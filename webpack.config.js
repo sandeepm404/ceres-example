@@ -448,6 +448,34 @@ class AssetManifestPlugin {
             return false;
           };
 
+          // Helper to copy any mock-*.json static data files for local/CI testing
+          const copyMockFiles = (templateName) => {
+            const srcDir = path.join(
+              __dirname,
+              "src",
+              "templates",
+              templateName
+            );
+            if (!fs.existsSync(srcDir)) return;
+            const mockFiles = fs.readdirSync(srcDir).filter(
+              (f) => f.startsWith("mock-") && f.endsWith(".json")
+            );
+            for (const mockFile of mockFiles) {
+              try {
+                const content = fs.readFileSync(path.join(srcDir, mockFile));
+                compilation.emitAsset(
+                  `templates/${templateName}/${mockFile}`,
+                  new RawSource(content)
+                );
+              } catch (e) {
+                console.warn(
+                  `Failed to copy mock file ${mockFile} for ${templateName}:`,
+                  e.message
+                );
+              }
+            }
+          };
+
           // Helper to copy thumbnail if exists
           const copyThumbnail = (templateName, version) => {
             const srcPath = path.join(
@@ -507,8 +535,9 @@ class AssetManifestPlugin {
 
                 // Copy thumbnail to version directory
                 const thumbnailPath = copyThumbnail(templateName, version);
-                // Copy samples to root template directory
+                // Copy samples and mock data files to root template directory
                 copySamples(templateName);
+                copyMockFiles(templateName);
 
                 // Create versioned manifest structure
                 const assets = {
