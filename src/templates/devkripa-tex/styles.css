@@ -257,12 +257,11 @@
   margin-top: 6px;
 }
 
-/* ===== ITEMS TABLE WRAPPER ===== */
+/* ===== TABLE SECTION ===== */
 .dt-table-wrap {
-  flex: 1;          /* fill remaining height */
+  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
 }
 
 /* ===== ITEMS TABLE ===== */

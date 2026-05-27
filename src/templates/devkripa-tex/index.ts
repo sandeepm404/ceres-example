@@ -43,12 +43,17 @@ function paginateTable(): void {
   let currentPage = originalPage;
   let currentItemsBody = itemsBody;
 
+  const PAGE_BOTTOM_PADDING = 16;
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     currentItemsBody.appendChild(row);
 
-    // If page overflows and we have at least 1 row on this page
-    if (currentPage.scrollHeight > currentPage.clientHeight && currentItemsBody.children.length > 1) {
+    const pageRect = currentPage.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+
+    // If the bottom of the row extends past the bottom padding boundary of the page
+    if (rowRect.bottom > pageRect.bottom - PAGE_BOTTOM_PADDING && currentItemsBody.children.length > 1) {
       // Remove the row that caused overflow
       row.remove();
       
@@ -85,7 +90,10 @@ function paginateTable(): void {
     currentPage.appendChild(bottomContent);
     
     // Check if bottom content caused an overflow
-    if (currentPage.scrollHeight > currentPage.clientHeight) {
+    const pageRect = currentPage.getBoundingClientRect();
+    const bottomRect = bottomContent.getBoundingClientRect();
+    
+    if (bottomRect.bottom > pageRect.bottom - PAGE_BOTTOM_PADDING) {
       bottomContent.remove();
       
       const newPage = originalPage.cloneNode(true) as HTMLElement;
