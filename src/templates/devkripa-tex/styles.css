@@ -1,0 +1,574 @@
+/* =====================================================
+   Devkripa Tex — Tax Invoice Template Styles
+   A4 page, border with padding, stretchy line items
+   ===================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  --dt-font: var(--ceres-font-family, "Inter", "Helvetica Neue", Arial, sans-serif);
+  --dt-text: #111;
+  --dt-text-muted: #555;
+  --dt-text-light: #777;
+  --dt-border: #333;
+  --dt-border-light: #bbb;
+  --dt-bg: #fff;
+  --dt-header-bg: #fff;
+
+  /* A4 dimensions (screen approximation at 96 dpi) */
+  --dt-page-width: 794px;
+  --dt-page-height: 1123px;
+  --dt-page-padding: 16px;
+  --dt-border-inset: 10px;
+}
+
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* ===== SHELL ===== */
+.dt-shell {
+  font-family: var(--dt-font);
+  font-size: 11px;
+  color: var(--dt-text);
+  background: var(--dt-bg);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  line-height: 1.4;
+  width: var(--dt-page-width);
+  margin: 0 auto;
+}
+
+.dt-shell p {
+  margin: 0;
+}
+
+/* ===== LETTERHEAD ===== */
+.dt-letterhead,
+.dt-letterhead-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dt-letterhead.is-empty,
+.dt-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dt-letterhead img,
+.dt-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ===== PAGE — A4 fixed size with outer border ===== */
+.dt-page {
+  width: var(--dt-page-width);
+  min-height: var(--dt-page-height);
+  padding: var(--dt-page-padding);
+
+  /* The page itself acts as the outer box */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Inner border frame sitting inside the page padding */
+.dt-page::before {
+  content: "";
+  position: absolute;
+  top: var(--dt-border-inset);
+  left: var(--dt-border-inset);
+  right: var(--dt-border-inset);
+  bottom: var(--dt-border-inset);
+  border: 1.5px solid var(--dt-border);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Make the page a positioning context for the pseudo-border */
+.dt-page {
+  position: relative;
+}
+
+/* ===== COMPANY HEADER ===== */
+.dt-company-header {
+  text-align: center;
+  padding: 8px 16px 6px;
+  border-bottom: 1.5px solid var(--dt-border);
+  position: relative;
+}
+
+.dt-demo-badge-wrap {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.dt-salutation {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--dt-text);
+  margin-bottom: 2px;
+}
+
+.dt-company-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--dt-text);
+  text-decoration: underline;
+  margin: 0 0 4px;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.dt-company-address {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--dt-text);
+  margin-bottom: 3px;
+  line-height: 1.5;
+}
+
+.dt-company-meta {
+  font-size: 10.5px;
+  color: var(--dt-text);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+
+.dt-meta-sep::before {
+  content: "  ";
+  white-space: pre;
+}
+
+/* ===== INVOICE TITLE BAR ===== */
+.dt-invoice-title-bar {
+  border-bottom: 1.5px solid var(--dt-border);
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.dt-invoice-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ===== INFO ROW ===== */
+.dt-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 0.85fr;
+  border-bottom: 1.5px solid var(--dt-border);
+  min-height: 120px;
+}
+
+.dt-info-cell {
+  padding: 7px 9px;
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
+.dt-info-cell + .dt-info-cell {
+  border-left: 1px solid var(--dt-border);
+}
+
+.dt-info-label {
+  font-size: 10.5px;
+  margin-bottom: 3px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dt-billed-name {
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+/* Key-value inline */
+.dt-kv {
+  display: flex;
+  gap: 4px;
+  line-height: 1.55;
+}
+
+.dt-kv-key {
+  color: var(--dt-text);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.dt-kv-val {
+  font-weight: 600;
+  color: var(--dt-text);
+  word-break: break-word;
+}
+
+.dt-kv-bold {
+  font-weight: 700;
+}
+
+/* Grid for transport / meta */
+.dt-kv-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1px 8px;
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+.dt-kv-grid .dt-kv-key {
+  color: var(--dt-text);
+  white-space: nowrap;
+}
+
+.dt-kv-grid .dt-kv-val {
+  font-weight: 600;
+  color: var(--dt-text);
+  word-break: break-word;
+}
+
+/* Meta card grid (Invoice #, Date) */
+.dt-meta-grid {
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+}
+
+.dt-status-wrap {
+  margin-top: 6px;
+}
+
+/* ===== ITEMS TABLE WRAPPER ===== */
+.dt-table-wrap {
+  flex: 1;          /* fill remaining height */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ===== ITEMS TABLE ===== */
+.dt-item-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+  flex: 1;
+}
+
+.dt-item-table thead th {
+  background-color: #f5f5f5;
+  border: 1px solid var(--dt-border);
+  padding: 4px 4px;
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--dt-text);
+  text-align: center;
+  line-height: 1.3;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.dt-item-table tbody td {
+  border: 1px solid var(--dt-border);
+  padding: 4px 4px;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+/* Spacer row stretches to fill remaining height in the table */
+.dt-spacer-row {
+  height: 100%;
+}
+
+.dt-spacer-row td {
+  border-left: 1px solid var(--dt-border);
+  border-right: 1px solid var(--dt-border);
+  border-top: none;
+  border-bottom: none;
+}
+
+/* Column widths */
+.dt-col-sno    { width: 22px;  text-align: center; }
+.dt-col-item   { min-width: 90px; }
+.dt-col-hsn    { width: 52px;  text-align: center; }
+.dt-col-pcs    { width: 32px; }
+.dt-col-mtr    { width: 42px; }
+.dt-col-uom    { width: 36px; }
+.dt-col-fold   { width: 44px; }
+.dt-col-rate   { width: 40px; }
+.dt-col-disc   { width: 42px; }
+.dt-col-gst    { width: 42px; }
+.dt-col-netmtr { width: 38px; }
+.dt-col-amount { width: 56px; }
+.dt-col-igst   { width: 46px; }
+.dt-col-total  { width: 56px; }
+
+.dt-item-name {
+  font-weight: 600;
+  display: block;
+}
+
+.dt-item-sku {
+  font-size: 10px;
+  color: var(--dt-text-light);
+}
+
+.dt-item-desc {
+  font-size: 10px;
+  color: var(--dt-text-muted);
+  margin-top: 2px;
+}
+
+.text-right  { text-align: right !important; }
+.text-center { text-align: center !important; }
+
+/* ===== TOTALS SECTION ===== */
+.dt-totals-section {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1.5px solid var(--dt-border);
+}
+
+.dt-totals-spacer {
+  flex: 1;
+}
+
+.dt-totals-right {
+  width: 260px;
+  font-size: 10.5px;
+}
+
+.dt-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--dt-border-light);
+  border-left: 1px solid var(--dt-border);
+}
+
+.dt-total-row:first-child {
+  border-left: 1px solid var(--dt-border);
+}
+
+.dt-total-label {
+  color: var(--dt-text);
+  font-weight: 400;
+}
+
+.dt-total-val {
+  font-weight: 600;
+  text-align: right;
+}
+
+.dt-grand-total {
+  border-bottom: none;
+  background-color: #f0f0f0;
+}
+
+.dt-grand-total .dt-total-label {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.dt-grand-total .dt-total-val {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* ===== TOTAL IN WORDS ===== */
+.dt-words-row {
+  display: flex;
+  gap: 6px;
+  padding: 5px 8px;
+  border-top: 1px solid var(--dt-border);
+  border-bottom: 1.5px solid var(--dt-border);
+  font-size: 10.5px;
+  flex-wrap: wrap;
+}
+
+.dt-words-label {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dt-words-val {
+  font-weight: 400;
+  color: var(--dt-text);
+}
+
+/* ===== FOOTER ROW ===== */
+.dt-footer-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  border-top: 1px solid var(--dt-border);
+  min-height: 100px;
+  flex-shrink: 0;
+}
+
+.dt-footer-terms,
+.dt-footer-bank {
+  padding: 7px 9px;
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
+.dt-footer-bank {
+  border-left: 1px solid var(--dt-border);
+}
+
+.dt-footer-qr {
+  border-left: 1px solid var(--dt-border);
+  padding: 7px 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 110px;
+}
+
+.dt-footer-section-title {
+  font-weight: 700;
+  font-size: 10.5px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  margin-bottom: 4px;
+}
+
+.dt-terms-list {
+  padding-left: 16px;
+  margin: 0 0 6px;
+}
+
+.dt-terms-list li {
+  font-size: 10px;
+  color: var(--dt-text-muted);
+  line-height: 1.55;
+  margin-bottom: 2px;
+}
+
+.dt-declaration-text {
+  font-size: 10px;
+  color: var(--dt-text-muted);
+  line-height: 1.55;
+}
+
+/* Bank key-value grid */
+.dt-bank-kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.dt-bank-kv .dt-kv-key {
+  color: var(--dt-text-muted);
+  white-space: nowrap;
+  font-weight: 400;
+}
+
+.dt-bank-kv .dt-kv-val {
+  font-weight: 500;
+  color: var(--dt-text);
+}
+
+/* QR code */
+.dt-qr-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  margin: 4px auto;
+}
+
+.dt-qr-label {
+  font-size: 9px;
+  color: var(--dt-text-muted);
+  text-align: center;
+  word-break: break-all;
+}
+
+/* ===== ELECTRONIC NOTICE ===== */
+.dt-elec-notice {
+  border-top: 1px solid var(--dt-border-light);
+  text-align: center;
+  padding: 4px 8px;
+  font-size: 9.5px;
+  color: var(--dt-text-muted);
+  flex-shrink: 0;
+}
+
+.dt-elec-notice p {
+  margin: 0;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  .dt-shell {
+    width: 210mm;
+    margin: 0;
+  }
+
+  .dt-page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: var(--dt-page-padding);
+  }
+
+  .dt-page::before {
+    /* border stays in place on print */
+    position: fixed;
+    top: var(--dt-border-inset);
+    left: var(--dt-border-inset);
+    right: var(--dt-border-inset);
+    bottom: var(--dt-border-inset);
+  }
+
+  .dt-item-table {
+    break-inside: auto;
+  }
+
+  .dt-item-table thead {
+    display: table-header-group;
+  }
+
+  .dt-item-table tbody tr {
+    break-inside: avoid;
+  }
+
+  /* Make spacer row not force a huge empty page */
+  .dt-spacer-row {
+    height: auto;
+  }
+
+  .dt-footer-row,
+  .dt-totals-section,
+  .dt-words-row {
+    break-inside: avoid;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}
