@@ -15,62 +15,128 @@ Handlebars.registerHelper("increment", function (value: number) {
   return value + 1;
 });
 
-// ─── Print Layout Fix ─────────────────────────────────────────────────────────
-// On web preview, the template flows continuously without forced page breaks,
-// ensuring the footer appears right after the totals block without awkward gaps.
-//
-// But on print, we want the template divided neatly into A4 pages, with the
-// line-item table stretching to the bottom of the last page so that the footer
-// is snapped perfectly to the bottom.
-//
-// This listens to standard print events (which Lydia's bridge triggers) and 
-// forces the `.dt-spacer-row` inside the table to fill the remaining gap 
-// up to the next A4 page boundary.
+// ─── DOM Pagination ──────────────────────────────────────────────────────────
+// To provide a true "PDF Viewer" experience on the web where the user sees
+// discrete A4 pages, we must physically paginate the DOM. 
+// This script runs once the template is rendered and splits the table rows 
+// across multiple `.dt-page` containers.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const A4_HEIGHT_PX = 1123; // A4 at 96 dpi  (210 mm × 297 mm)
+function paginateTable(): void {
+  const shell = document.querySelector(".dt-shell");
+  const originalPage = document.querySelector(".dt-page") as HTMLElement;
+  if (!shell || !originalPage) return;
 
-function applyPrintPaginationFix(): void {
-  const page = document.querySelector(".dt-page") as HTMLElement | null;
-  const spacerRow = document.querySelector(".dt-spacer-row") as HTMLElement | null;
-  const spacerCell = document.querySelector(".dt-spacer-row td") as HTMLElement | null;
-  
-  if (!page || !spacerRow || !spacerCell) return;
+  const bottomContent = originalPage.querySelector(".dt-bottom-content");
+  if (bottomContent) bottomContent.remove();
 
-  // Temporarily reset height to measure natural content accurately
-  spacerRow.style.height = "auto";
-  spacerCell.style.height = "auto";
-  
-  // Force a layout flush so scrollHeight is up to date
-  page.getBoundingClientRect();
+  const itemsBody = originalPage.querySelector(".dt-items-body");
+  if (!itemsBody) return;
 
-  const naturalHeight = page.scrollHeight;
-  if (naturalHeight <= 0) return;
+  // Remove spacer row during measurement
+  const spacerRow = originalPage.querySelector(".dt-spacer-row");
+  if (spacerRow) spacerRow.remove();
 
-  const numPages = Math.ceil(naturalHeight / A4_HEIGHT_PX);
-  const targetHeight = numPages * A4_HEIGHT_PX;
-  const gap = targetHeight - naturalHeight;
+  const rows = Array.from(itemsBody.querySelectorAll("tr"));
+  itemsBody.innerHTML = "";
 
-  // If there's a gap, force the table spacer row to fill it
-  if (gap > 0) {
-    spacerRow.style.height = `${gap}px`;
-    spacerCell.style.height = `${gap}px`;
+  let currentPage = originalPage;
+  let currentItemsBody = itemsBody;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    currentItemsBody.appendChild(row);
+
+    // If page overflows and we have at least 1 row on this page
+    if (currentPage.scrollHeight > currentPage.clientHeight && currentItemsBody.children.length > 1) {
+      // Remove the row that caused overflow
+      row.remove();
+      
+      // Create a new page clone
+      const newPage = originalPage.cloneNode(true) as HTMLElement;
+      
+      // Strip out the company header & info row to save space on subsequent pages
+      newPage.querySelector(".dt-company-header")?.remove();
+      newPage.querySelector(".dt-info-row")?.remove();
+      newPage.querySelector(".dt-invoice-title-bar")?.remove();
+      
+      // Clear the cloned table body
+      const newItemsBody = newPage.querySelector(".dt-items-body") as HTMLElement;
+      if (newItemsBody) newItemsBody.innerHTML = "";
+      
+      // Insert the new page before the letterhead footer
+      const footer = document.querySelector(".dt-letterhead-footer");
+      if (footer) {
+        shell.insertBefore(newPage, footer);
+      } else {
+        shell.appendChild(newPage);
+      }
+      
+      currentPage = newPage;
+      currentItemsBody = newItemsBody;
+      
+      // Append the overflowed row to the new page
+      currentItemsBody.appendChild(row);
+    }
+  }
+
+  // Append bottom content to the last page
+  if (bottomContent) {
+    currentPage.appendChild(bottomContent);
+    
+    // Check if bottom content caused an overflow
+    if (currentPage.scrollHeight > currentPage.clientHeight) {
+      bottomContent.remove();
+      
+      const newPage = originalPage.cloneNode(true) as HTMLElement;
+      newPage.querySelector(".dt-company-header")?.remove();
+      newPage.querySelector(".dt-info-row")?.remove();
+      newPage.querySelector(".dt-invoice-title-bar")?.remove();
+      
+      const newItemsBody = newPage.querySelector(".dt-items-body") as HTMLElement;
+      if (newItemsBody) newItemsBody.innerHTML = "";
+      
+      newPage.appendChild(bottomContent);
+      
+      const footer = document.querySelector(".dt-letterhead-footer");
+      if (footer) {
+        shell.insertBefore(newPage, footer);
+      } else {
+        shell.appendChild(newPage);
+      }
+      currentPage = newPage;
+    }
+  }
+
+  // Restore the spacer row to all pages so the table stretches cleanly
+  if (spacerRow) {
+    const allPages = document.querySelectorAll(".dt-page");
+    allPages.forEach(page => {
+      const body = page.querySelector(".dt-items-body");
+      if (body) {
+        body.appendChild(spacerRow.cloneNode(true));
+      }
+    });
   }
 }
 
-function removePrintPaginationFix(): void {
-  const spacerRow = document.querySelector(".dt-spacer-row") as HTMLElement | null;
-  const spacerCell = document.querySelector(".dt-spacer-row td") as HTMLElement | null;
-  
-  // Revert back to CSS-driven layout for web preview
-  if (spacerRow) spacerRow.style.height = "";
-  if (spacerCell) spacerCell.style.height = "";
+/**
+ * Run pagination after fonts load to ensure height calculations are accurate.
+ */
+function schedulePagination(): void {
+  const fontsReady: Promise<void> =
+    "fonts" in document && document.fonts?.ready
+      ? (document.fonts.ready as unknown as Promise<void>)
+      : Promise.resolve();
+
+  fontsReady.then(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(paginateTable);
+    });
+  });
 }
 
-window.addEventListener("beforeprint", applyPrintPaginationFix);
-window.addEventListener("afterprint", removePrintPaginationFix);
-
-// ─────────────────────────────────────────────────────────────────────────────
+schedulePagination();
 
 // Export template to global for main renderer to consume
 window.CeresTemplateDataMapper = normalizeInvoiceTemplateState as any;

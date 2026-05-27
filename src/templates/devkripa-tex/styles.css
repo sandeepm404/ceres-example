@@ -32,12 +32,12 @@
   font-family: var(--dt-font);
   font-size: 11px;
   color: var(--dt-text);
-  background: var(--dt-bg);
+  background: #e0e0e0;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
   line-height: 1.4;
-  width: var(--dt-page-width);
-  margin: 0 auto;
+  width: 100%;
+  padding: 24px 0;
 }
 
 .dt-shell p {
@@ -75,8 +75,11 @@
 /* ===== PAGE — A4 fixed size with outer border ===== */
 .dt-page {
   width: var(--dt-page-width);
-  min-height: var(--dt-page-height);
+  height: var(--dt-page-height);
   padding: var(--dt-page-padding);
+  margin: 0 auto 24px auto;
+  background: var(--dt-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
   /* The page itself acts as the outer box */
   display: flex;
@@ -528,12 +531,17 @@
   .dt-shell {
     width: 210mm;
     margin: 0;
+    padding: 0;
+    background: transparent;
   }
 
   .dt-page {
     width: 210mm;
     min-height: 297mm;
+    height: auto;
     padding: var(--dt-page-padding);
+    margin: 0;
+    box-shadow: none;
   }
 
   .dt-page::before {

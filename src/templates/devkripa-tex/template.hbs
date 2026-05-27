@@ -103,7 +103,7 @@
             <th class="dt-col-total text-right">Total</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="dt-items-body">
           {{#each invoice.items}}
           <tr>
             <td class="text-center">{{increment @index}}</td>
@@ -132,96 +132,97 @@
       </table>
     </div>
 
-    {{!-- Totals --}}
-    <div class="dt-totals-section">
-      <div class="dt-totals-spacer"></div>
-      <div class="dt-totals-right">
-        {{#if invoice.finalTotal.discount}}
-        <div class="dt-total-row">
-          <span class="dt-total-label">Discount ({{invoice.discountPercent}}%)</span>
-          <span class="dt-total-val">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.discount}}</span>
-        </div>
-        {{/if}}
-        {{#if invoice.finalTotal.sgst}}
-        <div class="dt-total-row">
-          <span class="dt-total-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</span>
-          <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.sgst}}</span>
-        </div>
-        {{/if}}
-        {{#if invoice.finalTotal.cgst}}
-        <div class="dt-total-row">
-          <span class="dt-total-label">CGST</span>
-          <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.cgst}}</span>
-        </div>
-        {{/if}}
-        {{#if invoice.finalTotal.igst}}
-        <div class="dt-total-row">
-          <span class="dt-total-label">IGST</span>
-          <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.igst}}</span>
-        </div>
-        {{/if}}
-        <div class="dt-total-row dt-grand-total">
-          <span class="dt-total-label">Total (INR)</span>
-          <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.total}}</span>
+    <div class="dt-bottom-content">
+      <div class="dt-totals-section">
+        <div class="dt-totals-spacer"></div>
+        <div class="dt-totals-right">
+          {{#if invoice.finalTotal.discount}}
+          <div class="dt-total-row">
+            <span class="dt-total-label">Discount ({{invoice.discountPercent}}%)</span>
+            <span class="dt-total-val">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.discount}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.finalTotal.sgst}}
+          <div class="dt-total-row">
+            <span class="dt-total-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</span>
+            <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.sgst}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.finalTotal.cgst}}
+          <div class="dt-total-row">
+            <span class="dt-total-label">CGST</span>
+            <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.cgst}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.finalTotal.igst}}
+          <div class="dt-total-row">
+            <span class="dt-total-label">IGST</span>
+            <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.igst}}</span>
+          </div>
+          {{/if}}
+          <div class="dt-total-row dt-grand-total">
+            <span class="dt-total-label">Total (INR)</span>
+            <span class="dt-total-val">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.total}}</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    {{!-- Total in words --}}
-    {{#if invoice.customLabels.totalInWordsValue}}
-    <div class="dt-words-row">
-      <span class="dt-words-label">Invoice Total (in words):</span>
-      <span class="dt-words-val">{{invoice.customLabels.totalInWordsValue}}</span>
-    </div>
-    {{/if}}
-
-    {{!-- Footer: Terms | Bank | QR --}}
-    <div class="dt-footer-row">
-
-      {{!-- Terms & Declaration --}}
-      <div class="dt-footer-terms">
-        {{#if invoice.terms.0.terms.length}}
-        <p class="dt-footer-section-title">Terms and Conditions</p>
-        <ol class="dt-terms-list">
-          {{#each invoice.terms.0.terms}}
-          <li>{{this}}</li>
-          {{/each}}
-        </ol>
-        {{/if}}
-        {{#if invoice.customLabels.declaration}}
-        <p class="dt-footer-section-title">Declaration</p>
-        <p class="dt-declaration-text">{{invoice.customLabels.declaration}}</p>
-        {{/if}}
-      </div>
-
-      {{!-- Bank Details --}}
-      {{#if mapped.visibility.showBankAccount}}
-      <div class="dt-footer-bank">
-        <p class="dt-footer-section-title">Bank and UPI details</p>
-        <div class="dt-bank-kv">
-          {{#if invoice.bankAccount.bankName}}<span class="dt-kv-key">Bank Name</span><span class="dt-kv-val">{{invoice.bankAccount.bankName}}</span>{{/if}}
-          <span class="dt-kv-key">Account Holder Name</span><span class="dt-kv-val">{{#if invoice.bankAccount.holderName}}{{invoice.bankAccount.holderName}}{{else}}{{invoice.billedBy.name}}{{/if}}</span>
-          {{#if invoice.bankAccount.accountNo}}<span class="dt-kv-key">Account Number</span><span class="dt-kv-val">{{invoice.bankAccount.accountNo}}</span>{{/if}}
-          {{#if invoice.bankAccount.ifsc}}<span class="dt-kv-key">IFSC</span><span class="dt-kv-val">{{invoice.bankAccount.ifsc}}</span>{{/if}}
-          {{#if invoice.bankAccount.accountType}}<span class="dt-kv-key">Account Type</span><span class="dt-kv-val dt-kv-bold">{{invoice.bankAccount.accountType}}</span>{{/if}}
-        </div>
+      {{!-- Total in words --}}
+      {{#if invoice.customLabels.totalInWordsValue}}
+      <div class="dt-words-row">
+        <span class="dt-words-label">Invoice Total (in words):</span>
+        <span class="dt-words-val">{{invoice.customLabels.totalInWordsValue}}</span>
       </div>
       {{/if}}
 
-      {{!-- QR / Scan to Pay --}}
-      {{#if invoice.bankAccount.qrCode}}
-      <div class="dt-footer-qr">
-        <p class="dt-footer-section-title text-center">Scan To Pay</p>
-        <img src="{{invoice.bankAccount.qrCode}}" alt="Scan to Pay" class="dt-qr-img" />
-        {{#if invoice.bankAccount.upiId}}<p class="dt-qr-label text-center">{{invoice.bankAccount.upiId}}</p>{{/if}}
+      {{!-- Footer: Terms | Bank | QR --}}
+      <div class="dt-footer-row">
+
+        {{!-- Terms & Declaration --}}
+        <div class="dt-footer-terms">
+          {{#if invoice.terms.0.terms.length}}
+          <p class="dt-footer-section-title">Terms and Conditions</p>
+          <ol class="dt-terms-list">
+            {{#each invoice.terms.0.terms}}
+            <li>{{this}}</li>
+            {{/each}}
+          </ol>
+          {{/if}}
+          {{#if invoice.customLabels.declaration}}
+          <p class="dt-footer-section-title">Declaration</p>
+          <p class="dt-declaration-text">{{invoice.customLabels.declaration}}</p>
+          {{/if}}
+        </div>
+
+        {{!-- Bank Details --}}
+        {{#if mapped.visibility.showBankAccount}}
+        <div class="dt-footer-bank">
+          <p class="dt-footer-section-title">Bank and UPI details</p>
+          <div class="dt-bank-kv">
+            {{#if invoice.bankAccount.bankName}}<span class="dt-kv-key">Bank Name</span><span class="dt-kv-val">{{invoice.bankAccount.bankName}}</span>{{/if}}
+            <span class="dt-kv-key">Account Holder Name</span><span class="dt-kv-val">{{#if invoice.bankAccount.holderName}}{{invoice.bankAccount.holderName}}{{else}}{{invoice.billedBy.name}}{{/if}}</span>
+            {{#if invoice.bankAccount.accountNo}}<span class="dt-kv-key">Account Number</span><span class="dt-kv-val">{{invoice.bankAccount.accountNo}}</span>{{/if}}
+            {{#if invoice.bankAccount.ifsc}}<span class="dt-kv-key">IFSC</span><span class="dt-kv-val">{{invoice.bankAccount.ifsc}}</span>{{/if}}
+            {{#if invoice.bankAccount.accountType}}<span class="dt-kv-key">Account Type</span><span class="dt-kv-val dt-kv-bold">{{invoice.bankAccount.accountType}}</span>{{/if}}
+          </div>
+        </div>
+        {{/if}}
+
+        {{!-- QR / Scan to Pay --}}
+        {{#if invoice.bankAccount.qrCode}}
+        <div class="dt-footer-qr">
+          <p class="dt-footer-section-title text-center">Scan To Pay</p>
+          <img src="{{invoice.bankAccount.qrCode}}" alt="Scan to Pay" class="dt-qr-img" />
+          {{#if invoice.bankAccount.upiId}}<p class="dt-qr-label text-center">{{invoice.bankAccount.upiId}}</p>{{/if}}
+        </div>
+        {{/if}}
+
       </div>
-      {{/if}}
 
-    </div>
-
-    {{!-- Electronic Notice --}}
-    <div class="dt-elec-notice">
-      <p>This is an electronically generated document, no signature is required.</p>
+      {{!-- Electronic Notice --}}
+      <div class="dt-elec-notice">
+        <p>This is an electronically generated document, no signature is required.</p>
+      </div>
     </div>
 
   </div>{{!-- .dt-page --}}
