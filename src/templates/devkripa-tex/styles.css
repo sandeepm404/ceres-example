@@ -412,6 +412,14 @@
   color: var(--dt-text);
 }
 
+/* ===== FOOTER SPACER (JS-controlled) ===== */
+.dt-footer-spacer {
+  /* starts at zero height; JS sets it to fill the gap on the last page */
+  flex-shrink: 0;
+  min-height: 0;
+  height: 0;
+}
+
 /* ===== FOOTER ROW ===== */
 .dt-footer-row {
   display: grid;
