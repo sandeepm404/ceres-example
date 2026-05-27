@@ -15,29 +15,34 @@ Handlebars.registerHelper("increment", function (value: number) {
   return value + 1;
 });
 
-// ─── Last-page footer snap ────────────────────────────────────────────────────
+// ─── Print Layout Fix ─────────────────────────────────────────────────────────
+// On web preview, the template flows continuously without forced page breaks,
+// ensuring the footer appears right after the totals block without awkward gaps.
 //
-// After the template is rendered, the `.dt-footer-spacer` div is expanded so
-// that the footer block (Terms + Bank + Notice) is always pinned to the very
-// bottom of the last A4 page, with the line-item table filling the gap.
+// But on print, we want the template divided neatly into A4 pages, with the
+// line-item table stretching to the bottom of the last page so that the footer
+// is snapped perfectly to the bottom.
 //
-// How it works:
-//  1. Measure the natural rendered height of .dt-page with spacer at 0.
-//  2. Round up to the next A4-page boundary (multiples of A4_HEIGHT_PX).
-//  3. Set the spacer height = difference → footer snaps to the bottom.
+// This listens to standard print events (which Lydia's bridge triggers) and 
+// forces the `.dt-spacer-row` inside the table to fill the remaining gap 
+// up to the next A4 page boundary.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const A4_HEIGHT_PX = 1123; // A4 at 96 dpi  (210 mm × 297 mm)
 
-function snapFooterToLastPage(): void {
+function applyPrintPaginationFix(): void {
   const page = document.querySelector(".dt-page") as HTMLElement | null;
-  const spacer = document.querySelector(
-    ".dt-footer-spacer"
-  ) as HTMLElement | null;
-  if (!page || !spacer) return;
+  const spacerRow = document.querySelector(".dt-spacer-row") as HTMLElement | null;
+  const spacerCell = document.querySelector(".dt-spacer-row td") as HTMLElement | null;
+  
+  if (!page || !spacerRow || !spacerCell) return;
 
-  // Reset spacer so we measure the natural content height
-  spacer.style.height = "0px";
+  // Temporarily reset height to measure natural content accurately
+  spacerRow.style.height = "auto";
+  spacerCell.style.height = "auto";
+  
+  // Force a layout flush so scrollHeight is up to date
+  page.getBoundingClientRect();
 
   const naturalHeight = page.scrollHeight;
   if (naturalHeight <= 0) return;
@@ -46,41 +51,24 @@ function snapFooterToLastPage(): void {
   const targetHeight = numPages * A4_HEIGHT_PX;
   const gap = targetHeight - naturalHeight;
 
+  // If there's a gap, force the table spacer row to fill it
   if (gap > 0) {
-    spacer.style.height = `${gap}px`;
+    spacerRow.style.height = `${gap}px`;
+    spacerCell.style.height = `${gap}px`;
   }
 }
 
-/**
- * Watches the DOM for `.dt-footer-spacer` to appear (set by the renderer
- * after it calls window.CeresTemplate and injects the HTML), then waits for
- * fonts to be ready before running the layout fix.
- */
-function scheduleLayoutFix(): void {
-  const observer = new MutationObserver((_mutations, obs) => {
-    if (!document.querySelector(".dt-footer-spacer")) return;
-    obs.disconnect();
-
-    const fontsReady: Promise<void> =
-      "fonts" in document && document.fonts?.ready
-        ? (document.fonts.ready as unknown as Promise<void>)
-        : Promise.resolve();
-
-    fontsReady.then(() => {
-      // Two rAF passes: first lets the browser flush layout, second measures
-      requestAnimationFrame(() => {
-        requestAnimationFrame(snapFooterToLastPage);
-      });
-    });
-  });
-
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-  });
+function removePrintPaginationFix(): void {
+  const spacerRow = document.querySelector(".dt-spacer-row") as HTMLElement | null;
+  const spacerCell = document.querySelector(".dt-spacer-row td") as HTMLElement | null;
+  
+  // Revert back to CSS-driven layout for web preview
+  if (spacerRow) spacerRow.style.height = "";
+  if (spacerCell) spacerCell.style.height = "";
 }
 
-scheduleLayoutFix();
+window.addEventListener("beforeprint", applyPrintPaginationFix);
+window.addEventListener("afterprint", removePrintPaginationFix);
 
 // ─────────────────────────────────────────────────────────────────────────────
 
