@@ -267,9 +267,11 @@
 /* ===== ITEMS TABLE ===== */
 .dt-item-table {
   width: 100%;
+  height: 100%;
   border-collapse: collapse;
   font-size: 10px;
   flex: 1;
+  border-bottom: 1px solid var(--dt-border);
 }
 
 .dt-item-table thead th {
@@ -298,8 +300,6 @@
 }
 
 .dt-spacer-row td {
-  border-left: 1px solid var(--dt-border);
-  border-right: 1px solid var(--dt-border);
   border-top: none;
   border-bottom: none;
 }
