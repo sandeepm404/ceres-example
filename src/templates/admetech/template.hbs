@@ -1,0 +1,226 @@
+<div class="amt-shell">
+
+  {{!-- Letterhead --}}
+  <div class="no-dibella amt-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+    {{#if invoice.letterHead}}
+    <img src="{{invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+    {{else}}
+    <img alt="Letterhead" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="amt-page">
+
+    {{!-- ═══ Header: Logo left, Company info right ═══ --}}
+    <div class="amt-header">
+      <div class="amt-header-left">
+        {{#if invoice.billedBy.logo}}
+        <img src="{{invoice.billedBy.logo}}" alt="{{invoice.billedBy.name}}" class="amt-logo" />
+        {{/if}}
+        <div style="margin-top:4px">{{> DemoBadge }}</div>
+      </div>
+      <div class="amt-header-right">
+        <p class="amt-company-name">{{invoice.billedBy.name}}</p>
+        {{#if invoice.billedBy.city}}<p>{{invoice.billedBy.city}}{{#if invoice.billedBy.state}}, {{invoice.billedBy.state}}{{/if}}{{#if invoice.billedBy.country}} {{invoice.billedBy.country}}{{/if}}</p>{{/if}}
+        {{#if invoice.billedBy.website}}<p><strong>Website :</strong> {{invoice.billedBy.website}}</p>{{/if}}
+        {{#if invoice.billedBy.gstin}}<p><strong>TRN :</strong> {{invoice.billedBy.gstin}}</p>{{/if}}
+      </div>
+    </div>
+
+    {{!-- ═══ Invoice Title ═══ --}}
+    <div class="amt-title-bar">
+      <span class="amt-title-line"></span>
+      <h1 class="amt-title">{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}TAX INVOICE{{/if}}</h1>
+      <span class="amt-title-line"></span>
+    </div>
+
+    {{!-- ═══ Info Row: Bill To left, Invoice Meta right ═══ --}}
+    <div class="amt-info-row">
+      <div class="amt-info-left">
+        <p class="amt-info-label">{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}Bill To{{/if}}</p>
+        <p class="amt-client-name">{{invoice.billedTo.name}}</p>
+        {{#if invoice.billedTo.gstin}}<p><strong>TRN :</strong> {{invoice.billedTo.gstin}}</p>{{/if}}
+      </div>
+      <div class="amt-info-right">
+        <div class="amt-meta-grid">
+          <span class="amt-meta-key">{{#if invoice.customLabels.invoiceNumber}}{{invoice.customLabels.invoiceNumber}}{{else}}Invoice #{{/if}}</span>
+          <span class="amt-meta-val">{{invoice.invoiceNumber}}</span>
+
+          <span class="amt-meta-key">{{#if invoice.customLabels.invoiceDate}}{{invoice.customLabels.invoiceDate}}{{else}}Invoice Date{{/if}}</span>
+          <span class="amt-meta-val">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</span>
+
+          {{#if invoice.paymentTerms}}
+          <span class="amt-meta-key">Terms</span>
+          <span class="amt-meta-val">{{invoice.paymentTerms}}</span>
+          {{/if}}
+
+          {{#if invoice.dueDate}}
+          <span class="amt-meta-key">{{#if invoice.customLabels.dueDate}}{{invoice.customLabels.dueDate}}{{else}}Due Date{{/if}}</span>
+          <span class="amt-meta-val">{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</span>
+          {{/if}}
+
+          {{#if invoice.customLabels.poNumber}}
+          <span class="amt-meta-key">P.O.#</span>
+          <span class="amt-meta-val">{{invoice.customLabels.poNumber}}</span>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{!-- ═══ Line Items Table ═══ --}}
+    <div class="amt-table-wrap">
+      <table class="amt-item-table">
+        <thead>
+          <tr>
+            <th class="amt-col-sno"></th>
+            <th class="amt-col-item">ITEM</th>
+            <th class="amt-col-qty text-center">Qty</th>
+            <th class="amt-col-rate text-right">Rate</th>
+            <th class="amt-col-taxable text-right">Taxable Amount</th>
+            <th class="amt-col-tax text-right">Tax</th>
+            <th class="amt-col-amount text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody class="amt-items-body">
+          {{#each invoice.items}}
+          <tr>
+            <td class="text-center">{{increment @index}}</td>
+            <td>
+              <div class="amt-item-content">
+                <span class="amt-item-name">{{name}}</span>
+                {{#if ../../advanceOptions.showSkuInInvoice}}{{#if sku}}<span class="amt-item-sku"> (SKU: {{sku}})</span>{{/if}}{{/if}}
+              </div>
+              {{#if description}}
+              <div class="amt-item-desc">
+                {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+              </div>
+              {{/if}}
+            </td>
+            <td class="text-center">{{quantity}}{{#if unit}}<br/>({{unit}}){{/if}}</td>
+            <td class="text-right">{{../invoice.customCurrencySymbol}} {{rate}}</td>
+            <td class="text-right">{{../invoice.customCurrencySymbol}} {{amount}}</td>
+            <td class="text-right">{{tax}}</td>
+            <td class="text-right">{{../invoice.customCurrencySymbol}} {{total}}</td>
+          </tr>
+          {{/each}}
+          {{!-- Totals summary row --}}
+          <tr class="amt-totals-row">
+            <td></td>
+            <td class="amt-bold">Total</td>
+            <td class="text-center amt-bold">{{invoice.finalTotal.totalQuantity}}</td>
+            <td></td>
+            <td class="text-right amt-bold">{{invoice.customCurrencySymbol}} {{#if invoice.finalTotal.subTotal}}{{invoice.finalTotal.subTotal}}{{else}}{{invoice.subTotal}}{{/if}}</td>
+            <td class="text-right amt-bold">{{invoice.finalTotal.totalTax}}</td>
+            <td class="text-right amt-bold">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.total}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {{!-- ═══ Right-aligned Totals Summary ═══ --}}
+    <div class="amt-totals-area">
+      <div class="amt-totals-spacer"></div>
+      <div class="amt-totals-right">
+        {{#if invoice.finalTotal.taxRate}}
+        <div class="amt-total-line">
+          <span class="amt-total-label">Rate</span>
+          <span class="amt-total-value">{{invoice.customCurrencySymbol}}</span>
+        </div>
+        {{/if}}
+
+        <div class="amt-total-line">
+          <span class="amt-total-label">Taxable Amount</span>
+          <span class="amt-total-value">{{invoice.customCurrencySymbol}}</span>
+        </div>
+
+        {{#if invoice.finalTotal.igst}}
+        <div class="amt-total-line">
+          <span class="amt-total-label">Tax</span>
+          <span class="amt-total-value">{{invoice.customCurrencySymbol}}</span>
+        </div>
+        {{/if}}
+
+        {{#if invoice.finalTotal.cgst}}
+        <div class="amt-total-line">
+          <span class="amt-total-label">CGST</span>
+          <span class="amt-total-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.cgst}}</span>
+        </div>
+        {{/if}}
+
+        {{#if invoice.finalTotal.sgst}}
+        <div class="amt-total-line">
+          <span class="amt-total-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</span>
+          <span class="amt-total-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.sgst}}</span>
+        </div>
+        {{/if}}
+
+        <div class="amt-total-line amt-grand-total">
+          <span class="amt-total-label">{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}</span>
+          <span class="amt-total-value">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.total}}</span>
+        </div>
+      </div>
+    </div>
+
+    {{!-- ═══ Total in Words ═══ --}}
+    {{#if invoice.customLabels.totalInWordsValue}}
+    <div class="amt-words-row">
+      <span class="amt-words-label">{{#if invoice.customLabels.totalInWords}}{{invoice.customLabels.totalInWords}}{{else}}Invoice Total (in words){{/if}}:</span>
+      <span class="amt-words-val">{{invoice.customLabels.totalInWordsValue}}</span>
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Notes ═══ --}}
+    {{#if invoice.notes}}
+    <div class="amt-notes-section">
+      <h3>{{#if invoice.customLabels.notes}}{{invoice.customLabels.notes}}{{else}}Notes{{/if}}</h3>
+      {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Terms & Conditions ═══ --}}
+    {{#if invoice.terms.0.terms.length}}
+    <div class="amt-terms-section">
+      <h3 class="amt-terms-title">{{#if invoice.customLabels.terms}}{{invoice.customLabels.terms}}{{else}}Terms and Conditions{{/if}}</h3>
+      <ol class="amt-terms-list">
+        {{#each invoice.terms.0.terms}}
+        <li>{{this}}</li>
+        {{/each}}
+      </ol>
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Signature & Stamp ═══ --}}
+    <div class="amt-signature-section">
+      {{#if invoice.billedBy.signature}}
+      <img class="amt-stamp-img" src="{{invoice.billedBy.signature}}" alt="Stamp" />
+      {{/if}}
+      <p class="amt-sig-label">Authorized Signature</p>
+    </div>
+
+    {{!-- ═══ Bottom Footer ═══ --}}
+    <div class="amt-bottom-footer">
+      <p class="amt-footer-line">
+        {{#if invoice.billedBy.email}}{{invoice.billedBy.email}}{{/if}}
+        {{#if invoice.billedBy.website}} I {{invoice.billedBy.website}}{{/if}}
+        {{#if invoice.billedBy.phone}} I Mob {{invoice.billedBy.phone}}{{/if}}
+      </p>
+      <p class="amt-footer-line">
+        {{#if invoice.billedBy.street}}{{invoice.billedBy.street}}{{/if}}
+        {{#if invoice.billedBy.city}} I {{invoice.billedBy.city}}{{/if}}
+        {{#if invoice.billedBy.state}} {{invoice.billedBy.state}}{{/if}}
+        {{#if invoice.billedBy.country}} I {{invoice.billedBy.country}}{{/if}}
+      </p>
+    </div>
+
+  </div>{{!-- .amt-page --}}
+
+  {{!-- Letterhead Footer --}}
+  <div class="no-dibella amt-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if invoice.letterHeadFooter}}
+    <img src="{{invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+    <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+
+</div>
