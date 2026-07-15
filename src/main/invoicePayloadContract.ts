@@ -504,7 +504,9 @@ export interface FlattenedInvoicePayload extends InvoiceData {
   einvoiceConfig?: EinvoiceConfig;
 }
 
-export type InvoicePayloadInput = CeresTemplatePayload | FlattenedInvoicePayload;
+export type InvoicePayloadInput =
+  | CeresTemplatePayload
+  | FlattenedInvoicePayload;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -571,6 +573,7 @@ export const normalizeInvoicePayload = (
     copy: payload.copy,
     ewayConfig: payload.ewayConfig,
     einvoiceConfig: payload.einvoiceConfig,
-    template: payload.invoice.template ?? normalizeTemplateConfig(payload.template),
+    template:
+      payload.invoice.template ?? normalizeTemplateConfig(payload.template),
   };
 };
