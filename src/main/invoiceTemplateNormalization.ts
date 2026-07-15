@@ -237,7 +237,7 @@ const getSummaryCessAmount = (
     return directAmount;
   }
 
-  return getNestedSummaryEntries(record[listKey], listKey).reduce<number>(
+  return getNestedSummaryEntries(record, listKey).reduce<number>(
     (sum, entry) => {
       const row = asRecord(entry);
       return (

@@ -50,17 +50,18 @@ const sortKeysDeep = (value) => {
 const buildSchema = ({ id, source, types }) => {
   const definitions = {};
 
-  types.forEach((typeName) => {
-    const generator = createGenerator({
-      path: path.join(repoRoot, source),
-      tsconfig: path.join(repoRoot, "tsconfig.json"),
-      type: typeName,
-      expose: "export",
-      topRef: true,
-      additionalProperties: true,
-      sortProps: true,
-    });
+  // One generator per source file: booting the TypeScript program is the
+  // expensive part, and createSchema can be called per type against it.
+  const generator = createGenerator({
+    path: path.join(repoRoot, source),
+    tsconfig: path.join(repoRoot, "tsconfig.json"),
+    expose: "export",
+    topRef: true,
+    additionalProperties: true,
+    sortProps: true,
+  });
 
+  types.forEach((typeName) => {
     const { definitions: generated = {} } = generator.createSchema(typeName);
 
     Object.entries(generated).forEach(([name, definition]) => {
