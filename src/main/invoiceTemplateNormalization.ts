@@ -419,7 +419,9 @@ export const normalizeInvoiceTemplateState = (
   const irn = asRecord(invoice.irn);
   const upi = asRecord(invoice.upi);
   const irnCancelDate = toNonEmptyString(irn.CancelDate);
-  const irnQr = toNonEmptyString(irn.qrCode);
+  // Root qrCode is the same IRN QR delivered by the Lydia host overlay, so the
+  // CancelDate guard below applies to it equally.
+  const irnQr = toNonEmptyString(pickFirstValue(invoice.qrCode, irn.qrCode));
   const topQr =
     (irnQr && !irnCancelDate ? irnQr : null) ??
     toNonEmptyString(invoice.zatcaQrCode) ??

@@ -66,6 +66,13 @@ export interface InvoiceAdvanceOptions {
   itemNameFullWidth?: boolean;
   isDescriptionFullWidth?: boolean;
   hideCountryOfSupply?: boolean;
+  showHSNSummaryInInvoice?: boolean;
+  // The Lydia live-update bridge emits this alias instead of showHSNSummaryInInvoice;
+  // declared so bridge deltas stay within the contract until the host sends the
+  // canonical key.
+  showHsnSummary?: boolean;
+  showStockSummary?: boolean;
+  showPaymentsTable?: boolean;
   [key: string]: unknown;
 }
 
@@ -179,6 +186,43 @@ export interface InvoiceData {
   zatcaQrCode?: string;
   lhdnQrCode?: string;
   documentQr?: string;
+  // IRN QR data URL at the invoice root. Never part of the fetched payload — the Lydia
+  // host overlays it at runtime, so templates must treat it as optional.
+  qrCode?: string;
+  sharedDocumentId?: string;
+  share?: {
+    link?: string;
+    name?: string;
+    fileName?: string;
+    pdf?: string;
+    printLabels?: Array<{ label: string; pdf: string }>;
+  };
+  // Document-level stock summary; the API includes it only for batch-tracked documents
+  // with advanceOptions.showStockSummary enabled.
+  batchSummary?: DocumentBatchSummaryEntry[];
+  creditDiscount?: number;
+  beforeDiscountPay?: number | { full: number; [key: string]: any };
+  earlyPayDiscount?: {
+    enabled?: boolean;
+    applied?: boolean;
+    totals?: Record<string, any>;
+    [key: string]: any;
+  };
+  vendorFields?: Record<string, any>;
+  hasPgPayments?: boolean;
+  totalConversions?: Record<string, any>;
+  lastPaymentDate?: string | Date;
+}
+
+export interface DocumentBatchSummaryEntry {
+  inventory?: string;
+  itemName?: string;
+  sku?: string;
+  batch?: Record<string, any>;
+  warehouse?: string;
+  warehouseName?: string;
+  quantity?: number;
+  [key: string]: any;
 }
 
 export interface BusinessData {
