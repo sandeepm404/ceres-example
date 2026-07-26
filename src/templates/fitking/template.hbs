@@ -1,0 +1,212 @@
+<div class="fk-shell">
+
+  {{!-- Letterhead --}}
+  <div class="no-dibella fk-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+    {{#if invoice.letterHead}}
+    <img src="{{invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+    {{else}}
+    <img alt="Letterhead" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="fk-page">
+
+    {{!-- ═══ Header: Logo left + Logo right ═══ --}}
+    <div class="fk-header">
+      <div class="fk-header-left">
+        {{#if invoice.billedBy.logo}}
+        <img src="{{invoice.billedBy.logo}}" alt="{{invoice.billedBy.name}}" class="fk-logo" />
+        {{/if}}
+        <div style="margin-top:4px">{{> DemoBadge }}</div>
+      </div>
+      <div class="fk-header-right">
+        {{#if invoice.billedTo.logo}}
+        <img src="{{invoice.billedTo.logo}}" alt="{{invoice.billedTo.name}}" class="fk-logo" />
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Red accent stripe --}}
+    <div class="fk-accent-stripe"></div>
+
+    {{!-- ═══ Title Bar ═══ --}}
+    <div class="fk-title-bar">
+      <h1 class="fk-title">{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}Quotation{{/if}}</h1>
+    </div>
+
+    {{!-- ═══ Three-column Info Section ═══ --}}
+    <div class="fk-info-section">
+      {{!-- Column 1: From --}}
+      <div class="fk-info-col fk-info-from">
+        <p class="fk-info-heading">{{#if invoice.customLabels.billedBy}}{{invoice.customLabels.billedBy}}{{else}}Quotation From{{/if}}</p>
+        <p class="fk-info-value-bold">{{invoice.billedBy.name}}</p>
+        {{#if invoice.billedBy.city}}<p class="fk-info-value">{{invoice.billedBy.city}} -</p>{{/if}}
+        {{#if invoice.billedBy.phone}}<p class="fk-info-value">Phone&nbsp;&nbsp;&nbsp;{{invoice.billedBy.phone}}</p>{{/if}}
+        {{#if invoice.billedBy.email}}<p class="fk-info-value">Email&nbsp;&nbsp;&nbsp;{{invoice.billedBy.email}}</p>{{/if}}
+      </div>
+
+      {{!-- Column 2: To --}}
+      <div class="fk-info-col fk-info-to">
+        <p class="fk-info-heading">{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}Quotation To{{/if}}</p>
+        <p class="fk-info-value-bold">{{invoice.billedTo.name}}</p>
+        {{#if invoice.billedTo.city}}<p class="fk-info-value">{{invoice.billedTo.city}} -</p>{{/if}}
+        {{#if invoice.billedTo.phone}}<p class="fk-info-value">Phone&nbsp;&nbsp;&nbsp;{{invoice.billedTo.phone}}</p>{{/if}}
+        {{#if invoice.billedTo.email}}<p class="fk-info-value">Email&nbsp;&nbsp;&nbsp;{{invoice.billedTo.email}}</p>{{/if}}
+      </div>
+
+      {{!-- Column 3: Details --}}
+      <div class="fk-info-col fk-info-details">
+        <p class="fk-info-heading">{{#if invoice.customLabels.invoiceNumber}}{{invoice.customLabels.invoiceNumber}}{{else}}Quotation Details{{/if}}</p>
+        <table class="fk-details-table">
+          <tr>
+            <td class="fk-dt-label">Quotation No</td>
+            <td class="fk-dt-value">{{invoice.invoiceNumber}}</td>
+          </tr>
+          <tr>
+            <td class="fk-dt-label">{{#if invoice.customLabels.invoiceDate}}{{invoice.customLabels.invoiceDate}}{{else}}Quotation Date{{/if}}</td>
+            <td class="fk-dt-value">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</td>
+          </tr>
+          {{#if invoice.billedTo._id}}
+          <tr>
+            <td class="fk-dt-label">Client ID</td>
+            <td class="fk-dt-value">{{invoice.billedTo._id}}</td>
+          </tr>
+          {{/if}}
+        </table>
+      </div>
+    </div>
+
+    {{!-- ═══ Line Items Table ═══ --}}
+    <div class="fk-table-wrap">
+      <table class="fk-item-table">
+        <thead>
+          <tr>
+            <th class="fk-col-sno"></th>
+            <th class="fk-col-desc">Product Description and Photo</th>
+            <th class="fk-col-img"></th>
+            <th class="fk-col-model">Model&nbsp;&nbsp;No</th>
+            <th class="fk-col-price text-right">Unit Price</th>
+            <th class="fk-col-qty text-center">Qty</th>
+            <th class="fk-col-total text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each invoice.items}}
+          <tr>
+            <td class="text-center fk-sno-cell">{{increment @index}}</td>
+            <td class="fk-desc-cell">
+              <p class="fk-item-name">{{name}}</p>
+              {{#if description}}
+              <div class="fk-item-desc">
+                {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+              </div>
+              {{/if}}
+            </td>
+            <td class="fk-img-cell">
+              {{#if thumbnail}}
+              <img src="{{thumbnail}}" alt="{{name}}" class="fk-product-img" />
+              {{/if}}
+            </td>
+            <td class="text-center">{{sku}}</td>
+            <td class="text-right">{{../invoice.customCurrencySymbol}} {{rate}}</td>
+            <td class="text-center">{{quantity}}{{#if unit}} {{unit}}{{/if}}</td>
+            <td class="text-right">{{../invoice.customCurrencySymbol}} {{amount}}</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    {{!-- ═══ Bottom Section: Terms (left) + Totals (right) ═══ --}}
+    <div class="fk-bottom-section">
+      {{!-- Left: Terms --}}
+      <div class="fk-bottom-left">
+        {{#if invoice.terms.0.terms.length}}
+        <div class="fk-terms-section">
+          <p class="fk-section-title">{{#if invoice.customLabels.terms}}{{invoice.customLabels.terms}}{{else}}Terms and Conditions{{/if}}</p>
+          <ol class="fk-terms-list">
+            {{#each invoice.terms.0.terms}}
+            <li>{{this}}</li>
+            {{/each}}
+          </ol>
+        </div>
+        {{/if}}
+      </div>
+
+      {{!-- Right: Totals --}}
+      <div class="fk-bottom-right">
+        <table class="fk-totals-table">
+          <tr>
+            <td class="fk-totals-label">Total</td>
+            <td class="fk-totals-value">{{invoice.customCurrencySymbol}}{{#if invoice.finalTotal.subTotal}}{{invoice.finalTotal.subTotal}}{{else}}{{invoice.subTotal}}{{/if}}</td>
+          </tr>
+          {{#if invoice.finalTotal.igst}}
+          <tr>
+            <td class="fk-totals-label">GST @ 18%</td>
+            <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.igst}}</td>
+          </tr>
+          {{/if}}
+          {{#if invoice.finalTotal.cgst}}
+          <tr>
+            <td class="fk-totals-label">CGST</td>
+            <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.cgst}}</td>
+          </tr>
+          {{/if}}
+          {{#if invoice.finalTotal.sgst}}
+          <tr>
+            <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</td>
+            <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.sgst}}</td>
+          </tr>
+          {{/if}}
+          {{#if invoice.finalTotal.roundOff}}
+          <tr>
+            <td class="fk-totals-label">Round off</td>
+            <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.roundOff}}</td>
+          </tr>
+          {{/if}}
+          <tr class="fk-grand-total-row">
+            <td class="fk-totals-label">{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Grand Total{{/if}}</td>
+            <td class="fk-totals-value">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.total}}</td>
+          </tr>
+        </table>
+
+        {{!-- Amount in Words --}}
+        {{#if invoice.customLabels.totalInWordsValue}}
+        <div class="fk-amount-words">
+          <p class="fk-amount-words-label">{{#if invoice.customLabels.totalInWords}}{{invoice.customLabels.totalInWords}}{{else}}Amount in words{{/if}}</p>
+          <p class="fk-amount-words-value">{{invoice.customLabels.totalInWordsValue}}</p>
+        </div>
+        {{/if}}
+
+        {{!-- Signature --}}
+        <div class="fk-signature-area">
+          {{#if invoice.billedBy.signature}}
+          <img class="fk-stamp-img" src="{{invoice.billedBy.signature}}" alt="Stamp" />
+          {{/if}}
+          <p class="fk-sig-label">Authorised Signatory</p>
+        </div>
+      </div>
+    </div>
+
+    {{!-- ═══ Notes / Remarks ═══ --}}
+    {{#if invoice.notes}}
+    <div class="fk-remarks-section">
+      <p class="fk-section-title">{{#if invoice.customLabels.notes}}{{invoice.customLabels.notes}}{{else}}Remarks{{/if}}</p>
+      <div class="fk-remarks-content">
+        {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+      </div>
+    </div>
+    {{/if}}
+
+  </div>{{!-- .fk-page --}}
+
+  {{!-- Letterhead Footer --}}
+  <div class="no-dibella fk-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if invoice.letterHeadFooter}}
+    <img src="{{invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+    <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+
+</div>

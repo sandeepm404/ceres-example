@@ -1,0 +1,469 @@
+/* =====================================================
+   Fitking — Quotation Template Styles
+   Red-accented design with product image column,
+   three-column info, and terms/totals split footer
+   ===================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  --fk-font: var(--ceres-font-family, "Inter", "Helvetica Neue", Arial, sans-serif);
+  --fk-primary: var(--ceres-primary-color, #cc0000);
+  --fk-primary-dark: #990000;
+  --fk-text: #222;
+  --fk-text-muted: #555;
+  --fk-text-light: #777;
+  --fk-border: #333;
+  --fk-border-light: #999;
+  --fk-bg: #fff;
+  --fk-table-header-bg: #d9d9d9;
+
+  /* A4 dimensions (screen approximation at 96 dpi) */
+  --fk-page-width: 794px;
+  --fk-page-min-height: 1123px;
+  --fk-page-padding: 24px 28px;
+}
+
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* ===== SHELL ===== */
+.fk-shell {
+  font-family: var(--fk-font);
+  font-size: 10.5px;
+  color: var(--fk-text);
+  background: #e0e0e0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  line-height: 1.45;
+  width: 100%;
+  padding: 24px 0;
+}
+
+.fk-shell p {
+  margin: 0;
+}
+
+/* ===== LETTERHEAD ===== */
+.fk-letterhead,
+.fk-letterhead-footer {
+  width: var(--fk-page-width);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.fk-letterhead.is-empty,
+.fk-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fk-letterhead img,
+.fk-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ===== PAGE ===== */
+.fk-page {
+  width: var(--fk-page-width);
+  min-height: var(--fk-page-min-height);
+  padding: var(--fk-page-padding);
+  margin: 0 auto 24px auto;
+  background: var(--fk-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ===== HEADER ===== */
+.fk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0 12px;
+  gap: 24px;
+}
+
+.fk-header-left,
+.fk-header-right {
+  flex-shrink: 0;
+}
+
+.fk-logo {
+  max-width: 180px;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+/* ===== ACCENT STRIPE ===== */
+.fk-accent-stripe {
+  height: 4px;
+  background: linear-gradient(90deg, var(--fk-primary) 0%, var(--fk-primary) 60%, transparent 100%);
+  margin-bottom: 0;
+}
+
+/* ===== TITLE BAR ===== */
+.fk-title-bar {
+  background-color: var(--fk-primary);
+  padding: 6px 16px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.fk-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #fff;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+/* ===== THREE-COLUMN INFO SECTION ===== */
+.fk-info-section {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--fk-border-light);
+  margin-bottom: 12px;
+}
+
+.fk-info-col {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.fk-info-col + .fk-info-col {
+  border-left: 1px solid var(--fk-border-light);
+}
+
+.fk-info-heading {
+  font-weight: 700;
+  font-size: 10px;
+  margin-bottom: 4px;
+  color: var(--fk-text);
+}
+
+.fk-info-value {
+  color: var(--fk-text);
+  font-size: 9.5px;
+}
+
+.fk-info-value-bold {
+  font-weight: 600;
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+/* Details mini-table */
+.fk-details-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5px;
+}
+
+.fk-details-table tr + tr {
+  border-top: 1px solid #ddd;
+}
+
+.fk-details-table td {
+  padding: 3px 6px;
+}
+
+.fk-dt-label {
+  font-weight: 500;
+  color: var(--fk-text-muted);
+  white-space: nowrap;
+}
+
+.fk-dt-value {
+  text-align: right;
+  font-weight: 500;
+  color: var(--fk-text);
+}
+
+/* ===== ITEMS TABLE ===== */
+.fk-table-wrap {
+  margin-bottom: 8px;
+}
+
+.fk-item-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+
+.fk-item-table thead th {
+  background-color: var(--fk-table-header-bg);
+  border: 1px solid var(--fk-border);
+  padding: 6px 6px;
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--fk-text);
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.fk-item-table tbody td {
+  border: 1px solid var(--fk-border-light);
+  padding: 6px 6px;
+  vertical-align: top;
+  line-height: 1.5;
+}
+
+/* Column widths */
+.fk-col-sno   { width: 24px;  text-align: center; }
+.fk-col-desc  { min-width: 180px; text-align: left; }
+.fk-col-img   { width: 120px; text-align: center; }
+.fk-col-model { width: 80px;  text-align: center; }
+.fk-col-price { width: 80px; }
+.fk-col-qty   { width: 50px; }
+.fk-col-total { width: 90px; }
+
+.fk-sno-cell {
+  vertical-align: top;
+  font-weight: 600;
+}
+
+.fk-desc-cell {
+  vertical-align: top;
+}
+
+.fk-item-name {
+  font-weight: 600;
+  font-size: 10.5px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.fk-item-desc {
+  font-size: 9.5px;
+  color: var(--fk-text-muted);
+  line-height: 1.55;
+}
+
+.fk-item-desc ul {
+  margin: 2px 0 2px 14px;
+  padding: 0;
+}
+
+.fk-item-desc li {
+  margin-bottom: 1px;
+}
+
+/* Product image cell */
+.fk-img-cell {
+  text-align: center;
+  vertical-align: middle;
+  padding: 4px;
+}
+
+.fk-product-img {
+  max-width: 110px;
+  max-height: 90px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.text-right  { text-align: right !important; }
+.text-center { text-align: center !important; }
+
+/* ===== BOTTOM SECTION (Terms left, Totals right) ===== */
+.fk-bottom-section {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+  border-top: 1px solid var(--fk-border-light);
+  padding-top: 8px;
+}
+
+.fk-bottom-left {
+  flex: 1;
+  font-size: 9.5px;
+}
+
+.fk-bottom-right {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+/* ===== TERMS ===== */
+.fk-section-title {
+  font-weight: 700;
+  font-size: 11px;
+  margin-bottom: 4px;
+  color: var(--fk-text);
+}
+
+.fk-terms-list {
+  padding-left: 16px;
+  margin: 0;
+}
+
+.fk-terms-list li {
+  font-size: 9px;
+  color: var(--fk-text-muted);
+  line-height: 1.65;
+  margin-bottom: 1px;
+}
+
+/* ===== TOTALS TABLE ===== */
+.fk-totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+}
+
+.fk-totals-table tr {
+  border-bottom: 1px solid #ddd;
+}
+
+.fk-totals-table td {
+  padding: 5px 8px;
+}
+
+.fk-totals-label {
+  font-weight: 500;
+  color: var(--fk-text);
+  text-align: left;
+}
+
+.fk-totals-value {
+  font-weight: 500;
+  text-align: right;
+  color: var(--fk-text);
+  white-space: nowrap;
+}
+
+.fk-grand-total-row {
+  background-color: #f2f2f2;
+  border-top: 2px solid var(--fk-border);
+  border-bottom: 2px solid var(--fk-border);
+}
+
+.fk-grand-total-row .fk-totals-label {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.fk-grand-total-row .fk-totals-value {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* ===== AMOUNT IN WORDS ===== */
+.fk-amount-words {
+  padding: 8px 8px 4px;
+  font-size: 10px;
+}
+
+.fk-amount-words-label {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.fk-amount-words-value {
+  font-style: italic;
+  color: var(--fk-text-muted);
+  line-height: 1.5;
+}
+
+/* ===== SIGNATURE ===== */
+.fk-signature-area {
+  padding: 12px 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-height: 80px;
+}
+
+.fk-stamp-img {
+  max-width: 130px;
+  max-height: 80px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
+.fk-sig-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--fk-text);
+  border-top: 1px solid var(--fk-border-light);
+  padding-top: 4px;
+}
+
+/* ===== REMARKS ===== */
+.fk-remarks-section {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--fk-border-light);
+}
+
+.fk-remarks-content {
+  font-size: 9.5px;
+  color: var(--fk-text-muted);
+  line-height: 1.6;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  .fk-shell {
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .fk-page {
+    width: 210mm;
+    min-height: 297mm;
+    height: auto;
+    padding: 20px 24px;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .fk-item-table {
+    break-inside: auto;
+  }
+
+  .fk-item-table thead {
+    display: table-header-group;
+  }
+
+  .fk-item-table tbody tr {
+    break-inside: avoid;
+  }
+
+  .fk-bottom-section,
+  .fk-remarks-section,
+  .fk-signature-area {
+    break-inside: avoid;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}
