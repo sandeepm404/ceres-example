@@ -4,7 +4,6 @@ import { normalizeInvoiceTemplateState } from "../../main/invoiceTemplateNormali
 import "./styles.css";
 
 // Register widgets
-import "../../widgets/demo-badge";
 import "../../widgets/date-time";
 import "../../widgets/markdown-viewer";
 
