@@ -40,6 +40,12 @@ function extractNumericValue(val: any): number | null {
   return null;
 }
 
+Handlebars.registerHelper("hasValue", function (val: any) {
+  const num = extractNumericValue(val);
+  if (num !== null) return true;
+  return val !== undefined && val !== null && val !== "";
+});
+
 Handlebars.registerHelper("isPositive", function (val: any) {
   const num = extractNumericValue(val);
   return num !== null && num > 0;
@@ -52,7 +58,9 @@ Handlebars.registerHelper("formatCurrency", function (value: any, invoiceOrSymbo
     return "";
   }
 
-  const formattedNum = num.toLocaleString("en-IN", {
+  const absNum = Math.abs(num);
+  const formattedNum = absNum.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
@@ -73,7 +81,11 @@ Handlebars.registerHelper("formatCurrency", function (value: any, invoiceOrSymbo
     }
   }
 
-  return sym ? `${sym} ${formattedNum}` : formattedNum;
+  const text = sym ? `${sym}${formattedNum}` : formattedNum;
+  if (num < 0) {
+    return `(${text})`;
+  }
+  return text;
 });
 
 Handlebars.registerHelper("formatPhone", function (phone: any) {
