@@ -1,15 +1,10 @@
 /* =====================================================
    Fitking — Quotation Template Styles
-   Matches screenshot design: top red bar, outer border box,
-   dark header bars (#3e3e3e), 3-col info, image column with
-   colspan header, terms & totals split, gray signature box,
-   and bottom-left red accent shape.
-
-   FONT SCALE (Max 4 sizes):
-   - 20px: Main Document Title (.fk-title)
-   - 16px: Section Headings & Grand Total
-   - 13px: Table Headers, Names, Sub-headings & Signatory
-   - 11px: Base Body Text, Table Cell Data & Descriptions
+   Matches annotated specifications:
+   - Title = 20px
+   - Total (Grand Total) = 16px
+   - SKU ID = 11px
+   - Rest all = 13px
    ===================================================== */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
@@ -35,10 +30,10 @@
   box-sizing: border-box;
 }
 
-/* ===== SHELL ===== */
+/* ===== SHELL (Base: 13px) ===== */
 .fk-shell {
   font-family: var(--fk-font);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--fk-text);
   background: #e0e0e0;
   -webkit-print-color-adjust: exact;
@@ -130,7 +125,7 @@
   margin-bottom: 20px;
 }
 
-/* ===== TITLE BAR (Quotation / INVOICE) — 20px ===== */
+/* ===== TITLE BAR — 20px ===== */
 .fk-title-bar {
   background-color: var(--fk-dark-header);
   padding: 8px 16px;
@@ -147,7 +142,7 @@
   text-transform: uppercase;
 }
 
-/* ===== THREE-COLUMN INFO SECTION ===== */
+/* ===== THREE-COLUMN INFO SECTION — 13px ===== */
 .fk-info-section {
   display: flex;
   border-bottom: 1.5px solid var(--fk-border);
@@ -156,22 +151,20 @@
 .fk-info-col {
   flex: 1;
   padding: 8px 12px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fk-info-col + .fk-info-col {
   border-left: 1.5px solid var(--fk-border);
 }
 
-/* Headings — 16px */
 .fk-info-heading {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 13px;
   margin-bottom: 6px;
   color: var(--fk-text);
 }
 
-/* Billed Names — 13px */
 .fk-info-value-bold {
   font-weight: 700;
   font-size: 13px;
@@ -181,17 +174,17 @@
 .fk-info-value {
   color: #444;
   margin-bottom: 3px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fk-info-kv {
   display: flex;
   margin-bottom: 3px;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fk-kv-key {
-  width: 55px;
+  width: 60px;
   color: #555;
 }
 
@@ -199,7 +192,7 @@
   color: #222;
 }
 
-/* Details Column */
+/* Details Column — 13px */
 .fk-info-details {
   padding: 0;
 }
@@ -211,7 +204,7 @@
 .fk-details-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fk-details-table td {
@@ -234,7 +227,7 @@
   color: #222;
 }
 
-/* ===== ITEMS TABLE ===== */
+/* ===== ITEMS TABLE — 13px ===== */
 .fk-table-wrap {
   width: 100%;
 }
@@ -242,10 +235,9 @@
 .fk-item-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 13px;
 }
 
-/* Table Headers — 13px */
 .fk-item-table thead th {
   background-color: var(--fk-dark-header);
   color: #fff;
@@ -260,7 +252,7 @@
   border: 1px solid var(--fk-border-light);
   padding: 8px 8px;
   vertical-align: top;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 /* Column Widths */
@@ -273,14 +265,13 @@
 
 .fk-sno-cell {
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fk-desc-cell {
   width: 42%;
 }
 
-/* Item Name — 13px */
 .fk-item-name {
   font-weight: 700;
   font-size: 13px;
@@ -289,7 +280,7 @@
 }
 
 .fk-item-desc {
-  font-size: 11px;
+  font-size: 13px;
   color: #333;
   line-height: 1.5;
 }
@@ -319,6 +310,7 @@
   margin: 0 auto;
 }
 
+/* SKU ID — 11px */
 .fk-item-sku {
   font-size: 11px;
   color: var(--fk-text-muted);
@@ -328,33 +320,33 @@
 .fk-desc-fullwidth-cell {
   background-color: #fafafa;
   border-top: 1px dashed var(--fk-border-light) !important;
-  font-size: 11px;
+  font-size: 13px;
   color: #333;
   padding: 6px 12px !important;
 }
 
 .fk-model-cell {
-  font-size: 11px;
+  font-size: 13px;
   color: #333;
 }
 
 .fk-price-cell {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .fk-qty-cell {
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
 .fk-total-cell {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .text-right  { text-align: right !important; }
 .text-center { text-align: center !important; }
 
-/* ===== BOTTOM SECTION ===== */
+/* ===== BOTTOM SECTION — 13px ===== */
 .fk-bottom-section {
   display: flex;
   border-top: 1.5px solid var(--fk-border);
@@ -373,10 +365,9 @@
   flex-direction: column;
 }
 
-/* Section Headings — 16px */
 .fk-section-title {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 13px;
   margin-bottom: 6px;
   color: var(--fk-text);
 }
@@ -387,7 +378,7 @@
 }
 
 .fk-terms-list li {
-  font-size: 11px;
+  font-size: 13px;
   color: #444;
   line-height: 1.6;
   margin-bottom: 4px;
@@ -398,11 +389,11 @@
 }
 
 .fk-remarks-content {
-  font-size: 11px;
+  font-size: 13px;
   color: #444;
 }
 
-/* ===== TOTALS TABLE — 13px ===== */
+/* ===== TOTALS TABLE — 13px (except Grand Total 16px) ===== */
 .fk-totals-table {
   width: 100%;
   border-collapse: collapse;
@@ -440,7 +431,7 @@
   padding-top: 8px;
 }
 
-/* ===== AMOUNT IN WORDS ===== */
+/* ===== AMOUNT IN WORDS — 13px ===== */
 .fk-amount-words {
   margin-bottom: 16px;
 }
@@ -452,12 +443,12 @@
 }
 
 .fk-amount-words-value {
-  font-size: 11px;
+  font-size: 13px;
   color: #444;
   line-height: 1.4;
 }
 
-/* ===== SIGNATURE BOX ===== */
+/* ===== SIGNATURE BOX — 13px ===== */
 .fk-signature-container {
   margin-top: auto;
   text-align: center;
@@ -479,7 +470,6 @@
   object-fit: contain;
 }
 
-/* Signatory Label — 13px */
 .fk-sig-label {
   font-size: 13px;
   font-weight: 700;
