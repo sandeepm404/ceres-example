@@ -80,6 +80,61 @@ Handlebars.registerHelper("formatPhone", function (phone: any) {
   return str;
 });
 
+function resolveUnit(unitRaw: any, item?: any, invoice?: any): string {
+  if (!unitRaw && item) {
+    unitRaw = item.unitName || item.unit_name || item.unitSymbol || item.unit_symbol;
+    if (typeof item.unit === "object" && item.unit !== null) {
+      unitRaw = item.unit.name || item.unit.symbol || item.unit.label;
+    }
+  }
+
+  if (typeof unitRaw === "object" && unitRaw !== null) {
+    unitRaw = unitRaw.name || unitRaw.symbol || unitRaw.label;
+  }
+
+  let unitStr = typeof unitRaw === "string" ? unitRaw.trim() : "";
+
+  // Lookup in units map if provided
+  if (unitStr && invoice) {
+    const unitsMap = invoice.units || invoice.unitMap || invoice.unitMapping;
+    if (unitsMap && unitsMap[unitStr]) {
+      const mapped = unitsMap[unitStr];
+      if (typeof mapped === "string") unitStr = mapped;
+      else if (typeof mapped === "object" && mapped !== null) {
+        unitStr = mapped.name || mapped.symbol || mapped.label || unitStr;
+      }
+    }
+  }
+
+  // Filter out raw MongoDB / hash IDs (e.g. "vlr32e4cnnb" or 24-hex characters)
+  if (/^[a-z0-9]{10,}$/i.test(unitStr) || /^[0-9a-fA-F]{24}$/.test(unitStr)) {
+    return "";
+  }
+
+  return unitStr;
+}
+
+Handlebars.registerHelper("formatQtyCell", function (item: any, invoice: any, advanceOptions: any) {
+  if (!item) return "";
+  const qty = item.quantity !== undefined && item.quantity !== null ? item.quantity : item.qty;
+  if (qty === undefined || qty === null) return "";
+
+  const unitCol = (
+    advanceOptions?.unitColumn ||
+    invoice?.advanceOptions?.unitColumn ||
+    "MERGE_QUANTITY"
+  ).toUpperCase();
+
+  // If unit placement is MERGE_NAME, SEPARATE, HIDE, FALSE, or NONE -> do not merge unit in Qty cell
+  if (["MERGE_NAME", "SEPARATE", "HIDE", "NONE", "FALSE"].includes(unitCol)) {
+    return String(qty);
+  }
+
+  // MERGE_QUANTITY (default)
+  const unit = resolveUnit(item.unit, item, invoice);
+  return unit ? `${qty} ${unit}` : String(qty);
+});
+
 // Export template to global for main renderer to consume
 window.CeresTemplateDataMapper = normalizeInvoiceTemplateState as any;
 window.CeresTemplate = template;

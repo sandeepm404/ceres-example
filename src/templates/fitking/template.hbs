@@ -156,7 +156,7 @@
               </td>
               <td class="text-center fk-model-cell">{{#if model}}{{model}}{{else}}{{#if custom.modelNo}}{{custom.modelNo}}{{else}}{{#if custom.model}}{{custom.model}}{{else}}{{sku}}{{/if}}{{/if}}{{/if}}</td>
               <td class="text-right fk-price-cell">{{formatCurrency rate ../invoice}}</td>
-              <td class="text-center fk-qty-cell">{{quantity}}{{#if unit}} {{unit}}{{else}} No{{/if}}</td>
+              <td class="text-center fk-qty-cell">{{formatQtyCell this ../invoice ../advanceOptions}}</td>
               <td class="text-right fk-total-cell">{{formatCurrency amount ../invoice}}</td>
             </tr>
             {{#if ../mapped.visibility.showDescriptionFullWidth}}
