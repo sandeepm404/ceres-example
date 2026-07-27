@@ -20,10 +20,37 @@ Handlebars.registerHelper("or", function (...args: any[]) {
   return values.some((val) => Boolean(val) && val !== "0" && val !== 0);
 });
 
+function extractNumericValue(val: any): number | null {
+  if (val === undefined || val === null || val === "") return null;
+  if (typeof val === "number") return isNaN(val) ? null : val;
+  if (typeof val === "string") {
+    const cleaned = val.replace(/,/g, "").trim();
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? null : parsed;
+  }
+  if (typeof val === "object" && val !== null) {
+    const candidateKeys = ["amount", "total", "value", "totalDiscount", "discountAmount", "val", "price", "rate"];
+    for (const k of candidateKeys) {
+      if (val[k] !== undefined && val[k] !== null) {
+        const res = extractNumericValue(val[k]);
+        if (res !== null) return res;
+      }
+    }
+  }
+  return null;
+}
+
+Handlebars.registerHelper("isPositive", function (val: any) {
+  const num = extractNumericValue(val);
+  return num !== null && num > 0;
+});
+
 Handlebars.registerHelper("formatCurrency", function (value: any, invoiceOrSymbol?: any) {
-  if (value === undefined || value === null || value === "") return "";
-  const num = typeof value === "number" ? value : parseFloat(String(value).replace(/,/g, ""));
-  if (isNaN(num)) return String(value);
+  const num = extractNumericValue(value);
+  if (num === null) {
+    if (typeof value === "string") return value;
+    return "";
+  }
 
   const formattedNum = num.toLocaleString("en-IN", {
     maximumFractionDigits: 2,
