@@ -80,40 +80,39 @@ Handlebars.registerHelper("formatPhone", function (phone: any) {
   return str;
 });
 
-function lookupUnitInInvoice(unitId: string, invoice: any): string {
-  if (!invoice || !unitId) return "";
-  const unitsSources = [
-    invoice.units,
-    invoice.unitList,
-    invoice.unitMap,
-    invoice.unitMapping,
-    invoice.owner?.units,
-    invoice.masterData?.units,
-  ];
+function isDatabaseId(str: string): boolean {
+  if (!str) return false;
+  const trimmed = str.trim();
+  return /^[a-z0-9]{10,}$/i.test(trimmed) || /^[0-9a-fA-F]{24}$/.test(trimmed);
+}
 
-  for (const src of unitsSources) {
-    if (!src) continue;
-    if (typeof src === "object" && !Array.isArray(src)) {
-      const match = src[unitId];
-      if (typeof match === "string") return match;
-      if (typeof match === "object" && match !== null) {
-        return match.name || match.symbol || match.label || match.title || "";
-      }
+function lookupUnitInObjectOrArray(unitId: string, src: any): string {
+  if (!src || !unitId) return "";
+  
+  if (typeof src === "object" && !Array.isArray(src)) {
+    const match = src[unitId];
+    if (typeof match === "string" && !isDatabaseId(match)) return match;
+    if (typeof match === "object" && match !== null) {
+      const name = match.symbol || match.name || match.shortName || match.label || match.title;
+      if (name && !isDatabaseId(name)) return name;
     }
-    if (Array.isArray(src)) {
-      const match = src.find(
-        (u: any) =>
-          u &&
-          (u.id === unitId ||
-            u._id === unitId ||
-            u.unitId === unitId ||
-            u.key === unitId ||
-            u.name === unitId ||
-            u.code === unitId)
-      );
-      if (match) {
-        if (typeof match === "string") return match;
-        return match.name || match.symbol || match.label || match.title || match.code || "";
+  }
+
+  if (Array.isArray(src)) {
+    const match = src.find(
+      (u: any) =>
+        u &&
+        (u.id === unitId ||
+          u._id === unitId ||
+          u.unitId === unitId ||
+          u.key === unitId ||
+          u.code === unitId)
+    );
+    if (match) {
+      if (typeof match === "string" && !isDatabaseId(match)) return match;
+      if (typeof match === "object" && match !== null) {
+        const name = match.symbol || match.name || match.shortName || match.label || match.title || match.code;
+        if (name && !isDatabaseId(name)) return name;
       }
     }
   }
@@ -122,29 +121,63 @@ function lookupUnitInInvoice(unitId: string, invoice: any): string {
 }
 
 function resolveUnit(unitRaw: any, item?: any, invoice?: any): string {
-  let val =
-    unitRaw ||
-    item?.unitName ||
-    item?.unit_name ||
-    item?.unitSymbol ||
-    item?.unit_symbol ||
-    item?.unitTitle ||
-    item?.unitLabel;
+  let candidates = [
+    item?.unitName,
+    item?.unit_name,
+    item?.unitSymbol,
+    item?.unit_symbol,
+    item?.unitTitle,
+    item?.unitLabel,
+    item?.unitDetails?.symbol,
+    item?.unitDetails?.name,
+    item?.unit_details?.symbol,
+    item?.unit_details?.name,
+    item?.custom?.unit,
+  ];
 
-  if (typeof val === "object" && val !== null) {
-    val = val.name || val.symbol || val.label || val.title || val.code;
-  }
-
-  let unitStr = typeof val === "string" ? val.trim() : "";
-
-  if (invoice) {
-    const lookedUp = lookupUnitInInvoice(unitStr || item?.unit, invoice);
-    if (lookedUp) {
-      unitStr = lookedUp;
+  for (const cand of candidates) {
+    if (cand && typeof cand === "string" && !isDatabaseId(cand)) {
+      return cand.trim();
     }
   }
 
-  return unitStr;
+  let rawStr = "";
+  if (typeof unitRaw === "string") {
+    rawStr = unitRaw.trim();
+  } else if (typeof unitRaw === "object" && unitRaw !== null) {
+    rawStr = unitRaw.symbol || unitRaw.name || unitRaw.shortName || unitRaw.label || "";
+  }
+
+  if (rawStr && !isDatabaseId(rawStr)) {
+    return rawStr;
+  }
+
+  const unitIdToLookup = rawStr || (typeof item?.unit === "string" ? item.unit : "");
+  if (unitIdToLookup && invoice) {
+    const sources = [
+      invoice.units,
+      invoice.unitList,
+      invoice.unitMap,
+      invoice.unitMapping,
+      invoice.masterUnits,
+      invoice.owner?.units,
+      invoice.business?.units,
+      invoice.company?.units,
+      invoice.masterData?.units,
+      invoice.advanceOptions?.units,
+    ];
+
+    for (const src of sources) {
+      const found = lookupUnitInObjectOrArray(unitIdToLookup, src);
+      if (found) return found;
+    }
+  }
+
+  if (isDatabaseId(unitIdToLookup)) {
+    return "Nos";
+  }
+
+  return rawStr;
 }
 
 Handlebars.registerHelper("formatQtyCell", function (item: any, invoice: any, advanceOptions: any) {
@@ -158,12 +191,10 @@ Handlebars.registerHelper("formatQtyCell", function (item: any, invoice: any, ad
     "MERGE_QUANTITY"
   ).toUpperCase();
 
-  // If unit placement is MERGE_NAME, SEPARATE, HIDE, FALSE, or NONE -> do not merge unit in Qty cell
   if (["MERGE_NAME", "SEPARATE", "HIDE", "NONE", "FALSE"].includes(unitCol)) {
     return String(qty);
   }
 
-  // MERGE_QUANTITY (default) -> place unit below quantity number
   const unit = resolveUnit(item.unit, item, invoice);
   if (unit) {
     return new Handlebars.SafeString(`<div class="fk-qty-num">${qty}</div><div class="fk-qty-unit">${unit}</div>`);
