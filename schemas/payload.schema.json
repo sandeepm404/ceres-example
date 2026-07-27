@@ -406,6 +406,9 @@
         "showBankAccount": {
           "type": "boolean"
         },
+        "showDescriptionFullWidth": {
+          "type": "boolean"
+        },
         "showExpenseNumber": {
           "type": "boolean"
         },
@@ -1163,6 +1166,9 @@
         "showBranding": {
           "type": "boolean"
         },
+        "showDescriptionFullWidth": {
+          "type": "boolean"
+        },
         "showExpenseNumber": {
           "type": "boolean"
         },
@@ -1370,6 +1376,9 @@
           "type": "boolean"
         },
         "reverseCharge": {
+          "type": "boolean"
+        },
+        "showDescriptionFullWidth": {
           "type": "boolean"
         },
         "showHSNSummaryInInvoice": {
