@@ -55,36 +55,6 @@
   margin: 0;
 }
 
-/* ===== LETTERHEAD ===== */
-.fk-letterhead,
-.fk-letterhead-footer {
-  width: var(--fk-page-width);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.fk-letterhead.is-empty,
-.fk-letterhead-footer.is-empty {
-  position: absolute;
-  width: 0;
-  height: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.fk-letterhead img,
-.fk-letterhead-footer img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
 /* ===== PAGE ===== */
 .fk-page {
   /* max-width, not width: the host page centres this with `display: flex;

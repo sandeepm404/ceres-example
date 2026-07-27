@@ -88,27 +88,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return fields;
   });
 
-  // Letterhead/footer assets are documented as strings, but the platform also
-  // ships them as { url } — see toAssetUrl in src/main/commonUtils.ts. Printing
-  // the raw value in an `src` renders "[object Object]", which the browser
-  // resolves to a broken image: the block keeps its height but shows nothing.
-  // Resolving here means a value we cannot turn into a URL reads as absent, so
-  // the surrounding `is-empty` guard collapses the block instead.
-  function resolveAssetUrl(val: any): string {
-    if (typeof val === "string") return val.trim();
-    if (val && typeof val === "object") {
-      for (const key of ["url", "src", "link", "href"]) {
-        const nested = (val as any)[key];
-        if (typeof nested === "string" && nested.trim()) return nested.trim();
-      }
-    }
-    return "";
-  }
-
-  HB.registerHelper("assetUrl", function (val: any) {
-    return resolveAssetUrl(val);
-  });
-
   HB.registerHelper("isPositive", function (val: any) {
     const num = extractNumericValue(val);
     return num !== null && num > 0;
