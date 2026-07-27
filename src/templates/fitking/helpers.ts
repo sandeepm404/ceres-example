@@ -88,11 +88,13 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return fields;
   });
 
-  // Some asset fields are documented as strings but the platform also ships
-  // them as { url } — see toAssetUrl in src/main/commonUtils.ts. `itemImages`
-  // below needs this unwrapping; letterhead/footer no longer route through it
-  // (see PR #1), so this is internal now rather than an exposed `{{assetUrl}}`
-  // template helper.
+  // Letterhead/footer assets are documented as strings, but the platform also
+  // ships them as { url } — see toAssetUrl in src/main/commonUtils.ts. Printing
+  // the raw value in an `src` renders "[object Object]", which the browser
+  // resolves to a broken image: the block keeps its height but shows nothing.
+  // Resolving here means a value we cannot turn into a URL reads as absent, so
+  // the surrounding `is-empty` guard collapses the block instead. `itemImages`
+  // below reuses the same unwrapping for line-item photos.
   function resolveAssetUrl(val: any): string {
     if (typeof val === "string") return val.trim();
     if (val && typeof val === "object") {
@@ -103,6 +105,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     }
     return "";
   }
+
+  HB.registerHelper("assetUrl", function (val: any) {
+    return resolveAssetUrl(val);
+  });
 
   // A line item's pictures. The contract declares three fields for them —
   // `originalImages`, `images` and `thumbnail` (see InvoiceItem in
