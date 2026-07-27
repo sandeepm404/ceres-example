@@ -134,12 +134,7 @@
               <td class="fk-dt-value">{{formateShortDateWithOffset invoice.irn.CancelDate invoice.ownerOffset}}</td>
             </tr>
             {{/if}}
-            {{#if invoice.billedTo._id}}
-            <tr>
-              <td class="fk-dt-label">Client ID</td>
-              <td class="fk-dt-value">{{invoice.billedTo._id}}</td>
-            </tr>
-            {{/if}}
+
             {{#each invoice.customFields}}
             <tr>
               <td class="fk-dt-label">{{label}}</td>

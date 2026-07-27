@@ -55,6 +55,7 @@ Ask specifically for missing:
 - Logo, letterhead, footer, signature, stamp, or QR assets.
 - Exact business, tax, bank, UPI, contact, address, or registration identifiers.
 - Custom labels or wording that must match the image.
+- Any visible detail-table row that is not a standard contract field, such as `Client ID`, `Project ID`, `Patient ID`, `Policy No`, `Reference ID`, or other customer/document identifiers.
 - Line-item columns, totals, tax rows, discount rows, cess rows, payment rows, or summary sections that are partially cropped or absent.
 - Print behavior that cannot be inferred, such as first-page letterhead, last-page footer, repeated table headers, page-break rules, and whether totals/signature/payment blocks must stay together.
 - Required print font sizing when the image is only a screen preview or when small legal/tax text, item rows, totals, or footers must match a printed/PDF layout.
@@ -73,13 +74,35 @@ I can build the layout from the image, but I need these missing data details fir
 Use these defaults unless the current contract or existing template shows a better pattern:
 
 - Document title/number/date: `invoice.invoiceTitle`, `invoice.invoiceSubTitle`, `invoice.invoiceNumber`, `invoice.invoiceDate`, `invoice.dueDate`, `invoice.purchaseOrderNumber`, `invoice.copy`.
+- Document type specifics: delivery challan rows usually map to `invoice.transportDetails.challanNumber` and `invoice.transportDetails.challanDate`; quotation rows may map to `invoice.quotationNumber` or the normalized `invoice.invoiceNumber` depending on the API payload.
 - Parties: `invoice.billedBy`, `invoice.billedTo`, `invoice.shippedFrom`, `invoice.shippedTo`.
+- Custom detail rows: use `invoice.customFields[]` for document-level rows rendered inside invoice/quotation/challan details.
 - Items: `invoice.items`, with visible column decisions from `mapped.columns` or `derived.*`.
 - Taxes and totals: `invoice.taxSummary`, `invoice.hsnSummary`, `invoice.finalTotal`, `invoice.totals`, `invoice.balance`, and `mapped.visibility.showIgst/showCgstSgst/showTaxTable/showHsnSummary/showSummaryCess`.
 - Payments: `invoice.allPayments`, `invoice.payments`, `invoice.paymentOptions`, `invoice.bankAccount`, `invoice.upi`, `mapped.visibility.showBankAccount`, `mapped.visibility.showUpi`, `mapped.visibility.showBankUpiSection`.
 - QR codes: `mapped.qr.top` for document/IRN/ZATCA/LHDN QR, `mapped.qr.upi` for payment QR, `mapped.upi.id` for UPI text.
 - Notes/terms/footer: `invoice.notes`, `invoice.terms`, `invoice.footers`, `invoice.customFooters`, `invoice.showBranding`.
 - Styling options: use Ceres CSS custom properties where possible: `--ceres-primary-color`, `--ceres-secondary-color`, `--ceres-primary-background`, `--ceres-secondary-background`, `--ceres-font-family`.
+
+## Unmapped Identifier Rows
+
+Treat visible rows like `Client ID` as required data, not decoration.
+
+For a screenshot row labeled `Client ID` inside a document details table, check these API candidates in order:
+
+1. `invoice.customFields[]` with a matching `label` or `name`, for example `{ label: "Client ID", value: "..." }`. This is the preferred source for document-level metadata rows.
+2. `invoice.customHeaders[]` when the value is intended as header/detail metadata rather than a custom field.
+3. `invoice.billedTo.additionalIds[]` when the identifier belongs to the customer/client identity and has `{ label, value, showInInvoice }`.
+4. `invoice.billedTo.customFields[]` or `invoice.billedTo.customHeaders[]` when the identifier is stored on the billed party profile.
+5. A raw party identifier such as `invoice.billedTo._id` only if the actual API sample contains it. This is not part of the typed `BillerDetails` contract, so do not assume it exists.
+
+If the field is visible in the image but not present in the provided sample payload, ask the user for the source field and sample value before finalizing the template. Do not substitute `invoice._id`, `ownerBusiness._id`, or another Mongo-style ID just because the visible value looks like an ObjectId.
+
+Use a concise question:
+
+```text
+The screenshot shows `Client ID`, but the typed contract has no dedicated `clientId`. Should this come from `invoice.customFields[]`, `invoice.billedTo.additionalIds[]`, or another API field? Please share one sample payload value for it.
+```
 
 ## Print Typography
 

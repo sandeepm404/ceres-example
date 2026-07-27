@@ -85,12 +85,16 @@
 
 /* ===== PAGE ===== */
 .fk-page {
-  width: var(--fk-page-width);
+  /* max-width, not width: the host page centres this with `display: flex;
+     justify-content: center` under `html { overflow-x: hidden }`. A fixed width
+     wider than the viewport gets centred as overflow and clipped on *both*
+     sides, taking the .fk-main-box border with it. */
+  width: 100%;
+  max-width: var(--fk-page-width);
   min-height: var(--fk-page-min-height);
   padding: 0px var(--fk-page-padding-horizontal, 24px) 24px var(--fk-page-padding-horizontal, 24px);
   margin: 0 auto;
   background: var(--fk-bg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   position: relative;
@@ -610,11 +614,13 @@
 }
 
 .fk-summary-table th {
-  text-align: left;
-  border-bottom: 1px solid var(--fk-border-light);
-  padding: 6px 8px;
+  background-color: var(--fk-dark-header);
+  color: #fff;
+  border: 1px solid var(--fk-border);
+  padding: 8px 6px;
   font-weight: 600;
-  color: #444;
+  text-align: left;
+  vertical-align: middle;
 }
 
 .fk-summary-table th.text-right,
@@ -623,8 +629,9 @@
 }
 
 .fk-summary-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid #eee;
+  border: 1px solid var(--fk-border-light);
+  padding: 8px 8px;
+  vertical-align: top;
   color: #333;
 }
 
@@ -661,7 +668,7 @@
 }
 
 .fk-signature-img {
-  max-width: 240pxpx;
+  max-width: 240px;
   max-height: 120px;
   object-fit: contain;
 }

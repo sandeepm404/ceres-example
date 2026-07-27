@@ -74,7 +74,13 @@
 
 /* ===== PAGE — A4 fixed size with outer border ===== */
 .dt-page {
-  width: var(--dt-page-width);
+  /* max-width, not width: the host page centres this with `display: flex;
+     justify-content: center` under `html { overflow-x: hidden }`. A fixed width
+     wider than the viewport gets centred as overflow and clipped on *both*
+     sides, taking the page border with it. The fixed height is deliberate —
+     this template renders a true A4 sheet. */
+  width: 100%;
+  max-width: var(--dt-page-width);
   height: var(--dt-page-height);
   padding: var(--dt-page-padding);
   margin: 0 auto 24px auto;

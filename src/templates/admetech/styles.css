@@ -50,7 +50,9 @@
 /* ===== LETTERHEAD ===== */
 .amt-letterhead,
 .amt-letterhead-footer {
-  width: var(--amt-page-width);
+  /* Tracks .amt-page so the letterhead stays aligned with it at any width. */
+  width: 100%;
+  max-width: var(--amt-page-width);
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -79,7 +81,12 @@
 
 /* ===== PAGE ===== */
 .amt-page {
-  width: var(--amt-page-width);
+  /* max-width, not width: the host page centres this with `display: flex;
+     justify-content: center` under `html { overflow-x: hidden }`. A fixed width
+     wider than the viewport gets centred as overflow and clipped on *both*
+     sides, taking the page border with it. */
+  width: 100%;
+  max-width: var(--amt-page-width);
   min-height: var(--amt-page-min-height);
   padding: var(--amt-page-padding);
   margin: 0 auto 24px auto;
