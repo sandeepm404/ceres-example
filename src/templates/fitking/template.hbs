@@ -407,6 +407,18 @@
             </tr>
             {{/if}}
 
+            {{!-- Extra amount rows configured on the document, above the grand
+                  total. `amount` is the numeric form; some entries only carry a
+                  plain `value`, which is printed as-is. --}}
+            {{#each invoice.extraTotalFields}}
+            {{#if label}}
+            <tr>
+              <td class="fk-totals-label">{{label}}</td>
+              <td class="fk-totals-value">{{#if amount}}{{formatCurrency amount ../invoice}}{{else}}{{value}}{{/if}}</td>
+            </tr>
+            {{/if}}
+            {{/each}}
+
             <tr class="fk-grand-total-row">
               <td class="fk-totals-label">{{getTotalsLabel "total" "Total"}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
@@ -423,6 +435,26 @@
               <td class="fk-totals-value fk-balance-due">{{formatCurrency invoice.balanceAmount invoice}}</td>
             </tr>
             {{/if}}
+
+            {{!-- Document-level custom fields that belong under the totals, e.g.
+                  "Account Number" / "IFSC Code". These are non-monetary, so they
+                  sit below the grand total rather than feeding into it. --}}
+            {{#each invoice.customFooters}}
+            {{#if value}}
+            <tr class="fk-totals-custom-row">
+              <td class="fk-totals-label">{{label}}</td>
+              <td class="fk-totals-value">{{value}}</td>
+            </tr>
+            {{/if}}
+            {{/each}}
+            {{#each invoice.footers}}
+            {{#if value}}
+            <tr class="fk-totals-custom-row">
+              <td class="fk-totals-label">{{label}}</td>
+              <td class="fk-totals-value">{{value}}</td>
+            </tr>
+            {{/if}}
+            {{/each}}
           </table>
 
           {{!-- Amount in Words --}}

@@ -357,7 +357,7 @@
    the photo is half of an unsized colspan. `.fk-col-desc` stays unsized so the
    description text takes every px the other columns don't claim. */
 .fk-col-photo {
-  width: 100px;
+  width: 152px;
 }
 
 .fk-col-model {
@@ -456,7 +456,8 @@
   margin-bottom: 3px;
 }
 
-/* Product Image Cell. The column width is set on `.fk-col-photo`, not here. */
+/* Product Image Cell. The column width is set on `.fk-col-photo`, not here —
+   the photo column is a flat 144px and the image scales to fit inside it. */
 .fk-img-cell {
   text-align: center;
   vertical-align: top !important;
@@ -621,6 +622,21 @@
 .fk-balance-due {
   font-weight: 600;
   color: #222;
+}
+
+/* Custom footer fields sitting under the totals. Ruled off from the monetary
+   rows above so they don't read as another amount, and free to wrap — unlike
+   the currency rows these carry arbitrary text (account numbers, IFSC codes). */
+/* Rule above the first custom row only — `:first-of-type` would match on the
+   `tr` type rather than the class, so key off the last non-custom row instead. */
+tr:not(.fk-totals-custom-row)+.fk-totals-custom-row td {
+  border-top: 1px solid var(--fk-border-light);
+  padding-top: 8px;
+}
+
+.fk-totals-custom-row .fk-totals-value {
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* ===== TAX, HSN & PAYMENTS SUMMARIES ===== */
@@ -868,10 +884,6 @@
   .fk-col-disc,
   .fk-col-tax {
     width: 64px;
-  }
-
-  .fk-col-photo {
-    width: 85px;
   }
 
   .fk-img-cell {
