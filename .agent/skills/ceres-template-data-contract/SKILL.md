@@ -56,7 +56,7 @@ Ask specifically for missing:
 - Exact business, tax, bank, UPI, contact, address, or registration identifiers.
 - Custom labels or wording that must match the image.
 - Line-item columns, totals, tax rows, discount rows, cess rows, payment rows, or summary sections that are partially cropped or absent.
-- Print behavior that cannot be inferred, such as first-page letterhead, last-page footer, repeated table headers, or page-break rules.
+- Print behavior that cannot be inferred, such as first-page letterhead, last-page footer, repeated table headers, page-break rules, and whether totals/signature/payment blocks must stay together.
 - Required print font sizing when the image is only a screen preview or when small legal/tax text, item rows, totals, or footers must match a printed/PDF layout.
 - Any field that appears visually important but has no obvious source in `invoice.*`, `mapped.*`, `derived.*`, `advanceOptions`, or `pdfOptions`.
 
@@ -92,6 +92,18 @@ Always handle print font sizing when creating or modifying template CSS:
 - Preserve visual hierarchy in print: document title, metadata labels, line-item body text, totals, and fine print should have deliberate relative sizes.
 - If the source image does not show a printed/PDF view and exact print sizing matters, ask the user whether to optimize for A4 or Letter and whether compact or spacious print density is preferred.
 - Verify print CSS does not hide required data, clip long values, or create page breaks inside important rows/summary blocks.
+
+## Print Pagination
+
+Always consider page breaks when creating or modifying template CSS:
+
+- Add print rules that avoid breaking inside line-item rows, tax summary rows, total rows, payment blocks, QR/bank sections, signatures, notes, and terms where possible.
+- Use `break-inside: avoid`, `page-break-inside: avoid`, `break-before`, `break-after`, `page-break-before`, and `page-break-after` deliberately for print-only layout.
+- Let long item tables continue across pages instead of forcing the entire table to stay together.
+- Repeat or preserve table headers in print with `thead { display: table-header-group; }` and keep footers predictable with `tfoot { display: table-footer-group; }` when the template uses semantic tables.
+- Keep totals, amount-in-words, payment details, and signature/stamp blocks together unless the user requests a different layout.
+- Avoid fixed heights that clip content in print. Prefer natural document flow with targeted `break-inside: avoid` on grouped sections.
+- Ask the user when the image does not make pagination clear, especially for long invoices: whether totals should appear immediately after items or on the final page, whether letterhead appears only on the first page, and whether footer content appears on every page or only the last page.
 
 ## Verification
 
