@@ -80,35 +80,68 @@ Handlebars.registerHelper("formatPhone", function (phone: any) {
   return str;
 });
 
-function resolveUnit(unitRaw: any, item?: any, invoice?: any): string {
-  if (!unitRaw && item) {
-    unitRaw = item.unitName || item.unit_name || item.unitSymbol || item.unit_symbol;
-    if (typeof item.unit === "object" && item.unit !== null) {
-      unitRaw = item.unit.name || item.unit.symbol || item.unit.label;
+function lookupUnitInInvoice(unitId: string, invoice: any): string {
+  if (!invoice || !unitId) return "";
+  const unitsSources = [
+    invoice.units,
+    invoice.unitList,
+    invoice.unitMap,
+    invoice.unitMapping,
+    invoice.owner?.units,
+    invoice.masterData?.units,
+  ];
+
+  for (const src of unitsSources) {
+    if (!src) continue;
+    if (typeof src === "object" && !Array.isArray(src)) {
+      const match = src[unitId];
+      if (typeof match === "string") return match;
+      if (typeof match === "object" && match !== null) {
+        return match.name || match.symbol || match.label || match.title || "";
+      }
     }
-  }
-
-  if (typeof unitRaw === "object" && unitRaw !== null) {
-    unitRaw = unitRaw.name || unitRaw.symbol || unitRaw.label;
-  }
-
-  let unitStr = typeof unitRaw === "string" ? unitRaw.trim() : "";
-
-  // Lookup in units map if provided
-  if (unitStr && invoice) {
-    const unitsMap = invoice.units || invoice.unitMap || invoice.unitMapping;
-    if (unitsMap && unitsMap[unitStr]) {
-      const mapped = unitsMap[unitStr];
-      if (typeof mapped === "string") unitStr = mapped;
-      else if (typeof mapped === "object" && mapped !== null) {
-        unitStr = mapped.name || mapped.symbol || mapped.label || unitStr;
+    if (Array.isArray(src)) {
+      const match = src.find(
+        (u: any) =>
+          u &&
+          (u.id === unitId ||
+            u._id === unitId ||
+            u.unitId === unitId ||
+            u.key === unitId ||
+            u.name === unitId ||
+            u.code === unitId)
+      );
+      if (match) {
+        if (typeof match === "string") return match;
+        return match.name || match.symbol || match.label || match.title || match.code || "";
       }
     }
   }
 
-  // Filter out raw MongoDB / hash IDs (e.g. "vlr32e4cnnb" or 24-hex characters)
-  if (/^[a-z0-9]{10,}$/i.test(unitStr) || /^[0-9a-fA-F]{24}$/.test(unitStr)) {
-    return "";
+  return "";
+}
+
+function resolveUnit(unitRaw: any, item?: any, invoice?: any): string {
+  let val =
+    unitRaw ||
+    item?.unitName ||
+    item?.unit_name ||
+    item?.unitSymbol ||
+    item?.unit_symbol ||
+    item?.unitTitle ||
+    item?.unitLabel;
+
+  if (typeof val === "object" && val !== null) {
+    val = val.name || val.symbol || val.label || val.title || val.code;
+  }
+
+  let unitStr = typeof val === "string" ? val.trim() : "";
+
+  if (invoice) {
+    const lookedUp = lookupUnitInInvoice(unitStr || item?.unit, invoice);
+    if (lookedUp) {
+      unitStr = lookedUp;
+    }
   }
 
   return unitStr;
