@@ -1,3 +1,7 @@
+<style>@page {
+  size: {{pageSizeKeyword pdfOptions.format}} portrait;
+  margin: 0;
+}</style>
 <div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};" {{else}}{{#if
   invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}>
 

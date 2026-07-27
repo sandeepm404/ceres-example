@@ -82,6 +82,16 @@ describe("fitking user-defined item columns", () => {
           { key: "colour", label: "Colour" },
           { key: "total", label: "Total", system: true },
         ],
+        items: [
+          {
+            _id: "1",
+            name: "Elliptical Cross Trainer",
+            quantity: 1,
+            rate: 100,
+            amount: 100,
+            custom: { warranty: "2 yrs", colour: "Red" },
+          },
+        ],
       })
     );
 
@@ -104,6 +114,16 @@ describe("fitking user-defined item columns", () => {
           { key: "modelNumberField", label: "Model No" },
           { key: "grandTotalField", label: "Total" },
         ],
+        items: [
+          {
+            _id: "1",
+            name: "Elliptical Cross Trainer",
+            quantity: 1,
+            rate: 100,
+            amount: 100,
+            custom: { modelNumberField: "AF-139", grandTotalField: "100" },
+          },
+        ],
       })
     );
 
@@ -121,6 +141,16 @@ describe("fitking user-defined item columns", () => {
           { key: "warranty", label: "Warranty" },
           { key: "model", label: "Model No" },
           { key: "total", label: "Total", system: true },
+        ],
+        items: [
+          {
+            _id: "1",
+            name: "Elliptical Cross Trainer",
+            quantity: 1,
+            rate: 100,
+            amount: 100,
+            custom: { warranty: "2 yrs" },
+          },
         ],
       })
     );
@@ -166,6 +196,10 @@ describe("fitking user-defined item columns", () => {
   });
 
   it("formats currency columns and blanks unusable values", () => {
+    // A second item carries real "meta"/"absent" values so those columns stay
+    // declared (a column with nothing on any item is dropped — see "hides a
+    // custom column with no value on any item" below); this item's own values
+    // are still unusable and must blank rather than borrow the other row's.
     const html = render(
       withCustom(
         [
@@ -182,11 +216,26 @@ describe("fitking user-defined item columns", () => {
             amount: 100,
             custom: { installation: 1500, meta: { nested: true } },
           },
+          {
+            _id: "2",
+            name: "Trainer 2",
+            quantity: 1,
+            rate: 200,
+            amount: 200,
+            custom: { installation: 200, meta: "ok", absent: "here" },
+          },
         ]
       )
     );
 
-    expect(customCells(html)).toEqual(["₹1,500.00", "", ""]);
+    expect(customCells(html)).toEqual([
+      "₹1,500.00",
+      "",
+      "",
+      "₹200.00",
+      "ok",
+      "here",
+    ]);
   });
 
   // A `number` column prints as the document stores it — only a column that
@@ -212,6 +261,38 @@ describe("fitking user-defined item columns", () => {
     );
 
     expect(customCells(html)).toEqual(["20,13,20,21,562", "₹500.00"]);
+  });
+
+  // A column the account configured but never filled in on any item — a
+  // header over an empty strip — is dropped rather than printed blank.
+  it("hides a custom column with no value on any item", () => {
+    const html = render(
+      withCustom(
+        [{ key: "code", label: "Code" }],
+        [
+          { _id: "1", name: "Trainer", quantity: 1, rate: 100, amount: 100 },
+          { _id: "2", name: "Trainer 2", quantity: 1, rate: 200, amount: 200, custom: { code: "" } },
+        ]
+      )
+    );
+
+    expect(headerLabels(html)).not.toContain("Code");
+    expect(customCells(html)).toEqual([]);
+  });
+
+  it("keeps a custom column when only some items have a value", () => {
+    const html = render(
+      withCustom(
+        [{ key: "code", label: "Code" }],
+        [
+          { _id: "1", name: "Trainer", quantity: 1, rate: 100, amount: 100 },
+          { _id: "2", name: "Trainer 2", quantity: 1, rate: 200, amount: 200, custom: { code: "C-2" } },
+        ]
+      )
+    );
+
+    expect(headerLabels(html)).toContain("Code");
+    expect(customCells(html)).toEqual(["", "C-2"]);
   });
 
   // "20,13,20,21,562" broken across two lines reads as two separate numbers.

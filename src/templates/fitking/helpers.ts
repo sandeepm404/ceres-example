@@ -18,6 +18,22 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return values.some((val) => Boolean(val) && val !== "0" && val !== 0);
   });
 
+  // The document's own page size, e.g. `pdfOptions.format: "a5"` — the CSS
+  // `@page` at-rule can't read Handlebars data, so `template.hbs` emits a
+  // `<style>` block with this resolved keyword rather than hardcoding A4. Only
+  // sizes Chromium's print pipeline recognises as an `@page { size: … }`
+  // keyword are mapped; anything else (unset, "auto", a value we don't know)
+  // falls back to A4, matching the previous hardcoded behaviour.
+  const PAGE_SIZE_KEYWORDS: Record<string, string> = {
+    a3: "A3", a4: "A4", a5: "A5", b4: "B4", b5: "B5",
+    letter: "letter", legal: "legal", ledger: "ledger", tabloid: "ledger",
+  };
+
+  HB.registerHelper("pageSizeKeyword", function (format: any) {
+    const key = String(format ?? "").trim().toLowerCase();
+    return PAGE_SIZE_KEYWORDS[key] || "A4";
+  });
+
   function extractNumericValue(val: any): number | null {
     if (val === undefined || val === null || val === "") return null;
     if (typeof val === "number") return isNaN(val) ? null : val;
@@ -482,8 +498,21 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       add("amount");
     }
 
-    assignColumnWidths(columns, root);
-    return columns;
+    // A user-defined column the account configured but never actually filled
+    // in — no item on this document carries a value for its key under any of
+    // the three buckets `customColumnValue` checks — renders as a header over
+    // an empty strip. Built-in kinds are left alone: those are core invoice
+    // fields (rate, qty, tax…) where an all-zero column is still meaningful,
+    // just a `custom` column with nothing in it is dead weight.
+    const items = Array.isArray(root?.invoice?.items) ? root.invoice.items : [];
+    const visibleColumns = columns.filter(
+      (column) =>
+        column.kind !== "custom" ||
+        items.some((item: any) => customColumnValue(item, column, root?.invoice).text !== "")
+    );
+
+    assignColumnWidths(visibleColumns, root);
+    return visibleColumns;
   }
 
   // ── Column widths ────────────────────────────────────────────────────────

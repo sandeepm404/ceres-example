@@ -850,11 +850,6 @@
     margin: 0 auto;
   }
 
-  @page {
-    size: A4 portrait;
-    margin: 0;
-  }
-
   .fk-shell {
     width: 100%;
     margin: 0;
