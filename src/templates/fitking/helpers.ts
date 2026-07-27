@@ -109,6 +109,25 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return resolveAssetUrl(val);
   });
 
+  // A line item's pictures. The contract declares three fields for them —
+  // `originalImages`, `images` and `thumbnail` (see InvoiceItem in
+  // src/main/invoicePayloadContract.ts) — and which one a document fills
+  // depends on how its images were uploaded, so reading only the first leaves
+  // the photo column blank for the others.
+  HB.registerHelper("itemImages", function (item: any) {
+    if (!item || typeof item !== "object") return [];
+
+    for (const key of ["originalImages", "images"]) {
+      const urls = (Array.isArray(item[key]) ? item[key] : [])
+        .map(resolveAssetUrl)
+        .filter(Boolean);
+      if (urls.length) return urls;
+    }
+
+    const thumbnail = resolveAssetUrl(item.thumbnail);
+    return thumbnail ? [thumbnail] : [];
+  });
+
   HB.registerHelper("isPositive", function (val: any) {
     const num = extractNumericValue(val);
     return num !== null && num > 0;
@@ -385,7 +404,140 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       add("amount");
     }
 
+    assignColumnWidths(columns, root);
     return columns;
+  }
+
+  // ── Column widths ────────────────────────────────────────────────────────
+  //
+  // Widths are measured from the values this document actually prints, not
+  // declared per column name in CSS: the column set comes from the payload, so
+  // a fixed px rule per name either clips a column whose figures are larger
+  // than the rule anticipated (a nowrap total spilling past the table edge) or
+  // hands width to a column that does not need it. Everything is emitted as a
+  // percentage, which keeps the row exactly as wide as the table under
+  // `table-layout: fixed` however many columns the payload declares.
+
+  // Rough advance width of one character at the table's base font. Digits and
+  // uppercase run wider than lowercase, so this errs high — a column half a
+  // character too wide costs the description nothing noticeable, a column half
+  // a character too narrow clips a figure.
+  const CHAR_PX = 7;
+  // Cell padding plus both borders, which the text never gets to use.
+  const CELL_CHROME_PX = 14;
+  // Nominal content width of the table: page width less the page and main-box
+  // padding. Only used to turn measured px into a ratio, so it does not have to
+  // track the real width exactly.
+  const TABLE_PX = 950;
+  // The description column is the point of the table; never let the measured
+  // columns squeeze it below this share.
+  const MIN_NAME_PCT = 26;
+
+  // Per kind: floor, ceiling, and whether the value can wrap. Wrapping columns
+  // are measured by their longest word rather than their whole text, since the
+  // rest can fall to the next line.
+  const COLUMN_WIDTH_RULES: Record<
+    string,
+    { min: number; max: number; wraps?: boolean }
+  > = {
+    sno: { min: 30, max: 46 },
+    photo: { min: 152, max: 152 },
+    model: { min: 70, max: 150, wraps: true },
+    hsn: { min: 66, max: 110 },
+    rate: { min: 82, max: 190 },
+    qty: { min: 46, max: 90 },
+    discount: { min: 64, max: 130 },
+    igst: { min: 60, max: 130 },
+    cgst: { min: 60, max: 130 },
+    sgst: { min: 60, max: 130 },
+    amount: { min: 90, max: 200 },
+    custom: { min: 70, max: 150, wraps: true },
+  };
+
+  const longestWordLength = (text: string) =>
+    String(text || "")
+      .split(/\s+/)
+      .reduce((longest, word) => Math.max(longest, word.length), 0);
+
+  // The text a given column prints for a given item, mirroring the row markup.
+  // Anything this returns short renders clipped, so it has to stay in step with
+  // the cells in template.hbs.
+  function columnCellText(kind: string, column: any, item: any, invoice: any): string {
+    switch (kind) {
+      case "model":
+        return String(
+          item?.model || item?.custom?.modelNo || item?.custom?.model || item?.sku || ""
+        );
+      case "hsn":
+        return String(item?.hsn || "");
+      case "rate":
+        return formatCurrencyValue(item?.rate, invoice);
+      case "qty": {
+        const qty = item?.quantity !== undefined && item?.quantity !== null ? item.quantity : item?.qty;
+        if (qty === undefined || qty === null) return "";
+        // The unit prints on its own line under the figure, so the column only
+        // has to fit whichever of the two is wider.
+        const unit = resolveUnit(item?.unit, item, invoice);
+        return String(qty).length >= String(unit || "").length ? String(qty) : String(unit);
+      }
+      case "discount":
+        return String(item?.discountLabel || "");
+      case "igst":
+        return formatCurrencyValue(item?.igst, invoice);
+      case "cgst":
+        return formatCurrencyValue(item?.cgst, invoice);
+      case "sgst":
+        return formatCurrencyValue(item?.sgst, invoice);
+      case "amount":
+        return formatCurrencyValue(item?.amount, invoice);
+      case "custom":
+        return customColumnValue(item, column, invoice).text;
+      default:
+        return "";
+    }
+  }
+
+  function assignColumnWidths(columns: Array<Record<string, any>>, root: any): void {
+    const invoice = root?.invoice;
+    const items = Array.isArray(invoice?.items) ? invoice.items : [];
+
+    // Measured px per column, name excluded: it takes whatever is left.
+    let measuredTotal = 0;
+    for (const column of columns) {
+      if (column.kind === "name") continue;
+
+      const rule = COLUMN_WIDTH_RULES[column.kind] || COLUMN_WIDTH_RULES.custom;
+      let widest = rule.wraps ? longestWordLength(column.label) : String(column.label || "").length;
+
+      if (column.kind === "sno") {
+        widest = Math.max(widest, String(items.length).length);
+      } else if (column.kind !== "photo") {
+        for (const item of items) {
+          const text = columnCellText(column.kind, column, item, invoice);
+          widest = Math.max(widest, rule.wraps ? longestWordLength(text) : text.length);
+        }
+      }
+
+      const px = Math.min(rule.max, Math.max(rule.min, widest * CHAR_PX + CELL_CHROME_PX));
+      column.widthPx = px;
+      measuredTotal += px;
+    }
+
+    let measuredPct = (measuredTotal / TABLE_PX) * 100;
+    // Too many columns to fit alongside a readable description: give them their
+    // share of what is left over instead of their measured width.
+    const scale = measuredPct > 100 - MIN_NAME_PCT ? (100 - MIN_NAME_PCT) / measuredPct : 1;
+    measuredPct *= scale;
+
+    for (const column of columns) {
+      if (column.kind === "name") continue;
+      column.widthPct = Number(((column.widthPx / TABLE_PX) * 100 * scale).toFixed(3));
+    }
+
+    const nameColumn = columns.find((column) => column.kind === "name");
+    if (nameColumn) {
+      nameColumn.widthPct = Number(Math.max(MIN_NAME_PCT, 100 - measuredPct).toFixed(3));
+    }
   }
 
   HB.registerHelper("itemColumns", function (options: any) {
@@ -397,7 +549,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // Payloads put these values on `custom` keyed by column key, on a
   // `customFields` list, or occasionally flat on the item itself, so all three
   // are checked before giving up.
-  HB.registerHelper("customColumnCell", function (item: any, column: any, invoice?: any) {
+  function customColumnValue(item: any, column: any, invoice?: any) {
     if (!item || !column?.key) return { text: "", isNumber: false };
 
     const key = String(column.key);
@@ -430,7 +582,9 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       text: stringifyFieldValue(value),
       isNumber: extractNumericValue(value) !== null,
     };
-  });
+  }
+
+  HB.registerHelper("customColumnCell", customColumnValue);
 
   // Column count of the line-item table. The full-width description row spans
   // the whole table, and a colspan larger than the real column count makes the
@@ -440,7 +594,18 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return getItemColumns(options?.data?.root).length;
   });
 
-  HB.registerHelper("getTotalsLabel", function (key: string, fallback: string, options: any) {
+  // Every heading the document names for itself. The account configures these
+  // in `invoice.customLabels` — a quotation's "Quotation From", a renamed
+  // "Remarks", a translated "Total" — so the string in the markup is only what
+  // prints when the payload carries no label for that key. Deciding wording
+  // from the document's own data instead (matching `invoiceTitle` against
+  // "Quotation", say) reads a field the user is free to type anything into, and
+  // silently falls back the moment they do.
+  //
+  // Named `docLabel`, not `label`: line items, terms and custom fields all
+  // carry their own `label` property, and a helper of that name would shadow
+  // every one of them.
+  function documentLabel(key: string, fallback: string, options: any) {
     const root = options?.data?.root;
     const customLabels = root?.invoice?.customLabels;
     if (customLabels) {
@@ -452,7 +617,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       }
     }
     return fallback;
-  });
+  }
+
+  HB.registerHelper("docLabel", documentLabel);
+  HB.registerHelper("getTotalsLabel", documentLabel);
 
   HB.registerHelper("getChargeName", function (item: any, fallback?: string) {
     if (!item) return typeof fallback === "string" ? fallback : "Extra Charges";

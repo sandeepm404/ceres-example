@@ -37,7 +37,7 @@
       <div class="fk-info-section">
         {{!-- Column 1: Billed By / Quotation From --}}
         <div class="fk-info-col fk-info-from">
-          <p class="fk-info-heading">{{#if invoice.customLabels.billedBy}}{{invoice.customLabels.billedBy}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation From{{else}}Billed By{{/if}}{{/if}}</p>
+          <p class="fk-info-heading">{{docLabel "billedBy" "Billed By"}}</p>
           <p class="fk-info-value-bold">{{invoice.billedBy.name}}</p>
           {{#if invoice.billedBy.building}}<p class="fk-info-value">{{invoice.billedBy.building}}</p>{{/if}}
           {{#if invoice.billedBy.street}}<p class="fk-info-value">{{invoice.billedBy.street}}</p>{{/if}}
@@ -71,7 +71,7 @@
 
         {{!-- Column 2: Billed To / Quotation To --}}
         <div class="fk-info-col fk-info-to">
-          <p class="fk-info-heading">{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation To{{else}}Billed To{{/if}}{{/if}}</p>
+          <p class="fk-info-heading">{{docLabel "billedTo" "Billed To"}}</p>
           <p class="fk-info-value-bold">{{invoice.billedTo.name}}</p>
           {{#if invoice.billedTo.building}}<p class="fk-info-value">{{invoice.billedTo.building}}</p>{{/if}}
           {{#if invoice.billedTo.street}}<p class="fk-info-value">{{invoice.billedTo.street}}</p>{{/if}}
@@ -100,31 +100,31 @@
 
         {{!-- Column 3: Details --}}
         <div class="fk-info-col fk-info-details">
-          <p class="fk-info-heading">{{#if invoice.customLabels.invoiceDetails}}{{invoice.customLabels.invoiceDetails}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation Details{{else}}Invoice Details{{/if}}{{/if}}</p>
+          <p class="fk-info-heading">{{docLabel "invoiceDetails" "Invoice Details"}}</p>
           <table class="fk-details-table">
             <tr>
-              <td class="fk-dt-label">{{#if invoice.customLabels.invoiceNumber}}{{invoice.customLabels.invoiceNumber}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation No{{else}}Invoice{{/if}}{{/if}}</td>
+              <td class="fk-dt-label">{{docLabel "invoiceNumber" "Invoice No"}}</td>
               <td class="fk-dt-value">{{invoice.invoiceNumber}}</td>
             </tr>
             <tr>
-              <td class="fk-dt-label">{{#if invoice.customLabels.invoiceDate}}{{invoice.customLabels.invoiceDate}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation Date{{else}}Invoice Date{{/if}}{{/if}}</td>
+              <td class="fk-dt-label">{{docLabel "invoiceDate" "Invoice Date"}}</td>
               <td class="fk-dt-value">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</td>
             </tr>
             {{#if invoice.dueDate}}
             <tr>
-              <td class="fk-dt-label">{{#if invoice.customLabels.dueDate}}{{invoice.customLabels.dueDate}}{{else}}Due Date{{/if}}</td>
+              <td class="fk-dt-label">{{docLabel "dueDate" "Due Date"}}</td>
               <td class="fk-dt-value">{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</td>
             </tr>
             {{/if}}
             {{#if invoice.purchaseOrderNumber}}
             <tr>
-              <td class="fk-dt-label">{{#if invoice.customLabels.purchaseOrderNumber}}{{invoice.customLabels.purchaseOrderNumber}}{{else}}PO No{{/if}}</td>
+              <td class="fk-dt-label">{{docLabel "purchaseOrderNumber" "PO No"}}</td>
               <td class="fk-dt-value">{{invoice.purchaseOrderNumber}}</td>
             </tr>
             {{/if}}
             {{#if invoice.placeOfSupply}}
             <tr>
-              <td class="fk-dt-label">Place of Supply</td>
+              <td class="fk-dt-label">{{docLabel "placeOfSupply" "Place of Supply"}}</td>
               <td class="fk-dt-value">{{invoice.placeOfSupply}}</td>
             </tr>
             {{/if}}
@@ -150,7 +150,7 @@
           </table>
           {{#with (qrSrc mapped.qr.top) as |docQrSrc|}}
           <div class="fk-details-qr">
-            <p class="fk-doc-qr-label">Document QR</p>
+            <p class="fk-doc-qr-label">{{docLabel "documentQr" "Document QR"}}</p>
             <img src="{{docQrSrc}}" alt="Document QR" class="fk-qr-img" />
           </div>
           {{/with}}
@@ -162,7 +162,7 @@
       <div class="fk-info-section fk-logistics-section">
         {{#if mapped.visibility.shippedFrom}}
         <div class="fk-info-col fk-info-shipped-from">
-          <p class="fk-info-heading">{{#if invoice.customLabels.shippedFrom}}{{invoice.customLabels.shippedFrom}}{{else}}Shipped From{{/if}}</p>
+          <p class="fk-info-heading">{{docLabel "shippedFrom" "Shipped From"}}</p>
           <p class="fk-info-value-bold">{{invoice.shippedFrom.name}}</p>
           {{#if invoice.shippedFrom.building}}<p class="fk-info-value">{{invoice.shippedFrom.building}}</p>{{/if}}
           {{#if invoice.shippedFrom.street}}<p class="fk-info-value">{{invoice.shippedFrom.street}}</p>{{/if}}
@@ -183,7 +183,7 @@
 
         {{#if mapped.visibility.shippedTo}}
         <div class="fk-info-col fk-info-shipped">
-          <p class="fk-info-heading">{{#if invoice.customLabels.shippedTo}}{{invoice.customLabels.shippedTo}}{{else}}Shipped To{{/if}}</p>
+          <p class="fk-info-heading">{{docLabel "shippedTo" "Shipped To"}}</p>
           <p class="fk-info-value-bold">{{invoice.shippedTo.name}}</p>
           {{#if invoice.shippedTo.building}}<p class="fk-info-value">{{invoice.shippedTo.building}}</p>{{/if}}
           {{#if invoice.shippedTo.street}}<p class="fk-info-value">{{invoice.shippedTo.street}}</p>{{/if}}
@@ -204,7 +204,7 @@
         
         {{#if mapped.visibility.showLogistics}}
         <div class="fk-info-col fk-info-transport">
-          <p class="fk-info-heading">Transport Details</p>
+          <p class="fk-info-heading">{{docLabel "transport" "Transport Details"}}</p>
           <div class="fk-transport-kv">
             {{#if invoice.transportDetails.transporter.name}}<p><span class="fk-kv-key">{{#if invoice.customLabels.transportName}}{{invoice.customLabels.transportName}}{{else}}Transport Name{{/if}}:</span> <span class="fk-kv-val">{{invoice.transportDetails.transporter.name}}</span></p>{{/if}}
             {{#if invoice.transportDetails.transportMode}}<p><span class="fk-kv-key">Transport Mode:</span> <span class="fk-kv-val">{{invoice.transportDetails.transportMode}}</span></p>{{/if}}
@@ -229,7 +229,10 @@
                 the description <col> is deliberately unsized so it absorbs all
                 the leftover width. --}}
           <colgroup>
-            {{#each (itemColumns)}}<col class="{{colClass}}" />{{/each}}
+            {{!-- Widths are measured from this document's own values in
+                  `itemColumns`, so a column is as wide as the figures it has to
+                  print and the description keeps the rest. --}}
+            {{#each (itemColumns)}}<col class="{{colClass}}" style="width: {{widthPct}}%" />{{/each}}
           </colgroup>
           <thead>
             <tr>
@@ -275,7 +278,7 @@
               {{/if}}
               {{#if (eq kind "photo")}}
               <td class="fk-img-cell">
-                {{#each ../originalImages}}
+                {{#each (itemImages ..)}}
                 <img src="{{this}}" alt="{{../../name}}" class="fk-product-img" />
                 {{/each}}
               </td>
@@ -321,7 +324,7 @@
           {{#each invoice.terms}}
           {{#if terms.length}}
           <div class="fk-terms-section">
-            <p class="fk-section-title">{{#if label}}{{label}}{{else}}{{#if ../invoice.customLabels.terms}}{{../invoice.customLabels.terms}}{{else}}Terms and Conditions{{/if}}{{/if}}</p>
+            <p class="fk-section-title">{{#if label}}{{label}}{{else}}{{docLabel "terms" "Terms and Conditions"}}{{/if}}</p>
             <ol class="fk-terms-list">
               {{#each terms}}
               <li>{{this}}</li>
@@ -333,7 +336,7 @@
 
           {{#if invoice.notes}}
           <div class="fk-remarks-section">
-            <p class="fk-section-title">{{#if invoice.customLabels.notes}}{{invoice.customLabels.notes}}{{else}}Remarks{{/if}}</p>
+            <p class="fk-section-title">{{docLabel "notes" "Remarks"}}</p>
             <div class="fk-remarks-content">
               {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
             </div>
@@ -343,7 +346,7 @@
           {{!-- Bank & UPI Details --}}
           {{#if mapped.visibility.showBankUpiSection}}
           <div class="fk-bank-section">
-            <p class="fk-section-title">Bank and UPI Details</p>
+            <p class="fk-section-title">{{docLabel "bankDetails" "Bank and UPI Details"}}</p>
             <div class="fk-bank-content">
               {{#if mapped.visibility.showBankAccount}}
               <div class="fk-bank-kv">
@@ -372,7 +375,7 @@
                 they sit here under the bank details instead of in the totals. --}}
           {{#if (or invoice.customFooters.length invoice.footers.length)}}
           <div class="fk-additional-notes-section">
-            <p class="fk-section-title">Additional Notes</p>
+            <p class="fk-section-title">{{docLabel "footer" "Additional Notes"}}</p>
             <div class="fk-additional-notes-content">
               {{#each invoice.customFooters}}
               {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>{{/if}}
@@ -507,7 +510,7 @@
               <img class="fk-signature-img" src="{{invoice.billedBy.signatureImage}}" alt="Authorised Signature" />
               {{/if}}{{/if}}{{/if}}{{/if}}
             </div>
-            <p class="fk-sig-label">Authorised Signatory</p>
+            <p class="fk-sig-label">{{docLabel "signature" "Authorised Signatory"}}</p>
           </div>
         </div>
       </div>

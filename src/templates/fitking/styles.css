@@ -351,13 +351,14 @@
 }
 
 /* Column Widths
-   The table is `table-layout: fixed`, so the description column is whatever is
-   left over after these. Keep the numeric columns as tight as their widest
-   realistic value (they are `nowrap`, so overflow spills rather than wraps) and
-   pair them with the 4px side padding below — every px saved here goes to the
-   item description. */
+   Not declared here. The column set comes from the payload, so a width per
+   column name can only ever be a guess at what that column will hold — the
+   `itemColumns` helper measures each column against the values this document
+   actually prints and emits a percentage on the <col>. These classes carry the
+   alignment and wrapping that goes with each kind, nothing more.
+   Percentages also survive the smaller print font, which is why there are no
+   width overrides left in the print block. */
 .fk-col-sno {
-  width: 30px;
   text-align: center;
 }
 
@@ -366,50 +367,21 @@
   text-align: center;
 }
 
-/* Photo column. This width has to live on the <col> — a width on `.fk-img-cell`
-   is ignored under fixed layout, which sizes columns from the first row where
-   the photo is half of an unsized colspan. `.fk-col-desc` stays unsized so the
-   description text takes every px the other columns don't claim. */
-.fk-col-photo {
-  width: 152px;
-}
-
-/* User-defined columns. Sized modestly because their count is unbounded — every
-   one of them comes out of the description column's leftover width. Their
-   values are arbitrary text, so unlike the currency columns they may wrap. */
-.fk-col-custom {
-  width: 100px;
-}
-
 .fk-col-model {
-  width: 120px;
   text-align: center;
 }
 
-.fk-col-price {
-  width: 100px;
-  white-space: nowrap;
-}
-
-.fk-col-qty {
-  width: 52px;
-}
-
-.fk-col-total {
-  width: 118px;
-  white-space: nowrap;
-}
-
-/* New columns added for tax, discount, hsn */
-.fk-col-hsn {
-  width: 78px;
-  text-align: center;
-}
-
+/* Currency columns never wrap: a figure broken across two lines reads as two
+   numbers. Their measured width is what keeps them from spilling. */
+.fk-col-price,
+.fk-col-total,
 .fk-col-disc,
 .fk-col-tax {
-  width: 75px;
   white-space: nowrap;
+}
+
+.fk-col-hsn {
+  text-align: center;
 }
 
 /* Narrow side padding on the numeric columns: the content box stays as wide as
@@ -889,35 +861,6 @@
     --fk-font-size-md: 12px;
     --fk-font-size-lg: 12px;
     --fk-font-size-xl: 14px;
-  }
-
-  .fk-col-model {
-    width: 75px;
-  }
-
-  .fk-col-price {
-    width: 82px;
-  }
-
-  .fk-col-total {
-    width: 100px;
-  }
-
-  .fk-col-qty {
-    width: 40px;
-  }
-
-  .fk-col-sno {
-    width: 26px;
-  }
-
-  .fk-col-hsn {
-    width: 66px;
-  }
-
-  .fk-col-disc,
-  .fk-col-tax {
-    width: 64px;
   }
 
   .fk-img-cell {
