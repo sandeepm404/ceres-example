@@ -455,10 +455,11 @@ export const normalizeInvoiceTemplateState = (
     toNonEmptyString(invoice.documentQr) ??
     "";
 
+  const bankAccount = asRecord(invoice.bankAccount);
   const upiId =
     toNonEmptyString(pickFirstValue(upi.upi, upi.vpa, upi.upiId)) ?? "";
   const upiQr =
-    toNonEmptyString(pickFirstValue(upi.qr, upi.qrCode)) ??
+    toNonEmptyString(pickFirstValue(upi.qr, upi.qrCode, bankAccount.qrCode)) ??
     (upiId ? buildUpiPayload(upiId) : "");
 
   const billType = toStringValue(invoice.billType);
@@ -466,7 +467,6 @@ export const normalizeInvoiceTemplateState = (
   const isExpenditure = Boolean(invoice.isExpenditure);
   const invoiceAccepted = toStringValue(invoice.invoiceAccepted);
   const paymentOptions = asRecord(invoice.paymentOptions);
-  const bankAccount = asRecord(invoice.bankAccount);
   const bankAccountNo = toStringValue(
     pickFirstValue(bankAccount.accountNo, bankAccount.accountNumber)
   );

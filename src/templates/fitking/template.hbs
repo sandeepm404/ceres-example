@@ -217,12 +217,12 @@
               <th colspan="2" class="fk-col-desc-photo">{{getColumnLabel "item" "Item"}}</th>
               <th class="fk-col-model">{{getColumnLabel "model" "Model  No"}}</th>
               {{#if derived.showHsnColumn}}<th class="fk-col-hsn">HSN/SAC</th>{{/if}}
-              <th class="fk-col-price text-right">{{getColumnLabel "rate" "Unit Price"}}</th>
+              <th class="fk-col-price text-center">{{getColumnLabel "rate" "Unit Price"}}</th>
               <th class="fk-col-qty text-center">{{getColumnLabel "quantity" "Qty"}}</th>
-              {{#if invoice.finalTotal.discount}}<th class="fk-col-disc text-right">Discount</th>{{/if}}
-              {{#if mapped.visibility.showIgst}}<th class="fk-col-tax text-right">IGST</th>{{/if}}
-              {{#if mapped.visibility.showCgstSgst}}<th class="fk-col-tax text-right">CGST</th><th class="fk-col-tax text-right">SGST</th>{{/if}}
-              <th class="fk-col-total text-right">{{getColumnLabel "total" "Total"}}</th>
+              {{#if invoice.finalTotal.discount}}<th class="fk-col-disc text-center">Discount</th>{{/if}}
+              {{#if mapped.visibility.showIgst}}<th class="fk-col-tax text-center">IGST</th>{{/if}}
+              {{#if mapped.visibility.showCgstSgst}}<th class="fk-col-tax text-center">CGST</th><th class="fk-col-tax text-center">SGST</th>{{/if}}
+              <th class="fk-col-total text-center">{{getColumnLabel "total" "Total"}}</th>
             </tr>
           </thead>
           <tbody>
@@ -248,12 +248,12 @@
               </td>
               <td class="text-center fk-model-cell">{{#if model}}{{model}}{{else}}{{#if custom.modelNo}}{{custom.modelNo}}{{else}}{{#if custom.model}}{{custom.model}}{{else}}{{sku}}{{/if}}{{/if}}{{/if}}</td>
               {{#if ../derived.showHsnColumn}}<td class="text-center fk-hsn-cell">{{hsn}}</td>{{/if}}
-              <td class="text-right fk-price-cell">{{formatCurrency rate ../invoice}}</td>
+              <td class="text-center fk-price-cell">{{formatCurrency rate ../invoice}}</td>
               <td class="text-center fk-qty-cell">{{formatQtyCell this ../invoice ../advanceOptions}}</td>
-              {{#if ../invoice.finalTotal.discount}}<td class="text-right fk-disc-cell">{{discountLabel}}</td>{{/if}}
-              {{#if ../mapped.visibility.showIgst}}<td class="text-right fk-tax-cell">{{formatCurrency igst ../invoice}}</td>{{/if}}
-              {{#if ../mapped.visibility.showCgstSgst}}<td class="text-right fk-tax-cell">{{formatCurrency cgst ../invoice}}</td><td class="text-right fk-tax-cell">{{formatCurrency sgst ../invoice}}</td>{{/if}}
-              <td class="text-right fk-total-cell">{{formatCurrency amount ../invoice}}</td>
+              {{#if ../invoice.finalTotal.discount}}<td class="text-center fk-disc-cell">{{discountLabel}}</td>{{/if}}
+              {{#if ../mapped.visibility.showIgst}}<td class="text-center fk-tax-cell">{{formatCurrency igst ../invoice}}</td>{{/if}}
+              {{#if ../mapped.visibility.showCgstSgst}}<td class="text-center fk-tax-cell">{{formatCurrency cgst ../invoice}}</td><td class="text-center fk-tax-cell">{{formatCurrency sgst ../invoice}}</td>{{/if}}
+              <td class="text-center fk-total-cell">{{formatCurrency amount ../invoice}}</td>
             </tr>
             {{#if ../mapped.visibility.showDescriptionFullWidth}}
             {{#if description}}
@@ -296,26 +296,29 @@
           {{/if}}
 
           {{!-- Bank & UPI Details --}}
-          {{#if mapped.visibility.showBankAccount}}
+          {{#if mapped.visibility.showBankUpiSection}}
           <div class="fk-bank-section">
             <p class="fk-section-title">Bank and UPI Details</p>
-            <div class="fk-bank-kv">
-              {{#if invoice.bankAccount.bankName}}<p><span class="fk-bank-key">Bank Name:</span> <span class="fk-bank-val">{{invoice.bankAccount.bankName}}</span></p>{{/if}}
-              <p><span class="fk-bank-key">Account Name:</span> <span class="fk-bank-val">{{#if invoice.bankAccount.holderName}}{{invoice.bankAccount.holderName}}{{else}}{{invoice.billedBy.name}}{{/if}}</span></p>
-              {{#if invoice.bankAccount.accountNo}}<p><span class="fk-bank-key">Account No:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountNo}}</span></p>{{/if}}
-              {{#if invoice.bankAccount.ifsc}}<p><span class="fk-bank-key">IFSC:</span> <span class="fk-bank-val">{{invoice.bankAccount.ifsc}}</span></p>{{/if}}
-              {{#if invoice.bankAccount.accountType}}<p><span class="fk-bank-key">Account Type:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountType}}</span></p>{{/if}}
+            <div class="fk-bank-content">
+              {{#if mapped.visibility.showBankAccount}}
+              <div class="fk-bank-kv">
+                {{#if invoice.bankAccount.bankName}}<p><span class="fk-bank-key">Bank Name:</span> <span class="fk-bank-val">{{invoice.bankAccount.bankName}}</span></p>{{/if}}
+                <p><span class="fk-bank-key">Account Name:</span> <span class="fk-bank-val">{{#if invoice.bankAccount.holderName}}{{invoice.bankAccount.holderName}}{{else}}{{invoice.billedBy.name}}{{/if}}</span></p>
+                {{#if invoice.bankAccount.accountNo}}<p><span class="fk-bank-key">Account No:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountNo}}</span></p>{{/if}}
+                {{#if invoice.bankAccount.ifsc}}<p><span class="fk-bank-key">IFSC:</span> <span class="fk-bank-val">{{invoice.bankAccount.ifsc}}</span></p>{{/if}}
+                {{#if invoice.bankAccount.accountType}}<p><span class="fk-bank-key">Account Type:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountType}}</span></p>{{/if}}
+              </div>
+              {{/if}}
+              {{#if mapped.visibility.showUpi}}
+              <div class="fk-upi-qr-block">
+                {{#if mapped.qr.upi}}<p class="fk-upi-title">Scan to pay via UPI</p>{{/if}}
+                {{#if mapped.qr.upi}}
+                <img src="{{mapped.qr.upi}}" alt="Scan to Pay" class="fk-upi-qr" />
+                {{/if}}
+                {{#if mapped.upi.id}}<p class="fk-upi-label">{{#unless mapped.qr.upi}}UPI: {{/unless}}{{mapped.upi.id}}</p>{{/if}}
+              </div>
+              {{/if}}
             </div>
-            {{#if invoice.bankAccount.qrCode}}
-            <div class="fk-upi-qr-block">
-              <img src="{{invoice.bankAccount.qrCode}}" alt="Scan to Pay" class="fk-upi-qr" />
-              {{#if invoice.bankAccount.upiId}}<p class="fk-upi-label">{{invoice.bankAccount.upiId}}</p>{{/if}}
-            </div>
-            {{else}}{{#if invoice.bankAccount.upiId}}
-            <div class="fk-upi-qr-block">
-              <p class="fk-upi-label">UPI: {{invoice.bankAccount.upiId}}</p>
-            </div>
-            {{/if}}{{/if}}
           </div>
           {{/if}}
         </div>
