@@ -336,9 +336,14 @@
   border-bottom: 1.5px solid var(--fk-border);
 }
 
-/* Column Widths */
+/* Column Widths
+   The table is `table-layout: fixed`, so the description column is whatever is
+   left over after these. Keep the numeric columns as tight as their widest
+   realistic value (they are `nowrap`, so overflow spills rather than wraps) and
+   pair them with the 4px side padding below — every px saved here goes to the
+   item description. */
 .fk-col-sno {
-  width: 35px;
+  width: 30px;
   text-align: center;
 }
 
@@ -347,35 +352,63 @@
   text-align: center;
 }
 
+/* Photo column. This width has to live on the <col> — a width on `.fk-img-cell`
+   is ignored under fixed layout, which sizes columns from the first row where
+   the photo is half of an unsized colspan. `.fk-col-desc` stays unsized so the
+   description text takes every px the other columns don't claim. */
+.fk-col-photo {
+  width: 100px;
+}
+
 .fk-col-model {
   width: 120px;
   text-align: center;
 }
 
 .fk-col-price {
-  width: 135px;
+  width: 100px;
   white-space: nowrap;
 }
 
 .fk-col-qty {
-  width: 65px;
+  width: 52px;
 }
 
 .fk-col-total {
-  width: 145px;
+  width: 118px;
   white-space: nowrap;
 }
 
 /* New columns added for tax, discount, hsn */
 .fk-col-hsn {
-  width: 90px;
+  width: 78px;
   text-align: center;
 }
 
 .fk-col-disc,
 .fk-col-tax {
-  width: 80px;
+  width: 75px;
   white-space: nowrap;
+}
+
+/* Narrow side padding on the numeric columns: the content box stays as wide as
+   it was at the old widths, so nothing that fitted before starts overflowing. */
+.fk-item-table thead th.fk-col-sno,
+.fk-item-table thead th.fk-col-price,
+.fk-item-table thead th.fk-col-qty,
+.fk-item-table thead th.fk-col-hsn,
+.fk-item-table thead th.fk-col-disc,
+.fk-item-table thead th.fk-col-tax,
+.fk-item-table thead th.fk-col-total,
+.fk-item-table tbody td.fk-sno-cell,
+.fk-item-table tbody td.fk-price-cell,
+.fk-item-table tbody td.fk-qty-cell,
+.fk-item-table tbody td.fk-hsn-cell,
+.fk-item-table tbody td.fk-disc-cell,
+.fk-item-table tbody td.fk-tax-cell,
+.fk-item-table tbody td.fk-total-cell {
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .fk-hsn-cell,
@@ -423,12 +456,11 @@
   margin-bottom: 3px;
 }
 
-/* Product Image Cell */
+/* Product Image Cell. The column width is set on `.fk-col-photo`, not here. */
 .fk-img-cell {
-  width: 130px;
   text-align: center;
-  vertical-align: middle !important;
-  padding: 6px !important;
+  vertical-align: top !important;
+  padding: 4px !important;
 }
 
 .fk-product-img {
@@ -814,15 +846,32 @@
   }
 
   .fk-col-price {
-    width: 95px;
+    width: 82px;
   }
 
   .fk-col-total {
-    width: 115px;
+    width: 100px;
   }
 
   .fk-col-qty {
     width: 40px;
+  }
+
+  .fk-col-sno {
+    width: 26px;
+  }
+
+  .fk-col-hsn {
+    width: 66px;
+  }
+
+  .fk-col-disc,
+  .fk-col-tax {
+    width: 64px;
+  }
+
+  .fk-col-photo {
+    width: 85px;
   }
 
   .fk-img-cell {

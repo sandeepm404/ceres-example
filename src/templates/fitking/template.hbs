@@ -202,6 +202,27 @@
       {{!-- ═══ Line Items Table ═══ --}}
       <div class="fk-table-wrap">
         <table class="fk-item-table">
+          {{!-- The table is `table-layout: fixed`, which takes its column widths
+                from the first row only — and there the item heading is a single
+                `colspan="2"` cell, so the browser splits that space evenly
+                between the description and the photo and ignores any width set
+                on `.fk-img-cell`. These <col>s size the columns directly. The
+                set has to track the <th> set below (and `itemColspan`) exactly;
+                the description <col> is deliberately unsized so it absorbs all
+                the leftover width. --}}
+          <colgroup>
+            <col class="fk-col-sno" />
+            <col class="fk-col-desc" />
+            <col class="fk-col-photo" />
+            <col class="fk-col-model" />
+            {{#if derived.showHsnColumn}}<col class="fk-col-hsn" />{{/if}}
+            <col class="fk-col-price" />
+            <col class="fk-col-qty" />
+            {{#if invoice.finalTotal.discount}}<col class="fk-col-disc" />{{/if}}
+            {{#if mapped.visibility.showIgst}}<col class="fk-col-tax" />{{/if}}
+            {{#if mapped.visibility.showCgstSgst}}<col class="fk-col-tax" /><col class="fk-col-tax" />{{/if}}
+            <col class="fk-col-total" />
+          </colgroup>
           <thead>
             <tr>
               <th class="fk-col-sno"></th>
