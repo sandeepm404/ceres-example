@@ -129,7 +129,8 @@
           <thead>
             <tr>
               <th class="fk-col-sno"></th>
-              <th colspan="2" class="fk-col-desc-photo">Product Description and Photo</th>
+              <th class="fk-col-desc">Product Description</th>
+              <th class="fk-col-photo">Photo</th>
               <th class="fk-col-model">Model&nbsp;&nbsp;No</th>
               <th class="fk-col-price text-right">Unit Price</th>
               <th class="fk-col-qty text-center">Qty</th>
@@ -152,9 +153,9 @@
                 {{/unless}}
               </td>
               <td class="fk-img-cell">
-                {{#if thumbnail}}
-                <img src="{{thumbnail}}" alt="{{name}}" class="fk-product-img" />
-                {{/if}}
+                {{#each originalImages}}
+                <img src="{{this}}" alt="{{../name}}" class="fk-product-img" />
+                {{/each}}
               </td>
               <td class="text-center fk-model-cell">{{#if model}}{{model}}{{else}}{{#if custom.modelNo}}{{custom.modelNo}}{{else}}{{#if custom.model}}{{custom.model}}{{else}}{{sku}}{{/if}}{{/if}}{{/if}}</td>
               <td class="text-right fk-price-cell">{{#if ../invoice.customCurrencySymbol}}{{../invoice.customCurrencySymbol}}{{/if}}{{rate}}</td>

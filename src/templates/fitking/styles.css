@@ -257,7 +257,8 @@
 
 /* Column Widths */
 .fk-col-sno        { width: 30px; text-align: center; }
-.fk-col-desc-photo { text-align: center; }
+.fk-col-desc       { text-align: center; }
+.fk-col-photo      { width: 130px; text-align: center; }
 .fk-col-model      { width: 95px; text-align: center; }
 .fk-col-price      { width: 95px; }
 .fk-col-qty        { width: 55px; }
@@ -308,6 +309,10 @@
   object-fit: contain;
   display: block;
   margin: 0 auto;
+}
+
+.fk-product-img + .fk-product-img {
+  margin-top: 6px;
 }
 
 /* SKU ID — 11px */
