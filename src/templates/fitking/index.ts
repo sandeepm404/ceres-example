@@ -135,6 +135,40 @@ Handlebars.registerHelper("getColumnLabel", function (key: string, fallback: str
   return fallback;
 });
 
+Handlebars.registerHelper("getTotalsLabel", function (key: string, fallback: string, options: any) {
+  const root = options?.data?.root;
+  const customLabels = root?.invoice?.customLabels;
+  if (customLabels) {
+    const k = (key || "").toLowerCase();
+    for (const [ckey, cval] of Object.entries(customLabels)) {
+      if (ckey.toLowerCase() === k && typeof cval === "string" && cval.trim()) {
+        return cval.trim();
+      }
+    }
+  }
+  return fallback;
+});
+
+Handlebars.registerHelper("getChargeName", function (item: any, fallback?: string) {
+  if (!item) return typeof fallback === "string" ? fallback : "Extra Charges";
+  if (typeof item === "string") return item;
+
+  const name =
+    item.name ||
+    item.label ||
+    item.chargeName ||
+    item.title ||
+    item.description ||
+    item.customLabel ||
+    item.type;
+
+  if (name && typeof name === "string" && name.trim()) {
+    return name.trim();
+  }
+
+  return typeof fallback === "string" ? fallback : "Extra Charges";
+});
+
 function isDatabaseId(str: string): boolean {
   if (!str) return false;
   const trimmed = str.trim();

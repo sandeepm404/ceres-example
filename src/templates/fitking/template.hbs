@@ -203,7 +203,7 @@
             {{#if (or invoice.finalTotal.subTotal invoice.subTotal)}}
             {{#if (or (isPositive invoice.finalTotal.discount) (isPositive invoice.discount) (isPositive invoice.totalDiscount) (isPositive invoice.finalTotal.igst) (isPositive invoice.finalTotal.cgst) (isPositive invoice.finalTotal.sgst) (isPositive invoice.finalTotal.totalTax) (isPositive invoice.taxAmount) (isPositive invoice.extraCharges) (isPositive invoice.finalTotal.roundOff))}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.customLabels.subTotal}}{{invoice.customLabels.subTotal}}{{else}}Subtotal{{/if}}</td>
+              <td class="fk-totals-label">{{getTotalsLabel "subTotal" "Sub Total"}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.subTotal}}{{formatCurrency invoice.finalTotal.subTotal invoice}}{{else}}{{formatCurrency invoice.subTotal invoice}}{{/if}}</td>
             </tr>
             {{/if}}
@@ -211,38 +211,38 @@
 
             {{#if (isPositive invoice.finalTotal.discount)}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.customLabels.discount}}{{invoice.customLabels.discount}}{{else}}Discounts{{/if}}</td>
+              <td class="fk-totals-label">{{getTotalsLabel "discount" "Discounts"}}</td>
               <td class="fk-totals-value">- {{formatCurrency invoice.finalTotal.discount invoice}}</td>
             </tr>
             {{else}}{{#if (isPositive invoice.discount)}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.customLabels.discount}}{{invoice.customLabels.discount}}{{else}}Discounts{{/if}}</td>
+              <td class="fk-totals-label">{{getTotalsLabel "discount" "Discounts"}}</td>
               <td class="fk-totals-value">- {{formatCurrency invoice.discount invoice}}</td>
             </tr>
             {{else}}{{#if (isPositive invoice.totalDiscount)}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.customLabels.discount}}{{invoice.customLabels.discount}}{{else}}Discounts{{/if}}</td>
+              <td class="fk-totals-label">{{getTotalsLabel "discount" "Discounts"}}</td>
               <td class="fk-totals-value">- {{formatCurrency invoice.totalDiscount invoice}}</td>
             </tr>
             {{/if}}{{/if}}{{/if}}
 
             {{#if (isPositive invoice.finalTotal.igst)}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.customLabels.igst}}{{invoice.customLabels.igst}}{{else}}{{#if invoice.igstRate}}Tax ({{invoice.igstRate}}%){{else}}Tax{{/if}}{{/if}}</td>
+              <td class="fk-totals-label">{{#if invoice.igstRate}}{{getTotalsLabel "igst" "GST"}} ({{invoice.igstRate}}%){{else}}{{getTotalsLabel "igst" "IGST"}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.igst invoice}}</td>
             </tr>
             {{/if}}
 
             {{#if (isPositive invoice.finalTotal.cgst)}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.customLabels.cgst}}{{invoice.customLabels.cgst}}{{else}}CGST{{/if}}</td>
+              <td class="fk-totals-label">{{getTotalsLabel "cgst" "CGST"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.cgst invoice}}</td>
             </tr>
             {{/if}}
 
             {{#if (isPositive invoice.finalTotal.sgst)}}
             <tr>
-              <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}{{#if invoice.customLabels.sgst}}{{invoice.customLabels.sgst}}{{else}}SGST{{/if}}{{/if}}</td>
+              <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}{{getTotalsLabel "utgst" "UTGST"}}{{else}}{{getTotalsLabel "sgst" "SGST"}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.sgst invoice}}</td>
             </tr>
             {{/if}}
@@ -250,7 +250,7 @@
             {{#unless (or (isPositive invoice.finalTotal.igst) (isPositive invoice.finalTotal.cgst) (isPositive invoice.finalTotal.sgst))}}
             {{#if (or (isPositive invoice.finalTotal.totalTax) (isPositive invoice.finalTotal.tax) (isPositive invoice.taxAmount))}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.taxName}}{{invoice.taxName}}{{#if invoice.taxRate}} ({{invoice.taxRate}}%){{/if}}{{else}}{{#if invoice.taxRate}}Tax ({{invoice.taxRate}}%){{else}}Tax{{/if}}{{/if}}</td>
+              <td class="fk-totals-label">{{#if invoice.taxName}}{{invoice.taxName}}{{#if invoice.taxRate}} ({{invoice.taxRate}}%){{/if}}{{else}}{{#if invoice.taxRate}}{{getTotalsLabel "tax" "Tax"}} ({{invoice.taxRate}}%){{else}}{{getTotalsLabel "tax" "Tax"}}{{/if}}{{/if}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.totalTax}}{{formatCurrency invoice.finalTotal.totalTax invoice}}{{else}}{{#if invoice.finalTotal.tax}}{{formatCurrency invoice.finalTotal.tax invoice}}{{else}}{{formatCurrency invoice.taxAmount invoice}}{{/if}}{{/if}}</td>
             </tr>
             {{/if}}
@@ -259,7 +259,7 @@
             {{#each invoice.additionalCharges}}
             {{#if (isPositive amount)}}
             <tr>
-              <td class="fk-totals-label">{{#if name}}{{name}}{{else}}Extra Charges{{/if}}</td>
+              <td class="fk-totals-label">{{getChargeName this "Extra Charges"}}</td>
               <td class="fk-totals-value">{{formatCurrency amount ../invoice}}</td>
             </tr>
             {{/if}}
@@ -267,27 +267,27 @@
 
             {{#if (isPositive invoice.extraCharges)}}
             <tr>
-              <td class="fk-totals-label">Extra Charges</td>
+              <td class="fk-totals-label">{{getTotalsLabel "extraCharges" "Extra Charges"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.extraCharges invoice}}</td>
             </tr>
             {{/if}}
 
             {{#if (isPositive invoice.otherCharges)}}
             <tr>
-              <td class="fk-totals-label">Other Charges</td>
+              <td class="fk-totals-label">{{getTotalsLabel "otherCharges" "Other Charges"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.otherCharges invoice}}</td>
             </tr>
             {{/if}}
 
             {{#if (isPositive invoice.finalTotal.roundOff)}}
             <tr>
-              <td class="fk-totals-label">Round off</td>
+              <td class="fk-totals-label">{{getTotalsLabel "roundOff" "Round off"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.roundOff invoice}}</td>
             </tr>
             {{/if}}
 
             <tr class="fk-grand-total-row">
-              <td class="fk-totals-label">{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}</td>
+              <td class="fk-totals-label">{{getTotalsLabel "total" "Total"}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
             </tr>
           </table>
