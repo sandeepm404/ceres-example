@@ -1,7 +1,15 @@
-<style>@page {
-  size: {{pageSizeKeyword pdfOptions.format}} portrait;
-  margin: 0;
-}</style>
+{{!-- <style>
+  @page {
+    size: {
+        {
+        pageSizeKeyword pdfOptions.format
+      }
+    }
+
+    portrait;
+    margin: 0;
+  }
+</style> --}}
 <div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};" {{else}}{{#if
   invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}>
 
@@ -316,7 +324,7 @@
                   {{#unless ../../mapped.visibility.showDescriptionFullWidth}}
                   {{#if ../description}}
                   <div class="fk-item-desc">
-                    {{> MarkdownViewer (prepareMarkdownViewerData ../description) }}
+                    {{> MarkdownViewer (prepareMarkdownViewerData (trimTrailingBlankLines ../description)) }}
                   </div>
                   {{/if}}
                   {{/unless}}
@@ -361,7 +369,7 @@
               {{#if description}}
               <tr class="fk-desc-fullwidth-row">
                 <td colspan="{{itemColspan}}" class="fk-desc-fullwidth-cell">
-                  {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+                  {{> MarkdownViewer (prepareMarkdownViewerData (trimTrailingBlankLines description)) }}
                 </td>
               </tr>
               {{/if}}
@@ -393,7 +401,7 @@
           <div class="fk-remarks-section">
             <p class="fk-section-title">{{docLabel "notes" "Remarks"}}</p>
             <div class="fk-remarks-content">
-              {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+              {{> MarkdownViewer (prepareMarkdownViewerData (trimTrailingBlankLines invoice.notes)) }}
             </div>
           </div>
           {{/if}}

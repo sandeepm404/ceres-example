@@ -76,6 +76,18 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return "";
   }
 
+  // Strips a trailing blank line/`<br>` a rich-text editor leaves behind when
+  // a description is composed with an empty line at the end. MarkdownViewer
+  // renders that as a genuine empty `<p><br></p>`, which — inside a table
+  // cell sharing its row's height with much shorter cells (rate, total, tax)
+  // — shows up as dead space at the bottom of the row, bounded by the row's
+  // own borders like an extra blank row. Only trailing emptiness is removed;
+  // a `<br>` anywhere else in the text is a deliberate line break.
+  HB.registerHelper("trimTrailingBlankLines", function (text: any) {
+    if (typeof text !== "string") return text;
+    return text.replace(/(?:\s*<br\s*\/?>\s*)+$/gi, "").replace(/\s+$/, "");
+  });
+
   HB.registerHelper("partyFields", function (party: any) {
     if (!party || typeof party !== "object") return [];
 
