@@ -46,6 +46,7 @@ export interface InvoiceTemplateVisibility {
   footerOnLastPage: boolean;
   itemNameFullWidth: boolean;
   isDescriptionFullWidth: boolean;
+  showDescriptionFullWidth: boolean;
   showStatusTagInPrint: boolean;
   visibleColumnCount: number;
 }
@@ -154,6 +155,33 @@ const toNumberValue = (value: unknown, fallback = 0): number => {
     if (Number.isFinite(parsed)) {
       return parsed;
     }
+  }
+
+  return fallback;
+};
+
+const toBooleanValue = (value: unknown, fallback = false): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value !== 0 : fallback;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+
+    if (["true", "1", "yes", "on"].indexOf(normalized) !== -1) {
+      return true;
+    }
+
+    // "false" is a truthy string, so never hand these to Boolean()
+    if (["false", "0", "no", "off", ""].indexOf(normalized) !== -1) {
+      return false;
+    }
+
+    return fallback;
   }
 
   return fallback;
@@ -468,6 +496,16 @@ export const normalizeInvoiceTemplateState = (
   const showIgst =
     Boolean(invoice.igst) || toStringValue(invoice.taxName) !== "GST";
   const showCgstSgst = !showIgst && toStringValue(invoice.taxName) === "GST";
+  // Off unless the payload explicitly opts in; `showDescriptionFullWidth` is the
+  // current flag name, `isDescriptionFullWidth` the legacy one.
+  const descriptionFullWidth = toBooleanValue(
+    pickFirstValue(
+      context.advanceOptions.showDescriptionFullWidth,
+      invoice.showDescriptionFullWidth,
+      context.advanceOptions.isDescriptionFullWidth,
+      invoice.isDescriptionFullWidth
+    )
+  );
 
   return {
     invoice,
@@ -521,12 +559,8 @@ export const normalizeInvoiceTemplateState = (
             invoice.showItemNameFullWidth
           )
         ),
-        isDescriptionFullWidth: Boolean(
-          pickFirstValue(
-            context.advanceOptions.isDescriptionFullWidth,
-            invoice.isDescriptionFullWidth
-          )
-        ),
+        isDescriptionFullWidth: descriptionFullWidth,
+        showDescriptionFullWidth: descriptionFullWidth,
         showStatusTagInPrint: billType === "INVOICE" && status === "PAID",
         visibleColumnCount: columns.filter((column) => !column.isHidden).length + 1,
       },

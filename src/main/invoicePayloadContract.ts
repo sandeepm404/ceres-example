@@ -23,6 +23,7 @@ export interface CeresTemplatePayload {
   showPaymentsTable?: boolean;
   isPublicView?: boolean;
   isDescriptionFullWidth?: boolean;
+  showDescriptionFullWidth?: boolean;
   irnPosition?: "ABOVE_LINEITEMS" | "BELOW_LINEITEMS" | string;
   showStockSummary?: boolean;
   showVendorBankAccount?: boolean;
@@ -65,6 +66,7 @@ export interface InvoiceAdvanceOptions {
   hsnView?: string;
   itemNameFullWidth?: boolean;
   isDescriptionFullWidth?: boolean;
+  showDescriptionFullWidth?: boolean;
   hideCountryOfSupply?: boolean;
   [key: string]: unknown;
 }
@@ -450,6 +452,7 @@ export interface FlattenedInvoicePayload extends InvoiceData {
   showPaymentsTable?: boolean;
   isPublicView?: boolean;
   isDescriptionFullWidth?: boolean;
+  showDescriptionFullWidth?: boolean;
   irnPosition?: CeresTemplatePayload["irnPosition"];
   showStockSummary?: boolean;
   showVendorBankAccount?: boolean;
@@ -519,6 +522,7 @@ export const normalizeInvoicePayload = (
     showPaymentsTable: payload.showPaymentsTable,
     isPublicView: payload.isPublicView,
     isDescriptionFullWidth: payload.isDescriptionFullWidth,
+    showDescriptionFullWidth: payload.showDescriptionFullWidth,
     irnPosition: payload.irnPosition,
     showStockSummary: payload.showStockSummary,
     showVendorBankAccount: payload.showVendorBankAccount,

@@ -144,7 +144,7 @@
               <td class="fk-desc-cell">
                 <p class="fk-item-name">{{name}}</p>
                 {{#if sku}}<div class="fk-item-sku">SKU: {{sku}}</div>{{/if}}
-                {{#unless ../mapped.visibility.isDescriptionFullWidth}}
+                {{#unless ../mapped.visibility.showDescriptionFullWidth}}
                 {{#if description}}
                 <div class="fk-item-desc">
                   {{> MarkdownViewer (prepareMarkdownViewerData description) }}
@@ -162,7 +162,7 @@
               <td class="text-center fk-qty-cell">{{quantity}}{{#if unit}} {{unit}}{{else}} No{{/if}}</td>
               <td class="text-right fk-total-cell">{{#if ../invoice.customCurrencySymbol}}{{../invoice.customCurrencySymbol}}{{/if}}{{amount}}</td>
             </tr>
-            {{#if ../mapped.visibility.isDescriptionFullWidth}}
+            {{#if ../mapped.visibility.showDescriptionFullWidth}}
             {{#if description}}
             <tr class="fk-desc-fullwidth-row">
               <td colspan="7" class="fk-desc-fullwidth-cell">
