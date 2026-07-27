@@ -260,9 +260,15 @@
           {{!-- Signature Box Area --}}
           <div class="fk-signature-container">
             <div class="fk-signature-box">
-              {{#if invoice.billedBy.signature}}
-              <img class="fk-stamp-img" src="{{invoice.billedBy.signature}}" alt="Stamp" />
-              {{/if}}
+              {{#if invoice.signature}}
+              <img class="fk-signature-img" src="{{invoice.signature}}" alt="Authorised Signature" />
+              {{else}}{{#if invoice.billedBy.signature}}
+              <img class="fk-signature-img" src="{{invoice.billedBy.signature}}" alt="Authorised Signature" />
+              {{else}}{{#if invoice.signatureImage}}
+              <img class="fk-signature-img" src="{{invoice.signatureImage}}" alt="Authorised Signature" />
+              {{else}}{{#if invoice.billedBy.signatureImage}}
+              <img class="fk-signature-img" src="{{invoice.billedBy.signatureImage}}" alt="Authorised Signature" />
+              {{/if}}{{/if}}{{/if}}{{/if}}
             </div>
             <p class="fk-sig-label">Authorised Signatory</p>
           </div>

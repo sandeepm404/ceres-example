@@ -452,13 +452,12 @@
 
 /* ===== SIGNATURE BOX — 13px ===== */
 .fk-signature-container {
-  margin-top: auto;
+  margin-top: 15px;
   text-align: center;
 }
 
 .fk-signature-box {
-  background-color: #f0f0f0;
-  height: 65px;
+  min-height: 50px;
   width: 100%;
   margin-bottom: 6px;
   display: flex;
@@ -466,9 +465,9 @@
   justify-content: center;
 }
 
-.fk-stamp-img {
-  max-width: 130px;
-  max-height: 60px;
+.fk-signature-img {
+  max-width: 140px;
+  max-height: 55px;
   object-fit: contain;
 }
 
