@@ -305,6 +305,20 @@
   margin: 0 auto;
 }
 
+.fk-item-sku {
+  font-size: 9.5px;
+  color: var(--fk-text-muted);
+  margin-top: 2px;
+}
+
+.fk-desc-fullwidth-cell {
+  background-color: #fafafa;
+  border-top: 1px dashed var(--fk-border-light) !important;
+  font-size: 9.5px;
+  color: #333;
+  padding: 6px 12px !important;
+}
+
 .fk-model-cell {
   font-size: 10.5px;
   color: #333;

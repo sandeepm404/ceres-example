@@ -31,51 +31,88 @@
     {{!-- ═══ Outer Main Box Frame ═══ --}}
     <div class="fk-main-box">
 
-      {{!-- ═══ Title Bar (Quotation) ═══ --}}
+      {{!-- ═══ Title Bar ═══ --}}
       <div class="fk-title-bar">
         <h1 class="fk-title">{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}Quotation{{/if}}</h1>
       </div>
 
       {{!-- ═══ Three-Column Info Section ═══ --}}
       <div class="fk-info-section">
-        {{!-- Column 1: Quotation From --}}
+        {{!-- Column 1: Billed By / Quotation From --}}
         <div class="fk-info-col fk-info-from">
-          <p class="fk-info-heading">{{#if invoice.customLabels.billedBy}}{{invoice.customLabels.billedBy}}{{else}}Quotation From{{/if}}</p>
+          <p class="fk-info-heading">{{#if invoice.customLabels.billedBy}}{{invoice.customLabels.billedBy}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation From{{else}}Billed By{{/if}}{{/if}}</p>
           <p class="fk-info-value-bold">{{invoice.billedBy.name}}</p>
-          {{#if invoice.billedBy.city}}<p class="fk-info-value">{{invoice.billedBy.city}} -</p>{{/if}}
+          {{#if invoice.billedBy.building}}<p class="fk-info-value">{{invoice.billedBy.building}}</p>{{/if}}
+          {{#if invoice.billedBy.street}}<p class="fk-info-value">{{invoice.billedBy.street}}</p>{{/if}}
+          {{#if invoice.billedBy.address}}<p class="fk-info-value">{{invoice.billedBy.address}}</p>{{/if}}
+          {{#if invoice.billedBy.city}}
+          <p class="fk-info-value">
+            {{invoice.billedBy.city}}{{#if invoice.billedBy.state}}, {{invoice.billedBy.state}}{{/if}}{{#if invoice.billedBy.pincode}} {{invoice.billedBy.pincode}}{{/if}}{{#if invoice.billedBy.country}}, {{invoice.billedBy.country}}{{/if}}
+          </p>
+          {{/if}}
           {{#if invoice.billedBy.phone}}
           <div class="fk-info-kv"><span class="fk-kv-key">Phone</span><span class="fk-kv-val">{{invoice.billedBy.phone}}</span></div>
           {{/if}}
           {{#if invoice.billedBy.email}}
           <div class="fk-info-kv"><span class="fk-kv-key">Email</span><span class="fk-kv-val">{{invoice.billedBy.email}}</span></div>
           {{/if}}
+          {{#if invoice.billedBy.gstin}}
+          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.billedBy.gstin}}</span></div>
+          {{/if}}
+          {{#if invoice.billedBy.panNumber}}
+          <div class="fk-info-kv"><span class="fk-kv-key">PAN:</span><span class="fk-kv-val">{{invoice.billedBy.panNumber}}</span></div>
+          {{else}}{{#if invoice.billedBy.pan}}
+          <div class="fk-info-kv"><span class="fk-kv-key">PAN:</span><span class="fk-kv-val">{{invoice.billedBy.pan}}</span></div>
+          {{/if}}{{/if}}
+          {{#if invoice.billedBy.trnNumber}}
+          <div class="fk-info-kv"><span class="fk-kv-key">TRN:</span><span class="fk-kv-val">{{invoice.billedBy.trnNumber}}</span></div>
+          {{/if}}
         </div>
 
-        {{!-- Column 2: Quotation To --}}
+        {{!-- Column 2: Billed To / Quotation To --}}
         <div class="fk-info-col fk-info-to">
-          <p class="fk-info-heading">{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}Quotation To{{/if}}</p>
+          <p class="fk-info-heading">{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation To{{else}}Billed To{{/if}}{{/if}}</p>
           <p class="fk-info-value-bold">{{invoice.billedTo.name}}</p>
-          {{#if invoice.billedTo.city}}<p class="fk-info-value">{{invoice.billedTo.city}} -</p>{{/if}}
+          {{#if invoice.billedTo.building}}<p class="fk-info-value">{{invoice.billedTo.building}}</p>{{/if}}
+          {{#if invoice.billedTo.street}}<p class="fk-info-value">{{invoice.billedTo.street}}</p>{{/if}}
+          {{#if invoice.billedTo.address}}<p class="fk-info-value">{{invoice.billedTo.address}}</p>{{/if}}
+          {{#if invoice.billedTo.city}}
+          <p class="fk-info-value">
+            {{invoice.billedTo.city}}{{#if invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}{{#if invoice.billedTo.pincode}} {{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}}, {{invoice.billedTo.country}}{{/if}}
+          </p>
+          {{/if}}
           {{#if invoice.billedTo.phone}}
           <div class="fk-info-kv"><span class="fk-kv-key">Phone</span><span class="fk-kv-val">{{invoice.billedTo.phone}}</span></div>
           {{/if}}
           {{#if invoice.billedTo.email}}
           <div class="fk-info-kv"><span class="fk-kv-key">Email</span><span class="fk-kv-val">{{invoice.billedTo.email}}</span></div>
           {{/if}}
+          {{#if invoice.billedTo.gstin}}
+          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.billedTo.gstin}}</span></div>
+          {{/if}}
+          {{#if invoice.billedTo.trnNumber}}
+          <div class="fk-info-kv"><span class="fk-kv-key">TRN:</span><span class="fk-kv-val">{{invoice.billedTo.trnNumber}}</span></div>
+          {{/if}}
         </div>
 
-        {{!-- Column 3: Quotation Details --}}
+        {{!-- Column 3: Details --}}
         <div class="fk-info-col fk-info-details">
-          <p class="fk-info-heading">Quotation Details</p>
+          <p class="fk-info-heading">{{#if invoice.customLabels.invoiceDetails}}{{invoice.customLabels.invoiceDetails}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation Details{{else}}Invoice Details{{/if}}{{/if}}</p>
           <table class="fk-details-table">
             <tr>
-              <td class="fk-dt-label">{{#if invoice.customLabels.invoiceNumber}}{{invoice.customLabels.invoiceNumber}}{{else}}Quotation No{{/if}}</td>
+              <td class="fk-dt-label">{{#if invoice.customLabels.invoiceNumber}}{{invoice.customLabels.invoiceNumber}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation No{{else}}Invoice{{/if}}{{/if}}</td>
               <td class="fk-dt-value">{{invoice.invoiceNumber}}</td>
             </tr>
             <tr>
-              <td class="fk-dt-label">{{#if invoice.customLabels.invoiceDate}}{{invoice.customLabels.invoiceDate}}{{else}}Quotation Date{{/if}}</td>
+              <td class="fk-dt-label">{{#if invoice.customLabels.invoiceDate}}{{invoice.customLabels.invoiceDate}}{{else}}{{#if (eq invoice.invoiceTitle "Quotation")}}Quotation Date{{else}}Invoice Date{{/if}}{{/if}}</td>
               <td class="fk-dt-value">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</td>
             </tr>
+            {{#if invoice.dueDate}}
+            <tr>
+              <td class="fk-dt-label">{{#if invoice.customLabels.dueDate}}{{invoice.customLabels.dueDate}}{{else}}Due Date{{/if}}</td>
+              <td class="fk-dt-value">{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</td>
+            </tr>
+            {{/if}}
             {{#if invoice.billedTo._id}}
             <tr>
               <td class="fk-dt-label">Client ID</td>
@@ -105,22 +142,34 @@
               <td class="text-center fk-sno-cell">{{increment @index}}</td>
               <td class="fk-desc-cell">
                 <p class="fk-item-name">{{name}}</p>
+                {{#if sku}}<div class="fk-item-sku">SKU: {{sku}}</div>{{/if}}
+                {{#unless ../mapped.visibility.isDescriptionFullWidth}}
                 {{#if description}}
                 <div class="fk-item-desc">
                   {{> MarkdownViewer (prepareMarkdownViewerData description) }}
                 </div>
                 {{/if}}
+                {{/unless}}
               </td>
               <td class="fk-img-cell">
                 {{#if thumbnail}}
                 <img src="{{thumbnail}}" alt="{{name}}" class="fk-product-img" />
                 {{/if}}
               </td>
-              <td class="text-center fk-model-cell">{{sku}}</td>
-              <td class="text-right fk-price-cell">{{rate}}</td>
+              <td class="text-center fk-model-cell">{{#if model}}{{model}}{{else}}{{#if custom.modelNo}}{{custom.modelNo}}{{else}}{{#if custom.model}}{{custom.model}}{{else}}{{sku}}{{/if}}{{/if}}{{/if}}</td>
+              <td class="text-right fk-price-cell">{{#if ../invoice.customCurrencySymbol}}{{../invoice.customCurrencySymbol}}{{/if}}{{rate}}</td>
               <td class="text-center fk-qty-cell">{{quantity}}{{#if unit}} {{unit}}{{else}} No{{/if}}</td>
-              <td class="text-right fk-total-cell">{{amount}}</td>
+              <td class="text-right fk-total-cell">{{#if ../invoice.customCurrencySymbol}}{{../invoice.customCurrencySymbol}}{{/if}}{{amount}}</td>
             </tr>
+            {{#if ../mapped.visibility.isDescriptionFullWidth}}
+            {{#if description}}
+            <tr class="fk-desc-fullwidth-row">
+              <td colspan="7" class="fk-desc-fullwidth-cell">
+                {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+              </td>
+            </tr>
+            {{/if}}
+            {{/if}}
             {{/each}}
           </tbody>
         </table>
@@ -154,44 +203,58 @@
         {{!-- Right Side: Totals + Words + Signature --}}
         <div class="fk-bottom-right">
           <table class="fk-totals-table">
+            {{#if (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst invoice.finalTotal.discount invoice.finalTotal.roundOff)}}
             <tr>
-              <td class="fk-totals-label">Total</td>
-              <td class="fk-totals-value">{{invoice.customCurrencySymbol}}{{#if invoice.finalTotal.subTotal}}{{invoice.finalTotal.subTotal}}{{else}}{{invoice.subTotal}}{{/if}}</td>
+              <td class="fk-totals-label">{{#if invoice.customLabels.subTotal}}{{invoice.customLabels.subTotal}}{{else}}Total{{/if}}</td>
+              <td class="fk-totals-value">{{#if invoice.customCurrencySymbol}}{{invoice.customCurrencySymbol}}{{/if}}{{#if invoice.finalTotal.subTotal}}{{invoice.finalTotal.subTotal}}{{else}}{{invoice.subTotal}}{{/if}}</td>
             </tr>
+            {{/if}}
+
+            {{#if invoice.finalTotal.discount}}
+            <tr>
+              <td class="fk-totals-label">Discount</td>
+              <td class="fk-totals-value">- {{#if invoice.customCurrencySymbol}}{{invoice.customCurrencySymbol}}{{/if}}{{invoice.finalTotal.discount}}</td>
+            </tr>
+            {{/if}}
+
             {{#if invoice.finalTotal.igst}}
             <tr>
               <td class="fk-totals-label">GST @ 18%</td>
-              <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.igst}}</td>
+              <td class="fk-totals-value">{{#if invoice.customCurrencySymbol}}{{invoice.customCurrencySymbol}}{{/if}}{{invoice.finalTotal.igst}}</td>
             </tr>
             {{/if}}
+
             {{#if invoice.finalTotal.cgst}}
             <tr>
               <td class="fk-totals-label">CGST</td>
-              <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.cgst}}</td>
+              <td class="fk-totals-value">{{#if invoice.customCurrencySymbol}}{{invoice.customCurrencySymbol}}{{/if}}{{invoice.finalTotal.cgst}}</td>
             </tr>
             {{/if}}
+
             {{#if invoice.finalTotal.sgst}}
             <tr>
               <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</td>
-              <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.sgst}}</td>
+              <td class="fk-totals-value">{{#if invoice.customCurrencySymbol}}{{invoice.customCurrencySymbol}}{{/if}}{{invoice.finalTotal.sgst}}</td>
             </tr>
             {{/if}}
+
             {{#if invoice.finalTotal.roundOff}}
             <tr>
               <td class="fk-totals-label">Round off</td>
-              <td class="fk-totals-value">{{invoice.customCurrencySymbol}} {{invoice.finalTotal.roundOff}}</td>
+              <td class="fk-totals-value">{{#if invoice.customCurrencySymbol}}{{invoice.customCurrencySymbol}}{{/if}}{{invoice.finalTotal.roundOff}}</td>
             </tr>
             {{/if}}
+
             <tr class="fk-grand-total-row">
-              <td class="fk-totals-label">{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Grand Total{{/if}}</td>
-              <td class="fk-totals-value">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.total}}</td>
+              <td class="fk-totals-label">{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}</td>
+              <td class="fk-totals-value">{{#if invoice.customCurrencySymbol}}{{invoice.customCurrencySymbol}}{{/if}}{{invoice.finalTotal.total}}</td>
             </tr>
           </table>
 
           {{!-- Amount in Words --}}
           {{#if invoice.customLabels.totalInWordsValue}}
           <div class="fk-amount-words">
-            <p class="fk-amount-words-label">{{#if invoice.customLabels.totalInWords}}{{invoice.customLabels.totalInWords}}{{else}}Amount in words{{/if}}</p>
+            <p class="fk-amount-words-label">{{#if invoice.customLabels.totalInWords}}{{invoice.customLabels.totalInWords}}{{else}}Total (in words){{/if}}</p>
             <p class="fk-amount-words-value">{{invoice.customLabels.totalInWordsValue}}</p>
           </div>
           {{/if}}
