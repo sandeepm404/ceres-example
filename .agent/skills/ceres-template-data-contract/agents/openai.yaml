@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ceres Template Data Contract"
+  short_description: "Map template designs to Ceres invoice data"
+  default_prompt: "Use $ceres-template-data-contract when creating a Ceres template from an image or design."

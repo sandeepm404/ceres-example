@@ -189,7 +189,7 @@ const toBooleanValue = (value: unknown, fallback = false): boolean => {
 
 const toNonEmptyString = (value: unknown): string | null => {
   const normalized = toStringValue(value);
-  return normalized.length > 0 ? normalized : null;
+  return normalized.length > 0 && normalized !== "null" && normalized !== "undefined" ? normalized : null;
 };
 
 const hasValue = (value: unknown): boolean => {

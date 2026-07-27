@@ -30,6 +30,7 @@ Runs inside an iframe. Communication via postMessage:
 - `navigate-codebase` - Understand repo structure and Lydia integration
 - `snapshot-testing` - Manage visual regression tests
 - `design-to-template` - Convert Figma/screenshot into a Ceres template
+- `ceres-template-data-contract` - Map template designs to the normalized invoice data contract and ask for missing data from provided images
 
 ## Local Preview
 

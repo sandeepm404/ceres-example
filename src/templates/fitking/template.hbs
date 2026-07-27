@@ -1,4 +1,4 @@
-<div class="fk-shell">
+<div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};"{{else}}{{#if invoice.textScale}}style="zoom: {{invoice.textScale}};"{{/if}}{{/if}}>
 
   {{!-- Letterhead --}}
   <div class="no-dibella invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
@@ -9,9 +9,9 @@
     {{/if}}
   </div>
 
-  <div class="fk-page">
+  <div class="fk-page" {{#if advanceOptions.pageMargin}}style="--fk-page-padding-horizontal: {{advanceOptions.pageMargin}};"{{/if}}>
 
-    {{!-- ═══ Header: Logos ═══ --}}
+    {{!-- ═══ Header: Logos & QR ═══ --}}
     <div class="fk-header">
       <div class="fk-header-left">
         {{#if invoice.billedBy.logo}}
@@ -110,15 +110,103 @@
               <td class="fk-dt-value">{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</td>
             </tr>
             {{/if}}
+            {{#if invoice.purchaseOrderNumber}}
+            <tr>
+              <td class="fk-dt-label">{{#if invoice.customLabels.purchaseOrderNumber}}{{invoice.customLabels.purchaseOrderNumber}}{{else}}PO No{{/if}}</td>
+              <td class="fk-dt-value">{{invoice.purchaseOrderNumber}}</td>
+            </tr>
+            {{/if}}
+            {{#if invoice.placeOfSupply}}
+            <tr>
+              <td class="fk-dt-label">Place of Supply</td>
+              <td class="fk-dt-value">{{invoice.placeOfSupply}}</td>
+            </tr>
+            {{/if}}
+            {{#if invoice.irn.AckDt}}
+            <tr>
+              <td class="fk-dt-label">IRN Ack Date</td>
+              <td class="fk-dt-value">{{formatDateInTimeZone invoice.irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</td>
+            </tr>
+            {{/if}}
+            {{#if invoice.irn.CancelDate}}
+            <tr>
+              <td class="fk-dt-label">IRN Cancelled</td>
+              <td class="fk-dt-value">{{formateShortDateWithOffset invoice.irn.CancelDate invoice.ownerOffset}}</td>
+            </tr>
+            {{/if}}
             {{#if invoice.billedTo._id}}
             <tr>
               <td class="fk-dt-label">Client ID</td>
               <td class="fk-dt-value">{{invoice.billedTo._id}}</td>
             </tr>
             {{/if}}
+            {{#each invoice.customFields}}
+            <tr>
+              <td class="fk-dt-label">{{label}}</td>
+              <td class="fk-dt-value">{{value}}</td>
+            </tr>
+            {{/each}}
           </table>
+          {{#if mapped.qr.top}}
+          {{#unless (eq mapped.qr.top "null")}}
+          {{#unless (eq mapped.qr.top "undefined")}}
+          <div class="fk-details-qr">
+            <p class="fk-doc-qr-label">Document QR</p>
+            <img src="{{mapped.qr.top}}" alt="Document QR" class="fk-qr-img" />
+          </div>
+          {{/unless}}
+          {{/unless}}
+          {{/if}}
         </div>
       </div>
+
+      {{!-- ═══ Shipping & Logistics (Conditionally shown) ═══ --}}
+      {{#if (or mapped.visibility.shippedTo mapped.visibility.shippedFrom mapped.visibility.showLogistics)}}
+      <div class="fk-info-section fk-logistics-section">
+        {{#if mapped.visibility.shippedFrom}}
+        <div class="fk-info-col fk-info-shipped-from">
+          <p class="fk-info-heading">{{#if invoice.customLabels.shippedFrom}}{{invoice.customLabels.shippedFrom}}{{else}}Shipped From{{/if}}</p>
+          <p class="fk-info-value-bold">{{invoice.shippedFrom.name}}</p>
+          {{#if invoice.shippedFrom.building}}<p class="fk-info-value">{{invoice.shippedFrom.building}}</p>{{/if}}
+          {{#if invoice.shippedFrom.street}}<p class="fk-info-value">{{invoice.shippedFrom.street}}</p>{{/if}}
+          {{#if invoice.shippedFrom.address}}<p class="fk-info-value">{{invoice.shippedFrom.address}}</p>{{/if}}
+          {{#if invoice.shippedFrom.city}}
+          <p class="fk-info-value">
+            {{invoice.shippedFrom.city}}{{#if invoice.shippedFrom.state}}, {{invoice.shippedFrom.state}}{{/if}}{{#if invoice.shippedFrom.pincode}} {{invoice.shippedFrom.pincode}}{{/if}}{{#if invoice.shippedFrom.country}}, {{invoice.shippedFrom.country}}{{/if}}
+          </p>
+          {{/if}}
+        </div>
+        {{/if}}
+
+        {{#if mapped.visibility.shippedTo}}
+        <div class="fk-info-col fk-info-shipped">
+          <p class="fk-info-heading">{{#if invoice.customLabels.shippedTo}}{{invoice.customLabels.shippedTo}}{{else}}Shipped To{{/if}}</p>
+          <p class="fk-info-value-bold">{{invoice.shippedTo.name}}</p>
+          {{#if invoice.shippedTo.building}}<p class="fk-info-value">{{invoice.shippedTo.building}}</p>{{/if}}
+          {{#if invoice.shippedTo.street}}<p class="fk-info-value">{{invoice.shippedTo.street}}</p>{{/if}}
+          {{#if invoice.shippedTo.address}}<p class="fk-info-value">{{invoice.shippedTo.address}}</p>{{/if}}
+          {{#if invoice.shippedTo.city}}
+          <p class="fk-info-value">
+            {{invoice.shippedTo.city}}{{#if invoice.shippedTo.state}}, {{invoice.shippedTo.state}}{{/if}}{{#if invoice.shippedTo.pincode}} {{invoice.shippedTo.pincode}}{{/if}}{{#if invoice.shippedTo.country}}, {{invoice.shippedTo.country}}{{/if}}
+          </p>
+          {{/if}}
+        </div>
+        {{/if}}
+        
+        {{#if mapped.visibility.showLogistics}}
+        <div class="fk-info-col fk-info-transport">
+          <p class="fk-info-heading">Transport Details</p>
+          <div class="fk-transport-kv">
+            {{#if invoice.transportDetails.transporter.name}}<p><span class="fk-kv-key">{{#if invoice.customLabels.transportName}}{{invoice.customLabels.transportName}}{{else}}Transport Name{{/if}}:</span> <span class="fk-kv-val">{{invoice.transportDetails.transporter.name}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.transportMode}}<p><span class="fk-kv-key">Transport Mode:</span> <span class="fk-kv-val">{{invoice.transportDetails.transportMode}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.challanNumber}}<p><span class="fk-kv-key">{{#if invoice.customLabels.challanNumber}}{{invoice.customLabels.challanNumber}}{{else}}Challan No{{/if}}:</span> <span class="fk-kv-val">{{invoice.transportDetails.challanNumber}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.challanDate}}<p><span class="fk-kv-key">{{#if invoice.customLabels.challanDate}}{{invoice.customLabels.challanDate}}{{else}}Challan Date{{/if}}:</span> <span class="fk-kv-val">{{formateDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.vehicleNumber}}<p><span class="fk-kv-key">Vehicle No:</span> <span class="fk-kv-val">{{invoice.transportDetails.vehicleNumber}}</span></p>{{/if}}
+          </div>
+        </div>
+        {{/if}}
+      </div>
+      {{/if}}
 
       {{!-- ═══ Line Items Table ═══ --}}
       <div class="fk-table-wrap">
@@ -128,8 +216,12 @@
               <th class="fk-col-sno"></th>
               <th colspan="2" class="fk-col-desc-photo">{{getColumnLabel "item" "Item"}}</th>
               <th class="fk-col-model">{{getColumnLabel "model" "Model  No"}}</th>
+              {{#if derived.showHsnColumn}}<th class="fk-col-hsn">HSN/SAC</th>{{/if}}
               <th class="fk-col-price text-right">{{getColumnLabel "rate" "Unit Price"}}</th>
               <th class="fk-col-qty text-center">{{getColumnLabel "quantity" "Qty"}}</th>
+              {{#if invoice.finalTotal.discount}}<th class="fk-col-disc text-right">Discount</th>{{/if}}
+              {{#if mapped.visibility.showIgst}}<th class="fk-col-tax text-right">IGST</th>{{/if}}
+              {{#if mapped.visibility.showCgstSgst}}<th class="fk-col-tax text-right">CGST</th><th class="fk-col-tax text-right">SGST</th>{{/if}}
               <th class="fk-col-total text-right">{{getColumnLabel "total" "Total"}}</th>
             </tr>
           </thead>
@@ -139,7 +231,8 @@
               <td class="text-center fk-sno-cell">{{increment @index}}</td>
               <td class="fk-desc-cell">
                 <p class="fk-item-name">{{name}}</p>
-                {{#if sku}}<div class="fk-item-sku">SKU: {{sku}}</div>{{/if}}
+                {{#if ../advanceOptions.showSkuInInvoice}}{{#if sku}}<div class="fk-item-sku">SKU: {{sku}}</div>{{/if}}{{/if}}
+                {{#if ../derived.showInlineHsn}}{{#if hsn}}<div class="fk-item-sku">HSN/SAC: {{hsn}}</div>{{/if}}{{/if}}
                 {{#unless ../mapped.visibility.showDescriptionFullWidth}}
                 {{#if description}}
                 <div class="fk-item-desc">
@@ -154,14 +247,18 @@
                 {{/each}}
               </td>
               <td class="text-center fk-model-cell">{{#if model}}{{model}}{{else}}{{#if custom.modelNo}}{{custom.modelNo}}{{else}}{{#if custom.model}}{{custom.model}}{{else}}{{sku}}{{/if}}{{/if}}{{/if}}</td>
+              {{#if ../derived.showHsnColumn}}<td class="text-center fk-hsn-cell">{{hsn}}</td>{{/if}}
               <td class="text-right fk-price-cell">{{formatCurrency rate ../invoice}}</td>
               <td class="text-center fk-qty-cell">{{formatQtyCell this ../invoice ../advanceOptions}}</td>
+              {{#if ../invoice.finalTotal.discount}}<td class="text-right fk-disc-cell">{{discountLabel}}</td>{{/if}}
+              {{#if ../mapped.visibility.showIgst}}<td class="text-right fk-tax-cell">{{formatCurrency igst ../invoice}}</td>{{/if}}
+              {{#if ../mapped.visibility.showCgstSgst}}<td class="text-right fk-tax-cell">{{formatCurrency cgst ../invoice}}</td><td class="text-right fk-tax-cell">{{formatCurrency sgst ../invoice}}</td>{{/if}}
               <td class="text-right fk-total-cell">{{formatCurrency amount ../invoice}}</td>
             </tr>
             {{#if ../mapped.visibility.showDescriptionFullWidth}}
             {{#if description}}
             <tr class="fk-desc-fullwidth-row">
-              <td colspan="7" class="fk-desc-fullwidth-cell">
+              <td colspan="12" class="fk-desc-fullwidth-cell">
                 {{> MarkdownViewer (prepareMarkdownViewerData description) }}
               </td>
             </tr>
@@ -297,6 +394,18 @@
               <td class="fk-totals-label">{{getTotalsLabel "total" "Total"}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
             </tr>
+            {{#if invoice.totalPaid}}
+            <tr>
+              <td class="fk-totals-label">Total Paid</td>
+              <td class="fk-totals-value">{{formatCurrency invoice.totalPaid invoice}}</td>
+            </tr>
+            {{/if}}
+            {{#if invoice.balanceAmount}}
+            <tr>
+              <td class="fk-totals-label fk-balance-due">Balance Due</td>
+              <td class="fk-totals-value fk-balance-due">{{formatCurrency invoice.balanceAmount invoice}}</td>
+            </tr>
+            {{/if}}
           </table>
 
           {{!-- Amount in Words --}}
@@ -324,6 +433,107 @@
           </div>
         </div>
       </div>
+
+      {{!-- ═══ Tax, HSN & Payments (Conditionally shown) ═══ --}}
+      {{#if mapped.visibility.showTaxTable}}
+      <div class="fk-summary-section">
+        <p class="fk-summary-heading">Tax Details</p>
+        <table class="fk-summary-table">
+          <thead>
+            <tr>
+              <th>Tax Rate</th>
+              <th class="text-right">Taxable Amount</th>
+              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">CGST</th><th class="text-right">SGST</th>{{/if}}
+              {{#if mapped.visibility.showIgst}}<th class="text-right">IGST</th>{{/if}}
+              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">CESS</th>{{/if}}
+              <th class="text-right">Total Tax</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each invoice.taxSummary.taxList}}
+            <tr>
+              <td>{{taxRate}}%</td>
+              <td class="text-right">{{formatCurrency taxableAmount ../invoice}}</td>
+              {{#if ../mapped.visibility.showCgstSgst}}
+              <td class="text-right">{{formatCurrency cgstAmount ../invoice}}</td>
+              <td class="text-right">{{formatCurrency sgstAmount ../invoice}}</td>
+              {{/if}}
+              {{#if ../mapped.visibility.showIgst}}
+              <td class="text-right">{{formatCurrency igstAmount ../invoice}}</td>
+              {{/if}}
+              {{#if ../mapped.visibility.showSummaryCess}}
+              <td class="text-right">{{formatCurrency cessAmount ../invoice}}</td>
+              {{/if}}
+              <td class="text-right">{{formatCurrency totalTaxAmount ../invoice}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{/if}}
+
+      {{#if mapped.visibility.showHsnSummary}}
+      <div class="fk-summary-section">
+        <p class="fk-summary-heading">HSN Summary</p>
+        <table class="fk-summary-table">
+          <thead>
+            <tr>
+              <th>HSN/SAC</th>
+              <th class="text-right">Taxable Amount</th>
+              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">CGST</th><th class="text-right">SGST</th>{{/if}}
+              {{#if mapped.visibility.showIgst}}<th class="text-right">IGST</th>{{/if}}
+              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">CESS</th>{{/if}}
+              <th class="text-right">Total Tax</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each invoice.hsnSummary.hsnList}}
+            <tr>
+              <td>{{hsnCode}}</td>
+              <td class="text-right">{{formatCurrency taxableAmount ../invoice}}</td>
+              {{#if ../mapped.visibility.showCgstSgst}}
+              <td class="text-right">{{formatCurrency cgstAmount ../invoice}}</td>
+              <td class="text-right">{{formatCurrency sgstAmount ../invoice}}</td>
+              {{/if}}
+              {{#if ../mapped.visibility.showIgst}}
+              <td class="text-right">{{formatCurrency igstAmount ../invoice}}</td>
+              {{/if}}
+              {{#if ../mapped.visibility.showSummaryCess}}
+              <td class="text-right">{{formatCurrency cessAmount ../invoice}}</td>
+              {{/if}}
+              <td class="text-right">{{formatCurrency totalTaxAmount ../invoice}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{/if}}
+
+      {{#if invoice.allPayments.length}}
+      <div class="fk-summary-section">
+        <p class="fk-summary-heading">Payments History</p>
+        <table class="fk-summary-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Mode</th>
+              <th>Ref/Notes</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each invoice.allPayments}}
+            <tr>
+              <td>{{formateShortDateWithOffset paymentDate ../invoice.ownerOffset}}</td>
+              <td>{{paymentMethod}}</td>
+              <td>{{referenceNumber}} {{#if notes}}- {{notes}}{{/if}}</td>
+              <td class="text-right">{{formatCurrency amount ../invoice}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{/if}}
 
     </div>{{!-- .fk-main-box --}}
 
