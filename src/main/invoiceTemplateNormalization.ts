@@ -31,6 +31,7 @@ export interface InvoiceTemplateVisibility {
   isUtgst: boolean;
   showTaxTable: boolean;
   showHsnSummary: boolean;
+  showPaymentsTable: boolean;
   showSummaryCess: boolean;
   showSku: boolean;
   showHsn: boolean;
@@ -482,11 +483,19 @@ export const normalizeInvoiceTemplateState = (
     (!isExpenditure || invoiceAccepted === "ACCEPTED") &&
     Boolean(paymentOptions.upi) &&
     hasValue(upiId);
-  const showTaxTable = ["TABLE", "BOTH"].includes(
-    toStringValue(context.advanceOptions.taxSummaryView)
-  );
+  // Each summary table needs BOTH an opt-in from the document's configuration
+  // and rows to put in it. Configuration alone renders a bare header strip;
+  // rows alone renders a table the user asked to hide.
+  const showTaxTable =
+    ["TABLE", "BOTH"].includes(
+      toStringValue(context.advanceOptions.taxSummaryView)
+    ) && getNestedSummaryEntries(invoice.taxSummary, "taxList").length > 0;
   const showHsnSummary =
+    toBooleanValue(context.advanceOptions.showHSNSummaryInInvoice) &&
     getNestedSummaryEntries(invoice.hsnSummary, "hsnList").length > 0;
+  const showPaymentsTable =
+    toBooleanValue(invoice.showPaymentsTable) &&
+    asArray(invoice.allPayments).length > 0;
   const showSummaryCess =
     asArray(invoice.cesses).some((entry) =>
       Boolean(asRecord(entry).isApplied)
@@ -543,6 +552,7 @@ export const normalizeInvoiceTemplateState = (
         isUtgst: Boolean(invoice.utgst),
         showTaxTable,
         showHsnSummary,
+        showPaymentsTable,
         showSummaryCess,
         showSku: context.showSkuInName,
         showHsn: context.showHsnColumn,

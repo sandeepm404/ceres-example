@@ -205,8 +205,9 @@
           <thead>
             <tr>
               <th class="fk-col-sno"></th>
-              <th class="fk-col-desc">{{getColumnLabel "item" "Item"}}</th>
-              <th class="fk-col-img-head"></th>
+              {{!-- One heading spanning the name and photo cells: the payload
+                    ships a single item column, the photo is part of it. --}}
+              <th colspan="2" class="fk-col-desc-photo">{{getColumnLabel "item" "Item"}}</th>
               <th class="fk-col-model">{{getColumnLabel "model" "Model  No"}}</th>
               {{#if derived.showHsnColumn}}<th class="fk-col-hsn">HSN/SAC</th>{{/if}}
               <th class="fk-col-price text-center">{{getColumnLabel "rate" "Unit Price"}}</th>
@@ -250,7 +251,7 @@
             {{#if ../mapped.visibility.showDescriptionFullWidth}}
             {{#if description}}
             <tr class="fk-desc-fullwidth-row">
-              <td colspan="12" class="fk-desc-fullwidth-cell">
+              <td colspan="{{itemColspan}}" class="fk-desc-fullwidth-cell">
                 {{> MarkdownViewer (prepareMarkdownViewerData description) }}
               </td>
             </tr>
@@ -504,7 +505,7 @@
       </div>
       {{/if}}
 
-      {{#if invoice.allPayments.length}}
+      {{#if mapped.visibility.showPaymentsTable}}
       <div class="fk-summary-section">
         <p class="fk-summary-heading">Payments History</p>
         <table class="fk-summary-table">

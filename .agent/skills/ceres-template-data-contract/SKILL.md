@@ -1,6 +1,6 @@
 ---
 name: ceres-template-data-contract
-description: Map Ceres invoice/document template designs to the renderer data contract. Use when creating or modifying a Ceres template from an image, screenshot, Figma/design reference, sample payload, or user description, especially when deciding which `invoice.*`, `mapped.*`, `derived.*`, `advanceOptions`, or `pdfOptions` fields a Handlebars template should consume and when the provided image is missing data needed to reproduce the design.
+description: Map Ceres invoice/document template designs to the renderer data contract. Use when creating or modifying a Ceres template from an image, screenshot, Figma/design reference, sample payload, or user description, especially for template-creation requests that require mapping visible fields to `invoice.*`, `mapped.*`, `derived.*`, `advanceOptions`, or `pdfOptions` and asking for missing API data before implementation.
 ---
 
 # Ceres Template Data Contract
@@ -39,16 +39,29 @@ Templates usually consume the normalized state:
 ## Workflow
 
 1. Inspect the provided design/image and list the visible document sections: title, document metadata, biller/customer blocks, shipping/transport, item columns, taxes, totals, payment details, QR codes, notes, terms, signature, branding, footer, and any custom labels.
-2. Map each visible section to existing normalized fields first. Prefer `invoice.*` for raw values, `mapped.visibility.*` for conditional sections, `mapped.columns` for dynamic line-item columns, `mapped.qr.*` for QR images, and `derived.*` for HSN/classification/SKU/unit layout decisions.
-3. Use `normalizeInvoiceTemplateState` in the template entrypoint unless the template has a specific reason to render the raw payload. Set `window.CeresTemplateDataMapper = normalizeInvoiceTemplateState`.
-4. Import only the widgets/helpers used by `template.hbs`, such as `invoice-status`, `date-time`, `demo-badge`, or `markdown-viewer`.
-5. Keep optional data conditional in Handlebars. Do not render empty labels, empty QR/image tags, blank tax sections, blank bank details, or placeholder identifiers in production markup.
-6. If the requested design needs fields not present in the normalized contract, add the smallest template-local mapper only after checking whether the raw payload already contains the data under another contract field.
-7. Update or create a sample payload only when the template needs data that is not represented by the existing sample. Keep sample fields consistent with `src/main/invoicePayloadContract.ts`.
+2. Create a visible-field inventory before coding. For every visible label/value pair, mark it as `mapped`, `custom-field candidate`, `asset needed`, `style-only`, or `missing/needs user answer`.
+3. Ask the user before implementation when a required visible field, asset, or bill-type behavior is `missing/needs user answer`. Do not defer these questions until the final response.
+4. Map each visible section to existing normalized fields first. Prefer `invoice.*` for raw values, `mapped.visibility.*` for conditional sections, `mapped.columns` for dynamic line-item columns, `mapped.qr.*` for QR images, and `derived.*` for HSN/classification/SKU/unit layout decisions.
+5. Use `normalizeInvoiceTemplateState` in the template entrypoint unless the template has a specific reason to render the raw payload. Set `window.CeresTemplateDataMapper = normalizeInvoiceTemplateState`.
+6. Import only the widgets/helpers used by `template.hbs`, such as `invoice-status`, `date-time`, `demo-badge`, or `markdown-viewer`.
+7. Keep optional data conditional in Handlebars. Do not render empty labels, empty QR/image tags, blank tax sections, blank bank details, or placeholder identifiers in production markup.
+8. If the requested design needs fields not present in the normalized contract, add the smallest template-local mapper only after checking whether the raw payload already contains the data under another contract field.
+9. Keep the layout consistent across bill types. Treat `invoice.billType`, `invoice.invoiceType`, and `invoice.invoiceTitle` as content/label switches unless the user explicitly asks for different layouts.
+10. Update or create a sample payload only when the template needs data that is not represented by the existing sample. Keep sample fields consistent with `src/main/invoicePayloadContract.ts`.
+
+## Data Audit Gate
+
+Run this gate before making template files from an image or design:
+
+- Extract every visible text label, repeated table heading, identifier row, QR label, footer phrase, and asset placeholder from the reference.
+- Match each item to a contract field, existing helper, widget, style-only element, or explicit user-provided asset.
+- Ask for unresolved required items in one concise question. Include the suspected API candidates when helpful.
+- Never hardcode visible sample values from the screenshot as production data. Use Handlebars fields and conditionals.
+- If the user does not provide a sample payload, state that the implementation will use contract-backed fields and that unmapped visible rows require confirmation before reliable preview.
 
 ## Missing Data Rule
 
-If the user provides an image/screenshot/design and something required to reproduce it is not visible or not inferable from the contract, ask for it before finalizing the template.
+If the user provides an image/screenshot/design and something required to reproduce it is not visible or not inferable from the contract, ask for it before implementing the template.
 
 Ask specifically for missing:
 
@@ -84,6 +97,18 @@ Use these defaults unless the current contract or existing template shows a bett
 - Notes/terms/footer: `invoice.notes`, `invoice.terms`, `invoice.footers`, `invoice.customFooters`, `invoice.showBranding`.
 - Styling options: use Ceres CSS custom properties where possible: `--ceres-primary-color`, `--ceres-secondary-color`, `--ceres-primary-background`, `--ceres-secondary-background`, `--ceres-font-family`.
 
+## Bill Type Layout Consistency
+
+Make the same template layout hold across supported `billType` variants.
+
+- Preserve the same document structure, section order, table widths, spacing, borders, typography hierarchy, and print behavior across invoices, quotations, delivery challans, credit notes, debit notes, and other bill types unless the user explicitly provides separate designs.
+- Change labels and values by bill type, not layout geometry. Examples: `Invoice Details` vs `Quotation Details` vs `Delivery Challan Details`, `Invoice No` vs `Quote No` vs `Challan No`, and date labels.
+- Use conditional rows/sections for data that only exists on some bill types, but keep the containing grid/table visually stable when rows appear or disappear.
+- Share CSS classes and Handlebars structure across bill types. Avoid duplicating whole templates or creating divergent wrappers just to handle title/label changes.
+- Do not remove common sections such as parties, item table, notes, terms, QR, or footer for a bill type unless the API visibility flags or the user request requires it.
+- For bill-type-specific identifiers, map to the closest contract fields first: quotation numbers to `invoice.quotationNumber` or normalized `invoice.invoiceNumber`; delivery challan number/date to `invoice.transportDetails.challanNumber` and `invoice.transportDetails.challanDate`; credit/debit-note status/payment behavior through existing `mapped.visibility.*` rules.
+- If only one screenshot is provided, ask whether the same layout must apply to all relevant bill types and which label changes are expected. If the user does not specify, apply the same layout and notify them that only labels/conditional rows were varied by bill type.
+
 ## Unmapped Identifier Rows
 
 Treat visible rows like `Client ID` as required data, not decoration.
@@ -96,7 +121,7 @@ For a screenshot row labeled `Client ID` inside a document details table, check 
 4. `invoice.billedTo.customFields[]` or `invoice.billedTo.customHeaders[]` when the identifier is stored on the billed party profile.
 5. A raw party identifier such as `invoice.billedTo._id` only if the actual API sample contains it. This is not part of the typed `BillerDetails` contract, so do not assume it exists.
 
-If the field is visible in the image but not present in the provided sample payload, ask the user for the source field and sample value before finalizing the template. Do not substitute `invoice._id`, `ownerBusiness._id`, or another Mongo-style ID just because the visible value looks like an ObjectId.
+If the field is visible in the image but not present in the provided sample payload, ask the user for the source field and sample value before implementing that row. Do not substitute `invoice._id`, `ownerBusiness._id`, or another Mongo-style ID just because the visible value looks like an ObjectId.
 
 Use a concise question:
 
@@ -135,5 +160,6 @@ After implementation, run the narrowest useful checks:
 - `npm run build:template --template=<name>` for one template.
 - `npm test -- --findRelatedTests <changed-files>` when template behavior or normalization tests exist.
 - `npm run typecheck` when TypeScript contract or mapper code changes.
+- Preview with representative payloads for the bill types affected by the template. If only one bill-type sample is available, report that cross-bill-type layout consistency is implemented by shared structure but not fully visually verified.
 
 If validation cannot run, report why and name the unverified risk.

@@ -1488,6 +1488,9 @@
         "showLogistics": {
           "type": "boolean"
         },
+        "showPaymentsTable": {
+          "type": "boolean"
+        },
         "showSku": {
           "type": "boolean"
         },
@@ -1540,6 +1543,7 @@
         "isUtgst",
         "showTaxTable",
         "showHsnSummary",
+        "showPaymentsTable",
         "showSummaryCess",
         "showSku",
         "showHsn",

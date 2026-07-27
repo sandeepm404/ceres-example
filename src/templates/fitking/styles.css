@@ -40,12 +40,14 @@
   font-family: var(--fk-font);
   font-size: var(--fk-font-size-base);
   color: var(--fk-text);
-  background: #e0e0e0;
+  /* No backdrop: the shell is only as wide as the page, so a grey background
+     plus bottom padding rendered as a grey band under the letterhead footer. */
+  background: transparent;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
   line-height: 1.4;
   width: 100%;
-  padding: 0 0 24px 0;
+  padding: 0;
   position: relative;
 }
 
@@ -340,14 +342,9 @@
   text-align: center;
 }
 
-.fk-item-table thead th.fk-col-desc {
-  border-right: none;
+/* Spans the name and photo cells, so the label centres over both of them. */
+.fk-col-desc-photo {
   text-align: center;
-}
-
-.fk-item-table thead th.fk-col-img-head {
-  border-left: none;
-  width: 140px;
 }
 
 .fk-col-model {
@@ -828,9 +825,7 @@
     width: 40px;
   }
 
-  .fk-img-cell,
-  .fk-item-table thead th.fk-col-img-head {
-    width: 90px;
+  .fk-img-cell {
     padding: 4px !important;
   }
 
