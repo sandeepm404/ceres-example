@@ -44,12 +44,77 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return val !== undefined && val !== null && val !== "";
   });
 
+  // A party's operator-defined extras arrive in three differently shaped
+  // buckets, and any of them can be absent. Flatten them to one {label, value}
+  // list so each party block renders with a single loop.
+  function stringifyFieldValue(val: any): string {
+    if (val === undefined || val === null) return "";
+    if (typeof val === "string") return val.trim();
+    if (typeof val === "number") return isNaN(val) ? "" : String(val);
+    if (typeof val === "boolean") return val ? "Yes" : "No";
+    if (Array.isArray(val)) {
+      return val.map(stringifyFieldValue).filter(Boolean).join(", ");
+    }
+    // Objects have no sensible single-line form; printing one would render
+    // "[object Object]" onto the document.
+    return "";
+  }
+
+  HB.registerHelper("partyFields", function (party: any) {
+    if (!party || typeof party !== "object") return [];
+
+    const fields: Array<{ label: string; value: string }> = [];
+    const add = (label: any, value: any, isHidden: boolean) => {
+      if (isHidden) return;
+      const text = stringifyFieldValue(value);
+      const name = typeof label === "string" ? label.trim() : "";
+      if (!text || !name) return;
+      fields.push({ label: name, value: text });
+    };
+    const asArray = (val: any): any[] => (Array.isArray(val) ? val : []);
+
+    // `showInInvoice` is opt-out: it is frequently absent on records that are
+    // meant to print, so only an explicit false hides the row.
+    for (const field of asArray(party.customFields)) {
+      add(field?.label ?? field?.name, field?.value, field?.params?.showInInvoice === false);
+    }
+    for (const id of asArray(party.additionalIds)) {
+      add(id?.label, id?.value, id?.showInInvoice === false);
+    }
+    for (const header of asArray(party.customHeaders)) {
+      add(header?.label, header?.value, header?.showInInvoice === false);
+    }
+
+    return fields;
+  });
+
+  // Letterhead/footer assets are documented as strings, but the platform also
+  // ships them as { url } — see toAssetUrl in src/main/commonUtils.ts. Printing
+  // the raw value in an `src` renders "[object Object]", which the browser
+  // resolves to a broken image: the block keeps its height but shows nothing.
+  // Resolving here means a value we cannot turn into a URL reads as absent, so
+  // the surrounding `is-empty` guard collapses the block instead.
+  function resolveAssetUrl(val: any): string {
+    if (typeof val === "string") return val.trim();
+    if (val && typeof val === "object") {
+      for (const key of ["url", "src", "link", "href"]) {
+        const nested = (val as any)[key];
+        if (typeof nested === "string" && nested.trim()) return nested.trim();
+      }
+    }
+    return "";
+  }
+
+  HB.registerHelper("assetUrl", function (val: any) {
+    return resolveAssetUrl(val);
+  });
+
   HB.registerHelper("isPositive", function (val: any) {
     const num = extractNumericValue(val);
     return num !== null && num > 0;
   });
 
-  HB.registerHelper("formatCurrency", function (value: any, invoiceOrSymbol?: any) {
+  function formatCurrencyValue(value: any, invoiceOrSymbol?: any): string {
     const num = extractNumericValue(value);
     if (num === null) {
       if (typeof value === "string") return value;
@@ -84,7 +149,9 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       return `(${text})`;
     }
     return text;
-  });
+  }
+
+  HB.registerHelper("formatCurrency", formatCurrencyValue);
 
   HB.registerHelper("formatPhone", function (phone: any) {
     if (!phone) return "";
@@ -155,21 +222,222 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return fallback;
   });
 
-  // Column count of the line-item table, mirroring the <th> set in template.hbs.
-  // The full-width description row spans the whole table, and a colspan larger
-  // than the real column count makes the browser invent the missing columns —
-  // they eat the width the auto-sized Item column should get and leave a dead
-  // strip at the right edge. So this has to track the header exactly.
-  HB.registerHelper("itemColspan", function (options: any) {
-    const root = options?.data?.root;
+  // ── Item table columns ───────────────────────────────────────────────────
+  //
+  // The order comes from `invoice.columns` as the API returns it. Each declared
+  // column maps to a `kind` the row markup knows how to render; anything
+  // unrecognised is a user-defined column and renders from the item's own data.
+
+  // Declared key (punctuation and case stripped) -> render kind.
+  const COLUMN_KEY_KINDS: Record<string, string> = {
+    name: "name",
+    item: "name",
+    itemname: "name",
+    description: "name",
+    model: "model",
+    modelno: "model",
+    modelnumber: "model",
+    hsn: "hsn",
+    sac: "hsn",
+    hsnsac: "hsn",
+    rate: "rate",
+    price: "rate",
+    unitprice: "rate",
+    quantity: "qty",
+    qty: "qty",
+    discount: "discount",
+    igst: "igst",
+    cgst: "cgst",
+    sgst: "sgst",
+    utgst: "sgst",
+    amount: "amount",
+    total: "amount",
+  };
+
+  // Kind -> width class on its <col>, default heading, and the `customLabels`
+  // key that overrides that heading.
+  const COLUMN_KIND_META: Record<
+    string,
+    { colClass: string; label: string; labelKey?: string }
+  > = {
+    sno: { colClass: "fk-col-sno", label: "" },
+    name: { colClass: "fk-col-desc", label: "Item", labelKey: "item" },
+    photo: { colClass: "fk-col-photo", label: "" },
+    model: { colClass: "fk-col-model", label: "Model  No", labelKey: "model" },
+    hsn: { colClass: "fk-col-hsn", label: "HSN/SAC", labelKey: "hsn" },
+    rate: { colClass: "fk-col-price", label: "Unit Price", labelKey: "rate" },
+    qty: { colClass: "fk-col-qty", label: "Qty", labelKey: "quantity" },
+    discount: { colClass: "fk-col-disc", label: "Discount", labelKey: "discount" },
+    igst: { colClass: "fk-col-tax", label: "IGST", labelKey: "igst" },
+    cgst: { colClass: "fk-col-tax", label: "CGST", labelKey: "cgst" },
+    sgst: { colClass: "fk-col-tax", label: "SGST", labelKey: "sgst" },
+    amount: { colClass: "fk-col-total", label: "Total", labelKey: "total" },
+    custom: { colClass: "fk-col-custom", label: "" },
+  };
+
+  const normalizeColumnKey = (key: any) =>
+    String(key || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // Tax, discount and HSN columns stay subject to the document's visibility
+  // flags: a declared column set lists every column the account has configured,
+  // including ones that do not apply to this document (an intra-state invoice
+  // still declares IGST), and rendering those would print a column of zeros.
+  function isKindVisible(kind: string, root: any): boolean {
     const visibility = root?.mapped?.visibility || {};
-    // sno, item, photo, model, unit price, qty, total
-    let count = 7;
-    if (root?.derived?.showHsnColumn) count += 1;
-    if (root?.invoice?.finalTotal?.discount) count += 1;
-    if (visibility.showIgst) count += 1;
-    if (visibility.showCgstSgst) count += 2;
-    return count;
+    if (kind === "hsn") return Boolean(root?.derived?.showHsnColumn);
+    if (kind === "discount") return Boolean(root?.invoice?.finalTotal?.discount);
+    if (kind === "igst") return Boolean(visibility.showIgst);
+    if (kind === "cgst" || kind === "sgst") return Boolean(visibility.showCgstSgst);
+    return true;
+  }
+
+  function getItemColumns(root: any): Array<Record<string, any>> {
+    const rawColumns = root?.columns || root?.invoice?.columns;
+    const customLabels = root?.invoice?.customLabels || {};
+
+    // The declared set, minus the entries that never print, resolved to kinds.
+    const declared: Array<Record<string, any>> = [];
+    for (const col of Array.isArray(rawColumns) ? rawColumns : []) {
+      if (!col || typeof col !== "object") continue;
+      if (col.isHidden === true || col.private === true) continue;
+
+      const key = String(col.key || col.id || col.name || "").trim();
+      if (!key) continue;
+      const label = typeof col.label === "string" ? col.label.trim() : "";
+      const kind = COLUMN_KEY_KINDS[normalizeColumnKey(key)];
+
+      // An unrecognised key is a user-defined column, rendered from item data.
+      if (!kind && !label) continue;
+      declared.push({
+        kind: kind || "custom",
+        label,
+        key,
+        dataType: String(col.dataType || "").toLowerCase(),
+        fxReturnType: String(col.fxReturnType || "").toLowerCase(),
+      });
+    }
+
+    const columns: Array<Record<string, any>> = [];
+    const usedKinds = new Set<string>();
+    const declares = (kind: string) => declared.some((col) => col.kind === kind);
+
+    const add = (kind: string, extra: Record<string, any> = {}) => {
+      // Every kind but `custom` is a single column; payloads legitimately
+      // declare both `amount` and `total`, which are the same column here.
+      if (kind !== "custom" && usedKinds.has(kind)) return;
+      if (!isKindVisible(kind, root)) return;
+      usedKinds.add(kind);
+
+      const meta = COLUMN_KIND_META[kind] || COLUMN_KIND_META.custom;
+      const label =
+        extra.label ||
+        (meta.labelKey && customLabels[meta.labelKey]) ||
+        meta.label;
+      columns.push({ ...extra, kind, colClass: extra.colClass || meta.colClass, label });
+    };
+
+    // The item name and its photo are one visual unit, so the photo is pinned
+    // beside the name rather than taking a slot from the declared order. It is
+    // the only column this template adds that the document does not declare —
+    // anything else invented here shows up as a duplicate of a declared column.
+    const addItemColumns = (label?: string) => {
+      if (usedKinds.has("name")) return;
+      add("name", label ? { label } : {});
+      add("photo");
+    };
+
+    // Payloads ship both an `amount` and a `total` column for what this
+    // template renders as one; `total` carries the heading meant for it.
+    const totalLabel = declared.find(
+      (col) => col.kind === "amount" && normalizeColumnKey(col.key) === "total"
+    )?.label;
+
+    add("sno");
+    if (!declares("name")) addItemColumns();
+
+    for (const col of declared) {
+      if (col.kind === "name") {
+        addItemColumns(col.label);
+      } else if (col.kind === "custom") {
+        add("custom", {
+          label: col.label,
+          key: col.key,
+          dataType: col.dataType,
+          fxReturnType: col.fxReturnType,
+        });
+      } else {
+        const label = col.kind === "amount" ? totalLabel || col.label : col.label;
+        add(col.kind, label ? { label } : {});
+      }
+    }
+
+    // No column config at all: fall back to this template's own order so those
+    // documents keep rendering exactly as they did.
+    if (!declared.length) {
+      add("model");
+      add("hsn");
+      add("rate");
+      add("qty");
+      add("discount");
+      add("igst");
+      add("cgst");
+      add("sgst");
+      add("amount");
+    }
+
+    return columns;
+  }
+
+  HB.registerHelper("itemColumns", function (options: any) {
+    return getItemColumns(options?.data?.root);
+  });
+
+  // The rendered cell for a user-defined column: the text plus whether it came
+  // out numeric, which the markup uses to stop long figures wrapping mid-number.
+  // Payloads put these values on `custom` keyed by column key, on a
+  // `customFields` list, or occasionally flat on the item itself, so all three
+  // are checked before giving up.
+  HB.registerHelper("customColumnCell", function (item: any, column: any, invoice?: any) {
+    if (!item || !column?.key) return { text: "", isNumber: false };
+
+    const key = String(column.key);
+    let value = item.custom?.[key];
+
+    if (value === undefined || value === null || value === "") {
+      const match = (Array.isArray(item.customFields) ? item.customFields : []).find((field: any) => {
+        const candidates = [field?.key, field?.name, field?.label];
+        return candidates.some(
+          (candidate: any) =>
+            typeof candidate === "string" &&
+            candidate.trim().toLowerCase() === key.toLowerCase()
+        );
+      });
+      value = match?.value;
+    }
+
+    if (value === undefined || value === null || value === "") {
+      value = item[key];
+    }
+
+    // Currency formatting only where the column declares it: everything else,
+    // `number` included, prints the value as the document stores it.
+    const declaredType = `${column.dataType || ""} ${column.fxReturnType || ""}`;
+    if (declaredType.includes("currency") && extractNumericValue(value) !== null) {
+      return { text: formatCurrencyValue(value, invoice), isNumber: true };
+    }
+
+    return {
+      text: stringifyFieldValue(value),
+      isNumber: extractNumericValue(value) !== null,
+    };
+  });
+
+  // Column count of the line-item table. The full-width description row spans
+  // the whole table, and a colspan larger than the real column count makes the
+  // browser invent the missing columns — they eat the width the auto-sized Item
+  // column should get and leave a dead strip at the right edge.
+  HB.registerHelper("itemColspan", function (options: any) {
+    return getItemColumns(options?.data?.root).length;
   });
 
   HB.registerHelper("getTotalsLabel", function (key: string, fallback: string, options: any) {

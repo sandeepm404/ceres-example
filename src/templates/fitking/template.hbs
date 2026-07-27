@@ -1,9 +1,9 @@
 <div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};"{{else}}{{#if invoice.textScale}}style="zoom: {{invoice.textScale}};"{{/if}}{{/if}}>
 
   {{!-- Letterhead --}}
-  <div class="no-dibella invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
-    {{#if invoice.letterHead}}
-    <img src="{{invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+  <div class="no-dibella invoice-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
+    {{#if (assetUrl invoice.letterHead)}}
+    <img src="{{assetUrl invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
     {{else}}
     <img alt="Letterhead" data-ceres-height="letterhead" />
     {{/if}}
@@ -64,6 +64,9 @@
           {{#if invoice.billedBy.trnNumber}}
           <div class="fk-info-kv"><span class="fk-kv-key">TRN:</span><span class="fk-kv-val">{{invoice.billedBy.trnNumber}}</span></div>
           {{/if}}
+          {{#each (partyFields invoice.billedBy)}}
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          {{/each}}
         </div>
 
         {{!-- Column 2: Billed To / Quotation To --}}
@@ -90,6 +93,9 @@
           {{#if invoice.billedTo.trnNumber}}
           <div class="fk-info-kv"><span class="fk-kv-key">TRN:</span><span class="fk-kv-val">{{invoice.billedTo.trnNumber}}</span></div>
           {{/if}}
+          {{#each (partyFields invoice.billedTo)}}
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          {{/each}}
         </div>
 
         {{!-- Column 3: Details --}}
@@ -166,6 +172,12 @@
             {{invoice.shippedFrom.city}}{{#if invoice.shippedFrom.state}}, {{invoice.shippedFrom.state}}{{/if}}{{#if invoice.shippedFrom.pincode}} {{invoice.shippedFrom.pincode}}{{/if}}{{#if invoice.shippedFrom.country}}, {{invoice.shippedFrom.country}}{{/if}}
           </p>
           {{/if}}
+          {{#if invoice.shippedFrom.gstin}}
+          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.shippedFrom.gstin}}</span></div>
+          {{/if}}
+          {{#each (partyFields invoice.shippedFrom)}}
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          {{/each}}
         </div>
         {{/if}}
 
@@ -181,6 +193,12 @@
             {{invoice.shippedTo.city}}{{#if invoice.shippedTo.state}}, {{invoice.shippedTo.state}}{{/if}}{{#if invoice.shippedTo.pincode}} {{invoice.shippedTo.pincode}}{{/if}}{{#if invoice.shippedTo.country}}, {{invoice.shippedTo.country}}{{/if}}
           </p>
           {{/if}}
+          {{#if invoice.shippedTo.gstin}}
+          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.shippedTo.gstin}}</span></div>
+          {{/if}}
+          {{#each (partyFields invoice.shippedTo)}}
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          {{/each}}
         </div>
         {{/if}}
         
@@ -211,63 +229,76 @@
                 the description <col> is deliberately unsized so it absorbs all
                 the leftover width. --}}
           <colgroup>
-            <col class="fk-col-sno" />
-            <col class="fk-col-desc" />
-            <col class="fk-col-photo" />
-            <col class="fk-col-model" />
-            {{#if derived.showHsnColumn}}<col class="fk-col-hsn" />{{/if}}
-            <col class="fk-col-price" />
-            <col class="fk-col-qty" />
-            {{#if invoice.finalTotal.discount}}<col class="fk-col-disc" />{{/if}}
-            {{#if mapped.visibility.showIgst}}<col class="fk-col-tax" />{{/if}}
-            {{#if mapped.visibility.showCgstSgst}}<col class="fk-col-tax" /><col class="fk-col-tax" />{{/if}}
-            <col class="fk-col-total" />
+            {{#each (itemColumns)}}<col class="{{colClass}}" />{{/each}}
           </colgroup>
           <thead>
             <tr>
-              <th class="fk-col-sno"></th>
-              {{!-- One heading spanning the name and photo cells: the payload
-                    ships a single item column, the photo is part of it. --}}
-              <th colspan="2" class="fk-col-desc-photo">{{getColumnLabel "item" "Item"}}</th>
-              <th class="fk-col-model">{{getColumnLabel "model" "Model  No"}}</th>
-              {{#if derived.showHsnColumn}}<th class="fk-col-hsn">HSN/SAC</th>{{/if}}
-              <th class="fk-col-price text-center">{{getColumnLabel "rate" "Unit Price"}}</th>
-              <th class="fk-col-qty text-center">{{getColumnLabel "quantity" "Qty"}}</th>
-              {{#if invoice.finalTotal.discount}}<th class="fk-col-disc text-center">Discount</th>{{/if}}
-              {{#if mapped.visibility.showIgst}}<th class="fk-col-tax text-center">IGST</th>{{/if}}
-              {{#if mapped.visibility.showCgstSgst}}<th class="fk-col-tax text-center">CGST</th><th class="fk-col-tax text-center">SGST</th>{{/if}}
-              <th class="fk-col-total text-center">{{getColumnLabel "total" "Total"}}</th>
+              {{!-- Column order comes from `invoice.columns` as the API returns
+                    it. The photo has no declared column of its own: it is part
+                    of the item, so it is pinned next to the name and the two
+                    share one heading via colspan — which is why the photo entry
+                    itself emits no <th>. --}}
+              {{#each (itemColumns)}}
+              {{#if (eq kind "sno")}}<th class="fk-col-sno"></th>{{/if}}
+              {{#if (eq kind "name")}}<th colspan="2" class="fk-col-desc-photo">{{label}}</th>{{/if}}
+              {{#if (eq kind "model")}}<th class="fk-col-model">{{label}}</th>{{/if}}
+              {{#if (eq kind "hsn")}}<th class="fk-col-hsn">{{label}}</th>{{/if}}
+              {{#unless (or (eq kind "sno") (eq kind "name") (eq kind "photo") (eq kind "model") (eq kind "hsn"))}}
+              <th class="{{colClass}} text-center">{{label}}</th>
+              {{/unless}}
+              {{/each}}
             </tr>
           </thead>
           <tbody>
             {{#each invoice.items}}
             <tr>
-              <td class="text-center fk-sno-cell">{{increment @index}}</td>
+              {{!-- One cell per declared column, in the same order as the header
+                    above. Inside this loop `..` is the line item and `../..` is
+                    the render root. --}}
+              {{#each (itemColumns)}}
+              {{#if (eq kind "sno")}}
+              <td class="text-center fk-sno-cell">{{increment @../index}}</td>
+              {{/if}}
+              {{#if (eq kind "name")}}
               <td class="fk-desc-cell">
-                <p class="fk-item-name">{{name}}</p>
-                {{#if ../advanceOptions.showSkuInInvoice}}{{#if sku}}<div class="fk-item-sku">SKU: {{sku}}</div>{{/if}}{{/if}}
-                {{#if ../derived.showInlineHsn}}{{#if hsn}}<div class="fk-item-sku">HSN/SAC: {{hsn}}</div>{{/if}}{{/if}}
-                {{#unless ../mapped.visibility.showDescriptionFullWidth}}
-                {{#if description}}
+                <p class="fk-item-name">{{../name}}</p>
+                {{#if ../../advanceOptions.showSkuInInvoice}}{{#if ../sku}}<div class="fk-item-sku">SKU: {{../sku}}</div>{{/if}}{{/if}}
+                {{#if ../../derived.showInlineHsn}}{{#if ../hsn}}<div class="fk-item-sku">HSN/SAC: {{../hsn}}</div>{{/if}}{{/if}}
+                {{#unless ../../mapped.visibility.showDescriptionFullWidth}}
+                {{#if ../description}}
                 <div class="fk-item-desc">
-                  {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+                  {{> MarkdownViewer (prepareMarkdownViewerData ../description) }}
                 </div>
                 {{/if}}
                 {{/unless}}
               </td>
+              {{/if}}
+              {{#if (eq kind "photo")}}
               <td class="fk-img-cell">
-                {{#each originalImages}}
-                <img src="{{this}}" alt="{{../name}}" class="fk-product-img" />
+                {{#each ../originalImages}}
+                <img src="{{this}}" alt="{{../../name}}" class="fk-product-img" />
                 {{/each}}
               </td>
-              <td class="text-center fk-model-cell">{{#if model}}{{model}}{{else}}{{#if custom.modelNo}}{{custom.modelNo}}{{else}}{{#if custom.model}}{{custom.model}}{{else}}{{sku}}{{/if}}{{/if}}{{/if}}</td>
-              {{#if ../derived.showHsnColumn}}<td class="text-center fk-hsn-cell">{{hsn}}</td>{{/if}}
-              <td class="text-center fk-price-cell">{{formatCurrency rate ../invoice}}</td>
-              <td class="text-center fk-qty-cell">{{formatQtyCell this ../invoice ../advanceOptions}}</td>
-              {{#if ../invoice.finalTotal.discount}}<td class="text-center fk-disc-cell">{{discountLabel}}</td>{{/if}}
-              {{#if ../mapped.visibility.showIgst}}<td class="text-center fk-tax-cell">{{formatCurrency igst ../invoice}}</td>{{/if}}
-              {{#if ../mapped.visibility.showCgstSgst}}<td class="text-center fk-tax-cell">{{formatCurrency cgst ../invoice}}</td><td class="text-center fk-tax-cell">{{formatCurrency sgst ../invoice}}</td>{{/if}}
-              <td class="text-center fk-total-cell">{{formatCurrency amount ../invoice}}</td>
+              {{/if}}
+              {{#if (eq kind "model")}}
+              <td class="text-center fk-model-cell">{{#if ../model}}{{../model}}{{else}}{{#if ../custom.modelNo}}{{../custom.modelNo}}{{else}}{{#if ../custom.model}}{{../custom.model}}{{else}}{{../sku}}{{/if}}{{/if}}{{/if}}</td>
+              {{/if}}
+              {{#if (eq kind "hsn")}}<td class="text-center fk-hsn-cell">{{../hsn}}</td>{{/if}}
+              {{#if (eq kind "rate")}}<td class="text-center fk-price-cell">{{formatCurrency ../rate ../../invoice}}</td>{{/if}}
+              {{#if (eq kind "qty")}}<td class="text-center fk-qty-cell">{{formatQtyCell ../this ../../invoice ../../advanceOptions}}</td>{{/if}}
+              {{#if (eq kind "discount")}}<td class="text-center fk-disc-cell">{{../discountLabel}}</td>{{/if}}
+              {{#if (eq kind "igst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../igst ../../invoice}}</td>{{/if}}
+              {{#if (eq kind "cgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../cgst ../../invoice}}</td>{{/if}}
+              {{#if (eq kind "sgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../sgst ../../invoice}}</td>{{/if}}
+              {{#if (eq kind "amount")}}<td class="text-center fk-total-cell">{{formatCurrency ../amount ../../invoice}}</td>{{/if}}
+              {{#if (eq kind "custom")}}
+              {{!-- Numeric values never wrap: a figure broken across two lines
+                    reads as two numbers. Text values still wrap. --}}
+              {{#with (customColumnCell ../this this ../../invoice)}}
+              <td class="text-center fk-custom-cell{{#if isNumber}} fk-nowrap{{/if}}">{{text}}</td>
+              {{/with}}
+              {{/if}}
+              {{/each}}
             </tr>
             {{#if ../mapped.visibility.showDescriptionFullWidth}}
             {{#if description}}
@@ -332,6 +363,23 @@
                 {{#if mapped.upi.id}}<p class="fk-upi-label">{{#unless (qrSrc mapped.qr.upi)}}UPI: {{/unless}}{{mapped.upi.id}}</p>{{/if}}
               </div>
               {{/if}}
+            </div>
+          </div>
+          {{/if}}
+
+          {{!-- Additional Notes: the document's own footer fields, e.g. "CIN" or
+                "Vehicle Number". They are labelled text rather than amounts, so
+                they sit here under the bank details instead of in the totals. --}}
+          {{#if (or invoice.customFooters.length invoice.footers.length)}}
+          <div class="fk-additional-notes-section">
+            <p class="fk-section-title">Additional Notes</p>
+            <div class="fk-additional-notes-content">
+              {{#each invoice.customFooters}}
+              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>{{/if}}
+              {{/each}}
+              {{#each invoice.footers}}
+              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>{{/if}}
+              {{/each}}
             </div>
           </div>
           {{/if}}
@@ -436,25 +484,6 @@
             </tr>
             {{/if}}
 
-            {{!-- Document-level custom fields that belong under the totals, e.g.
-                  "Account Number" / "IFSC Code". These are non-monetary, so they
-                  sit below the grand total rather than feeding into it. --}}
-            {{#each invoice.customFooters}}
-            {{#if value}}
-            <tr class="fk-totals-custom-row">
-              <td class="fk-totals-label">{{label}}</td>
-              <td class="fk-totals-value">{{value}}</td>
-            </tr>
-            {{/if}}
-            {{/each}}
-            {{#each invoice.footers}}
-            {{#if value}}
-            <tr class="fk-totals-custom-row">
-              <td class="fk-totals-label">{{label}}</td>
-              <td class="fk-totals-value">{{value}}</td>
-            </tr>
-            {{/if}}
-            {{/each}}
           </table>
 
           {{!-- Amount in Words --}}
@@ -589,9 +618,9 @@
   </div>{{!-- .fk-page --}}
 
   {{!-- Letterhead Footer --}}
-  <div class="no-dibella invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
-    {{#if invoice.letterHeadFooter}}
-    <img src="{{invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+  <div class="no-dibella invoice-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
+    {{#if (assetUrl invoice.letterHeadFooter)}}
+    <img src="{{assetUrl invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}
     <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{/if}}

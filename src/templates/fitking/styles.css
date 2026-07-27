@@ -214,6 +214,20 @@
   color: #222;
 }
 
+/* Custom field rows. Their labels are operator-defined and routinely longer
+   than the built-in keys the 60px column was sized for ("Phone", "GSTIN"), so
+   let the label size to its text and give the value the remaining width. */
+.fk-info-kv-custom .fk-kv-key {
+  width: auto;
+  flex: 0 0 auto;
+  margin-right: 6px;
+}
+
+.fk-info-kv-custom .fk-kv-val {
+  flex: 1 1 auto;
+  word-break: break-word;
+}
+
 /* Details Column — var(--fk-font-size-base) */
 .fk-info-details {
   padding: 0;
@@ -360,6 +374,13 @@
   width: 152px;
 }
 
+/* User-defined columns. Sized modestly because their count is unbounded — every
+   one of them comes out of the description column's leftover width. Their
+   values are arbitrary text, so unlike the currency columns they may wrap. */
+.fk-col-custom {
+  width: 100px;
+}
+
 .fk-col-model {
   width: 120px;
   text-align: center;
@@ -498,6 +519,19 @@
   color: #333;
 }
 
+.fk-custom-cell {
+  font-size: var(--fk-font-size-base);
+  color: #333;
+  word-break: break-word;
+}
+
+/* Numeric values: breaking "20,13,20,21,562" across two lines reads as two
+   separate numbers, so these keep to one line even if they overrun. */
+.fk-custom-cell.fk-nowrap {
+  white-space: nowrap;
+  word-break: normal;
+}
+
 .fk-price-cell {
   font-size: var(--fk-font-size-base);
   white-space: nowrap !important;
@@ -624,21 +658,6 @@
   color: #222;
 }
 
-/* Custom footer fields sitting under the totals. Ruled off from the monetary
-   rows above so they don't read as another amount, and free to wrap — unlike
-   the currency rows these carry arbitrary text (account numbers, IFSC codes). */
-/* Rule above the first custom row only — `:first-of-type` would match on the
-   `tr` type rather than the class, so key off the last non-custom row instead. */
-tr:not(.fk-totals-custom-row)+.fk-totals-custom-row td {
-  border-top: 1px solid var(--fk-border-light);
-  padding-top: 8px;
-}
-
-.fk-totals-custom-row .fk-totals-value {
-  white-space: normal;
-  word-break: break-word;
-}
-
 /* ===== TAX, HSN & PAYMENTS SUMMARIES ===== */
 .fk-summary-section {
   padding: var(--fk-font-size-lg);
@@ -756,6 +775,21 @@ tr:not(.fk-totals-custom-row)+.fk-totals-custom-row td {
 /* Bank & UPI Section */
 .fk-bank-section {
   margin-top: 24px;
+}
+
+/* Additional Notes — the document's footer fields, laid out like the bank
+   block above it so the two read as one column of labelled detail. */
+.fk-additional-notes-section {
+  margin-top: 24px;
+}
+
+.fk-additional-notes-content {
+  font-size: var(--fk-font-size-base);
+  color: #444;
+}
+
+.fk-additional-notes-content p {
+  margin: 0 0 4px 0;
 }
 
 .fk-bank-kv p {
