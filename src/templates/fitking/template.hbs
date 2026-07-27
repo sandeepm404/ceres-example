@@ -126,12 +126,11 @@
           <thead>
             <tr>
               <th class="fk-col-sno"></th>
-              <th class="fk-col-desc">Product Description</th>
-              <th class="fk-col-photo">Photo</th>
-              <th class="fk-col-model">Model&nbsp;&nbsp;No</th>
-              <th class="fk-col-price text-right">Unit Price</th>
-              <th class="fk-col-qty text-center">Qty</th>
-              <th class="fk-col-total text-right">Total</th>
+              <th colspan="2" class="fk-col-desc-photo">{{#if invoice.customLabels.item}}{{invoice.customLabels.item}}{{else}}{{#if invoice.customLabels.productDescription}}{{invoice.customLabels.productDescription}}{{else}}Item{{/if}}{{/if}}</th>
+              <th class="fk-col-model">{{#if invoice.customLabels.modelNo}}{{invoice.customLabels.modelNo}}{{else}}Model&nbsp;&nbsp;No{{/if}}</th>
+              <th class="fk-col-price text-right">{{#if invoice.customLabels.rate}}{{invoice.customLabels.rate}}{{else}}Unit Price{{/if}}</th>
+              <th class="fk-col-qty text-center">{{#if invoice.customLabels.quantity}}{{invoice.customLabels.quantity}}{{else}}Qty{{/if}}</th>
+              <th class="fk-col-total text-right">{{#if invoice.customLabels.amount}}{{invoice.customLabels.amount}}{{else}}Total{{/if}}</th>
             </tr>
           </thead>
           <tbody>

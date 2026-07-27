@@ -254,8 +254,7 @@
 
 /* Column Widths */
 .fk-col-sno        { width: 35px; text-align: center; }
-.fk-col-desc       { text-align: center; }
-.fk-col-photo      { width: 160px; text-align: center; }
+.fk-col-desc-photo { text-align: center; }
 .fk-col-model      { width: 120px; text-align: center; }
 .fk-col-price      { width: 135px; white-space: nowrap; }
 .fk-col-qty        { width: 65px; }
