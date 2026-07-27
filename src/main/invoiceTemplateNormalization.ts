@@ -1,6 +1,4 @@
-import {
-  normalizeInvoicePayload,
-} from "./invoicePayloadContract";
+import { normalizeInvoicePayload } from "./invoicePayloadContract";
 import type {
   FlattenedInvoicePayload,
   InvoicePayloadInput,
@@ -117,21 +115,14 @@ const asArray = (value: unknown): unknown[] => {
   return value;
 };
 
-const pickFirstValue = (...values: unknown[]): unknown => {
-  for (const value of values) {
+const pickFirstValue = (...values: unknown[]): unknown =>
+  values.find((value) => {
     if (value === null || value === undefined) {
-      continue;
+      return false;
     }
 
-    if (typeof value === "string" && value.trim().length === 0) {
-      continue;
-    }
-
-    return value;
-  }
-
-  return undefined;
-};
+    return !(typeof value === "string" && value.trim().length === 0);
+  });
 
 const toStringValue = (value: unknown, fallback = ""): string => {
   if (typeof value === "string") {
@@ -274,7 +265,7 @@ const getSummaryCessAmount = (
     return directAmount;
   }
 
-  return getNestedSummaryEntries(record[listKey], listKey).reduce<number>(
+  return getNestedSummaryEntries(record, listKey).reduce<number>(
     (sum, entry) => {
       const row = asRecord(entry);
       return (
@@ -301,17 +292,21 @@ const getInvoiceCessTotal = (invoice: FlattenedInvoicePayload): number => {
     pickFirstValue(totals.cessTotal, finalTotal.cessTotal)
   );
 
-  const recordSum = (Object.values(cessTotalRecord) as unknown[]).reduce<number>(
-    (sum, value) => sum + toNumberValue(value, 0),
-    0
-  );
+  const recordSum = (
+    Object.values(cessTotalRecord) as unknown[]
+  ).reduce<number>((sum, value) => sum + toNumberValue(value, 0), 0);
 
   if (recordSum > 0) {
     return recordSum;
   }
 
   return toNumberValue(
-    pickFirstValue(totals.totalCess, totals.cess, finalTotal.totalCess, finalTotal.cess),
+    pickFirstValue(
+      totals.totalCess,
+      totals.cess,
+      finalTotal.totalCess,
+      finalTotal.cess
+    ),
     0
   );
 };
@@ -328,7 +323,10 @@ const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
   const isTaxInvoice = invoiceType === "INVOICE";
   const igstTax = Boolean(invoice.igst);
   const discountEnabled = Boolean(
-    toNumberValue(pickFirstValue(finalTotal.discount, finalTotal.totalDiscount), 0)
+    toNumberValue(
+      pickFirstValue(finalTotal.discount, finalTotal.totalDiscount),
+      0
+    )
   );
   const hsnView = toStringValue(advanceOptions.hsnView, "DEFAULT");
   const ownerCountry =
@@ -447,7 +445,9 @@ export const normalizeInvoiceTemplateState = (
   const irn = asRecord(invoice.irn);
   const upi = asRecord(invoice.upi);
   const irnCancelDate = toNonEmptyString(irn.CancelDate);
-  const irnQr = toNonEmptyString(irn.qrCode);
+  // Root qrCode is the same IRN QR delivered by the Lydia host overlay, so the
+  // CancelDate guard below applies to it equally.
+  const irnQr = toNonEmptyString(pickFirstValue(invoice.qrCode, irn.qrCode));
   const topQr =
     (irnQr && !irnCancelDate ? irnQr : null) ??
     toNonEmptyString(invoice.zatcaQrCode) ??
@@ -485,14 +485,15 @@ export const normalizeInvoiceTemplateState = (
   const showTaxTable = ["TABLE", "BOTH"].includes(
     toStringValue(context.advanceOptions.taxSummaryView)
   );
-  const showHsnSummary = getNestedSummaryEntries(invoice.hsnSummary, "hsnList").length > 0;
+  const showHsnSummary =
+    getNestedSummaryEntries(invoice.hsnSummary, "hsnList").length > 0;
   const showSummaryCess =
-    asArray(invoice.cesses).some((entry) => Boolean(asRecord(entry).isApplied)) &&
-    (
-      getInvoiceCessTotal(invoice) > 0 ||
+    asArray(invoice.cesses).some((entry) =>
+      Boolean(asRecord(entry).isApplied)
+    ) &&
+    (getInvoiceCessTotal(invoice) > 0 ||
       getSummaryCessAmount(invoice.taxSummary, "taxList") > 0 ||
-      getSummaryCessAmount(invoice.hsnSummary, "hsnList") > 0
-    );
+      getSummaryCessAmount(invoice.hsnSummary, "hsnList") > 0);
   const showIgst =
     Boolean(invoice.igst) || toStringValue(invoice.taxName) !== "GST";
   const showCgstSgst = !showIgst && toStringValue(invoice.taxName) === "GST";
@@ -528,15 +529,15 @@ export const normalizeInvoiceTemplateState = (
         shippedFrom,
         transport,
         showLogistics: shippedFrom || transport,
-        singleLogistics: (shippedFrom && !transport) || (!shippedFrom && transport),
+        singleLogistics:
+          (shippedFrom && !transport) || (!shippedFrom && transport),
         showBankAccount,
         showUpi,
         showBankUpiSection:
           !["CREDITNOTE", "DEBITNOTE"].includes(billType) &&
           status !== "CANCELED" &&
           (showBankAccount || showUpi),
-        contactStrip:
-          hasValue(contact.email) || hasValue(contact.phone),
+        contactStrip: hasValue(contact.email) || hasValue(contact.phone),
         showIgst,
         showCgstSgst,
         isUtgst: Boolean(invoice.utgst),
@@ -545,13 +546,17 @@ export const normalizeInvoiceTemplateState = (
         showSummaryCess,
         showSku: context.showSkuInName,
         showHsn: context.showHsnColumn,
-        showThumbnailAsColumn: Boolean(context.advanceOptions.showThumbnailAsColumn),
+        showThumbnailAsColumn: Boolean(
+          context.advanceOptions.showThumbnailAsColumn
+        ),
         showInlineHsn: context.showInlineHsn,
         showInlineClassification: context.showInlineClassification,
         showSkuInName: context.showSkuInName,
         showUnitInName: context.showUnitInName,
         upiShrink: Boolean(asRecord(invoice.template).upiShrink),
-        letterHeadOnFirstPage: Boolean(context.pdfOptions.letterHeadOnFirstPage),
+        letterHeadOnFirstPage: Boolean(
+          context.pdfOptions.letterHeadOnFirstPage
+        ),
         footerOnLastPage: Boolean(context.pdfOptions.footerOnLastPage),
         itemNameFullWidth: Boolean(
           pickFirstValue(
@@ -562,7 +567,8 @@ export const normalizeInvoiceTemplateState = (
         isDescriptionFullWidth: descriptionFullWidth,
         showDescriptionFullWidth: descriptionFullWidth,
         showStatusTagInPrint: billType === "INVOICE" && status === "PAID",
-        visibleColumnCount: columns.filter((column) => !column.isHidden).length + 1,
+        visibleColumnCount:
+          columns.filter((column) => !column.isHidden).length + 1,
       },
     },
     derived: {

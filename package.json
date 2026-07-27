@@ -20,7 +20,9 @@
     "dev": "npm-run-all --parallel watch serve",
     "dev:template": "npm-run-all --parallel \"watch:template\" serve",
     "test": "jest",
-    "test:staged": "cross-env JEST_CI_RUN=1 jest --bail --ci --silent --coverage --passWithNoTests --forceExit --findRelatedTests"
+    "test:staged": "cross-env JEST_CI_RUN=1 jest --bail --ci --silent --coverage --passWithNoTests --forceExit --findRelatedTests",
+    "generate:schemas": "node scripts/generate-schemas.mjs",
+    "check:schemas": "node scripts/generate-schemas.mjs --check"
   },
   "browserslist": [
     "ie 11",
@@ -38,6 +40,8 @@
     "@types/dompurify": "^3.0.5",
     "@types/jest": "^29.5.12",
     "@types/node": "^25.4.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "babel-jest": "^29.7.0",
     "babel-loader": "^9.1.3",
     "core-js": "^3.38.1",
@@ -56,6 +60,7 @@
     "postcss-syntax": "^0.36.2",
     "prettier": "^2.8.8",
     "rimraf": "^6.0.1",
+    "ts-json-schema-generator": "^2.9.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "webpack": "^5.94.0",

@@ -1,0 +1,2358 @@
+{
+  "$id": "refrens://ceres/schemas/payload.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "AdditionalCharge": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "amountType": {
+          "type": "string"
+        },
+        "cgst": {
+          "type": "number"
+        },
+        "hsn": {
+          "type": "string"
+        },
+        "igst": {
+          "type": "number"
+        },
+        "label": {
+          "type": "string"
+        },
+        "multiplier": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sgst": {
+          "type": "number"
+        },
+        "tax": {
+          "type": "number"
+        },
+        "taxAmount": {
+          "type": "number"
+        },
+        "utgst": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "_id",
+        "amount"
+      ],
+      "type": "object"
+    },
+    "BankDetails": {
+      "properties": {
+        "accountHolderName": {
+          "type": "string"
+        },
+        "accountNo": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "accountType": {
+          "type": "string"
+        },
+        "bank": {
+          "type": "string"
+        },
+        "bankName": {
+          "type": "string"
+        },
+        "branch": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "customFields": {
+          "items": {
+            "$ref": "#/definitions/CustomFieldValue"
+          },
+          "type": "array"
+        },
+        "customLabels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "iban": {
+          "type": "string"
+        },
+        "ifsc": {
+          "type": "string"
+        },
+        "ifscCode": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sortCode": {
+          "type": "string"
+        },
+        "swift": {
+          "type": "string"
+        },
+        "swiftCode": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BillerDetails": {
+      "properties": {
+        "additionalIds": {
+          "items": {
+            "properties": {
+              "_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "showInInvoice": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "address": {
+          "type": "string"
+        },
+        "building": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "customFields": {
+          "items": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "params": {
+                "properties": {
+                  "showInInvoice": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "customHeaders": {
+          "items": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "district": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "emailShowInInvoice": {
+          "type": "boolean"
+        },
+        "fieldVisibility": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "type": "object"
+        },
+        "gstState": {
+          "type": "string"
+        },
+        "gstin": {
+          "type": "string"
+        },
+        "logo": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "panNumber": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "phoneShowInInvoice": {
+          "type": "boolean"
+        },
+        "pincode": {
+          "type": "string"
+        },
+        "sstNumber": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "stateCode": {
+          "type": "string"
+        },
+        "street": {
+          "type": "string"
+        },
+        "tinNumber": {
+          "type": "string"
+        },
+        "trnNumber": {
+          "type": "string"
+        },
+        "vatLabel": {
+          "type": "string"
+        },
+        "vatNumber": {
+          "type": "string"
+        },
+        "zipCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "BusinessData": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "_systemMeta": {
+          "properties": {
+            "indexedFieldsEnabled": {
+              "type": "boolean"
+            },
+            "showExtraIndexedField": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "configuration": {
+          "properties": {
+            "einvoice": {},
+            "eway": {},
+            "indexedCustomFields": {},
+            "units": {}
+          },
+          "type": "object"
+        },
+        "country": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_id"
+      ],
+      "type": "object"
+    },
+    "CeresTemplatePayload": {
+      "properties": {
+        "business": {
+          "$ref": "#/definitions/BusinessData"
+        },
+        "businessCurrency": {
+          "type": "string"
+        },
+        "businessLocale": {
+          "type": "string"
+        },
+        "businessTimeZone": {
+          "type": "string"
+        },
+        "copy": {
+          "type": "string"
+        },
+        "defaultBatchColumns": {
+          "items": {
+            "properties": {
+              "isHidden": {
+                "type": "boolean"
+              },
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "system": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "key",
+              "label"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "einvoiceConfig": {
+          "$ref": "#/definitions/EinvoiceConfig"
+        },
+        "ewayConfig": {
+          "$ref": "#/definitions/EwayConfig"
+        },
+        "hideEarlyPay": {
+          "type": "boolean"
+        },
+        "hideHashInDocumentNumber": {
+          "type": "boolean"
+        },
+        "invoice": {
+          "$ref": "#/definitions/InvoiceData"
+        },
+        "invoiceValueProps": {
+          "additionalProperties": {
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "visible"
+            ],
+            "type": "object"
+          },
+          "type": "object"
+        },
+        "irnPosition": {
+          "type": "string"
+        },
+        "isBusinessUser": {
+          "type": "boolean"
+        },
+        "isDescriptionFullWidth": {
+          "type": "boolean"
+        },
+        "isEarlyPayApplicable": {
+          "type": "boolean"
+        },
+        "isPublicView": {
+          "type": "boolean"
+        },
+        "ownerBusiness": {
+          "$ref": "#/definitions/BusinessData"
+        },
+        "ownerTimeZone": {
+          "type": "string"
+        },
+        "payUrl": {
+          "type": "string"
+        },
+        "query": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "showBankAccount": {
+          "type": "boolean"
+        },
+        "showExpenseNumber": {
+          "type": "boolean"
+        },
+        "showItemNameFullWidth": {
+          "type": "boolean"
+        },
+        "showPaymentsTable": {
+          "type": "boolean"
+        },
+        "showStockSummary": {
+          "type": "boolean"
+        },
+        "showUpi": {
+          "type": "boolean"
+        },
+        "showVendorBankAccount": {
+          "type": "boolean"
+        },
+        "store": {
+          "properties": {
+            "asideCollapsed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "asideCollapsed"
+          ],
+          "type": "object"
+        },
+        "template": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "invoice",
+        "ownerBusiness"
+      ],
+      "type": "object"
+    },
+    "CessCharge": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "cessAmountKey": {
+          "type": "string"
+        },
+        "cessKey": {
+          "type": "string"
+        },
+        "cessName": {
+          "type": "string"
+        },
+        "isApplied": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_id"
+      ],
+      "type": "object"
+    },
+    "ColumnDef": {
+      "properties": {
+        "dataType": {
+          "type": "string"
+        },
+        "fxReturnType": {
+          "type": "string"
+        },
+        "isHidden": {
+          "type": "boolean"
+        },
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "summarise": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "key",
+        "label"
+      ],
+      "type": "object"
+    },
+    "CustomFieldValue": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "dataType": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "params": {
+          "properties": {
+            "currency": {
+              "type": "string"
+            },
+            "showInInvoice": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "value": {}
+      },
+      "required": [
+        "label",
+        "value",
+        "dataType"
+      ],
+      "type": "object"
+    },
+    "DocumentBatchSummaryEntry": {
+      "properties": {
+        "batch": {
+          "type": "object"
+        },
+        "inventory": {
+          "type": "string"
+        },
+        "itemName": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "sku": {
+          "type": "string"
+        },
+        "warehouse": {
+          "type": "string"
+        },
+        "warehouseName": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "EinvoiceConfig": {
+      "properties": {
+        "irnAcknowledgementDate": {
+          "type": "boolean"
+        },
+        "irnAcknowledgementNumber": {
+          "type": "boolean"
+        },
+        "irnCancelledDate": {
+          "type": "boolean"
+        },
+        "irnNumber": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "EwayConfig": {
+      "properties": {
+        "billCancelledDate": {
+          "type": "boolean"
+        },
+        "billDate": {
+          "type": "boolean"
+        },
+        "billNumber": {
+          "type": "boolean"
+        },
+        "billValidTillDate": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "FlattenedInvoicePayload": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "additionalCharges": {
+          "items": {
+            "$ref": "#/definitions/AdditionalCharge"
+          },
+          "type": "array"
+        },
+        "advanceOptions": {
+          "$ref": "#/definitions/InvoiceAdvanceOptions"
+        },
+        "allPayments": {
+          "items": {
+            "$ref": "#/definitions/Payment"
+          },
+          "type": "array"
+        },
+        "attachments": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "balance": {
+          "properties": {
+            "credit": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "due": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "paid": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "settledAmount": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "tds": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "transactionCharge": {
+              "type": [
+                "number",
+                "string"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/BankDetails"
+        },
+        "batchSummary": {
+          "items": {
+            "$ref": "#/definitions/DocumentBatchSummaryEntry"
+          },
+          "type": "array"
+        },
+        "beforeDiscountPay": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "properties": {
+                "full": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "full"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "billType": {
+          "type": "string"
+        },
+        "billedBy": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "billedTo": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "business": {
+          "$ref": "#/definitions/BusinessData"
+        },
+        "businessCurrency": {
+          "type": "string"
+        },
+        "businessLocale": {
+          "type": "string"
+        },
+        "businessTimeZone": {
+          "type": "string"
+        },
+        "cesses": {
+          "items": {
+            "$ref": "#/definitions/CessCharge"
+          },
+          "type": "array"
+        },
+        "cgst": {
+          "type": "number"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/definitions/ColumnDef"
+          },
+          "type": "array"
+        },
+        "contact": {
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "copy": {
+          "type": "string"
+        },
+        "creditDiscount": {
+          "type": "number"
+        },
+        "creditNoteStatus": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "customCurrencySymbol": {
+          "type": "string"
+        },
+        "customFields": {
+          "items": {
+            "$ref": "#/definitions/CustomFieldValue"
+          },
+          "type": "array"
+        },
+        "customFooters": {
+          "items": {
+            "properties": {
+              "defaultValue": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "customHeaders": {
+          "items": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "customLabels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "defaultBatchColumns": {
+          "items": {
+            "properties": {
+              "isHidden": {
+                "type": "boolean"
+              },
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "system": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "key",
+              "label"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "documentQr": {
+          "type": "string"
+        },
+        "documentReason": {
+          "type": "string"
+        },
+        "dueDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "earlyPayDiscount": {
+          "properties": {
+            "applied": {
+              "type": "boolean"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "totals": {
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "einvoiceConfig": {
+          "$ref": "#/definitions/EinvoiceConfig"
+        },
+        "ewayConfig": {
+          "$ref": "#/definitions/EwayConfig"
+        },
+        "expenseNumber": {
+          "type": "string"
+        },
+        "finalTotal": {
+          "type": "object"
+        },
+        "footers": {
+          "items": {
+            "properties": {
+              "_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "_id",
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "hasPgPayments": {
+          "type": "boolean"
+        },
+        "hideEarlyPay": {
+          "type": "boolean"
+        },
+        "hideHashInDocumentNumber": {
+          "type": "boolean"
+        },
+        "hsnSummary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/HsnSummary"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/HsnSummary"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "igst": {
+          "type": "number"
+        },
+        "invoiceAccepted": {
+          "type": "string"
+        },
+        "invoiceDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "invoiceDateUserInput": {
+          "type": "string"
+        },
+        "invoiceNumber": {
+          "type": "string"
+        },
+        "invoiceSubTitle": {
+          "type": "string"
+        },
+        "invoiceTitle": {
+          "type": "string"
+        },
+        "invoiceType": {
+          "type": "string"
+        },
+        "invoiceValueProps": {
+          "additionalProperties": {
+            "properties": {
+              "visible": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "visible"
+            ],
+            "type": "object"
+          },
+          "type": "object"
+        },
+        "irn": {
+          "$ref": "#/definitions/IrnDetails"
+        },
+        "irnPosition": {
+          "type": "string"
+        },
+        "isBusinessUser": {
+          "type": "boolean"
+        },
+        "isDescriptionFullWidth": {
+          "type": "boolean"
+        },
+        "isEarlyPayApplicable": {
+          "type": "boolean"
+        },
+        "isExpenditure": {
+          "type": "boolean"
+        },
+        "isIgst": {
+          "type": "boolean"
+        },
+        "isOverdue": {
+          "type": "boolean"
+        },
+        "isPublicView": {
+          "type": "boolean"
+        },
+        "isRemoved": {
+          "type": "boolean"
+        },
+        "isUtgst": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/LineItem"
+          },
+          "type": "array"
+        },
+        "lastPaymentDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "latePaymentFee": {
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "finalAmount": {
+              "type": "number"
+            },
+            "isApplied": {
+              "type": "boolean"
+            },
+            "showInInvoice": {
+              "type": "boolean"
+            },
+            "when": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "letterHead": {
+          "type": "string"
+        },
+        "letterHeadFooter": {
+          "type": "string"
+        },
+        "lhdnQrCode": {
+          "type": "string"
+        },
+        "linkedInvoices": {
+          "items": {},
+          "type": "array"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/BusinessData"
+        },
+        "ownerBusiness": {
+          "$ref": "#/definitions/BusinessData"
+        },
+        "ownerOffset": {
+          "type": "string"
+        },
+        "ownerTimeZone": {
+          "type": "string"
+        },
+        "payUrl": {
+          "type": "string"
+        },
+        "paymentOptions": {
+          "$ref": "#/definitions/InvoicePaymentOptions"
+        },
+        "payments": {
+          "items": {
+            "$ref": "#/definitions/Payment"
+          },
+          "type": "array"
+        },
+        "pdfOptions": {
+          "$ref": "#/definitions/InvoicePdfOptions"
+        },
+        "placeOfSupply": {
+          "type": "string"
+        },
+        "pos": {
+          "type": "string"
+        },
+        "purchaseOrderNumber": {
+          "type": "string"
+        },
+        "qrCode": {
+          "type": "string"
+        },
+        "query": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "quotationNumber": {
+          "type": "string"
+        },
+        "reminders": {
+          "properties": {
+            "sent": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "roundOffQuantity": {
+          "type": "boolean"
+        },
+        "roundOffRate": {
+          "type": "boolean"
+        },
+        "sgst": {
+          "type": "number"
+        },
+        "share": {
+          "properties": {
+            "fileName": {
+              "type": "string"
+            },
+            "link": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "pdf": {
+              "type": "string"
+            },
+            "printLabels": {
+              "items": {
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "pdf": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "label",
+                  "pdf"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "sharedDocumentId": {
+          "type": "string"
+        },
+        "shippedFrom": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "shippedTo": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "showBankAccount": {
+          "type": "boolean"
+        },
+        "showBranding": {
+          "type": "boolean"
+        },
+        "showExpenseNumber": {
+          "type": "boolean"
+        },
+        "showItemNameFullWidth": {
+          "type": "boolean"
+        },
+        "showPaymentsTable": {
+          "type": "boolean"
+        },
+        "showStockSummary": {
+          "type": "boolean"
+        },
+        "showTotalsRow": {
+          "type": "boolean"
+        },
+        "showUpi": {
+          "type": "boolean"
+        },
+        "showVendorBankAccount": {
+          "type": "boolean"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "store": {
+          "properties": {
+            "asideCollapsed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "asideCollapsed"
+          ],
+          "type": "object"
+        },
+        "subTotal": {
+          "type": "number"
+        },
+        "subUnitLength": {
+          "type": "number"
+        },
+        "taxName": {
+          "type": "string"
+        },
+        "taxSummary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TaxSummary"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/TaxSummary"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "taxType": {
+          "type": "string"
+        },
+        "template": {
+          "$ref": "#/definitions/InvoiceTemplateConfig"
+        },
+        "templateName": {
+          "type": "string"
+        },
+        "terms": {
+          "items": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "terms": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "label",
+              "terms"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "toPay": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "properties": {
+                "full": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "full"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "totalConversions": {
+          "type": "object"
+        },
+        "totals": {
+          "type": "object"
+        },
+        "transportDetails": {
+          "$ref": "#/definitions/TransportDetails"
+        },
+        "upi": {
+          "$ref": "#/definitions/UpiDetails"
+        },
+        "utgst": {
+          "type": "number"
+        },
+        "vendorFields": {
+          "type": "object"
+        },
+        "zatcaQrCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_id",
+        "billType",
+        "currency",
+        "finalTotal",
+        "invoiceNumber",
+        "status",
+        "subTotal"
+      ],
+      "type": "object"
+    },
+    "HsnSummary": {
+      "properties": {
+        "cessAmount": {
+          "type": "number"
+        },
+        "cgst": {
+          "type": "number"
+        },
+        "hsn": {
+          "type": "string"
+        },
+        "igst": {
+          "type": "number"
+        },
+        "sgst": {
+          "type": "number"
+        },
+        "tax": {
+          "type": "number"
+        },
+        "taxableValue": {
+          "type": "number"
+        },
+        "utgst": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "cgst",
+        "hsn",
+        "igst",
+        "sgst",
+        "tax",
+        "taxableValue",
+        "utgst"
+      ],
+      "type": "object"
+    },
+    "InvoiceAdvanceOptions": {
+      "additionalProperties": {},
+      "properties": {
+        "hideCountryOfSupply": {
+          "type": "boolean"
+        },
+        "hideCurrencyCode": {
+          "type": "boolean"
+        },
+        "hideGroupSubTotal": {
+          "type": "boolean"
+        },
+        "hideTaxes": {
+          "type": "boolean"
+        },
+        "hideTotals": {
+          "type": "boolean"
+        },
+        "hsnView": {
+          "type": "string"
+        },
+        "isDescriptionFullWidth": {
+          "type": "boolean"
+        },
+        "itemNameFullWidth": {
+          "type": "boolean"
+        },
+        "reverseCharge": {
+          "type": "boolean"
+        },
+        "showHSNSummaryInInvoice": {
+          "type": "boolean"
+        },
+        "showHsnSummary": {
+          "type": "boolean"
+        },
+        "showPaymentsTable": {
+          "type": "boolean"
+        },
+        "showSkuInInvoice": {
+          "type": "boolean"
+        },
+        "showStockSummary": {
+          "type": "boolean"
+        },
+        "showThumbnailAsColumn": {
+          "type": "boolean"
+        },
+        "taxSummaryView": {
+          "type": "string"
+        },
+        "unitColumn": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "InvoiceData": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "additionalCharges": {
+          "items": {
+            "$ref": "#/definitions/AdditionalCharge"
+          },
+          "type": "array"
+        },
+        "advanceOptions": {
+          "$ref": "#/definitions/InvoiceAdvanceOptions"
+        },
+        "allPayments": {
+          "items": {
+            "$ref": "#/definitions/Payment"
+          },
+          "type": "array"
+        },
+        "attachments": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "balance": {
+          "properties": {
+            "credit": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "due": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "paid": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "settledAmount": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "tds": {
+              "type": [
+                "number",
+                "string"
+              ]
+            },
+            "transactionCharge": {
+              "type": [
+                "number",
+                "string"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        "bankAccount": {
+          "$ref": "#/definitions/BankDetails"
+        },
+        "batchSummary": {
+          "items": {
+            "$ref": "#/definitions/DocumentBatchSummaryEntry"
+          },
+          "type": "array"
+        },
+        "beforeDiscountPay": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "properties": {
+                "full": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "full"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "billType": {
+          "type": "string"
+        },
+        "billedBy": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "billedTo": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "cesses": {
+          "items": {
+            "$ref": "#/definitions/CessCharge"
+          },
+          "type": "array"
+        },
+        "cgst": {
+          "type": "number"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/definitions/ColumnDef"
+          },
+          "type": "array"
+        },
+        "contact": {
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "creditDiscount": {
+          "type": "number"
+        },
+        "creditNoteStatus": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "customCurrencySymbol": {
+          "type": "string"
+        },
+        "customFields": {
+          "items": {
+            "$ref": "#/definitions/CustomFieldValue"
+          },
+          "type": "array"
+        },
+        "customFooters": {
+          "items": {
+            "properties": {
+              "defaultValue": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "customHeaders": {
+          "items": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "customLabels": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "documentQr": {
+          "type": "string"
+        },
+        "documentReason": {
+          "type": "string"
+        },
+        "dueDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "earlyPayDiscount": {
+          "properties": {
+            "applied": {
+              "type": "boolean"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "totals": {
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "expenseNumber": {
+          "type": "string"
+        },
+        "finalTotal": {
+          "type": "object"
+        },
+        "footers": {
+          "items": {
+            "properties": {
+              "_id": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "_id",
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "hasPgPayments": {
+          "type": "boolean"
+        },
+        "hsnSummary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/HsnSummary"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/HsnSummary"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "igst": {
+          "type": "number"
+        },
+        "invoiceAccepted": {
+          "type": "string"
+        },
+        "invoiceDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "invoiceDateUserInput": {
+          "type": "string"
+        },
+        "invoiceNumber": {
+          "type": "string"
+        },
+        "invoiceSubTitle": {
+          "type": "string"
+        },
+        "invoiceTitle": {
+          "type": "string"
+        },
+        "invoiceType": {
+          "type": "string"
+        },
+        "irn": {
+          "$ref": "#/definitions/IrnDetails"
+        },
+        "isExpenditure": {
+          "type": "boolean"
+        },
+        "isIgst": {
+          "type": "boolean"
+        },
+        "isOverdue": {
+          "type": "boolean"
+        },
+        "isRemoved": {
+          "type": "boolean"
+        },
+        "isUtgst": {
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/definitions/LineItem"
+          },
+          "type": "array"
+        },
+        "lastPaymentDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "latePaymentFee": {
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "finalAmount": {
+              "type": "number"
+            },
+            "isApplied": {
+              "type": "boolean"
+            },
+            "showInInvoice": {
+              "type": "boolean"
+            },
+            "when": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "letterHead": {
+          "type": "string"
+        },
+        "letterHeadFooter": {
+          "type": "string"
+        },
+        "lhdnQrCode": {
+          "type": "string"
+        },
+        "linkedInvoices": {
+          "items": {},
+          "type": "array"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "owner": {
+          "$ref": "#/definitions/BusinessData"
+        },
+        "ownerOffset": {
+          "type": "string"
+        },
+        "paymentOptions": {
+          "$ref": "#/definitions/InvoicePaymentOptions"
+        },
+        "payments": {
+          "items": {
+            "$ref": "#/definitions/Payment"
+          },
+          "type": "array"
+        },
+        "pdfOptions": {
+          "$ref": "#/definitions/InvoicePdfOptions"
+        },
+        "placeOfSupply": {
+          "type": "string"
+        },
+        "pos": {
+          "type": "string"
+        },
+        "purchaseOrderNumber": {
+          "type": "string"
+        },
+        "qrCode": {
+          "type": "string"
+        },
+        "quotationNumber": {
+          "type": "string"
+        },
+        "reminders": {
+          "properties": {
+            "sent": {
+              "type": "boolean"
+            }
+          },
+          "type": "object"
+        },
+        "roundOffQuantity": {
+          "type": "boolean"
+        },
+        "roundOffRate": {
+          "type": "boolean"
+        },
+        "sgst": {
+          "type": "number"
+        },
+        "share": {
+          "properties": {
+            "fileName": {
+              "type": "string"
+            },
+            "link": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "pdf": {
+              "type": "string"
+            },
+            "printLabels": {
+              "items": {
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "pdf": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "label",
+                  "pdf"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "sharedDocumentId": {
+          "type": "string"
+        },
+        "shippedFrom": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "shippedTo": {
+          "$ref": "#/definitions/BillerDetails"
+        },
+        "showBranding": {
+          "type": "boolean"
+        },
+        "showTotalsRow": {
+          "type": "boolean"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "subTotal": {
+          "type": "number"
+        },
+        "subUnitLength": {
+          "type": "number"
+        },
+        "taxName": {
+          "type": "string"
+        },
+        "taxSummary": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TaxSummary"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/TaxSummary"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "taxType": {
+          "type": "string"
+        },
+        "template": {
+          "$ref": "#/definitions/InvoiceTemplateConfig"
+        },
+        "templateName": {
+          "type": "string"
+        },
+        "terms": {
+          "items": {
+            "properties": {
+              "label": {
+                "type": "string"
+              },
+              "terms": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "label",
+              "terms"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "toPay": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "properties": {
+                "full": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "full"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        "totalConversions": {
+          "type": "object"
+        },
+        "totals": {
+          "type": "object"
+        },
+        "transportDetails": {
+          "$ref": "#/definitions/TransportDetails"
+        },
+        "upi": {
+          "$ref": "#/definitions/UpiDetails"
+        },
+        "utgst": {
+          "type": "number"
+        },
+        "vendorFields": {
+          "type": "object"
+        },
+        "zatcaQrCode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "_id",
+        "billType",
+        "status",
+        "invoiceNumber",
+        "currency",
+        "subTotal",
+        "finalTotal"
+      ],
+      "type": "object"
+    },
+    "InvoicePaymentOptions": {
+      "additionalProperties": {},
+      "properties": {
+        "accountTransfer": {
+          "type": "boolean"
+        },
+        "upi": {
+          "type": "boolean"
+        },
+        "vendorAccountTransfer": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "InvoicePdfOptions": {
+      "additionalProperties": {},
+      "properties": {
+        "footerOnLastPage": {
+          "type": "boolean"
+        },
+        "letterHeadOnFirstPage": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "InvoiceTemplateConfig": {
+      "additionalProperties": {},
+      "properties": {
+        "parentTemplate": {
+          "type": "string"
+        },
+        "pdfOptions": {
+          "$ref": "#/definitions/InvoicePdfOptions"
+        },
+        "template": {
+          "type": "string"
+        },
+        "upiShrink": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "IrnDetails": {
+      "properties": {
+        "AckDt": {
+          "type": "string"
+        },
+        "AckNo": {
+          "type": "string"
+        },
+        "CancelDate": {
+          "type": "string"
+        },
+        "EwbDt": {
+          "type": "string"
+        },
+        "EwbNo": {
+          "type": "string"
+        },
+        "EwbValidTill": {
+          "type": "string"
+        },
+        "Irn": {
+          "type": "string"
+        },
+        "ewayCancelDate": {
+          "type": "string"
+        },
+        "qrCode": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "LineItem": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "batchSummary": {
+          "items": {
+            "properties": {
+              "_id": {
+                "type": "string"
+              },
+              "batchName": {
+                "type": "string"
+              },
+              "expiryDate": {
+                "type": "string"
+              },
+              "itemName": {
+                "type": "string"
+              },
+              "manufacturingDate": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "warehouse": {
+                "type": "string"
+              },
+              "warehouseName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "quantity"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "cessAmount": {
+          "type": "number"
+        },
+        "cgst": {
+          "type": "number"
+        },
+        "classification": {
+          "type": "string"
+        },
+        "custom": {
+          "type": "object"
+        },
+        "customFields": {
+          "items": {
+            "$ref": "#/definitions/CustomFieldValue"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "group": {
+          "type": "boolean"
+        },
+        "gstRate": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "hsn": {
+          "type": "string"
+        },
+        "igst": {
+          "type": "number"
+        },
+        "images": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "inventoryTxn": {
+          "type": "string"
+        },
+        "isAdditionalCharge": {
+          "type": "boolean"
+        },
+        "isGroupItemTotalRow": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "originalImages": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "rate": {
+          "type": "number"
+        },
+        "sgst": {
+          "type": "number"
+        },
+        "showSku": {
+          "type": "boolean"
+        },
+        "sku": {
+          "type": "string"
+        },
+        "subTotal": {
+          "type": "number"
+        },
+        "tax": {
+          "type": "number"
+        },
+        "taxAmount": {
+          "type": "number"
+        },
+        "taxRate": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "thumbnail": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "utgst": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "_id",
+        "name",
+        "quantity",
+        "rate",
+        "amount"
+      ],
+      "type": "object"
+    },
+    "Payment": {
+      "properties": {
+        "amount": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "paymentDate": {
+          "type": "string"
+        },
+        "paymentMethod": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "TaxSummary": {
+      "properties": {
+        "cessAmount": {
+          "type": "number"
+        },
+        "cgst": {
+          "type": "number"
+        },
+        "igst": {
+          "type": "number"
+        },
+        "sgst": {
+          "type": "number"
+        },
+        "tax": {
+          "type": "number"
+        },
+        "taxableValue": {
+          "type": "number"
+        },
+        "utgst": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "tax",
+        "taxableValue",
+        "cgst",
+        "sgst",
+        "igst",
+        "utgst"
+      ],
+      "type": "object"
+    },
+    "TransportDetails": {
+      "properties": {
+        "challanDate": {
+          "type": "string"
+        },
+        "challanNumber": {
+          "type": "string"
+        },
+        "distance": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "extraInformation": {
+          "type": "string"
+        },
+        "subSupplyType": {
+          "type": "string"
+        },
+        "transactionType": {
+          "type": "string"
+        },
+        "transport": {
+          "type": "string"
+        },
+        "transportMode": {
+          "type": "string"
+        },
+        "transporter": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "transporterId": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "transporterId": {
+          "type": "string"
+        },
+        "transporterName": {
+          "type": "string"
+        },
+        "vehicleNumber": {
+          "type": "string"
+        },
+        "vehicleType": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UpiDetails": {
+      "properties": {
+        "qr": {
+          "type": "string"
+        },
+        "qrCode": {
+          "type": "string"
+        },
+        "upi": {
+          "type": "string"
+        },
+        "upiId": {
+          "type": "string"
+        },
+        "vpa": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  }
+}
