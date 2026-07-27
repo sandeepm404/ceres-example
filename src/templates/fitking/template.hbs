@@ -1,7 +1,7 @@
 <div class="fk-shell">
 
   {{!-- Letterhead --}}
-  <div class="no-dibella fk-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+  <div class="no-dibella invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
     {{#if invoice.letterHead}}
     <img src="{{invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
     {{else}}
@@ -176,16 +176,18 @@
       <div class="fk-bottom-section">
         {{!-- Left Side: Terms & Conditions + Remarks --}}
         <div class="fk-bottom-left">
-          {{#if invoice.terms.0.terms.length}}
+          {{#each invoice.terms}}
+          {{#if terms.length}}
           <div class="fk-terms-section">
-            <p class="fk-section-title">{{#if invoice.customLabels.terms}}{{invoice.customLabels.terms}}{{else}}Terms and Conditions{{/if}}</p>
+            <p class="fk-section-title">{{#if label}}{{label}}{{else}}{{#if ../invoice.customLabels.terms}}{{../invoice.customLabels.terms}}{{else}}Terms and Conditions{{/if}}{{/if}}</p>
             <ol class="fk-terms-list">
-              {{#each invoice.terms.0.terms}}
+              {{#each terms}}
               <li>{{this}}</li>
               {{/each}}
             </ol>
           </div>
           {{/if}}
+          {{/each}}
 
           {{#if invoice.notes}}
           <div class="fk-remarks-section">
@@ -195,78 +197,81 @@
             </div>
           </div>
           {{/if}}
+
+          {{!-- Bank & UPI Details --}}
+          {{#if mapped.visibility.showBankAccount}}
+          <div class="fk-bank-section">
+            <p class="fk-section-title">Bank and UPI Details</p>
+            <div class="fk-bank-kv">
+              {{#if invoice.bankAccount.bankName}}<p><span class="fk-bank-key">Bank Name:</span> <span class="fk-bank-val">{{invoice.bankAccount.bankName}}</span></p>{{/if}}
+              <p><span class="fk-bank-key">Account Name:</span> <span class="fk-bank-val">{{#if invoice.bankAccount.holderName}}{{invoice.bankAccount.holderName}}{{else}}{{invoice.billedBy.name}}{{/if}}</span></p>
+              {{#if invoice.bankAccount.accountNo}}<p><span class="fk-bank-key">Account No:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountNo}}</span></p>{{/if}}
+              {{#if invoice.bankAccount.ifsc}}<p><span class="fk-bank-key">IFSC:</span> <span class="fk-bank-val">{{invoice.bankAccount.ifsc}}</span></p>{{/if}}
+              {{#if invoice.bankAccount.accountType}}<p><span class="fk-bank-key">Account Type:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountType}}</span></p>{{/if}}
+            </div>
+            {{#if invoice.bankAccount.qrCode}}
+            <div class="fk-upi-qr-block">
+              <img src="{{invoice.bankAccount.qrCode}}" alt="Scan to Pay" class="fk-upi-qr" />
+              {{#if invoice.bankAccount.upiId}}<p class="fk-upi-label">{{invoice.bankAccount.upiId}}</p>{{/if}}
+            </div>
+            {{else}}{{#if invoice.bankAccount.upiId}}
+            <div class="fk-upi-qr-block">
+              <p class="fk-upi-label">UPI: {{invoice.bankAccount.upiId}}</p>
+            </div>
+            {{/if}}{{/if}}
+          </div>
+          {{/if}}
         </div>
 
         {{!-- Right Side: Totals + Words + Signature --}}
         <div class="fk-bottom-right">
           <table class="fk-totals-table">
-            {{#if (or invoice.finalTotal.subTotal invoice.subTotal)}}
-            {{#if (or invoice.discounts.length (hasValue invoice.finalTotal.discount) (hasValue invoice.discount) (hasValue invoice.totalDiscount) (hasValue invoice.finalTotal.igst) (hasValue invoice.finalTotal.cgst) (hasValue invoice.finalTotal.sgst) (hasValue invoice.finalTotal.totalTax) (hasValue invoice.taxAmount) (hasValue invoice.extraCharges) (hasValue invoice.finalTotal.roundOff))}}
+            {{#if (or invoice.finalTotal.discount invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst invoice.finalTotal.totalTax invoice.finalTotal.roundOff)}}
             <tr>
               <td class="fk-totals-label">{{getTotalsLabel "subTotal" "Sub Total"}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.subTotal}}{{formatCurrency invoice.finalTotal.subTotal invoice}}{{else}}{{formatCurrency invoice.subTotal invoice}}{{/if}}</td>
             </tr>
             {{/if}}
-            {{/if}}
 
-            {{#if invoice.discounts.length}}
-            {{#each invoice.discounts}}
-            <tr>
-              <td class="fk-totals-label">{{getChargeName this "Discounts"}}</td>
-              <td class="fk-totals-value">{{formatCurrency amount ../invoice}}</td>
-            </tr>
-            {{/each}}
-            {{else}}
-            {{#if (hasValue invoice.finalTotal.discount)}}
+            {{#if invoice.finalTotal.discount}}
             <tr>
               <td class="fk-totals-label">{{getTotalsLabel "discount" "Discounts"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.discount invoice}}</td>
             </tr>
-            {{else}}{{#if (hasValue invoice.discount)}}
-            <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "discount" "Discounts"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.discount invoice}}</td>
-            </tr>
-            {{else}}{{#if (hasValue invoice.totalDiscount)}}
-            <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "discount" "Discounts"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.totalDiscount invoice}}</td>
-            </tr>
-            {{/if}}{{/if}}{{/if}}
             {{/if}}
 
-            {{#if (hasValue invoice.finalTotal.igst)}}
+            {{#if invoice.finalTotal.igst}}
             <tr>
               <td class="fk-totals-label">{{#if invoice.igstRate}}{{getTotalsLabel "igst" "Tax"}} ({{invoice.igstRate}}%){{else}}{{getTotalsLabel "igst" "IGST"}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.igst invoice}}</td>
             </tr>
             {{/if}}
 
-            {{#if (hasValue invoice.finalTotal.cgst)}}
+            {{#if invoice.finalTotal.cgst}}
             <tr>
               <td class="fk-totals-label">{{getTotalsLabel "cgst" "CGST"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.cgst invoice}}</td>
             </tr>
             {{/if}}
 
-            {{#if (hasValue invoice.finalTotal.sgst)}}
+            {{#if invoice.finalTotal.sgst}}
             <tr>
               <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}{{getTotalsLabel "utgst" "UTGST"}}{{else}}{{getTotalsLabel "sgst" "SGST"}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.sgst invoice}}</td>
             </tr>
             {{/if}}
 
-            {{#unless (or (hasValue invoice.finalTotal.igst) (hasValue invoice.finalTotal.cgst) (hasValue invoice.finalTotal.sgst))}}
-            {{#if (or (hasValue invoice.finalTotal.totalTax) (hasValue invoice.finalTotal.tax) (hasValue invoice.taxAmount))}}
+            {{#unless (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst)}}
+            {{#if invoice.finalTotal.totalTax}}
             <tr>
               <td class="fk-totals-label">{{#if invoice.taxName}}{{invoice.taxName}}{{#if invoice.taxRate}} ({{invoice.taxRate}}%){{/if}}{{else}}{{#if invoice.taxRate}}{{getTotalsLabel "tax" "Tax"}} ({{invoice.taxRate}}%){{else}}{{getTotalsLabel "tax" "Tax"}}{{/if}}{{/if}}</td>
-              <td class="fk-totals-value">{{#if invoice.finalTotal.totalTax}}{{formatCurrency invoice.finalTotal.totalTax invoice}}{{else}}{{#if invoice.finalTotal.tax}}{{formatCurrency invoice.finalTotal.tax invoice}}{{else}}{{formatCurrency invoice.taxAmount invoice}}{{/if}}{{/if}}</td>
+              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.totalTax invoice}}</td>
             </tr>
             {{/if}}
             {{/unless}}
 
             {{#each invoice.additionalCharges}}
-            {{#if (hasValue amount)}}
+            {{#if (isPositive amount)}}
             <tr>
               <td class="fk-totals-label">{{getChargeName this "Extra Charges"}}</td>
               <td class="fk-totals-value">{{formatCurrency amount ../invoice}}</td>
@@ -274,21 +279,14 @@
             {{/if}}
             {{/each}}
 
-            {{#if (hasValue invoice.extraCharges)}}
+            {{#if invoice.extraCharges}}
             <tr>
               <td class="fk-totals-label">{{getTotalsLabel "extraCharges" "Extra Charges"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.extraCharges invoice}}</td>
             </tr>
             {{/if}}
 
-            {{#if (hasValue invoice.otherCharges)}}
-            <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "otherCharges" "Other Charges"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.otherCharges invoice}}</td>
-            </tr>
-            {{/if}}
-
-            {{#if (hasValue invoice.finalTotal.roundOff)}}
+            {{#if invoice.finalTotal.roundOff}}
             <tr>
               <td class="fk-totals-label">{{getTotalsLabel "roundOff" "Round off"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.roundOff invoice}}</td>
@@ -332,7 +330,7 @@
   </div>{{!-- .fk-page --}}
 
   {{!-- Letterhead Footer --}}
-  <div class="no-dibella fk-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+  <div class="no-dibella invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
     {{#if invoice.letterHeadFooter}}
     <img src="{{invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}

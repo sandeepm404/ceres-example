@@ -203,7 +203,7 @@
 .fk-details-table td {
   border-top: 1px solid var(--fk-border-light);
   border-right: 1px solid var(--fk-border-light);
-  padding: 6px 10px;
+  padding: 4px 8px;
 }
 
 .fk-details-table td:last-child {
@@ -517,6 +517,74 @@
   font-weight: 700;
   color: #222;
   text-align: center;
+}
+
+/* Letterhead & Footer */
+.invoice-letterhead,
+.invoice-letterhead-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invoice-letterhead.is-empty,
+.invoice-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.invoice-letterhead img,
+.invoice-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Bank & UPI Section */
+.fk-bank-section {
+  margin-top: 24px;
+}
+
+.fk-bank-kv p {
+  margin: 0 0 4px 0;
+}
+
+.fk-bank-key {
+  color: var(--fk-text-muted);
+  display: inline-block;
+  min-width: 90px;
+}
+
+.fk-bank-val {
+  font-weight: 600;
+}
+
+.fk-upi-qr-block {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.fk-upi-qr {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
+.fk-upi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fk-text-muted);
+  margin: 0;
 }
 
 /* ===== PRINT STYLES ===== */
