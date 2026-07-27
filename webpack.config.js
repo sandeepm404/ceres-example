@@ -116,6 +116,7 @@ function readTemplateVersionMeta(templateName) {
     versionFile,
     version,
     digest: typeof data.digest === "string" ? data.digest : null,
+    pinned: data.pinned === true,
   };
 }
 
@@ -124,12 +125,14 @@ function readTemplateVersionMeta(templateName) {
  * @param templateName
  * @param version
  * @param digest
+ * @param pinned
  */
-function writeTemplateVersionMeta(templateName, version, digest) {
+function writeTemplateVersionMeta(templateName, version, digest, pinned) {
   const versionFile = getTemplateVersionFile(templateName);
+  const meta = pinned ? { version, digest, pinned: true } : { version, digest };
   try {
     fs.mkdirSync(path.dirname(versionFile), { recursive: true });
-    fs.writeFileSync(versionFile, JSON.stringify({ version, digest }, null, 2));
+    fs.writeFileSync(versionFile, JSON.stringify(meta, null, 2));
   } catch (e) {
     // Non-fatal: build continues; version will still be used in-memory
   }
@@ -178,12 +181,20 @@ function computeTemplateVersionMap(templateEntryNames) {
     const meta = readTemplateVersionMeta(templateName);
 
     let nextVersion = meta.version;
-    // If we already have a digest and it changed, bump
-    if (meta.digest && meta.digest !== newDigest) {
+    // "pinned": true in version.json freezes the version, so every build keeps
+    // overwriting the same folder. Consumers that stored a versioned manifest
+    // URL keep resolving; deploys replace the site, so unpinned bumps strand
+    // those URLs. Remove the flag (and set the version by hand) to resume.
+    if (meta.pinned) {
+      if (meta.digest !== newDigest) {
+        console.log(`[version] ${templateName}: content changed, held at ${meta.version} (pinned)`);
+      }
+    } else if (meta.digest && meta.digest !== newDigest) {
+      // If we already have a digest and it changed, bump
       nextVersion = bumpPatchVersion(meta.version);
     }
     // If there was no digest, just record it without bumping
-    writeTemplateVersionMeta(templateName, nextVersion, newDigest);
+    writeTemplateVersionMeta(templateName, nextVersion, newDigest, meta.pinned);
 
     map[templateName] = nextVersion;
   });
@@ -564,6 +575,40 @@ class AssetManifestPlugin {
                   `templates/${templateName}/${version}/manifest.json`,
                   new RawSource(JSON.stringify(versionedManifest, null, 2))
                 );
+
+                // Emit legacy fallback version folders up to current version patch number
+                // so stale or cached version URLs (e.g., 1.0.5) on static hosts like GitHub Pages never return 404
+                const vMatch = /^(\d+\.\d+\.)(\d+)$/.exec(version);
+                if (vMatch) {
+                  const prefix = vMatch[1];
+                  const currentPatch = parseInt(vMatch[2], 10);
+                  for (let p = 0; p <= currentPatch; p++) {
+                    const legacyVer = `${prefix}${p}`;
+                    if (legacyVer === version) continue;
+                    compilation.emitAsset(
+                      `templates/${templateName}/${legacyVer}/manifest.json`,
+                      new RawSource(
+                        JSON.stringify(
+                          { ...versionedManifest, version: legacyVer },
+                          null,
+                          2
+                        )
+                      )
+                    );
+                    if (assetRecord.js && compilation.assets[assetRecord.js]) {
+                      compilation.emitAsset(
+                        `templates/${templateName}/${legacyVer}/bundle.js`,
+                        compilation.assets[assetRecord.js]
+                      );
+                    }
+                    if (assetRecord.css && compilation.assets[assetRecord.css]) {
+                      compilation.emitAsset(
+                        `templates/${templateName}/${legacyVer}/bundle.css`,
+                        compilation.assets[assetRecord.css]
+                      );
+                    }
+                  }
+                }
 
                 // Store for per-template root manifest with direct asset URLs
                 globalTemplatesManifest[templateName] = {
