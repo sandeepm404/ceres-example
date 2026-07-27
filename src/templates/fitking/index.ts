@@ -80,6 +80,34 @@ Handlebars.registerHelper("formatPhone", function (phone: any) {
   return str;
 });
 
+Handlebars.registerHelper("getColumnLabel", function (key: string, fallback: string, options: any) {
+  const root = options?.data?.root;
+  const columns = root?.columns || root?.invoice?.columns;
+  if (Array.isArray(columns)) {
+    const col = columns.find((c: any) => {
+      const k = (c.key || c.id || c.name || "").toLowerCase();
+      const target = (key || "").toLowerCase();
+      if (k === target) return true;
+      if (target === "item" && ["name", "description", "item", "productdescription"].includes(k)) return true;
+      if (target === "model" && ["model", "modelno", "model_no"].includes(k)) return true;
+      if (target === "rate" && ["rate", "price", "unitprice", "unit_price"].includes(k)) return true;
+      if (target === "quantity" && ["quantity", "qty"].includes(k)) return true;
+      if (target === "total" && ["total", "amount", "linetotal"].includes(k)) return true;
+      return false;
+    });
+    if (col && col.label && typeof col.label === "string" && col.label.trim()) {
+      return col.label.trim();
+    }
+  }
+
+  const customLabels = root?.invoice?.customLabels;
+  if (customLabels && customLabels[key]) {
+    return customLabels[key];
+  }
+
+  return fallback;
+});
+
 function isDatabaseId(str: string): boolean {
   if (!str) return false;
   const trimmed = str.trim();

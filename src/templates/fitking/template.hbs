@@ -126,11 +126,11 @@
           <thead>
             <tr>
               <th class="fk-col-sno"></th>
-              <th colspan="2" class="fk-col-desc-photo">{{#if invoice.customLabels.item}}{{invoice.customLabels.item}}{{else}}{{#if invoice.customLabels.productDescription}}{{invoice.customLabels.productDescription}}{{else}}Item{{/if}}{{/if}}</th>
-              <th class="fk-col-model">{{#if invoice.customLabels.modelNo}}{{invoice.customLabels.modelNo}}{{else}}Model&nbsp;&nbsp;No{{/if}}</th>
-              <th class="fk-col-price text-right">{{#if invoice.customLabels.rate}}{{invoice.customLabels.rate}}{{else}}Unit Price{{/if}}</th>
-              <th class="fk-col-qty text-center">{{#if invoice.customLabels.quantity}}{{invoice.customLabels.quantity}}{{else}}Qty{{/if}}</th>
-              <th class="fk-col-total text-right">{{#if invoice.customLabels.amount}}{{invoice.customLabels.amount}}{{else}}Total{{/if}}</th>
+              <th colspan="2" class="fk-col-desc-photo">{{getColumnLabel "item" "Item"}}</th>
+              <th class="fk-col-model">{{getColumnLabel "model" "Model  No"}}</th>
+              <th class="fk-col-price text-right">{{getColumnLabel "rate" "Unit Price"}}</th>
+              <th class="fk-col-qty text-center">{{getColumnLabel "quantity" "Qty"}}</th>
+              <th class="fk-col-total text-right">{{getColumnLabel "total" "Total"}}</th>
             </tr>
           </thead>
           <tbody>
