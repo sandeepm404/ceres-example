@@ -13,10 +13,13 @@ const render = (payload: Record<string, unknown>) =>
   template(normalizeInvoiceTemplateState(payload as any));
 
 // The rows the party blocks emit for operator-defined fields, as label/value.
+// Whitespace between attributes is insignificant HTML — the formatter is free
+// to wrap `template.hbs` however it likes — so the regex tolerates it rather
+// than pinning an exact line layout.
 const customRows = (html: string) =>
   [
     ...html.matchAll(
-      /<div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">([^<]*):<\/span><span class="fk-kv-val">([^<]*)<\/span><\/div>/g
+      /<div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">([^<]*):<\/span><span\s+class="fk-kv-val">([^<]*)<\/span><\/div>/g
     ),
   ].map(([, label, value]) => `${label}=${value}`);
 

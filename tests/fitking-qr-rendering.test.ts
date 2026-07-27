@@ -55,7 +55,10 @@ describe("fitking UPI QR", () => {
     });
 
     expect(html).not.toContain("fk-upi-qr\"");
-    expect(html).toContain("UPI: someone@oksbi");
+    // Whitespace between the literal "UPI:" and the id is insignificant HTML
+    // (the formatter is free to wrap template.hbs across lines here), so this
+    // matches on content rather than an exact run of spaces.
+    expect(html).toMatch(/UPI:\s*someone@oksbi/);
   });
 
   it("omits the whole block when UPI is not an enabled payment option", () => {

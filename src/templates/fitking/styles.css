@@ -54,36 +54,6 @@
   margin: 0;
 }
 
-/* ===== LETTERHEAD ===== */
-.fk-letterhead,
-.fk-letterhead-footer {
-  width: var(--fk-page-width);
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.fk-letterhead.is-empty,
-.fk-letterhead-footer.is-empty {
-  position: absolute;
-  width: 0;
-  height: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.fk-letterhead img,
-.fk-letterhead-footer img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
 /* ===== PAGE ===== */
 .fk-page {
   /* max-width, not width: the host page centres this with `display: flex;
@@ -371,11 +341,14 @@
 }
 
 /* Currency columns never wrap: a figure broken across two lines reads as two
-   numbers. Their measured width is what keeps them from spilling. */
+   numbers. Their measured width is what keeps them from spilling. Quantity is
+   a number too — it wraps to a `fk-qty-unit` line underneath instead, but the
+   figure itself must stay on one line the same way. */
 .fk-col-price,
 .fk-col-total,
 .fk-col-disc,
-.fk-col-tax {
+.fk-col-tax,
+.fk-col-qty {
   white-space: nowrap;
 }
 
@@ -383,8 +356,11 @@
   text-align: center;
 }
 
-/* Narrow side padding on the numeric columns: the content box stays as wide as
-   it was at the old widths, so nothing that fitted before starts overflowing. */
+/* Side padding on the numeric columns: narrower than the table default so
+   width goes to the item description, but never so narrow that a right-aligned
+   figure sits flush against the border — `itemColumns` sizes each column
+   assuming this exact padding (see CELL_CHROME_PX in helpers.ts), so the two
+   have to change together. */
 .fk-item-table thead th.fk-col-sno,
 .fk-item-table thead th.fk-col-price,
 .fk-item-table thead th.fk-col-qty,
@@ -399,8 +375,8 @@
 .fk-item-table tbody td.fk-disc-cell,
 .fk-item-table tbody td.fk-tax-cell,
 .fk-item-table tbody td.fk-total-cell {
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .fk-hsn-cell,

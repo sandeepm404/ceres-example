@@ -88,12 +88,11 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return fields;
   });
 
-  // Letterhead/footer assets are documented as strings, but the platform also
-  // ships them as { url } — see toAssetUrl in src/main/commonUtils.ts. Printing
-  // the raw value in an `src` renders "[object Object]", which the browser
-  // resolves to a broken image: the block keeps its height but shows nothing.
-  // Resolving here means a value we cannot turn into a URL reads as absent, so
-  // the surrounding `is-empty` guard collapses the block instead.
+  // Some asset fields are documented as strings but the platform also ships
+  // them as { url } — see toAssetUrl in src/main/commonUtils.ts. `itemImages`
+  // below needs this unwrapping; letterhead/footer no longer route through it
+  // (see PR #1), so this is internal now rather than an exposed `{{assetUrl}}`
+  // template helper.
   function resolveAssetUrl(val: any): string {
     if (typeof val === "string") return val.trim();
     if (val && typeof val === "object") {
@@ -104,10 +103,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     }
     return "";
   }
-
-  HB.registerHelper("assetUrl", function (val: any) {
-    return resolveAssetUrl(val);
-  });
 
   // A line item's pictures. The contract declares three fields for them —
   // `originalImages`, `images` and `thumbnail` (see InvoiceItem in
@@ -501,7 +496,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // a character too narrow clips a figure.
   const CHAR_PX = 7;
   // Cell padding plus both borders, which the text never gets to use.
-  const CELL_CHROME_PX = 14;
+  const CELL_CHROME_PX = 18;
   // Nominal content width of the table: page width less the page and main-box
   // padding. Only used to turn measured px into a ratio, so it does not have to
   // track the real width exactly.
@@ -529,7 +524,20 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     sgst: { min: 60, max: 130 },
     amount: { min: 90, max: 200 },
     custom: { min: 70, max: 150, wraps: true },
+    // A user-defined column declared as a number or currency: same treatment
+    // as the built-in numeric kinds above, not the free-text `custom` rule.
+    customNumeric: { min: 90, max: 200 },
   };
+
+  // Whether a declared column's own dataType — not the value it happens to
+  // hold — marks it as numeric. A payload can mark a column `currency` and
+  // still send an item where that field is blank or unparsable; the column is
+  // numeric regardless, so its cells must not wrap just because one row's
+  // value could not be parsed.
+  function isNumericColumnType(column: any): boolean {
+    const declared = `${column?.dataType || ""} ${column?.fxReturnType || ""}`;
+    return declared.includes("number") || declared.includes("currency");
+  }
 
   const longestWordLength = (text: string) =>
     String(text || "")
@@ -583,7 +591,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     for (const column of columns) {
       if (column.kind === "name") continue;
 
-      const rule = COLUMN_WIDTH_RULES[column.kind] || COLUMN_WIDTH_RULES.custom;
+      const rule =
+        column.kind === "custom" && isNumericColumnType(column)
+          ? COLUMN_WIDTH_RULES.customNumeric
+          : COLUMN_WIDTH_RULES[column.kind] || COLUMN_WIDTH_RULES.custom;
       let widest = rule.wraps ? longestWordLength(column.label) : String(column.label || "").length;
 
       if (column.kind === "sno") {
@@ -655,9 +666,12 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       return { text: formatCurrencyValue(value, invoice), isNumber: true };
     }
 
+    // `isNumber` drives the nowrap class in the row markup. A column declared
+    // `number`/`currency` must not wrap even on a row where this value happens
+    // to be blank or unparsable — the column's shape doesn't change row to row.
     return {
       text: stringifyFieldValue(value),
-      isNumber: extractNumericValue(value) !== null,
+      isNumber: isNumericColumnType(column) || extractNumericValue(value) !== null,
     };
   }
 
