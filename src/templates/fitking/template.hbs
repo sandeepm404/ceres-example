@@ -1,4 +1,5 @@
-<div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};"{{else}}{{#if invoice.textScale}}style="zoom: {{invoice.textScale}};"{{/if}}{{/if}}>
+<div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};" {{else}}{{#if
+  invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}>
 
   {{!-- Letterhead --}}
   <div class="no-dibella invoice-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
@@ -9,7 +10,8 @@
     {{/if}}
   </div>
 
-  <div class="fk-page" {{#if advanceOptions.pageMargin}}style="--fk-page-padding-horizontal: {{advanceOptions.pageMargin}};"{{/if}}>
+  <div class="fk-page" {{#if
+    advanceOptions.pageMargin}}style="--fk-page-padding-horizontal: {{advanceOptions.pageMargin}};" {{/if}}>
 
     {{!-- ═══ Header: Logos & QR ═══ --}}
     <div class="fk-header">
@@ -44,28 +46,37 @@
           {{#if invoice.billedBy.address}}<p class="fk-info-value">{{invoice.billedBy.address}}</p>{{/if}}
           {{#if invoice.billedBy.city}}
           <p class="fk-info-value">
-            {{invoice.billedBy.city}}{{#if invoice.billedBy.state}}, {{invoice.billedBy.state}}{{/if}}{{#if invoice.billedBy.pincode}} {{invoice.billedBy.pincode}}{{/if}}{{#if invoice.billedBy.country}}, {{invoice.billedBy.country}}{{/if}}
+            {{invoice.billedBy.city}}{{#if invoice.billedBy.state}}, {{invoice.billedBy.state}}{{/if}}{{#if
+            invoice.billedBy.pincode}} {{invoice.billedBy.pincode}}{{/if}}{{#if invoice.billedBy.country}},
+            {{invoice.billedBy.country}}{{/if}}
           </p>
           {{/if}}
           {{#if invoice.billedBy.phone}}
-          <div class="fk-info-kv"><span class="fk-kv-key">Phone</span><span class="fk-kv-val">{{formatPhone invoice.billedBy.phone}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "phone" "Phone"}}</span><span
+              class="fk-kv-val">{{formatPhone invoice.billedBy.phone}}</span></div>
           {{/if}}
           {{#if invoice.billedBy.email}}
-          <div class="fk-info-kv"><span class="fk-kv-key">Email</span><span class="fk-kv-val">{{invoice.billedBy.email}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "email" "Email"}}</span><span
+              class="fk-kv-val">{{invoice.billedBy.email}}</span></div>
           {{/if}}
           {{#if invoice.billedBy.gstin}}
-          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.billedBy.gstin}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "gstin" "gstNumber" "GSTIN"}}:</span><span
+              class="fk-kv-val">{{invoice.billedBy.gstin}}</span></div>
           {{/if}}
           {{#if invoice.billedBy.panNumber}}
-          <div class="fk-info-kv"><span class="fk-kv-key">PAN:</span><span class="fk-kv-val">{{invoice.billedBy.panNumber}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "pan" "panNumber" "PAN"}}:</span><span
+              class="fk-kv-val">{{invoice.billedBy.panNumber}}</span></div>
           {{else}}{{#if invoice.billedBy.pan}}
-          <div class="fk-info-kv"><span class="fk-kv-key">PAN:</span><span class="fk-kv-val">{{invoice.billedBy.pan}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "pan" "panNumber" "PAN"}}:</span><span
+              class="fk-kv-val">{{invoice.billedBy.pan}}</span></div>
           {{/if}}{{/if}}
           {{#if invoice.billedBy.trnNumber}}
-          <div class="fk-info-kv"><span class="fk-kv-key">TRN:</span><span class="fk-kv-val">{{invoice.billedBy.trnNumber}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "trn" "trnNumber" "TRN"}}:</span><span
+              class="fk-kv-val">{{invoice.billedBy.trnNumber}}</span></div>
           {{/if}}
           {{#each (partyFields invoice.billedBy)}}
-          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{value}}</span></div>
           {{/each}}
         </div>
 
@@ -78,23 +89,30 @@
           {{#if invoice.billedTo.address}}<p class="fk-info-value">{{invoice.billedTo.address}}</p>{{/if}}
           {{#if invoice.billedTo.city}}
           <p class="fk-info-value">
-            {{invoice.billedTo.city}}{{#if invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}{{#if invoice.billedTo.pincode}} {{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}}, {{invoice.billedTo.country}}{{/if}}
+            {{invoice.billedTo.city}}{{#if invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}{{#if
+            invoice.billedTo.pincode}} {{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}},
+            {{invoice.billedTo.country}}{{/if}}
           </p>
           {{/if}}
           {{#if invoice.billedTo.phone}}
-          <div class="fk-info-kv"><span class="fk-kv-key">Phone</span><span class="fk-kv-val">{{formatPhone invoice.billedTo.phone}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "phone" "Phone"}}</span><span
+              class="fk-kv-val">{{formatPhone invoice.billedTo.phone}}</span></div>
           {{/if}}
           {{#if invoice.billedTo.email}}
-          <div class="fk-info-kv"><span class="fk-kv-key">Email</span><span class="fk-kv-val">{{invoice.billedTo.email}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "email" "Email"}}</span><span
+              class="fk-kv-val">{{invoice.billedTo.email}}</span></div>
           {{/if}}
           {{#if invoice.billedTo.gstin}}
-          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.billedTo.gstin}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "gstin" "gstNumber" "GSTIN"}}:</span><span
+              class="fk-kv-val">{{invoice.billedTo.gstin}}</span></div>
           {{/if}}
           {{#if invoice.billedTo.trnNumber}}
-          <div class="fk-info-kv"><span class="fk-kv-key">TRN:</span><span class="fk-kv-val">{{invoice.billedTo.trnNumber}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "trn" "trnNumber" "TRN"}}:</span><span
+              class="fk-kv-val">{{invoice.billedTo.trnNumber}}</span></div>
           {{/if}}
           {{#each (partyFields invoice.billedTo)}}
-          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{value}}</span></div>
           {{/each}}
         </div>
 
@@ -130,13 +148,14 @@
             {{/if}}
             {{#if invoice.irn.AckDt}}
             <tr>
-              <td class="fk-dt-label">IRN Ack Date</td>
-              <td class="fk-dt-value">{{formatDateInTimeZone invoice.irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</td>
+              <td class="fk-dt-label">{{docLabel "irnAckDate" "ackDate" "IRN Ack Date"}}</td>
+              <td class="fk-dt-value">{{formatDateInTimeZone invoice.irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+              </td>
             </tr>
             {{/if}}
             {{#if invoice.irn.CancelDate}}
             <tr>
-              <td class="fk-dt-label">IRN Cancelled</td>
+              <td class="fk-dt-label">{{docLabel "irnCancelled" "cancelDate" "IRN Cancelled"}}</td>
               <td class="fk-dt-value">{{formateShortDateWithOffset invoice.irn.CancelDate invoice.ownerOffset}}</td>
             </tr>
             {{/if}}
@@ -169,14 +188,18 @@
           {{#if invoice.shippedFrom.address}}<p class="fk-info-value">{{invoice.shippedFrom.address}}</p>{{/if}}
           {{#if invoice.shippedFrom.city}}
           <p class="fk-info-value">
-            {{invoice.shippedFrom.city}}{{#if invoice.shippedFrom.state}}, {{invoice.shippedFrom.state}}{{/if}}{{#if invoice.shippedFrom.pincode}} {{invoice.shippedFrom.pincode}}{{/if}}{{#if invoice.shippedFrom.country}}, {{invoice.shippedFrom.country}}{{/if}}
+            {{invoice.shippedFrom.city}}{{#if invoice.shippedFrom.state}}, {{invoice.shippedFrom.state}}{{/if}}{{#if
+            invoice.shippedFrom.pincode}} {{invoice.shippedFrom.pincode}}{{/if}}{{#if invoice.shippedFrom.country}},
+            {{invoice.shippedFrom.country}}{{/if}}
           </p>
           {{/if}}
           {{#if invoice.shippedFrom.gstin}}
-          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.shippedFrom.gstin}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "gstin" "gstNumber" "GSTIN"}}:</span><span
+              class="fk-kv-val">{{invoice.shippedFrom.gstin}}</span></div>
           {{/if}}
           {{#each (partyFields invoice.shippedFrom)}}
-          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{value}}</span></div>
           {{/each}}
         </div>
         {{/if}}
@@ -190,27 +213,40 @@
           {{#if invoice.shippedTo.address}}<p class="fk-info-value">{{invoice.shippedTo.address}}</p>{{/if}}
           {{#if invoice.shippedTo.city}}
           <p class="fk-info-value">
-            {{invoice.shippedTo.city}}{{#if invoice.shippedTo.state}}, {{invoice.shippedTo.state}}{{/if}}{{#if invoice.shippedTo.pincode}} {{invoice.shippedTo.pincode}}{{/if}}{{#if invoice.shippedTo.country}}, {{invoice.shippedTo.country}}{{/if}}
+            {{invoice.shippedTo.city}}{{#if invoice.shippedTo.state}}, {{invoice.shippedTo.state}}{{/if}}{{#if
+            invoice.shippedTo.pincode}} {{invoice.shippedTo.pincode}}{{/if}}{{#if invoice.shippedTo.country}},
+            {{invoice.shippedTo.country}}{{/if}}
           </p>
           {{/if}}
           {{#if invoice.shippedTo.gstin}}
-          <div class="fk-info-kv"><span class="fk-kv-key">GSTIN:</span><span class="fk-kv-val">{{invoice.shippedTo.gstin}}</span></div>
+          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "gstin" "gstNumber" "GSTIN"}}:</span><span
+              class="fk-kv-val">{{invoice.shippedTo.gstin}}</span></div>
           {{/if}}
           {{#each (partyFields invoice.shippedTo)}}
-          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span class="fk-kv-val">{{value}}</span></div>
+          <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{value}}</span></div>
           {{/each}}
         </div>
         {{/if}}
-        
+
         {{#if mapped.visibility.showLogistics}}
         <div class="fk-info-col fk-info-transport">
           <p class="fk-info-heading">{{docLabel "transport" "Transport Details"}}</p>
           <div class="fk-transport-kv">
-            {{#if invoice.transportDetails.transporter.name}}<p><span class="fk-kv-key">{{#if invoice.customLabels.transportName}}{{invoice.customLabels.transportName}}{{else}}Transport Name{{/if}}:</span> <span class="fk-kv-val">{{invoice.transportDetails.transporter.name}}</span></p>{{/if}}
-            {{#if invoice.transportDetails.transportMode}}<p><span class="fk-kv-key">Transport Mode:</span> <span class="fk-kv-val">{{invoice.transportDetails.transportMode}}</span></p>{{/if}}
-            {{#if invoice.transportDetails.challanNumber}}<p><span class="fk-kv-key">{{#if invoice.customLabels.challanNumber}}{{invoice.customLabels.challanNumber}}{{else}}Challan No{{/if}}:</span> <span class="fk-kv-val">{{invoice.transportDetails.challanNumber}}</span></p>{{/if}}
-            {{#if invoice.transportDetails.challanDate}}<p><span class="fk-kv-key">{{#if invoice.customLabels.challanDate}}{{invoice.customLabels.challanDate}}{{else}}Challan Date{{/if}}:</span> <span class="fk-kv-val">{{formateDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</span></p>{{/if}}
-            {{#if invoice.transportDetails.vehicleNumber}}<p><span class="fk-kv-key">Vehicle No:</span> <span class="fk-kv-val">{{invoice.transportDetails.vehicleNumber}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.transporter.name}}<p><span class="fk-kv-key">{{docLabel "transportName"
+                "transporterName" "Transport Name"}}:</span> <span
+                class="fk-kv-val">{{invoice.transportDetails.transporter.name}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.transportMode}}<p><span class="fk-kv-key">{{docLabel "transportMode"
+                "Transport Mode"}}:</span> <span class="fk-kv-val">{{invoice.transportDetails.transportMode}}</span></p>
+            {{/if}}
+            {{#if invoice.transportDetails.challanNumber}}<p><span class="fk-kv-key">{{docLabel "challanNumber" "Challan
+                No"}}:</span> <span class="fk-kv-val">{{invoice.transportDetails.challanNumber}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.challanDate}}<p><span class="fk-kv-key">{{docLabel "challanDate" "Challan
+                Date"}}:</span> <span class="fk-kv-val">{{formateDateWithOffset invoice.transportDetails.challanDate
+                invoice.ownerOffset}}</span></p>{{/if}}
+            {{#if invoice.transportDetails.vehicleNumber}}<p><span class="fk-kv-key">{{docLabel "vehicleNumber"
+                "vehicleNo" "Vehicle No"}}:</span> <span
+                class="fk-kv-val">{{invoice.transportDetails.vehicleNumber}}</span></p>{{/if}}
           </div>
         </div>
         {{/if}}
@@ -221,99 +257,113 @@
       <div class="fk-table-wrap">
         <table class="fk-item-table">
           {{!-- The table is `table-layout: fixed`, which takes its column widths
-                from the first row only — and there the item heading is a single
-                `colspan="2"` cell, so the browser splits that space evenly
-                between the description and the photo and ignores any width set
-                on `.fk-img-cell`. These <col>s size the columns directly. The
-                set has to track the <th> set below (and `itemColspan`) exactly;
-                the description <col> is deliberately unsized so it absorbs all
-                the leftover width. --}}
-          <colgroup>
-            {{!-- Widths are measured from this document's own values in
-                  `itemColumns`, so a column is as wide as the figures it has to
-                  print and the description keeps the rest. --}}
-            {{#each (itemColumns)}}<col class="{{colClass}}" style="width: {{widthPct}}%" />{{/each}}
-          </colgroup>
-          <thead>
-            <tr>
-              {{!-- Column order comes from `invoice.columns` as the API returns
-                    it. The photo has no declared column of its own: it is part
-                    of the item, so it is pinned next to the name and the two
-                    share one heading via colspan — which is why the photo entry
-                    itself emits no <th>. --}}
+          from the first row only — and there the item heading is a single
+          `colspan="2"` cell, so the browser splits that space evenly
+          between the description and the photo and ignores any width set
+          on `.fk-img-cell`. These
+          <col>s size the columns directly. The
+          set has to track the <th> set below (and `itemColspan`) exactly;
+            the description
+            <col> is deliberately unsized so it absorbs all
+            the leftover width. --}}
+            <colgroup>
+              {{!-- Widths are measured from this document's own values in
+              `itemColumns`, so a column is as wide as the figures it has to
+              print and the description keeps the rest. --}}
               {{#each (itemColumns)}}
-              {{#if (eq kind "sno")}}<th class="fk-col-sno"></th>{{/if}}
-              {{#if (eq kind "name")}}<th colspan="2" class="fk-col-desc-photo">{{label}}</th>{{/if}}
-              {{#if (eq kind "model")}}<th class="fk-col-model">{{label}}</th>{{/if}}
-              {{#if (eq kind "hsn")}}<th class="fk-col-hsn">{{label}}</th>{{/if}}
-              {{#unless (or (eq kind "sno") (eq kind "name") (eq kind "photo") (eq kind "model") (eq kind "hsn"))}}
-              <th class="{{colClass}} text-center">{{label}}</th>
-              {{/unless}}
-              {{/each}}
-            </tr>
-          </thead>
-          <tbody>
-            {{#each invoice.items}}
-            <tr>
-              {{!-- One cell per declared column, in the same order as the header
-                    above. Inside this loop `..` is the line item and `../..` is
-                    the render root. --}}
-              {{#each (itemColumns)}}
-              {{#if (eq kind "sno")}}
-              <td class="text-center fk-sno-cell">{{increment @../index}}</td>
-              {{/if}}
-              {{#if (eq kind "name")}}
-              <td class="fk-desc-cell">
-                <p class="fk-item-name">{{../name}}</p>
-                {{#if ../../advanceOptions.showSkuInInvoice}}{{#if ../sku}}<div class="fk-item-sku">SKU: {{../sku}}</div>{{/if}}{{/if}}
-                {{#if ../../derived.showInlineHsn}}{{#if ../hsn}}<div class="fk-item-sku">HSN/SAC: {{../hsn}}</div>{{/if}}{{/if}}
-                {{#unless ../../mapped.visibility.showDescriptionFullWidth}}
-                {{#if ../description}}
-                <div class="fk-item-desc">
-                  {{> MarkdownViewer (prepareMarkdownViewerData ../description) }}
-                </div>
-                {{/if}}
+              <col class="{{colClass}}" style="width: {{widthPct}}%" />{{/each}}
+            </colgroup>
+            <thead>
+              <tr>
+                {{!-- Column order comes from `invoice.columns` as the API returns
+                it. The photo has no declared column of its own: it is part
+                of the item, so it is pinned next to the name and the two
+                share one heading via colspan — which is why the photo entry
+                itself emits no <th>. --}}
+                  {{#each (itemColumns)}}
+                  {{#if (eq kind "sno")}}
+                <th class="fk-col-sno"></th>{{/if}}
+                {{#if (eq kind "name")}}<th colspan="2" class="fk-col-desc-photo">{{label}}</th>{{/if}}
+                {{#if (eq kind "model")}}<th class="fk-col-model">{{label}}</th>{{/if}}
+                {{#if (eq kind "hsn")}}<th class="fk-col-hsn">{{label}}</th>{{/if}}
+                {{#unless (or (eq kind "sno") (eq kind "name") (eq kind "photo") (eq kind "model") (eq kind "hsn"))}}
+                <th class="{{colClass}} text-center">{{label}}</th>
                 {{/unless}}
-              </td>
-              {{/if}}
-              {{#if (eq kind "photo")}}
-              <td class="fk-img-cell">
-                {{#each (itemImages ..)}}
-                <img src="{{this}}" alt="{{../../name}}" class="fk-product-img" />
                 {{/each}}
-              </td>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each invoice.items}}
+              <tr>
+                {{!-- One cell per declared column, in the same order as the header
+                above. Inside this loop `..` is the line item and `../..` is
+                the render root. --}}
+                {{#each (itemColumns)}}
+                {{#if (eq kind "sno")}}
+                <td class="text-center fk-sno-cell">{{increment @../index}}</td>
+                {{/if}}
+                {{#if (eq kind "name")}}
+                <td class="fk-desc-cell">
+                  <p class="fk-item-name">{{../name}}</p>
+                  {{#if ../../advanceOptions.showSkuInInvoice}}{{#if ../sku}}<div class="fk-item-sku">SKU: {{../sku}}
+                  </div>{{/if}}{{/if}}
+                  {{#if ../../derived.showInlineHsn}}{{#if ../hsn}}<div class="fk-item-sku">HSN/SAC: {{../hsn}}</div>
+                  {{/if}}{{/if}}
+                  {{#unless ../../mapped.visibility.showDescriptionFullWidth}}
+                  {{#if ../description}}
+                  <div class="fk-item-desc">
+                    {{> MarkdownViewer (prepareMarkdownViewerData ../description) }}
+                  </div>
+                  {{/if}}
+                  {{/unless}}
+                </td>
+                {{/if}}
+                {{#if (eq kind "photo")}}
+                <td class="fk-img-cell">
+                  {{#each (itemImages ..)}}
+                  <img src="{{this}}" alt="{{../../name}}" class="fk-product-img" />
+                  {{/each}}
+                </td>
+                {{/if}}
+                {{#if (eq kind "model")}}
+                <td class="text-center fk-model-cell">{{#if ../model}}{{../model}}{{else}}{{#if
+                  ../custom.modelNo}}{{../custom.modelNo}}{{else}}{{#if
+                  ../custom.model}}{{../custom.model}}{{else}}{{../sku}}{{/if}}{{/if}}{{/if}}</td>
+                {{/if}}
+                {{#if (eq kind "hsn")}}<td class="text-center fk-hsn-cell">{{../hsn}}</td>{{/if}}
+                {{#if (eq kind "rate")}}<td class="text-center fk-price-cell">{{formatCurrency ../rate ../../invoice}}
+                </td>{{/if}}
+                {{#if (eq kind "qty")}}<td class="text-center fk-qty-cell">{{formatQtyCell ../this ../../invoice
+                  ../../advanceOptions}}</td>{{/if}}
+                {{#if (eq kind "discount")}}<td class="text-center fk-disc-cell">{{../discountLabel}}</td>{{/if}}
+                {{#if (eq kind "igst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../igst ../../invoice}}
+                </td>{{/if}}
+                {{#if (eq kind "cgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../cgst ../../invoice}}
+                </td>{{/if}}
+                {{#if (eq kind "sgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../sgst ../../invoice}}
+                </td>{{/if}}
+                {{#if (eq kind "amount")}}<td class="text-center fk-total-cell">{{formatCurrency ../amount
+                  ../../invoice}}</td>{{/if}}
+                {{#if (eq kind "custom")}}
+                {{!-- Numeric values never wrap: a figure broken across two lines
+                reads as two numbers. Text values still wrap. --}}
+                {{#with (customColumnCell ../this this ../../invoice)}}
+                <td class="text-center fk-custom-cell{{#if isNumber}} fk-nowrap{{/if}}">{{text}}</td>
+                {{/with}}
+                {{/if}}
+                {{/each}}
+              </tr>
+              {{#if ../mapped.visibility.showDescriptionFullWidth}}
+              {{#if description}}
+              <tr class="fk-desc-fullwidth-row">
+                <td colspan="{{itemColspan}}" class="fk-desc-fullwidth-cell">
+                  {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+                </td>
+              </tr>
               {{/if}}
-              {{#if (eq kind "model")}}
-              <td class="text-center fk-model-cell">{{#if ../model}}{{../model}}{{else}}{{#if ../custom.modelNo}}{{../custom.modelNo}}{{else}}{{#if ../custom.model}}{{../custom.model}}{{else}}{{../sku}}{{/if}}{{/if}}{{/if}}</td>
-              {{/if}}
-              {{#if (eq kind "hsn")}}<td class="text-center fk-hsn-cell">{{../hsn}}</td>{{/if}}
-              {{#if (eq kind "rate")}}<td class="text-center fk-price-cell">{{formatCurrency ../rate ../../invoice}}</td>{{/if}}
-              {{#if (eq kind "qty")}}<td class="text-center fk-qty-cell">{{formatQtyCell ../this ../../invoice ../../advanceOptions}}</td>{{/if}}
-              {{#if (eq kind "discount")}}<td class="text-center fk-disc-cell">{{../discountLabel}}</td>{{/if}}
-              {{#if (eq kind "igst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../igst ../../invoice}}</td>{{/if}}
-              {{#if (eq kind "cgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../cgst ../../invoice}}</td>{{/if}}
-              {{#if (eq kind "sgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../sgst ../../invoice}}</td>{{/if}}
-              {{#if (eq kind "amount")}}<td class="text-center fk-total-cell">{{formatCurrency ../amount ../../invoice}}</td>{{/if}}
-              {{#if (eq kind "custom")}}
-              {{!-- Numeric values never wrap: a figure broken across two lines
-                    reads as two numbers. Text values still wrap. --}}
-              {{#with (customColumnCell ../this this ../../invoice)}}
-              <td class="text-center fk-custom-cell{{#if isNumber}} fk-nowrap{{/if}}">{{text}}</td>
-              {{/with}}
               {{/if}}
               {{/each}}
-            </tr>
-            {{#if ../mapped.visibility.showDescriptionFullWidth}}
-            {{#if description}}
-            <tr class="fk-desc-fullwidth-row">
-              <td colspan="{{itemColspan}}" class="fk-desc-fullwidth-cell">
-                {{> MarkdownViewer (prepareMarkdownViewerData description) }}
-              </td>
-            </tr>
-            {{/if}}
-            {{/if}}
-            {{/each}}
-          </tbody>
+            </tbody>
         </table>
       </div>
 
@@ -324,7 +374,8 @@
           {{#each invoice.terms}}
           {{#if terms.length}}
           <div class="fk-terms-section">
-            <p class="fk-section-title">{{#if label}}{{label}}{{else}}{{docLabel "terms" "Terms and Conditions"}}{{/if}}</p>
+            <p class="fk-section-title">{{#if label}}{{label}}{{else}}{{docLabel "terms" "Terms and Conditions"}}{{/if}}
+            </p>
             <ol class="fk-terms-list">
               {{#each terms}}
               <li>{{this}}</li>
@@ -346,24 +397,25 @@
           {{!-- Bank & UPI Details --}}
           {{#if mapped.visibility.showBankUpiSection}}
           <div class="fk-bank-section">
-            <p class="fk-section-title">{{docLabel "bankDetails" "Bank and UPI Details"}}</p>
+            <p class="fk-section-title">{{docLabel "bankDetails" "bankAndUpiDetails" "bank" "Bank and UPI Details"}}</p>
             <div class="fk-bank-content">
               {{#if mapped.visibility.showBankAccount}}
               <div class="fk-bank-kv">
-                {{#if invoice.bankAccount.bankName}}<p><span class="fk-bank-key">Bank Name:</span> <span class="fk-bank-val">{{invoice.bankAccount.bankName}}</span></p>{{/if}}
-                <p><span class="fk-bank-key">Account Name:</span> <span class="fk-bank-val">{{#if invoice.bankAccount.holderName}}{{invoice.bankAccount.holderName}}{{else}}{{invoice.billedBy.name}}{{/if}}</span></p>
-                {{#if invoice.bankAccount.accountNo}}<p><span class="fk-bank-key">Account No:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountNo}}</span></p>{{/if}}
-                {{#if invoice.bankAccount.ifsc}}<p><span class="fk-bank-key">IFSC:</span> <span class="fk-bank-val">{{invoice.bankAccount.ifsc}}</span></p>{{/if}}
-                {{#if invoice.bankAccount.accountType}}<p><span class="fk-bank-key">Account Type:</span> <span class="fk-bank-val">{{invoice.bankAccount.accountType}}</span></p>{{/if}}
+                {{!-- Rows, labels and order all come from the account as the
+                payload carries it; see `bankFields`. --}}
+                {{#each (bankFields invoice)}}
+                <p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>
+                {{/each}}
               </div>
               {{/if}}
               {{#if mapped.visibility.showUpi}}
               <div class="fk-upi-qr-block">
                 {{#with (qrSrc mapped.qr.upi) as |upiQrSrc|}}
-                <p class="fk-upi-title">Scan to pay via UPI</p>
+                <p class="fk-upi-title">{{docLabel "upi" "scanToPay" "Scan to pay via UPI"}}</p>
                 <img src="{{upiQrSrc}}" alt="Scan to Pay" class="fk-upi-qr" />
                 {{/with}}
-                {{#if mapped.upi.id}}<p class="fk-upi-label">{{#unless (qrSrc mapped.qr.upi)}}UPI: {{/unless}}{{mapped.upi.id}}</p>{{/if}}
+                {{#if mapped.upi.id}}<p class="fk-upi-label">{{#unless (qrSrc mapped.qr.upi)}}UPI:
+                  {{/unless}}{{mapped.upi.id}}</p>{{/if}}
               </div>
               {{/if}}
             </div>
@@ -371,17 +423,20 @@
           {{/if}}
 
           {{!-- Additional Notes: the document's own footer fields, e.g. "CIN" or
-                "Vehicle Number". They are labelled text rather than amounts, so
-                they sit here under the bank details instead of in the totals. --}}
+          "Vehicle Number". They are labelled text rather than amounts, so
+          they sit here under the bank details instead of in the totals. --}}
           {{#if (or invoice.customFooters.length invoice.footers.length)}}
           <div class="fk-additional-notes-section">
-            <p class="fk-section-title">{{docLabel "footer" "Additional Notes"}}</p>
+            <p class="fk-section-title">{{docLabel "additionalInfo" "additionalInformation" "customFooters" "footer"
+              "Additional Notes"}}</p>
             <div class="fk-additional-notes-content">
               {{#each invoice.customFooters}}
-              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>{{/if}}
+              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>
+              {{/if}}
               {{/each}}
               {{#each invoice.footers}}
-              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>{{/if}}
+              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>
+              {{/if}}
               {{/each}}
             </div>
           </div>
@@ -391,10 +446,12 @@
         {{!-- Right Side: Totals + Words + Signature --}}
         <div class="fk-bottom-right">
           <table class="fk-totals-table">
-            {{#if (or invoice.finalTotal.discount invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst invoice.finalTotal.totalTax invoice.finalTotal.roundOff)}}
+            {{#if (or invoice.finalTotal.discount invoice.finalTotal.igst invoice.finalTotal.cgst
+            invoice.finalTotal.sgst invoice.finalTotal.totalTax invoice.finalTotal.roundOff)}}
             <tr>
               <td class="fk-totals-label">{{getTotalsLabel "subTotal" "Sub Total"}}</td>
-              <td class="fk-totals-value">{{#if invoice.finalTotal.subTotal}}{{formatCurrency invoice.finalTotal.subTotal invoice}}{{else}}{{formatCurrency invoice.subTotal invoice}}{{/if}}</td>
+              <td class="fk-totals-value">{{#if invoice.finalTotal.subTotal}}{{formatCurrency
+                invoice.finalTotal.subTotal invoice}}{{else}}{{formatCurrency invoice.subTotal invoice}}{{/if}}</td>
             </tr>
             {{/if}}
 
@@ -407,7 +464,8 @@
 
             {{#if invoice.finalTotal.igst}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.igstRate}}{{getTotalsLabel "igst" "Tax"}} ({{invoice.igstRate}}%){{else}}{{getTotalsLabel "igst" "IGST"}}{{/if}}</td>
+              <td class="fk-totals-label">{{#if invoice.igstRate}}{{getTotalsLabel "igst" "Tax"}}
+                ({{invoice.igstRate}}%){{else}}{{getTotalsLabel "igst" "IGST"}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.igst invoice}}</td>
             </tr>
             {{/if}}
@@ -421,7 +479,8 @@
 
             {{#if invoice.finalTotal.sgst}}
             <tr>
-              <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}{{getTotalsLabel "utgst" "UTGST"}}{{else}}{{getTotalsLabel "sgst" "SGST"}}{{/if}}</td>
+              <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}{{getTotalsLabel "utgst"
+                "UTGST"}}{{else}}{{getTotalsLabel "sgst" "SGST"}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.sgst invoice}}</td>
             </tr>
             {{/if}}
@@ -429,7 +488,9 @@
             {{#unless (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst)}}
             {{#if invoice.finalTotal.totalTax}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.taxName}}{{invoice.taxName}}{{#if invoice.taxRate}} ({{invoice.taxRate}}%){{/if}}{{else}}{{#if invoice.taxRate}}{{getTotalsLabel "tax" "Tax"}} ({{invoice.taxRate}}%){{else}}{{getTotalsLabel "tax" "Tax"}}{{/if}}{{/if}}</td>
+              <td class="fk-totals-label">{{#if invoice.taxName}}{{invoice.taxName}}{{#if invoice.taxRate}}
+                ({{invoice.taxRate}}%){{/if}}{{else}}{{#if invoice.taxRate}}{{getTotalsLabel "tax" "Tax"}}
+                ({{invoice.taxRate}}%){{else}}{{getTotalsLabel "tax" "Tax"}}{{/if}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.totalTax invoice}}</td>
             </tr>
             {{/if}}
@@ -459,30 +520,32 @@
             {{/if}}
 
             {{!-- Extra amount rows configured on the document, above the grand
-                  total. `amount` is the numeric form; some entries only carry a
-                  plain `value`, which is printed as-is. --}}
+            total. `amount` is the numeric form; some entries only carry a
+            plain `value`, which is printed as-is. --}}
             {{#each invoice.extraTotalFields}}
             {{#if label}}
             <tr>
               <td class="fk-totals-label">{{label}}</td>
-              <td class="fk-totals-value">{{#if amount}}{{formatCurrency amount ../invoice}}{{else}}{{value}}{{/if}}</td>
+              <td class="fk-totals-value">{{#if amount}}{{formatCurrency amount ../invoice}}{{else}}{{value}}{{/if}}
+              </td>
             </tr>
             {{/if}}
             {{/each}}
 
             <tr class="fk-grand-total-row">
               <td class="fk-totals-label">{{getTotalsLabel "total" "Total"}}</td>
-              <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
+              <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total
+                invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
             </tr>
             {{#if invoice.totalPaid}}
             <tr>
-              <td class="fk-totals-label">Total Paid</td>
+              <td class="fk-totals-label">{{docLabel "paidAmount" "totalPaid" "Total Paid"}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.totalPaid invoice}}</td>
             </tr>
             {{/if}}
             {{#if invoice.balanceAmount}}
             <tr>
-              <td class="fk-totals-label fk-balance-due">Balance Due</td>
+              <td class="fk-totals-label fk-balance-due">{{docLabel "dueAmount" "balanceDue" "Balance Due"}}</td>
               <td class="fk-totals-value fk-balance-due">{{formatCurrency invoice.balanceAmount invoice}}</td>
             </tr>
             {{/if}}
@@ -492,7 +555,7 @@
           {{!-- Amount in Words --}}
           {{#if invoice.customLabels.totalInWordsValue}}
           <div class="fk-amount-words">
-            <p class="fk-amount-words-label">{{#if invoice.customLabels.totalInWords}}{{invoice.customLabels.totalInWords}}{{else}}Total (in words){{/if}}</p>
+            <p class="fk-amount-words-label">{{docLabel "totalInWords" "Total (in words)"}}</p>
             <p class="fk-amount-words-value">{{invoice.customLabels.totalInWordsValue}}</p>
           </div>
           {{/if}}
@@ -518,16 +581,17 @@
       {{!-- ═══ Tax, HSN & Payments (Conditionally shown) ═══ --}}
       {{#if mapped.visibility.showTaxTable}}
       <div class="fk-summary-section">
-        <p class="fk-summary-heading">Tax Details</p>
+        <p class="fk-summary-heading">{{docLabel "taxSummary" "taxDetails" "Tax Details"}}</p>
         <table class="fk-summary-table">
           <thead>
             <tr>
-              <th>Tax Rate</th>
-              <th class="text-right">Taxable Amount</th>
-              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">CGST</th><th class="text-right">SGST</th>{{/if}}
-              {{#if mapped.visibility.showIgst}}<th class="text-right">IGST</th>{{/if}}
-              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">CESS</th>{{/if}}
-              <th class="text-right">Total Tax</th>
+              <th>{{docLabel "taxRate" "Tax Rate"}}</th>
+              <th class="text-right">{{docLabel "taxableAmount" "Taxable Amount"}}</th>
+              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">{{docLabel "cgst" "CGST"}}</th>
+              <th class="text-right">{{docLabel "sgst" "SGST"}}</th>{{/if}}
+              {{#if mapped.visibility.showIgst}}<th class="text-right">{{docLabel "igst" "IGST"}}</th>{{/if}}
+              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">{{docLabel "cess" "CESS"}}</th>{{/if}}
+              <th class="text-right">{{docLabel "totalTax" "Total Tax"}}</th>
             </tr>
           </thead>
           <tbody>
@@ -555,16 +619,17 @@
 
       {{#if mapped.visibility.showHsnSummary}}
       <div class="fk-summary-section">
-        <p class="fk-summary-heading">HSN Summary</p>
+        <p class="fk-summary-heading">{{docLabel "hsnSummary" "HSN Summary"}}</p>
         <table class="fk-summary-table">
           <thead>
             <tr>
-              <th>HSN/SAC</th>
-              <th class="text-right">Taxable Amount</th>
-              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">CGST</th><th class="text-right">SGST</th>{{/if}}
-              {{#if mapped.visibility.showIgst}}<th class="text-right">IGST</th>{{/if}}
-              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">CESS</th>{{/if}}
-              <th class="text-right">Total Tax</th>
+              <th>{{docLabel "hsn" "HSN/SAC"}}</th>
+              <th class="text-right">{{docLabel "taxableAmount" "Taxable Amount"}}</th>
+              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">{{docLabel "cgst" "CGST"}}</th>
+              <th class="text-right">{{docLabel "sgst" "SGST"}}</th>{{/if}}
+              {{#if mapped.visibility.showIgst}}<th class="text-right">{{docLabel "igst" "IGST"}}</th>{{/if}}
+              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">{{docLabel "cess" "CESS"}}</th>{{/if}}
+              <th class="text-right">{{docLabel "totalTax" "Total Tax"}}</th>
             </tr>
           </thead>
           <tbody>
@@ -592,14 +657,14 @@
 
       {{#if mapped.visibility.showPaymentsTable}}
       <div class="fk-summary-section">
-        <p class="fk-summary-heading">Payments History</p>
+        <p class="fk-summary-heading">{{docLabel "paymentRecord" "paymentsHistory" "payments" "Payments History"}}</p>
         <table class="fk-summary-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Mode</th>
-              <th>Ref/Notes</th>
-              <th class="text-right">Amount</th>
+              <th>{{docLabel "paymentDate" "date" "Date"}}</th>
+              <th>{{docLabel "paymentMode" "paymentMethod" "Mode"}}</th>
+              <th>{{docLabel "referenceNumber" "reference" "Ref/Notes"}}</th>
+              <th class="text-right">{{docLabel "paymentAmount" "amount" "Amount"}}</th>
             </tr>
           </thead>
           <tbody>

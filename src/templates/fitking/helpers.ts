@@ -128,6 +128,83 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return thumbnail ? [thumbnail] : [];
   });
 
+  // The bank block, built from the payload rather than written out row by row.
+  // Two things make hardcoding it wrong: BankDetails carries its own
+  // `customLabels` (an account renaming "IFSC" to "Sort Code" is data, not a
+  // template edit), and every field has more than one accepted name in the
+  // contract — this payload fills `bank` and `name`, not the `bankName` and
+  // `holderName` the markup used to read, so those rows printed empty or fell
+  // back to the biller. Rows with no value are dropped, so an account that has
+  // no SWIFT/IBAN prints exactly what it did before.
+  const BANK_ROWS: Array<{ valueKeys: string[]; labelKeys: string[]; label: string }> = [
+    { valueKeys: ["bankName", "bank"], labelKeys: ["bankName", "bank"], label: "Bank Name" },
+    {
+      valueKeys: ["accountHolderName", "holderName", "name"],
+      labelKeys: ["accountName", "accountHolderName", "holderName"],
+      label: "Account Name",
+    },
+    { valueKeys: ["accountNo", "accountNumber"], labelKeys: ["accountNo", "accountNumber"], label: "Account No" },
+    { valueKeys: ["ifsc", "ifscCode"], labelKeys: ["ifsc", "ifscCode"], label: "IFSC" },
+    { valueKeys: ["swift", "swiftCode"], labelKeys: ["swift", "swiftCode"], label: "SWIFT" },
+    { valueKeys: ["iban"], labelKeys: ["iban"], label: "IBAN" },
+    { valueKeys: ["branch"], labelKeys: ["branch"], label: "Branch" },
+    { valueKeys: ["sortCode"], labelKeys: ["sortCode"], label: "Sort Code" },
+    { valueKeys: ["accountType"], labelKeys: ["accountType"], label: "Account Type" },
+  ];
+
+  HB.registerHelper("bankFields", function (invoice: any) {
+    const account = invoice?.bankAccount;
+    if (!account || typeof account !== "object") return [];
+
+    // The account's own labels win over the document's, which win over ours.
+    const labelSources = [account.customLabels, invoice?.customLabels];
+    const labelFor = (labelKeys: string[], fallback: string) => {
+      for (const source of labelSources) {
+        if (!source || typeof source !== "object") continue;
+        const available = new Map<string, string>();
+        for (const [key, val] of Object.entries(source)) {
+          if (typeof val === "string" && val.trim()) {
+            available.set(normalizeColumnKey(key), val.trim());
+          }
+        }
+        for (const key of labelKeys) {
+          const match = available.get(normalizeColumnKey(key));
+          if (match) return match;
+        }
+      }
+      return fallback;
+    };
+
+    const rows: Array<{ label: string; value: string }> = [];
+    for (const row of BANK_ROWS) {
+      let value = "";
+      for (const key of row.valueKeys) {
+        const text = stringifyFieldValue(account[key]);
+        if (text) {
+          value = text;
+          break;
+        }
+      }
+      // The holder name is the one row that prints regardless: an account with
+      // no name on it belongs to the business issuing the document.
+      if (!value && row.label === "Account Name") {
+        value = stringifyFieldValue(invoice?.billedBy?.name);
+      }
+      if (!value) continue;
+      rows.push({ label: labelFor(row.labelKeys, row.label), value });
+    }
+
+    // Whatever else the account has been configured to carry.
+    for (const field of Array.isArray(account.customFields) ? account.customFields : []) {
+      if (field?.params?.showInInvoice === false) continue;
+      const label = typeof field?.label === "string" ? field.label.trim() : "";
+      const value = stringifyFieldValue(field?.value);
+      if (label && value) rows.push({ label, value });
+    }
+
+    return rows;
+  });
+
   HB.registerHelper("isPositive", function (val: any) {
     const num = extractNumericValue(val);
     return num !== null && num > 0;
@@ -605,17 +682,32 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // Named `docLabel`, not `label`: line items, terms and custom fields all
   // carry their own `label` property, and a helper of that name would shadow
   // every one of them.
-  function documentLabel(key: string, fallback: string, options: any) {
-    const root = options?.data?.root;
-    const customLabels = root?.invoice?.customLabels;
+  // Takes one or more candidate keys followed by the fallback:
+  // `{{docLabel "notes" "Remarks"}}`, or where accounts are known to name the
+  // same section differently, `{{docLabel "additionalInfo" "footer" "…"}}` —
+  // the first key the payload carries wins. Keys are matched with punctuation
+  // and case stripped, so `additionalInfo`, `additional_info` and
+  // `Additional Info` are all the same key.
+  function documentLabel(...args: any[]) {
+    const options = args[args.length - 1];
+    const positional = args.slice(0, -1).filter((arg) => typeof arg === "string");
+    const fallback = positional.length > 1 ? positional[positional.length - 1] : "";
+    const keys = positional.length > 1 ? positional.slice(0, -1) : positional;
+
+    const customLabels = options?.data?.root?.invoice?.customLabels;
     if (customLabels) {
-      const k = (key || "").toLowerCase();
+      const available = new Map<string, string>();
       for (const [ckey, cval] of Object.entries(customLabels)) {
-        if (ckey.toLowerCase() === k && typeof cval === "string" && cval.trim()) {
-          return cval.trim();
+        if (typeof cval === "string" && cval.trim()) {
+          available.set(normalizeColumnKey(ckey), cval.trim());
         }
       }
+      for (const key of keys) {
+        const match = available.get(normalizeColumnKey(key));
+        if (match) return match;
+      }
     }
+
     return fallback;
   }
 
