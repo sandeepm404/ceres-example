@@ -1,9 +1,9 @@
 <div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};"{{else}}{{#if invoice.textScale}}style="zoom: {{invoice.textScale}};"{{/if}}{{/if}}>
 
   {{!-- Letterhead --}}
-  <div class="no-dibella invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
-    {{#if invoice.letterHead}}
-    <img src="{{invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+  <div class="no-dibella invoice-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
+    {{#if (assetUrl invoice.letterHead)}}
+    <img src="{{assetUrl invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
     {{else}}
     <img alt="Letterhead" data-ceres-height="letterhead" />
     {{/if}}
@@ -618,9 +618,9 @@
   </div>{{!-- .fk-page --}}
 
   {{!-- Letterhead Footer --}}
-  <div class="no-dibella invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
-    {{#if invoice.letterHeadFooter}}
-    <img src="{{invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+  <div class="no-dibella invoice-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
+    {{#if (assetUrl invoice.letterHeadFooter)}}
+    <img src="{{assetUrl invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}
     <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{/if}}
