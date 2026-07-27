@@ -200,38 +200,70 @@
         {{!-- Right Side: Totals + Words + Signature --}}
         <div class="fk-bottom-right">
           <table class="fk-totals-table">
-            {{#if (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst invoice.finalTotal.discount invoice.finalTotal.roundOff)}}
+            {{#if (or invoice.finalTotal.subTotal invoice.subTotal)}}
+            {{#if (or invoice.finalTotal.discount invoice.discount invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst invoice.finalTotal.totalTax invoice.taxAmount invoice.additionalCharges.length invoice.extraCharges invoice.finalTotal.roundOff)}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.customLabels.subTotal}}{{invoice.customLabels.subTotal}}{{else}}Total{{/if}}</td>
+              <td class="fk-totals-label">{{#if invoice.customLabels.subTotal}}{{invoice.customLabels.subTotal}}{{else}}Subtotal{{/if}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.subTotal}}{{formatCurrency invoice.finalTotal.subTotal invoice}}{{else}}{{formatCurrency invoice.subTotal invoice}}{{/if}}</td>
             </tr>
             {{/if}}
+            {{/if}}
 
-            {{#if invoice.finalTotal.discount}}
+            {{#if (or invoice.finalTotal.discount invoice.discount invoice.totalDiscount)}}
             <tr>
-              <td class="fk-totals-label">Discount</td>
-              <td class="fk-totals-value">- {{formatCurrency invoice.finalTotal.discount invoice}}</td>
+              <td class="fk-totals-label">{{#if invoice.customLabels.discount}}{{invoice.customLabels.discount}}{{else}}Discounts{{/if}}</td>
+              <td class="fk-totals-value">- {{#if invoice.finalTotal.discount}}{{formatCurrency invoice.finalTotal.discount invoice}}{{else}}{{#if invoice.discount}}{{formatCurrency invoice.discount invoice}}{{else}}{{formatCurrency invoice.totalDiscount invoice}}{{/if}}{{/if}}</td>
             </tr>
             {{/if}}
 
             {{#if invoice.finalTotal.igst}}
             <tr>
-              <td class="fk-totals-label">GST @ 18%</td>
+              <td class="fk-totals-label">{{#if invoice.customLabels.igst}}{{invoice.customLabels.igst}}{{else}}{{#if invoice.igstRate}}Tax ({{invoice.igstRate}}%){{else}}Tax{{/if}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.igst invoice}}</td>
             </tr>
             {{/if}}
 
             {{#if invoice.finalTotal.cgst}}
             <tr>
-              <td class="fk-totals-label">CGST</td>
+              <td class="fk-totals-label">{{#if invoice.customLabels.cgst}}{{invoice.customLabels.cgst}}{{else}}CGST{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.cgst invoice}}</td>
             </tr>
             {{/if}}
 
             {{#if invoice.finalTotal.sgst}}
             <tr>
-              <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</td>
+              <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}{{#if invoice.customLabels.sgst}}{{invoice.customLabels.sgst}}{{else}}SGST{{/if}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.sgst invoice}}</td>
+            </tr>
+            {{/if}}
+
+            {{#unless (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst)}}
+            {{#if (or invoice.finalTotal.totalTax invoice.finalTotal.tax invoice.taxAmount)}}
+            <tr>
+              <td class="fk-totals-label">{{#if invoice.taxName}}{{invoice.taxName}}{{#if invoice.taxRate}} ({{invoice.taxRate}}%){{/if}}{{else}}{{#if invoice.taxRate}}Tax ({{invoice.taxRate}}%){{else}}Tax{{/if}}{{/if}}</td>
+              <td class="fk-totals-value">{{#if invoice.finalTotal.totalTax}}{{formatCurrency invoice.finalTotal.totalTax invoice}}{{else}}{{#if invoice.finalTotal.tax}}{{formatCurrency invoice.finalTotal.tax invoice}}{{else}}{{formatCurrency invoice.taxAmount invoice}}{{/if}}{{/if}}</td>
+            </tr>
+            {{/if}}
+            {{/unless}}
+
+            {{#each invoice.additionalCharges}}
+            <tr>
+              <td class="fk-totals-label">{{#if name}}{{name}}{{else}}Extra Charges{{/if}}</td>
+              <td class="fk-totals-value">{{formatCurrency amount ../invoice}}</td>
+            </tr>
+            {{/each}}
+
+            {{#if invoice.extraCharges}}
+            <tr>
+              <td class="fk-totals-label">Extra Charges</td>
+              <td class="fk-totals-value">{{formatCurrency invoice.extraCharges invoice}}</td>
+            </tr>
+            {{/if}}
+
+            {{#if invoice.otherCharges}}
+            <tr>
+              <td class="fk-totals-label">Other Charges</td>
+              <td class="fk-totals-value">{{formatCurrency invoice.otherCharges invoice}}</td>
             </tr>
             {{/if}}
 
@@ -244,7 +276,7 @@
 
             <tr class="fk-grand-total-row">
               <td class="fk-totals-label">{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.total invoice}}</td>
+              <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
             </tr>
           </table>
 
