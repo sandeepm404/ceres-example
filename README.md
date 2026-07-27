@@ -61,14 +61,32 @@ Each template folder requires four core files:
 
 ### 3. Build & Serve locally
 
-To compile the bundles and start the local development server:
+Rebuild on every change and serve `dist/` in one command:
 
 ```bash
-npm run build
-npx http-server ./dist -p 8081
+npm run dev                              # watch + server on :4000
+npm run dev:template --template=fitking  # same, but only rebuilds one template
 ```
 
-> Open [http://127.0.0.1:8081](http://127.0.0.1:8081) in your browser. The app will automatically redirect to `?devMode=1` and bring up the Live Preview modal.
+> On start the server prints a ready-to-open URL per template, e.g.
+> [http://localhost:4000/?devMode=1&template=fitking](http://localhost:4000/?devMode=1&template=fitking).
+> The first entry in the template's `samples.json` loads automatically, and the Live Preview
+> modal in the bottom-right corner switches template or sample.
+
+Edit a `.hbs` or `.css` file and the open page reloads itself once webpack finishes. Two
+behaviours make that work, both dev-server only:
+
+- **Live reload** — `dist/` is watched and open pages are reloaded over SSE.
+- **Stale versions redirect to the newest build** — every build writes a new folder
+  (`templates/fitking/1.0.9/`, `1.0.10/`, …) and the dev bridge pins the URL to the version
+  it first resolved. Without rewriting, an open tab would keep loading the old bundle no
+  matter how often you rebuild. Requests for an old version are served from the current one.
+
+The halves also run on their own — `npm run serve` (no build; `PORT=5000` to change port)
+and `npm run watch` / `npm run build` (no server). Set `CERES_PIN_VERSION=1` to serve the
+exact version requested, or `CERES_NO_RELOAD=1` to drop the injected reload script — useful
+when you want a preview that behaves exactly like production. The server is plain Node with
+no extra dependencies and only serves files under `dist/`.
 
 ---
 

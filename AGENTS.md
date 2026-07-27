@@ -31,6 +31,23 @@ Runs inside an iframe. Communication via postMessage:
 - `snapshot-testing` - Manage visual regression tests
 - `design-to-template` - Convert Figma/screenshot into a Ceres template
 
+## Local Preview
+
+```bash
+npm run dev                                      # webpack --watch + server on :4000
+npm run dev:template --template=fitking          # watch a single template
+npm run serve                                    # serve dist/ only (PORT=5000 to change)
+```
+
+Open the URL the server prints (`/?devMode=1&template=<name>`). It loads the first sample from
+the template's `samples.json`; the bottom-right modal switches template or sample. `dist/` must
+be built at least once. `file://` does not work — the renderer fetches its manifests over http.
+
+Saving a source file reloads the open page: the server watches `dist/`, pushes a reload over
+SSE, and redirects requests for a stale template version to the newest build (the dev bridge
+pins the URL to a versioned manifest path, and old version folders are never deleted). Escape
+hatches: `CERES_PIN_VERSION=1`, `CERES_NO_RELOAD=1`.
+
 ## Build Commands
 
 ```bash

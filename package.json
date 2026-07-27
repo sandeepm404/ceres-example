@@ -14,6 +14,11 @@
     "build:widgets": "cross-env BUILD_WIDGETS_ONLY=1 webpack --config webpack.config.js",
     "build:widget": "cross-env BUILD_WIDGETS_ONLY=1 WIDGET=$npm_config_widget webpack --config webpack.config.js",
     "build:vendor": "cross-env BUILD_VENDOR_ONLY=1 webpack --config webpack.config.js",
+    "serve": "node scripts/dev-server.mjs",
+    "watch": "webpack --config webpack.config.js --watch",
+    "watch:template": "cross-env BUILD_TEMPLATES_ONLY=1 TEMPLATE=$npm_config_template webpack --config webpack.config.js --watch",
+    "dev": "npm-run-all --parallel watch serve",
+    "dev:template": "npm-run-all --parallel \"watch:template\" serve",
     "test": "jest",
     "test:staged": "cross-env JEST_CI_RUN=1 jest --bail --ci --silent --coverage --passWithNoTests --forceExit --findRelatedTests"
   },
