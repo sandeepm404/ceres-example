@@ -255,7 +255,7 @@
 /* Column Widths */
 .fk-col-sno        { width: 35px; text-align: center; }
 .fk-col-desc       { text-align: center; }
-.fk-col-photo      { width: 140px; text-align: center; }
+.fk-col-photo      { width: 160px; text-align: center; }
 .fk-col-model      { width: 120px; text-align: center; }
 .fk-col-price      { width: 135px; white-space: nowrap; }
 .fk-col-qty        { width: 65px; }
@@ -301,8 +301,10 @@
 }
 
 .fk-product-img {
-  max-width: 115px;
-  max-height: 100px;
+  width: 144px;
+  height: 144px;
+  max-width: 144px;
+  max-height: 144px;
   object-fit: contain;
   display: block;
   margin: 0 auto;
@@ -340,6 +342,18 @@
 .fk-qty-cell {
   font-size: 13px;
   white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.fk-qty-num {
+  font-size: 13px;
+  color: #222;
+}
+
+.fk-qty-unit {
+  font-size: 11px;
+  color: var(--fk-text-muted);
+  margin-top: 2px;
 }
 
 .fk-total-cell {

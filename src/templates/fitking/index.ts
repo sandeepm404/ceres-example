@@ -130,9 +130,12 @@ Handlebars.registerHelper("formatQtyCell", function (item: any, invoice: any, ad
     return String(qty);
   }
 
-  // MERGE_QUANTITY (default)
+  // MERGE_QUANTITY (default) -> place unit below quantity number
   const unit = resolveUnit(item.unit, item, invoice);
-  return unit ? `${qty} ${unit}` : String(qty);
+  if (unit) {
+    return new Handlebars.SafeString(`<div class="fk-qty-num">${qty}</div><div class="fk-qty-unit">${unit}</div>`);
+  }
+  return String(qty);
 });
 
 // Export template to global for main renderer to consume
