@@ -26,7 +26,6 @@
 
   /* A4 / Standard full width (matching default-template: 1000px) */
   --fk-page-width: 1000px;
-  --fk-page-min-height: 1123px;
   --fk-page-padding: 0px 24px 24px 24px;
 }
 
