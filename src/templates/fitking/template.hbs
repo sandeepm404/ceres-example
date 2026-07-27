@@ -147,16 +147,12 @@
             </tr>
             {{/each}}
           </table>
-          {{#if mapped.qr.top}}
-          {{#unless (eq mapped.qr.top "null")}}
-          {{#unless (eq mapped.qr.top "undefined")}}
+          {{#with (qrSrc mapped.qr.top) as |docQrSrc|}}
           <div class="fk-details-qr">
             <p class="fk-doc-qr-label">Document QR</p>
-            <img src="{{mapped.qr.top}}" alt="Document QR" class="fk-qr-img" />
+            <img src="{{docQrSrc}}" alt="Document QR" class="fk-qr-img" />
           </div>
-          {{/unless}}
-          {{/unless}}
-          {{/if}}
+          {{/with}}
         </div>
       </div>
 
@@ -214,7 +210,8 @@
           <thead>
             <tr>
               <th class="fk-col-sno"></th>
-              <th colspan="2" class="fk-col-desc-photo">{{getColumnLabel "item" "Item"}}</th>
+              <th class="fk-col-desc">{{getColumnLabel "item" "Item"}}</th>
+              <th class="fk-col-img-head"></th>
               <th class="fk-col-model">{{getColumnLabel "model" "Model  No"}}</th>
               {{#if derived.showHsnColumn}}<th class="fk-col-hsn">HSN/SAC</th>{{/if}}
               <th class="fk-col-price text-center">{{getColumnLabel "rate" "Unit Price"}}</th>
@@ -311,11 +308,11 @@
               {{/if}}
               {{#if mapped.visibility.showUpi}}
               <div class="fk-upi-qr-block">
-                {{#if mapped.qr.upi}}<p class="fk-upi-title">Scan to pay via UPI</p>{{/if}}
-                {{#if mapped.qr.upi}}
-                <img src="{{mapped.qr.upi}}" alt="Scan to Pay" class="fk-upi-qr" />
-                {{/if}}
-                {{#if mapped.upi.id}}<p class="fk-upi-label">{{#unless mapped.qr.upi}}UPI: {{/unless}}{{mapped.upi.id}}</p>{{/if}}
+                {{#with (qrSrc mapped.qr.upi) as |upiQrSrc|}}
+                <p class="fk-upi-title">Scan to pay via UPI</p>
+                <img src="{{upiQrSrc}}" alt="Scan to Pay" class="fk-upi-qr" />
+                {{/with}}
+                {{#if mapped.upi.id}}<p class="fk-upi-label">{{#unless (qrSrc mapped.qr.upi)}}UPI: {{/unless}}{{mapped.upi.id}}</p>{{/if}}
               </div>
               {{/if}}
             </div>

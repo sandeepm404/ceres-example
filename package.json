@@ -65,6 +65,7 @@
     "@babel/runtime": "^7.25.0",
     "@toast-ui/editor": "^3.2.2",
     "dompurify": "^3.3.2",
-    "marked": "^17.0.4"
+    "marked": "^17.0.4",
+    "qrcode-generator": "^2.0.4"
   }
 }

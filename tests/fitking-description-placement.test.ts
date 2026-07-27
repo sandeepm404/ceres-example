@@ -1,5 +1,5 @@
-import HandlebarsRuntime from "handlebars/runtime";
 import { normalizeInvoiceTemplateState } from "../src/main/invoiceTemplateNormalization";
+import { registerFitkingHelpers } from "./support/fitkingHelpers";
 import template from "../src/templates/fitking/template.hbs";
 
 const basePayload = () => ({
@@ -24,23 +24,7 @@ const render = (payload: Record<string, unknown>) =>
 const isFullWidth = (html: string) => html.includes("fk-desc-fullwidth-row");
 const isUnderTitle = (html: string) => html.includes("fk-item-desc");
 
-beforeAll(() => {
-  HandlebarsRuntime.registerPartial(
-    "MarkdownViewer",
-    (ctx: any) => `<span>${ctx?.markdown ?? ""}</span>`
-  );
-  HandlebarsRuntime.registerHelper("prepareMarkdownViewerData", (v: unknown) => ({
-    markdown: v,
-  }));
-  HandlebarsRuntime.registerHelper("increment", (v: number) => v + 1);
-  HandlebarsRuntime.registerHelper("eq", (a: unknown, b: unknown) => a === b);
-  HandlebarsRuntime.registerHelper("or", (...args: unknown[]) =>
-    args.slice(0, -1).some((v) => Boolean(v) && v !== "0" && v !== 0)
-  );
-  HandlebarsRuntime.registerHelper("formateShortDateWithOffset", (v: unknown) =>
-    String(v ?? "")
-  );
-});
+beforeAll(registerFitkingHelpers);
 
 describe("fitking description placement", () => {
   it("defaults to below the line item title when the flag is absent", () => {

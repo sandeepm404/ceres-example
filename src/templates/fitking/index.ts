@@ -6,6 +6,7 @@ import "./styles.css";
 // Register widgets
 import "../../widgets/date-time";
 import "../../widgets/markdown-viewer";
+import "../../widgets/qr-code";
 
 // Register custom helpers
 declare const Handlebars: any;
