@@ -33,9 +33,7 @@
       {{!-- ═══ Title Bar ═══ --}}
       <div class="fk-title-bar">
         <h1 class="fk-title">{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}Quotation{{/if}}</h1>
-        {{#if mapped.visibility.showStatusTagInPrint}}
-        <span class="fk-paid-stamp">{{docLabel "paidStatus" "Paid"}}</span>
-        {{/if}}
+        {{> InvoiceStatus invoice}}
       </div>
 
       {{!-- ═══ Three-Column Info Section ═══ --}}

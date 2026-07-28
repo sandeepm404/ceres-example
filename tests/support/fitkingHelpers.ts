@@ -32,4 +32,35 @@ export function registerFitkingHelpers(): void {
     "formateDateWithOffset",
     "formatDateInTimeZone",
   ].forEach((name) => HB.registerHelper(name, (v: unknown) => String(v ?? "")));
+
+  // Owned by the invoice-status widget (src/widgets/invoice-status), which
+  // registers against `window.Handlebars` and isn't importable as a module —
+  // mirrors mapStatusToTag's real logic so fitking's own integration (CSS
+  // class hookup, title-bar placement) is still exercised under Jest.
+  HB.registerHelper("computeInvoiceStatus", (invoice: any) => {
+    const status = String(invoice?.status ?? "").toUpperCase();
+    const isOverdue = Boolean(invoice?.isOverdue);
+    const tag =
+      isOverdue && status !== "PAID"
+        ? { text: "Overdue", color: "danger" }
+        : status === "PAID"
+          ? { text: "Paid", color: "success" }
+          : status === "PARTIAL" || status === "PARTIALLY_PAID"
+            ? { text: "Partially Paid", color: "info" }
+            : status === "DRAFT"
+              ? { text: "Draft", color: "devider" }
+              : status === "CANCELED" || status === "CANCELLED"
+                ? { text: "Canceled", color: "danger" }
+                : status === "REJECTED"
+                  ? { text: "Rejected", color: "danger" }
+                  : { text: "Unpaid", color: "warning" };
+    return {
+      tags: [{ ...tag, finalClass: `invoice-tag ${tag.color}` }],
+    };
+  });
+  HB.registerPartial("InvoiceStatus", (invoice: any) => {
+    const { tags } = HB.helpers.computeInvoiceStatus(invoice);
+    const tag = tags[0];
+    return `<span class="${tag.finalClass}">${tag.text}</span>`;
+  });
 }
