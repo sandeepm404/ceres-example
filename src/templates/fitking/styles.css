@@ -107,20 +107,26 @@
 }
 
 /* ===== MAIN BOX FRAME =====
-   .fk-bottom-section's break-inside: avoid (see @media print) can push the
-   whole totals block to the next page, leaving a gap on the current page
-   that is still vertically inside this box. Without box-decoration-break,
-   the browser's default page-fragmentation behaviour draws this box's
-   left/right border straight through that gap as a dangling, unclosed
-   line. `clone` caps it instead: a bottom border wherever the box's content
-   actually ends on a page, and a fresh top border where it resumes. */
+   No border here on purpose. `.fk-bottom-section`'s break-inside: avoid (see
+   @media print) can push the whole totals block to the next page, leaving a
+   gap on the current page that is still vertically inside this box — a
+   border-left/border-right on one continuous ancestor box draws hanging
+   vertical lines through that gap (box-decoration-break: clone was tried
+   here and didn't reliably close them in the real PDF pipeline either).
+   Instead, every direct child section below carries its own left/right/top/
+   bottom border, so the "boxed" look is built from independent, single-page
+   blocks: when a section jumps to the next page in full, it simply starts a
+   fresh bordered block there with nothing left dangling on the page before. */
 .fk-main-box {
-  border: 1px solid var(--fk-border);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
   display: flex;
   flex-direction: column;
   margin-bottom: var(--fk-font-size-xl);
+}
+
+/* Closes the box's bottom edge regardless of which section — .fk-bottom-section
+   or the last summary table — ends up being the final child. */
+.fk-main-box>*:last-child {
+  border-bottom: 1px solid var(--fk-border);
 }
 
 /* ===== TITLE BAR — var(--fk-font-size-xl) ===== */
@@ -129,7 +135,7 @@
   font-family: var(--fk-title-font);
   padding: 8px var(--fk-font-size-lg);
   text-align: center;
-  border-bottom: 1px solid var(--fk-border);
+  border: 1px solid var(--fk-border);
 }
 
 .fk-title {
@@ -144,6 +150,8 @@
 /* ===== THREE-COLUMN INFO SECTION — var(--fk-font-size-base) ===== */
 .fk-info-section {
   display: flex;
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
   border-bottom: 1px solid var(--fk-border);
 }
 
@@ -282,6 +290,8 @@
 /* ===== ITEMS TABLE — var(--fk-font-size-base) ===== */
 .fk-table-wrap {
   width: 100%;
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
 }
 
 .fk-item-table {
@@ -526,8 +536,9 @@
 /* ===== BOTTOM SECTION — var(--fk-font-size-base) ===== */
 .fk-bottom-section {
   display: flex;
-  margin-top: 24px;
   border-top: 1px solid var(--fk-border);
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
 }
 
 .fk-bottom-left {
@@ -623,6 +634,8 @@
 .fk-summary-section {
   padding: var(--fk-font-size-lg);
   border-top: 1px solid var(--fk-border);
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
 }
 
 .fk-summary-heading {
@@ -680,6 +693,7 @@
   font-size: var(--fk-font-size-base);
   color: #444;
   line-height: 1.4;
+  text-transform: capitalize;
 }
 
 /* ===== SIGNATURE BOX — var(--fk-font-size-base) ===== */
