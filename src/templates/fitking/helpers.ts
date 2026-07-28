@@ -6,6 +6,9 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import formatCurrency from "../../widgets/shared/formatCurrency";
+import formatPhoneNumberIntl from "../../widgets/phone-number";
+
 // India's official GST state codes — a fixed government-published list, not
 // something the payload carries a name for. `placeOfSupply` on this invoice
 // is just the bare code ("07"); some payloads instead combine code and name
@@ -316,67 +319,27 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       return "";
     }
 
-    const absNum = Math.abs(num);
-    const formattedNum = absNum.toLocaleString("en-IN", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-    let sym = "";
+    let currency: any;
+    let subUnitLength: any;
+    let customCurrencySymbol: any;
     if (typeof invoiceOrSymbol === "string") {
-      sym = invoiceOrSymbol.trim();
+      customCurrencySymbol = invoiceOrSymbol;
     } else if (typeof invoiceOrSymbol === "object" && invoiceOrSymbol !== null) {
-      if (invoiceOrSymbol.customCurrencySymbol !== undefined && invoiceOrSymbol.customCurrencySymbol !== null && invoiceOrSymbol.customCurrencySymbol !== "") {
-        sym = String(invoiceOrSymbol.customCurrencySymbol).trim();
-      } else if (invoiceOrSymbol.currencySymbol) {
-        sym = String(invoiceOrSymbol.currencySymbol).trim();
-      } else if (invoiceOrSymbol.currency === "INR" || invoiceOrSymbol.businessCurrency === "INR") {
-        sym = "₹";
-      } else if (invoiceOrSymbol.currency) {
-        sym = String(invoiceOrSymbol.currency).trim();
-      } else {
-        sym = "₹";
-      }
+      currency = invoiceOrSymbol.currency;
+      subUnitLength = invoiceOrSymbol.subUnitLength;
+      customCurrencySymbol = invoiceOrSymbol.customCurrencySymbol;
     }
 
-    const text = sym ? `${sym}${formattedNum}` : formattedNum;
-    if (num < 0) {
-      return `(${text})`;
-    }
-    return text;
+    return formatCurrency(num, currency, undefined, subUnitLength, customCurrencySymbol);
   }
 
   HB.registerHelper("formatCurrency", formatCurrencyValue);
 
   HB.registerHelper("formatPhone", function (phone: any) {
-    if (!phone) return "";
-    let str = String(phone).trim();
-    if (!str) return "";
-
-    if (str.includes(" ") || str.includes("-")) {
-      return str;
-    }
-
-    const hasPlus = str.startsWith("+");
-    const digits = str.replace(/\D/g, "");
-    if (!digits) return str;
-
-    if (digits.length === 12 && digits.startsWith("91")) {
-      return `+91 ${digits.slice(2, 7)} ${digits.slice(7)}`;
-    }
-
-    if (digits.length === 10) {
-      return `+91 ${digits.slice(0, 5)} ${digits.slice(5)}`;
-    }
-
-    if (hasPlus) {
-      if (digits.length === 12 && digits.startsWith("91")) {
-        return `+91 ${digits.slice(2, 7)} ${digits.slice(7)}`;
-      }
-      return `+${digits}`;
-    }
-
-    return str;
+    if (typeof phone !== "string" && typeof phone !== "number") return "";
+    const phoneStr = String(phone).trim();
+    if (!phoneStr) return "";
+    return formatPhoneNumberIntl(phoneStr) ?? phoneStr;
   });
 
   const COLUMN_ALIASES: Record<string, string[]> = {

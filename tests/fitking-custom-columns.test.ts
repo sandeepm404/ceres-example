@@ -229,10 +229,10 @@ describe("fitking user-defined item columns", () => {
     );
 
     expect(customCells(html)).toEqual([
-      "₹1,500.00",
+      "₹1,500",
       "",
       "",
-      "₹200.00",
+      "₹200",
       "ok",
       "here",
     ]);
@@ -260,7 +260,7 @@ describe("fitking user-defined item columns", () => {
       )
     );
 
-    expect(customCells(html)).toEqual(["20,13,20,21,562", "₹500.00"]);
+    expect(customCells(html)).toEqual(["20,13,20,21,562", "₹500"]);
   });
 
   // A column the account configured but never filled in on any item — a
