@@ -143,12 +143,14 @@
               <td class="fk-dt-value">{{invoice.purchaseOrderNumber}}</td>
             </tr>
             {{/if}}
+            {{#unless advanceOptions.hideCountryOfSupply}}
             {{#if invoice.placeOfSupply}}
             <tr>
               <td class="fk-dt-label">{{docLabel "placeOfSupply" "Place of Supply"}}</td>
-              <td class="fk-dt-value">{{invoice.placeOfSupply}}</td>
+              <td class="fk-dt-value">{{gstStateName invoice.placeOfSupply}}</td>
             </tr>
             {{/if}}
+            {{/unless}}
             {{#if invoice.irn.AckDt}}
             <tr>
               <td class="fk-dt-label">{{docLabel "irnAckDate" "ackDate" "IRN Ack Date"}}</td>
@@ -168,6 +170,15 @@
               <td class="fk-dt-label">{{label}}</td>
               <td class="fk-dt-value">{{value}}</td>
             </tr>
+            {{/each}}
+
+            {{#each invoice.customHeaders}}
+            {{#if value}}
+            <tr>
+              <td class="fk-dt-label">{{label}}</td>
+              <td class="fk-dt-value">{{value}}</td>
+            </tr>
+            {{/if}}
             {{/each}}
           </table>
           {{#with (qrSrc mapped.qr.top) as |docQrSrc|}}
@@ -286,7 +297,8 @@
                   {{#each (itemColumns)}}
                   {{#if (eq kind "sno")}}
                 <th class="fk-col-sno"></th>{{/if}}
-                {{#if (eq kind "name")}}<th colspan="2" class="fk-col-desc-photo">{{label}}</th>{{/if}}
+                {{#if (eq kind "name")}}<th colspan="{{#if (hasPhotoColumn)}}2{{else}}1{{/if}}"
+                  class="fk-col-desc-photo">{{label}}</th>{{/if}}
                 {{#if (eq kind "model")}}<th class="fk-col-model">{{label}}</th>{{/if}}
                 {{#if (eq kind "hsn")}}<th class="fk-col-hsn">{{label}}</th>{{/if}}
                 {{#unless (or (eq kind "sno") (eq kind "name") (eq kind "photo") (eq kind "model") (eq kind "hsn"))}}
@@ -324,7 +336,9 @@
                 {{#if (eq kind "photo")}}
                 <td class="fk-img-cell">
                   {{#each (itemImages ..)}}
+                  {{#if (eq @index 0)}}
                   <img src="{{this}}" alt="{{../../name}}" class="fk-product-img" />
+                  {{/if}}
                   {{/each}}
                 </td>
                 {{/if}}

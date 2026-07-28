@@ -6,7 +6,73 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// India's official GST state codes — a fixed government-published list, not
+// something the payload carries a name for. `placeOfSupply` on this invoice
+// is just the bare code ("07"); some payloads instead combine code and name
+// as one string ("29-KARNATAKA"), which the helper below also unpacks.
+const GST_STATE_CODES: Record<string, string> = {
+  "01": "Jammu and Kashmir",
+  "02": "Himachal Pradesh",
+  "03": "Punjab",
+  "04": "Chandigarh",
+  "05": "Uttarakhand",
+  "06": "Haryana",
+  "07": "Delhi",
+  "08": "Rajasthan",
+  "09": "Uttar Pradesh",
+  "10": "Bihar",
+  "11": "Sikkim",
+  "12": "Arunachal Pradesh",
+  "13": "Nagaland",
+  "14": "Manipur",
+  "15": "Mizoram",
+  "16": "Tripura",
+  "17": "Meghalaya",
+  "18": "Assam",
+  "19": "West Bengal",
+  "20": "Jharkhand",
+  "21": "Odisha",
+  "22": "Chattisgarh",
+  "23": "Madhya Pradesh",
+  "24": "Gujarat",
+  "26": "Dadra and Nagar Haveli and Daman and Diu",
+  "27": "Maharashtra",
+  "28": "Andhra Pradesh (Old)",
+  "29": "Karnataka",
+  "30": "Goa",
+  "31": "Lakshadweep",
+  "32": "Kerala",
+  "33": "Tamil Nadu",
+  "34": "Puducherry",
+  "35": "Andaman and Nicobar Islands",
+  "36": "Telangana",
+  "37": "Andhra Pradesh",
+  "38": "Ladakh",
+  "97": "Other Territory",
+  "99": "Centre Jurisdiction",
+};
+
 export function registerFitkingTemplateHelpers(HB: any): void {
+  // `placeOfSupply` is a bare numeric code on most payloads ("07"), so the
+  // state name has to come from a lookup — falls back to whatever text was
+  // actually there if the code isn't in the list (already a name, or a
+  // format this list doesn't recognise).
+  HB.registerHelper("gstStateName", function (value: any) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return "";
+
+    const code = (raw.match(/^\d+/)?.[0] ?? "").padStart(2, "0");
+    const name = GST_STATE_CODES[code];
+    if (name) return name;
+
+    // "29-KARNATAKA" style: no match by code above because the value isn't
+    // purely numeric — use whatever follows the dash instead.
+    const dashIndex = raw.indexOf("-");
+    if (dashIndex !== -1) return raw.slice(dashIndex + 1).trim();
+
+    return raw;
+  });
+
   HB.registerHelper("increment", function (value: number) {
     return value + 1;
   });
@@ -143,7 +209,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // src/main/invoicePayloadContract.ts) — and which one a document fills
   // depends on how its images were uploaded, so reading only the first leaves
   // the photo column blank for the others.
-  HB.registerHelper("itemImages", function (item: any) {
+  function resolveItemImages(item: any): string[] {
     if (!item || typeof item !== "object") return [];
 
     for (const key of ["originalImages", "images"]) {
@@ -155,6 +221,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     const thumbnail = resolveAssetUrl(item.thumbnail);
     return thumbnail ? [thumbnail] : [];
+  }
+
+  HB.registerHelper("itemImages", function (item: any) {
+    return resolveItemImages(item);
   });
 
   // The bank block, built from the payload rather than written out row by row.
@@ -413,6 +483,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     if (kind === "discount") return Boolean(root?.invoice?.finalTotal?.discount);
     if (kind === "igst") return Boolean(visibility.showIgst);
     if (kind === "cgst" || kind === "sgst") return Boolean(visibility.showCgstSgst);
+    if (kind === "photo") {
+      const items = Array.isArray(root?.invoice?.items) ? root.invoice.items : [];
+      return items.some((item: any) => resolveItemImages(item).length > 0);
+    }
     return true;
   }
 
@@ -730,6 +804,14 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // column should get and leave a dead strip at the right edge.
   HB.registerHelper("itemColspan", function (options: any) {
     return getItemColumns(options?.data?.root).length;
+  });
+
+  // The name header spans into the photo column via colspan, since photo
+  // never gets a <th> of its own — but isKindVisible drops photo entirely
+  // when no item has an image, so the colspan has to shrink to match or the
+  // header claims a column the body no longer has.
+  HB.registerHelper("hasPhotoColumn", function (options: any) {
+    return getItemColumns(options?.data?.root).some((col) => col.kind === "photo");
   });
 
   // Every heading the document names for itself. The account configures these
