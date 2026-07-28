@@ -351,7 +351,8 @@
                 {{!-- Numeric values never wrap: a figure broken across two lines
                 reads as two numbers. Text values still wrap. --}}
                 {{#with (customColumnCell ../this this ../../invoice)}}
-                <td class="text-center fk-custom-cell{{#if isNumber}} fk-nowrap{{/if}}">{{text}}</td>
+                <td class="text-center fk-custom-cell{{#if isNumber}} fk-nowrap{{/if}}">{{text}}{{#if (eq ../key
+                  "gstRate")}}%{{/if}}</td>
                 {{/with}}
                 {{/if}}
                 {{/each}}
