@@ -144,26 +144,49 @@
   position: relative;
 }
 
-/* ===== PAID STAMP =====
-   Only rendered when mapped.visibility.showStatusTagInPrint is true
-   (billType === "INVOICE" && status === "PAID"). Positioned relative to
-   .fk-title-bar so it sits inline beside the title text without disturbing
-   its centering. */
-.fk-paid-stamp {
-  right: var(--fk-font-size-lg);
-  background: #15b944;
+/* ===== STATUS TAG =====
+   Rendered via the shared InvoiceStatus widget ({{> InvoiceStatus}}), which
+   emits <span class="invoice-tag {success|danger|warning|info|devider}">
+   for every status (Paid, Overdue, Partially Paid, Draft, Cancelled,
+   Rejected, Unpaid) — not just Paid. The widget ships its own flat-tag
+   styles.css; these rules override it with fitking's pill look. Selectors
+   are scoped through .fk-main-box so they win regardless of which
+   stylesheet's import happens to load last. A normal (non-absolute) flex
+   child on purpose: .fk-title-bar is `display: flex; justify-content:
+   center`, so the tag sits right beside the title text as part of the same
+   centered group instead of pinned to the bar's edge. */
+.fk-main-box .fk-title-bar .invoice-tag {
+  align-self: center;
+  margin: 0;
   border-radius: 10px;
-  padding: 0px 12px;
+  padding: 0 12px;
   color: #fff;
   font-size: var(--fk-font-size-sm);
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  align-content: center;
-  justify-content: center;
   pointer-events: none;
   line-height: 2;
-  z-index: 5;
+}
+
+.fk-main-box .fk-title-bar .invoice-tag.success {
+  background: #15b944;
+}
+
+.fk-main-box .fk-title-bar .invoice-tag.danger {
+  background: #dc2626;
+}
+
+.fk-main-box .fk-title-bar .invoice-tag.warning {
+  background: #d97706;
+}
+
+.fk-main-box .fk-title-bar .invoice-tag.info {
+  background: #0369a1;
+}
+
+.fk-main-box .fk-title-bar .invoice-tag.devider {
+  background: #6b7280;
 }
 
 .fk-title {
