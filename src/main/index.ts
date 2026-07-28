@@ -33,11 +33,6 @@ const getTopLevelKeys = (value: unknown): string[] => {
   return Object.keys(value as Record<string, unknown>).sort();
 };
 
-let shouldRender = true;
-if (isDevMode) {
-  shouldRender = !initDevBridge();
-}
-
 if (isDibellaMode && !isLydiaMode && typeof document !== "undefined") {
   document.body?.classList.add("isDibella");
 }
@@ -180,4 +175,4 @@ const renderDocument = async () => {
 
 renderDocument();
 
-export {};
+export { };
