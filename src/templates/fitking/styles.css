@@ -108,7 +108,7 @@
 
 /* ===== MAIN BOX FRAME ===== */
 .fk-main-box {
-  border: 1.5px solid var(--fk-border);
+  border: 1px solid var(--fk-border);
   display: flex;
   flex-direction: column;
   margin-bottom: var(--fk-font-size-xl);
@@ -120,7 +120,7 @@
   font-family: var(--fk-title-font);
   padding: 8px var(--fk-font-size-lg);
   text-align: center;
-  border-bottom: 1.5px solid var(--fk-border);
+  border-bottom: 1px solid var(--fk-border);
 }
 
 .fk-title {
@@ -135,7 +135,7 @@
 /* ===== THREE-COLUMN INFO SECTION — var(--fk-font-size-base) ===== */
 .fk-info-section {
   display: flex;
-  border-bottom: 1.5px solid var(--fk-border);
+  border-bottom: 1px solid var(--fk-border);
 }
 
 .fk-info-col {
@@ -146,7 +146,7 @@
 }
 
 .fk-info-col+.fk-info-col {
-  border-left: 1.5px solid var(--fk-border);
+  border-left: 1px solid var(--fk-border);
 }
 
 .fk-info-heading {
@@ -251,7 +251,7 @@
 /* ===== LOGISTICS SECTION ===== */
 .fk-logistics-section {
   display: flex;
-  border-bottom: 1.5px solid var(--fk-border);
+  border-bottom: 1px solid var(--fk-border);
 }
 
 .fk-info-shipped-from,
@@ -316,7 +316,7 @@
 }
 
 .fk-item-table tbody tr:last-child td {
-  border-bottom: 1.5px solid var(--fk-border);
+  border-bottom: 1px solid var(--fk-border);
 }
 
 /* Column Widths
@@ -518,13 +518,13 @@
 .fk-bottom-section {
   display: flex;
   margin-top: 24px;
-  border-top: 1.5px solid var(--fk-border);
+  border-top: 1px solid var(--fk-border);
 }
 
 .fk-bottom-left {
   flex: 1;
   padding: 12px var(--fk-font-size-md);
-  border-right: 1.5px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
 }
 
 .fk-bottom-right {
@@ -608,7 +608,7 @@
 /* ===== TAX, HSN & PAYMENTS SUMMARIES ===== */
 .fk-summary-section {
   padding: var(--fk-font-size-lg);
-  border-top: 1.5px solid var(--fk-border);
+  border-top: 1px solid var(--fk-border);
 }
 
 .fk-summary-heading {

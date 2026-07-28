@@ -1,15 +1,3 @@
-{{!-- <style>
-  @page {
-    size: {
-        {
-        pageSizeKeyword pdfOptions.format
-      }
-    }
-
-    portrait;
-    margin: 0;
-  }
-</style> --}}
 <div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};" {{else}}{{#if
   invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}>
 
@@ -474,6 +462,7 @@
             </tr>
             {{/if}}
 
+            {{#if mapped.visibility.showIgst}}
             {{#if invoice.finalTotal.igst}}
             <tr>
               <td class="fk-totals-label">{{#if invoice.igstRate}}{{getTotalsLabel "igst" "Tax"}}
@@ -481,7 +470,9 @@
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.igst invoice}}</td>
             </tr>
             {{/if}}
+            {{/if}}
 
+            {{#if mapped.visibility.showCgstSgst}}
             {{#if invoice.finalTotal.cgst}}
             <tr>
               <td class="fk-totals-label">{{getTotalsLabel "cgst" "CGST"}}</td>
@@ -495,6 +486,7 @@
                 "UTGST"}}{{else}}{{getTotalsLabel "sgst" "SGST"}}{{/if}}</td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.sgst invoice}}</td>
             </tr>
+            {{/if}}
             {{/if}}
 
             {{#unless (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst)}}
@@ -609,8 +601,8 @@
           <tbody>
             {{#each invoice.taxSummary.taxList}}
             <tr>
-              <td>{{taxRate}}%</td>
-              <td class="text-right">{{formatCurrency taxableAmount ../invoice}}</td>
+              <td>{{#if taxRate}}{{taxRate}}{{else}}{{tax}}{{/if}}%</td>
+              <td class="text-right">{{formatCurrency taxableValue ../invoice}}</td>
               {{#if ../mapped.visibility.showCgstSgst}}
               <td class="text-right">{{formatCurrency cgstAmount ../invoice}}</td>
               <td class="text-right">{{formatCurrency sgstAmount ../invoice}}</td>
@@ -619,9 +611,9 @@
               <td class="text-right">{{formatCurrency igstAmount ../invoice}}</td>
               {{/if}}
               {{#if ../mapped.visibility.showSummaryCess}}
-              <td class="text-right">{{formatCurrency cessAmount ../invoice}}</td>
+              <td class="text-right">{{formatCurrency totalCessAmount ../invoice}}</td>
               {{/if}}
-              <td class="text-right">{{formatCurrency totalTaxAmount ../invoice}}</td>
+              <td class="text-right">{{formatCurrency taxAmount ../invoice}}</td>
             </tr>
             {{/each}}
           </tbody>
@@ -629,7 +621,14 @@
       </div>
       {{/if}}
 
-      {{#if mapped.visibility.showHsnSummary}}
+      {{!-- `mapped.visibility.showHsnSummary` only recognises the canonical
+      `showHSNSummaryInInvoice` advance option; the Lydia live-update bridge
+      emits the alias `showHsnSummary` instead (see InvoiceAdvanceOptions in
+      invoicePayloadContract.ts), which the normalizer doesn't read yet — so a
+      toggle flipped live never reaches `mapped.visibility`. Falling back to
+      the raw advance option here keeps the section in sync until that's
+      fixed upstream. --}}
+      {{#if (or mapped.visibility.showHsnSummary (eq advanceOptions.showHsnSummary true))}}
       <div class="fk-summary-section">
         <p class="fk-summary-heading">{{docLabel "hsnSummary" "HSN Summary"}}</p>
         <table class="fk-summary-table">
@@ -647,8 +646,8 @@
           <tbody>
             {{#each invoice.hsnSummary.hsnList}}
             <tr>
-              <td>{{hsnCode}}</td>
-              <td class="text-right">{{formatCurrency taxableAmount ../invoice}}</td>
+              <td>{{hsn}}</td>
+              <td class="text-right">{{formatCurrency taxableValue ../invoice}}</td>
               {{#if ../mapped.visibility.showCgstSgst}}
               <td class="text-right">{{formatCurrency cgstAmount ../invoice}}</td>
               <td class="text-right">{{formatCurrency sgstAmount ../invoice}}</td>
@@ -657,9 +656,9 @@
               <td class="text-right">{{formatCurrency igstAmount ../invoice}}</td>
               {{/if}}
               {{#if ../mapped.visibility.showSummaryCess}}
-              <td class="text-right">{{formatCurrency cessAmount ../invoice}}</td>
+              <td class="text-right">{{formatCurrency totalCessAmount ../invoice}}</td>
               {{/if}}
-              <td class="text-right">{{formatCurrency totalTaxAmount ../invoice}}</td>
+              <td class="text-right">{{formatCurrency taxAmount ../invoice}}</td>
             </tr>
             {{/each}}
           </tbody>
