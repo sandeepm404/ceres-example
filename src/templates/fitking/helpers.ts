@@ -845,6 +845,21 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return rawAmount * multiplier;
   });
 
+  // No invoice-level igst/cgst/sgst rate field exists on the payload — only a
+  // per-item gstRate — so the totals-table rate suffix is derived from the
+  // aggregate figures themselves: tax amount as a percentage of the taxable
+  // subtotal. Exact for a single uniform rate, a weighted average otherwise.
+  HB.registerHelper("taxRatePercent", function (taxAmount: any, invoice: any) {
+    const amount = extractNumericValue(taxAmount);
+    const finalTotal = (invoice && invoice.finalTotal) || {};
+    const subTotal = extractNumericValue(finalTotal.subTotal);
+
+    if (amount === null || !subTotal) return "";
+
+    const rate = Math.round((amount / subTotal) * 100 * 100) / 100;
+    return String(rate);
+  });
+
   function isDatabaseId(str: string): boolean {
     if (!str) return false;
     const trimmed = str.trim();
