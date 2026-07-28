@@ -637,28 +637,46 @@
       {{#if mapped.visibility.showTaxTable}}
       <div class="fk-summary-section">
         <p class="fk-summary-heading">{{docLabel "taxSummary" "taxDetails" "Tax Details"}}</p>
-        <table class="fk-summary-table">
+        <table class="fk-summary-table fk-summary-table-tiered">
           <thead>
             <tr>
-              <th>{{docLabel "taxRate" "Tax Rate"}}</th>
-              <th class="text-right">{{docLabel "taxableAmount" "Taxable Amount"}}</th>
-              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">{{docLabel "cgst" "CGST"}}</th>
-              <th class="text-right">{{docLabel "sgst" "SGST"}}</th>{{/if}}
-              {{#if mapped.visibility.showIgst}}<th class="text-right">{{docLabel "igst" "IGST"}}</th>{{/if}}
-              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">{{docLabel "cess" "CESS"}}</th>{{/if}}
-              <th class="text-right">{{docLabel "totalTax" "Total Tax"}}</th>
+              <th rowspan="2">{{docLabel "taxRate" "Tax Rate"}}</th>
+              {{#if mapped.visibility.showCgstSgst}}
+              <th colspan="2">{{docLabel "cgst" "CGST"}}</th>
+              <th colspan="2">{{#if mapped.visibility.isUtgst}}{{docLabel "utgst" "UTGST"}}{{else}}{{docLabel "sgst"
+                "SGST"}}{{/if}}</th>
+              {{/if}}
+              {{#if mapped.visibility.showIgst}}
+              <th colspan="2">{{docLabel "igst" "IGST"}}</th>
+              {{/if}}
+              {{#if mapped.visibility.showSummaryCess}}<th rowspan="2">{{docLabel "cess" "CESS"}}</th>{{/if}}
+              <th rowspan="2">{{docLabel "totalTax" "Total"}}</th>
+            </tr>
+            <tr>
+              {{#if mapped.visibility.showCgstSgst}}
+              <th class="text-right">Rate</th>
+              <th class="text-right">Amount</th>
+              <th class="text-right">Rate</th>
+              <th class="text-right">Amount</th>
+              {{/if}}
+              {{#if mapped.visibility.showIgst}}
+              <th class="text-right">Rate</th>
+              <th class="text-right">Amount</th>
+              {{/if}}
             </tr>
           </thead>
           <tbody>
             {{#each invoice.taxSummary.taxList}}
             <tr>
               <td>{{#if taxRate}}{{taxRate}}{{else}}{{tax}}{{/if}}%</td>
-              <td class="text-right">{{formatCurrency taxableValue ../invoice}}</td>
               {{#if ../mapped.visibility.showCgstSgst}}
+              <td class="text-right">{{cgstRate}}%</td>
               <td class="text-right">{{formatCurrency cgstAmount ../invoice}}</td>
+              <td class="text-right">{{sgstRate}}%</td>
               <td class="text-right">{{formatCurrency sgstAmount ../invoice}}</td>
               {{/if}}
               {{#if ../mapped.visibility.showIgst}}
+              <td class="text-right">{{igstRate}}%</td>
               <td class="text-right">{{formatCurrency igstAmount ../invoice}}</td>
               {{/if}}
               {{#if ../mapped.visibility.showSummaryCess}}
@@ -667,6 +685,23 @@
               <td class="text-right">{{formatCurrency taxAmount ../invoice}}</td>
             </tr>
             {{/each}}
+            <tr class="fk-summary-total-row">
+              <td>Total</td>
+              {{#if mapped.visibility.showCgstSgst}}
+              <td></td>
+              <td class="text-right">{{formatCurrency invoice.taxSummary.totalCgstAmount invoice}}</td>
+              <td></td>
+              <td class="text-right">{{formatCurrency invoice.taxSummary.totalSgstAmount invoice}}</td>
+              {{/if}}
+              {{#if mapped.visibility.showIgst}}
+              <td></td>
+              <td class="text-right">{{formatCurrency invoice.taxSummary.totalIgstAmount invoice}}</td>
+              {{/if}}
+              {{#if mapped.visibility.showSummaryCess}}
+              <td class="text-right">{{formatCurrency invoice.taxSummary.totalCessAmount invoice}}</td>
+              {{/if}}
+              <td class="text-right">{{formatCurrency invoice.taxSummary.totalTaxAmount invoice}}</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -682,16 +717,33 @@
       {{#if (or mapped.visibility.showHsnSummary (eq advanceOptions.showHsnSummary true))}}
       <div class="fk-summary-section">
         <p class="fk-summary-heading">{{docLabel "hsnSummary" "HSN Summary"}}</p>
-        <table class="fk-summary-table">
+        <table class="fk-summary-table fk-summary-table-tiered">
           <thead>
             <tr>
-              <th>{{docLabel "hsn" "HSN/SAC"}}</th>
-              <th class="text-right">{{docLabel "taxableAmount" "Taxable Amount"}}</th>
-              {{#if mapped.visibility.showCgstSgst}}<th class="text-right">{{docLabel "cgst" "CGST"}}</th>
-              <th class="text-right">{{docLabel "sgst" "SGST"}}</th>{{/if}}
-              {{#if mapped.visibility.showIgst}}<th class="text-right">{{docLabel "igst" "IGST"}}</th>{{/if}}
-              {{#if mapped.visibility.showSummaryCess}}<th class="text-right">{{docLabel "cess" "CESS"}}</th>{{/if}}
-              <th class="text-right">{{docLabel "totalTax" "Total Tax"}}</th>
+              <th rowspan="2">{{docLabel "hsn" "HSN/SAC"}}</th>
+              <th class="text-right" rowspan="2">{{docLabel "taxableAmount" "Taxable Value"}}</th>
+              {{#if mapped.visibility.showCgstSgst}}
+              <th colspan="2">{{docLabel "cgst" "CGST"}}</th>
+              <th colspan="2">{{#if mapped.visibility.isUtgst}}{{docLabel "utgst" "UTGST"}}{{else}}{{docLabel "sgst"
+                "SGST"}}{{/if}}</th>
+              {{/if}}
+              {{#if mapped.visibility.showIgst}}
+              <th colspan="2">{{docLabel "igst" "IGST"}}</th>
+              {{/if}}
+              {{#if mapped.visibility.showSummaryCess}}<th rowspan="2">{{docLabel "cess" "CESS"}}</th>{{/if}}
+              <th rowspan="2">{{docLabel "totalTax" "Total"}}</th>
+            </tr>
+            <tr>
+              {{#if mapped.visibility.showCgstSgst}}
+              <th class="text-right">Rate</th>
+              <th class="text-right">Amount</th>
+              <th class="text-right">Rate</th>
+              <th class="text-right">Amount</th>
+              {{/if}}
+              {{#if mapped.visibility.showIgst}}
+              <th class="text-right">Rate</th>
+              <th class="text-right">Amount</th>
+              {{/if}}
             </tr>
           </thead>
           <tbody>
@@ -700,10 +752,13 @@
               <td>{{hsn}}</td>
               <td class="text-right">{{formatCurrency taxableValue ../invoice}}</td>
               {{#if ../mapped.visibility.showCgstSgst}}
+              <td class="text-right">{{cgstRate}}%</td>
               <td class="text-right">{{formatCurrency cgstAmount ../invoice}}</td>
+              <td class="text-right">{{sgstRate}}%</td>
               <td class="text-right">{{formatCurrency sgstAmount ../invoice}}</td>
               {{/if}}
               {{#if ../mapped.visibility.showIgst}}
+              <td class="text-right">{{igstRate}}%</td>
               <td class="text-right">{{formatCurrency igstAmount ../invoice}}</td>
               {{/if}}
               {{#if ../mapped.visibility.showSummaryCess}}
@@ -712,6 +767,24 @@
               <td class="text-right">{{formatCurrency taxAmount ../invoice}}</td>
             </tr>
             {{/each}}
+            <tr class="fk-summary-total-row">
+              <td>Total</td>
+              <td class="text-right">{{formatCurrency invoice.hsnSummary.totalTaxableValue invoice}}</td>
+              {{#if mapped.visibility.showCgstSgst}}
+              <td></td>
+              <td class="text-right">{{formatCurrency invoice.hsnSummary.totalCgstAmount invoice}}</td>
+              <td></td>
+              <td class="text-right">{{formatCurrency invoice.hsnSummary.totalSgstAmount invoice}}</td>
+              {{/if}}
+              {{#if mapped.visibility.showIgst}}
+              <td></td>
+              <td class="text-right">{{formatCurrency invoice.hsnSummary.totalIgstAmount invoice}}</td>
+              {{/if}}
+              {{#if mapped.visibility.showSummaryCess}}
+              <td class="text-right">{{formatCurrency invoice.hsnSummary.totalCessAmount invoice}}</td>
+              {{/if}}
+              <td class="text-right">{{formatCurrency invoice.hsnSummary.totalTaxAmount invoice}}</td>
+            </tr>
           </tbody>
         </table>
       </div>
