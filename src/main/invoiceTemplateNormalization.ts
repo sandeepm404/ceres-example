@@ -63,6 +63,13 @@ export interface InvoiceTemplateMappedState {
     isCancelled: boolean;
   };
   visibility: InvoiceTemplateVisibility;
+  payments: {
+    tds: number;
+    received: number;
+    transactionCharge: number;
+    paid: number;
+    due: number;
+  };
 }
 
 export interface InvoiceTemplateDerivedState {
@@ -312,6 +319,25 @@ const getInvoiceCessTotal = (invoice: FlattenedInvoicePayload): number => {
   );
 };
 
+// TDS/paid/due only exist per-currency, under the invoice's own settlement
+// currency — `invoice.totalPaid`/`invoice.balanceAmount` are absent on
+// invoices settled this way, so this is the only place those figures live.
+const getPaymentConversion = (invoice: FlattenedInvoicePayload) => {
+  const totalConversions = asRecord(invoice.totalConversions);
+  const currency = toStringValue(invoice.currency);
+  const conversion = asRecord(totalConversions[currency]);
+  const received = toNumberValue(conversion.paid, 0);
+  const transactionCharge = toNumberValue(conversion.transactionCharge, 0);
+
+  return {
+    tds: toNumberValue(conversion.tds, 0),
+    received,
+    transactionCharge,
+    paid: received + transactionCharge,
+    due: toNumberValue(conversion.due, 0),
+  };
+};
+
 const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
   const invoiceTemplate = asRecord(invoice.template);
   const pdfOptions = asRecord(
@@ -424,10 +450,15 @@ const normalizeInvoiceColumns = (
 
       return {
         key,
+        // cgst/sgst labels are derived from igst/utgst flags, not column.label — accounts can mislabel it (e.g. cgst tagged "IGST")
         label:
-          key === "sgst" && Boolean(invoice.utgst)
-            ? "UTGST"
-            : toStringValue(column.label),
+          key === "sgst"
+            ? Boolean(invoice.utgst)
+              ? "UTGST"
+              : toStringValue(column.label)
+            : key === "cgst"
+              ? "CGST"
+              : toStringValue(column.label),
         className: getColumnClass(key),
         isHidden: Boolean(column.isHidden) || !visible,
         dataType,
@@ -580,6 +611,7 @@ export const normalizeInvoiceTemplateState = (
         visibleColumnCount:
           columns.filter((column) => !column.isHidden).length + 1,
       },
+      payments: getPaymentConversion(invoice),
     },
     derived: {
       showHsnColumn: context.showHsnColumn,

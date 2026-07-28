@@ -605,6 +605,11 @@
   color: #222;
 }
 
+.fk-totals-sub-label {
+  padding-left: 16px;
+  font-size: var(--fk-font-size-sm);
+}
+
 /* ===== TAX, HSN & PAYMENTS SUMMARIES ===== */
 .fk-summary-section {
   padding: var(--fk-font-size-lg);

@@ -456,47 +456,72 @@
             {{/if}}
 
             {{#if invoice.finalTotal.discount}}
+            {{#with (getTotalsLabel "discount" "") as |discountLabel|}}
             <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "discount" "Discounts"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.discount invoice}}</td>
+              <td class="fk-totals-label">{{discountLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.discount ../invoice}}</td>
             </tr>
+            {{/with}}
             {{/if}}
 
             {{#if mapped.visibility.showIgst}}
             {{#if invoice.finalTotal.igst}}
+            {{#with (getTotalsLabel "igst" "") as |igstLabel|}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.igstRate}}{{getTotalsLabel "igst" "Tax"}}
-                ({{invoice.igstRate}}%){{else}}{{getTotalsLabel "igst" "IGST"}}{{/if}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.igst invoice}}</td>
+              <td class="fk-totals-label">{{igstLabel}}{{#if ../invoice.igstRate}} ({{../invoice.igstRate}}%){{/if}}
+              </td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.igst ../invoice}}</td>
             </tr>
+            {{/with}}
             {{/if}}
             {{/if}}
 
             {{#if mapped.visibility.showCgstSgst}}
             {{#if invoice.finalTotal.cgst}}
+            {{#with (getTotalsLabel "cgst" "") as |cgstLabel|}}
             <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "cgst" "CGST"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.cgst invoice}}</td>
+              <td class="fk-totals-label">{{cgstLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.cgst ../invoice}}</td>
             </tr>
+            {{/with}}
             {{/if}}
 
             {{#if invoice.finalTotal.sgst}}
+            {{#if mapped.visibility.isUtgst}}
+            {{#with (getTotalsLabel "utgst" "") as |sgstLabel|}}
             <tr>
-              <td class="fk-totals-label">{{#if mapped.visibility.isUtgst}}{{getTotalsLabel "utgst"
-                "UTGST"}}{{else}}{{getTotalsLabel "sgst" "SGST"}}{{/if}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.sgst invoice}}</td>
+              <td class="fk-totals-label">{{sgstLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.sgst ../invoice}}</td>
             </tr>
+            {{/with}}
+            {{else}}
+            {{#with (getTotalsLabel "sgst" "") as |sgstLabel|}}
+            <tr>
+              <td class="fk-totals-label">{{sgstLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.sgst ../invoice}}</td>
+            </tr>
+            {{/with}}
+            {{/if}}
             {{/if}}
             {{/if}}
 
             {{#unless (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst)}}
             {{#if invoice.finalTotal.totalTax}}
+            {{#if invoice.taxName}}
             <tr>
-              <td class="fk-totals-label">{{#if invoice.taxName}}{{invoice.taxName}}{{#if invoice.taxRate}}
-                ({{invoice.taxRate}}%){{/if}}{{else}}{{#if invoice.taxRate}}{{getTotalsLabel "tax" "Tax"}}
-                ({{invoice.taxRate}}%){{else}}{{getTotalsLabel "tax" "Tax"}}{{/if}}{{/if}}</td>
+              <td class="fk-totals-label">{{invoice.taxName}}{{#if invoice.taxRate}} ({{invoice.taxRate}}%){{/if}}
+              </td>
               <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.totalTax invoice}}</td>
             </tr>
+            {{else}}
+            {{#with (getTotalsLabel "tax" "") as |taxLabel|}}
+            <tr>
+              <td class="fk-totals-label">{{taxLabel}}{{#if ../invoice.taxRate}} ({{../invoice.taxRate}}%){{/if}}
+              </td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.totalTax ../invoice}}</td>
+            </tr>
+            {{/with}}
+            {{/if}}
             {{/if}}
             {{/unless}}
 
@@ -510,17 +535,21 @@
             {{/each}}
 
             {{#if invoice.extraCharges}}
+            {{#with (getTotalsLabel "extraCharges" "") as |extraChargesLabel|}}
             <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "extraCharges" "Extra Charges"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.extraCharges invoice}}</td>
+              <td class="fk-totals-label">{{extraChargesLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.extraCharges ../invoice}}</td>
             </tr>
+            {{/with}}
             {{/if}}
 
             {{#if invoice.finalTotal.roundOff}}
+            {{#with (getTotalsLabel "roundOff" "") as |roundOffLabel|}}
             <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "roundOff" "Round off"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.roundOff invoice}}</td>
+              <td class="fk-totals-label">{{roundOffLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.roundOff ../invoice}}</td>
             </tr>
+            {{/with}}
             {{/if}}
 
             {{!-- Extra amount rows configured on the document, above the grand
@@ -541,17 +570,48 @@
               <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total
                 invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
             </tr>
-            {{#if invoice.totalPaid}}
+            {{#if mapped.payments.tds}}
+            {{#with (docLabel "tds" "tdsAmountWithheld" "TDS Amount Withheld") as |tdsLabel|}}
             <tr>
-              <td class="fk-totals-label">{{docLabel "paidAmount" "totalPaid" "Total Paid"}}</td>
-              <td class="fk-totals-value">{{formatCurrency invoice.totalPaid invoice}}</td>
+              <td class="fk-totals-label">{{tdsLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../mapped.payments.tds ../invoice}}</td>
             </tr>
+            {{/with}}
             {{/if}}
-            {{#if invoice.balanceAmount}}
+            {{#if (or invoice.totalPaid mapped.payments.paid)}}
+            {{#with (docLabel "paidAmount" "totalPaid" "") as |paidAmountLabel|}}
             <tr>
-              <td class="fk-totals-label fk-balance-due">{{docLabel "dueAmount" "balanceDue" "Balance Due"}}</td>
-              <td class="fk-totals-value fk-balance-due">{{formatCurrency invoice.balanceAmount invoice}}</td>
+              <td class="fk-totals-label">{{paidAmountLabel}}</td>
+              <td class="fk-totals-value">{{#if ../invoice.totalPaid}}{{formatCurrency ../invoice.totalPaid
+                ../invoice}}{{else}}{{formatCurrency ../mapped.payments.paid ../invoice}}{{/if}}</td>
             </tr>
+            {{/with}}
+            {{/if}}
+            {{#if mapped.payments.received}}
+            {{#with (docLabel "amountReceived" "Amount Received") as |receivedLabel|}}
+            <tr>
+              <td class="fk-totals-label fk-totals-sub-label">{{receivedLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../mapped.payments.received ../invoice}}</td>
+            </tr>
+            {{/with}}
+            {{/if}}
+            {{#if mapped.payments.transactionCharge}}
+            {{#with (docLabel "transactionCharge" "Transaction Charge") as |transactionChargeLabel|}}
+            <tr>
+              <td class="fk-totals-label fk-totals-sub-label">{{transactionChargeLabel}}</td>
+              <td class="fk-totals-value">{{formatCurrency ../mapped.payments.transactionCharge ../invoice}}</td>
+            </tr>
+            {{/with}}
+            {{/if}}
+            {{#if (or invoice.balanceAmount mapped.payments.due)}}
+            {{#with (docLabel "dueAmount" "balanceDue" "") as |dueAmountLabel|}}
+            <tr>
+              <td class="fk-totals-label fk-balance-due">{{dueAmountLabel}}</td>
+              <td class="fk-totals-value fk-balance-due">{{#if ../invoice.balanceAmount}}{{formatCurrency
+                ../invoice.balanceAmount ../invoice}}{{else}}{{formatCurrency ../mapped.payments.due
+                ../invoice}}{{/if}}</td>
+            </tr>
+            {{/with}}
             {{/if}}
 
           </table>
