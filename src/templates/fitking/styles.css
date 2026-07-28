@@ -106,9 +106,18 @@
   object-fit: contain;
 }
 
-/* ===== MAIN BOX FRAME ===== */
+/* ===== MAIN BOX FRAME =====
+   .fk-bottom-section's break-inside: avoid (see @media print) can push the
+   whole totals block to the next page, leaving a gap on the current page
+   that is still vertically inside this box. Without box-decoration-break,
+   the browser's default page-fragmentation behaviour draws this box's
+   left/right border straight through that gap as a dangling, unclosed
+   line. `clone` caps it instead: a bottom border wherever the box's content
+   actually ends on a page, and a fresh top border where it resumes. */
 .fk-main-box {
   border: 1px solid var(--fk-border);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   display: flex;
   flex-direction: column;
   margin-bottom: var(--fk-font-size-xl);
