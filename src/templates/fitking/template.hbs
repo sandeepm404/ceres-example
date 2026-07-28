@@ -449,7 +449,7 @@
             {{#if (or invoice.finalTotal.discount invoice.finalTotal.igst invoice.finalTotal.cgst
             invoice.finalTotal.sgst invoice.finalTotal.totalTax invoice.finalTotal.roundOff)}}
             <tr>
-              <td class="fk-totals-label">{{getTotalsLabel "subTotal" "Sub Total"}}</td>
+              <td class="fk-totals-label">{{columnLabel "amount" "Amount"}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.subTotal}}{{formatCurrency
                 invoice.finalTotal.subTotal invoice}}{{else}}{{formatCurrency invoice.subTotal invoice}}{{/if}}</td>
             </tr>
@@ -466,7 +466,7 @@
 
             {{#if mapped.visibility.showIgst}}
             {{#if invoice.finalTotal.igst}}
-            {{#with (getTotalsLabel "igst" "") as |igstLabel|}}
+            {{#with (getTotalsLabel "igst" "IGST") as |igstLabel|}}
             <tr>
               <td class="fk-totals-label">{{igstLabel}}{{#if ../invoice.igstRate}} ({{../invoice.igstRate}}%){{/if}}
               </td>
@@ -478,7 +478,7 @@
 
             {{#if mapped.visibility.showCgstSgst}}
             {{#if invoice.finalTotal.cgst}}
-            {{#with (getTotalsLabel "cgst" "") as |cgstLabel|}}
+            {{#with (columnLabel "cgst" "CGST") as |cgstLabel|}}
             <tr>
               <td class="fk-totals-label">{{cgstLabel}}</td>
               <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.cgst ../invoice}}</td>
@@ -488,14 +488,14 @@
 
             {{#if invoice.finalTotal.sgst}}
             {{#if mapped.visibility.isUtgst}}
-            {{#with (getTotalsLabel "utgst" "") as |sgstLabel|}}
+            {{#with (getTotalsLabel "utgst" "UTGST") as |sgstLabel|}}
             <tr>
               <td class="fk-totals-label">{{sgstLabel}}</td>
               <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.sgst ../invoice}}</td>
             </tr>
             {{/with}}
             {{else}}
-            {{#with (getTotalsLabel "sgst" "") as |sgstLabel|}}
+            {{#with (getTotalsLabel "sgst" "SGST") as |sgstLabel|}}
             <tr>
               <td class="fk-totals-label">{{sgstLabel}}</td>
               <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.sgst ../invoice}}</td>
@@ -566,7 +566,8 @@
             {{/each}}
 
             <tr class="fk-grand-total-row">
-              <td class="fk-totals-label">{{getTotalsLabel "total" "Total"}}</td>
+              <td class="fk-totals-label">{{#with (getTotalsLabel "total" "") as |totalLabel|}}{{totalLabel}}
+                {{else}}{{columnLabel "total" "Total"}}{{/with}}</td>
               <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total
                 invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
             </tr>

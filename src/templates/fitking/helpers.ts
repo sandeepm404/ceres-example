@@ -775,6 +775,23 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   HB.registerHelper("docLabel", documentLabel);
   HB.registerHelper("getTotalsLabel", documentLabel);
 
+  // Some totals-table rows mirror a declared line-item column rather than a
+  // customLabels entry — Sub Total mirrors the item table's "amount" column,
+  // which the account names for itself in `invoice.columns`, same as it does
+  // every other column heading.
+  HB.registerHelper("columnLabel", function (key: string, ...rest: any[]) {
+    const options = rest[rest.length - 1];
+    const fallback = rest.length > 1 ? rest[0] : "";
+    const columns = options?.data?.root?.invoice?.columns;
+    const normalizedKey = normalizeColumnKey(key);
+    const match = Array.isArray(columns)
+      ? columns.find((col: any) => normalizeColumnKey(col?.key) === normalizedKey)
+      : undefined;
+    const label = typeof match?.label === "string" ? match.label.trim() : "";
+
+    return label || (typeof fallback === "string" ? fallback : "");
+  });
+
   HB.registerHelper("getChargeName", function (item: any, fallback?: string) {
     if (!item) return typeof fallback === "string" ? fallback : "Extra Charges";
     if (typeof item === "string") return item;
