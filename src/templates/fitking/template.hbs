@@ -529,7 +529,7 @@
             {{#if (isPositive amount)}}
             <tr>
               <td class="fk-totals-label">{{getChargeName this "Extra Charges"}}</td>
-              <td class="fk-totals-value">{{formatCurrency amount ../invoice}}</td>
+              <td class="fk-totals-value">{{formatCurrency (chargeAmount this ../invoice) ../invoice}}</td>
             </tr>
             {{/if}}
             {{/each}}
@@ -552,7 +552,14 @@
             {{/with}}
             {{/if}}
 
-            {{!-- Extra amount rows configured on the document, above the grand
+            <tr class="fk-grand-total-row">
+              <td class="fk-totals-label">{{#with (getTotalsLabel "total" "") as |totalLabel|}}{{totalLabel}}
+                {{else}}{{columnLabel "total" "Total"}}{{/with}}</td>
+              <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total
+                invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
+            </tr>
+
+            {{!-- Extra amount rows configured on the document, below the grand
             total. `amount` is the numeric form; some entries only carry a
             plain `value`, which is printed as-is. --}}
             {{#each invoice.extraTotalFields}}
@@ -565,12 +572,6 @@
             {{/if}}
             {{/each}}
 
-            <tr class="fk-grand-total-row">
-              <td class="fk-totals-label">{{#with (getTotalsLabel "total" "") as |totalLabel|}}{{totalLabel}}
-                {{else}}{{columnLabel "total" "Total"}}{{/with}}</td>
-              <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total
-                invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
-            </tr>
             {{#if mapped.payments.tds}}
             {{#with (docLabel "tds" "tdsAmountWithheld" "TDS Amount Withheld") as |tdsLabel|}}
             <tr>

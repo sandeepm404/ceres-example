@@ -812,6 +812,39 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return typeof fallback === "string" ? fallback : "Extra Charges";
   });
 
+  // additionalCharges store amount as the raw magnitude the account typed in —
+  // a PERCENTAGE charge's `amount` is the percentage number itself (e.g. 2,
+  // meaning 2%), not a currency value, and `multiplier` (-1/1) carries the
+  // sign the front end applies before adding it into the grand total.
+  // formatCurrency already renders negative numbers parenthesised, so a
+  // negative result here needs no extra sign handling.
+  HB.registerHelper("chargeAmount", function (charge: any, invoice: any) {
+    if (!charge) return 0;
+
+    const rawAmount = extractNumericValue(charge.amount) ?? 0;
+    const multiplier = extractNumericValue(charge.multiplier) ?? 1;
+    const amountType = String(charge.amountType || "").toUpperCase();
+
+    if (amountType === "PERCENTAGE") {
+      const finalTotal = (invoice && invoice.finalTotal) || {};
+      // finalTotal carries both an igst figure and a cgst/sgst split even on
+      // invoices that only use one of them — only the one this invoice's own
+      // igst/taxName flags select is real tax, same rule normalizeInvoiceTemplateState
+      // uses for showIgst/showCgstSgst.
+      const isIgstInvoice =
+        Boolean(invoice && invoice.igst) ||
+        String((invoice && invoice.taxName) || "") !== "GST";
+      const taxTotal = isIgstInvoice
+        ? extractNumericValue(finalTotal.igst) ?? 0
+        : (extractNumericValue(finalTotal.cgst) ?? 0) +
+          (extractNumericValue(finalTotal.sgst) ?? 0);
+      const base = (extractNumericValue(finalTotal.subTotal) ?? 0) + taxTotal;
+      return ((rawAmount / 100) * base) * multiplier;
+    }
+
+    return rawAmount * multiplier;
+  });
+
   function isDatabaseId(str: string): boolean {
     if (!str) return false;
     const trimmed = str.trim();
