@@ -20,8 +20,14 @@
  */
 
 import {
+  applyAdvanceOptionsUpdate,
   applyPreviewAssets,
   applyPreviewStyles,
+  applyQrCodeUpdate,
+  applyIrnUpdate,
+  applyZatcaQrCodeUpdate,
+  applyLhdnQrCodeUpdate,
+  applyDocumentQrUpdate,
   extractTemplateStyleOptions,
   getQueryParam,
   isPlainObject,
@@ -50,6 +56,11 @@ export interface LydiaBridgeOptions {
 export interface LydiaBridgeHandle {
   reportContentHeight: (reason?: string) => void;
   triggerPrint: (reason?: string) => void;
+  registerInvoiceFieldHandler: (
+    field: string,
+    handler: (value: unknown) => void
+  ) => void;
+  notifyReady: () => void;
   destroy: () => void;
 }
 
@@ -84,7 +95,32 @@ export function initLydiaBridge(
   let heightReportTimer: number | null = null;
   let pendingReportReason: string | null = null;
 
+  // Handshake state
+  let isLydiaReady = false;
+  const pendingCeresQueue: Array<() => void> = [];
+
+  // Field handler registry — maps invoiceResponse field keys to DOM update functions.
+  // Registered before ceres:ready is sent; dispatched when lydia:invoice-update arrives.
+  const invoiceFieldHandlers = new Map<string, (value: unknown) => void>();
+
   const cleanupFns: CleanupFn[] = [];
+
+  // Note: handler receives `unknown` (not a generic keyed type) because Map<string, fn>
+  // cannot express per-key type safety without complex mapped types. Handlers guard internally.
+  const registerInvoiceFieldHandler = <K extends string>(
+    field: K,
+    handler: (value: unknown) => void
+  ): void => {
+    invoiceFieldHandlers.set(field, handler);
+  };
+
+  const handleInvoiceUpdate = (fields: Record<string, unknown>): void => {
+    // Unrecognised keys are silently ignored — forward compatible.
+    Object.entries(fields).forEach(([key, value]) => {
+      const handler = invoiceFieldHandlers.get(key);
+      if (handler) handler(value);
+    });
+  };
 
   // Logging (only when debug flag is enabled)
   const debugLog = (...args: unknown[]) => {
@@ -110,17 +146,25 @@ export function initLydiaBridge(
     );
   };
 
+  // Sends a message to the parent window. Includes all necessary guards.
+  const sendToParent = (payload: object) => {
+    if (window.parent == null || window.parent === window) return;
+    if (typeof window.parent.postMessage !== "function") return;
+    window.parent.postMessage(payload, "*");
+  };
+
+  // Sends immediately if handshake is complete, otherwise queues for later.
+  const sendOrQueue = (fn: () => void) => {
+    if (isLydiaReady) {
+      fn();
+    } else {
+      pendingCeresQueue.push(fn);
+    }
+  };
+
   // Sends the measured height to Lydia so it can resize the iframe to fit.
   // Skips duplicate reports on resize to avoid unnecessary chatter.
   const postHeightToParent = (fullHeight: number, reason = "resize") => {
-    if (window.parent == null || window.parent === window) {
-      return;
-    }
-
-    if (typeof window.parent.postMessage !== "function") {
-      return;
-    }
-
     if (!Number.isFinite(fullHeight)) {
       return;
     }
@@ -141,7 +185,7 @@ export function initLydiaBridge(
       timestamp: Date.now(),
     };
 
-    window.parent.postMessage(payload, "*");
+    sendOrQueue(() => sendToParent(payload));
     debugLog("postHeightToParent", payload);
   };
 
@@ -161,7 +205,7 @@ export function initLydiaBridge(
       force ||
       lastReportedHeight == null ||
       Math.abs(nextReportedHeight - lastReportedHeight) >
-      HEIGHT_CHANGE_THRESHOLD;
+        HEIGHT_CHANGE_THRESHOLD;
 
     if (!shouldPost) {
       return;
@@ -340,6 +384,30 @@ export function initLydiaBridge(
     return (data as { action?: string }).action === "lydia:height-request";
   };
 
+  const isLydiaAckMessage = (
+    data: unknown
+  ): data is { source: "lydia"; type: "lydia:ack"; version: number } => {
+    if (!isPlainObject(data)) return false;
+    return data.source === "lydia" && data.type === "lydia:ack";
+  };
+
+  const isInvoiceUpdateMessage = (
+    data: unknown
+  ): data is {
+    source: "lydia";
+    type: "lydia:invoice-update";
+    fields: Record<string, unknown>;
+    reason?: string;
+  } => {
+    if (!isPlainObject(data)) return false;
+    return (
+      data.source === "lydia" &&
+      data.type === "lydia:invoice-update" &&
+      typeof data.fields === "object" &&
+      data.fields !== null
+    );
+  };
+
   const isTemplateUpdateMessage = (
     data: unknown
   ): data is {
@@ -357,11 +425,24 @@ export function initLydiaBridge(
   // Listens for print commands from Lydia. When the user hits print in the parent app,
   // Lydia sends { action: 'lydia:print' } so Ceres can prepare the layout first.
   const handleParentMessage = (event: MessageEvent) => {
+    const { data } = event;
+
     if (event.source !== window.parent) {
       return;
     }
 
-    const { data } = event;
+    if (isLydiaAckMessage(data)) {
+      isLydiaReady = true;
+      const queued = pendingCeresQueue.splice(0);
+      queued.forEach((fn) => fn());
+      return;
+    }
+
+    if (isInvoiceUpdateMessage(data)) {
+      handleInvoiceUpdate(data.fields);
+      return;
+    }
+
     if (isTemplateUpdateMessage(data)) {
       const styleOptions = extractTemplateStyleOptions({
         template: data.template,
@@ -518,9 +599,34 @@ export function initLydiaBridge(
     resetSizing("destroy");
   };
 
+  // Register known invoice field handlers.
+  registerInvoiceFieldHandler("qrCode", applyQrCodeUpdate);
+  registerInvoiceFieldHandler("irn", applyIrnUpdate);
+  registerInvoiceFieldHandler("zatcaQrCode", applyZatcaQrCodeUpdate);
+  registerInvoiceFieldHandler("lhdnQrCode", applyLhdnQrCodeUpdate);
+  registerInvoiceFieldHandler("documentQr", applyDocumentQrUpdate);
+  registerInvoiceFieldHandler("advanceOptions", (value: unknown) => {
+    applyAdvanceOptionsUpdate(value as unknown);
+    reportContentHeight("advance-options-update");
+  });
+
+  // Called by the renderer after the template HTML is injected into the DOM.
+  // Sending ceres:ready at that point ensures Lydia's queued invoice-update messages
+  // (e.g. qrCode, irn) arrive when the target DOM elements already exist.
+  // Must NOT be called before outputDiv.innerHTML is set — handlers look up DOM elements
+  // at call time and will silently fail if the elements aren't there yet.
+  let hasNotifiedReady = false;
+  const notifyReady = () => {
+    if (hasNotifiedReady) return;
+    hasNotifiedReady = true;
+    sendToParent({ source: "ceres", type: "ceres:ready", version: 1 });
+  };
+
   return {
     reportContentHeight,
     triggerPrint,
+    registerInvoiceFieldHandler,
+    notifyReady,
     destroy,
   };
 }

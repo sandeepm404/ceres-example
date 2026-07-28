@@ -306,11 +306,11 @@ export const sanitizePreviewOptions = (
       | "primaryBackground"
       | "secondaryBackground"
     > = [
-        "primaryColor",
-        "secondaryColor",
-        "primaryBackground",
-        "secondaryBackground",
-      ];
+      "primaryColor",
+      "secondaryColor",
+      "primaryBackground",
+      "secondaryBackground",
+    ];
 
     const sanitizedEntries = colorKeys
       .map((key) => {
@@ -438,6 +438,77 @@ export const applyPreviewStyles = (options: PlainObject | null | undefined) => {
       }
     }
   }
+
+  // --- Watermark ---
+  const watermark = isPlainObject(options.watermark)
+    ? (options.watermark as PlainObject)
+    : null;
+
+  if (watermark) {
+    // Use Boolean() directly — no undefined fallback needed since isEnabled is
+    // always present in the real data shape, and an absent/falsy value should
+    // be treated as disabled (avoids an untested dead branch).
+    const isEnabled = Boolean(watermark.isEnabled);
+
+    const outputEl =
+      typeof document !== "undefined"
+        ? document.getElementById("documentOutput")
+        : null;
+
+    if (!isEnabled) {
+      // Clear all watermark state when disabled
+      root.style.removeProperty("--watermark-logo");
+      root.style.removeProperty("--watermark-opacity");
+      root.style.removeProperty("--watermark-rotate");
+      root.style.removeProperty("--watermark-scale");
+      root.style.removeProperty("--watermark-repeated-pattern");
+      root.style.removeProperty("--watermark-z-index");
+      // Clear text attr on both elements (screen + print targets)
+      outputEl?.removeAttribute("data-watermark-text");
+      document.body?.removeAttribute("data-watermark-text");
+      return;
+      // NOTE: this `return` exits applyPreviewStyles entirely. Colors and fonts
+      // are processed before this block so they are not affected.
+    }
+
+    const logo = toNonEmptyString(watermark.logo);
+    const customText = toNonEmptyString(watermark.customText);
+
+    if (logo) {
+      // Image watermark: set logo URL, raise z-index so image overlays content, clear stale text.
+      root.style.setProperty("--watermark-logo", `url(${toAssetUrl(logo)})`);
+      root.style.setProperty("--watermark-z-index", "5");
+      outputEl?.removeAttribute("data-watermark-text");
+      document.body?.removeAttribute("data-watermark-text");
+    } else if (customText) {
+      // Text watermark: clear logo var and z-index override; set data attribute on both elements.
+      // outputEl (#documentOutput) drives the screen ::before pseudo-element.
+      // document.body drives the print ::before pseudo-element (position:fixed).
+      root.style.removeProperty("--watermark-logo");
+      root.style.removeProperty("--watermark-z-index");
+      outputEl?.setAttribute("data-watermark-text", customText);
+      document.body?.setAttribute("data-watermark-text", customText);
+    }
+
+    // Numeric properties — use setProperty directly, NOT setVar, because setVar
+    // guards with `if (!value)` which treats "0" as falsy and would silently skip
+    // opacity:0, rotation:0 etc.
+    const opacity =
+      typeof watermark.opacity === "number" ? watermark.opacity / 100 : 0.1;
+    root.style.setProperty("--watermark-opacity", String(opacity));
+
+    const rotation =
+      typeof watermark.rotation === "number" ? watermark.rotation : 0;
+    root.style.setProperty("--watermark-rotate", `${rotation}deg`);
+
+    const scale = typeof watermark.scale === "number" ? watermark.scale : 1;
+    root.style.setProperty("--watermark-scale", String(scale));
+
+    const repeatedPattern = watermark.repeatedPatterns
+      ? "repeat-y"
+      : "no-repeat";
+    root.style.setProperty("--watermark-repeated-pattern", repeatedPattern);
+  }
 };
 
 export const applyPreviewAssets = (
@@ -515,6 +586,178 @@ export const applyPreviewAssets = (
   return didUpdate;
 };
 
+/**
+ * DOM targeting convention for Lydia-pushed field updates.
+ *
+ * Templates must mark updatable elements with data attributes:
+ *   - img[data-ceres-field="qrCode"]           → QR code image
+ *   - [data-ceres-field="irn"]                 → IRN text node
+ *   - [data-ceres-field-container="qrCode"]    → wrapper toggled with is-empty class
+ *
+ * Element targeting uses data-ceres-field attributes (similar to data-ceres-height in applyPreviewAssets).
+ * Container targeting uses data-ceres-field-container attributes (not class selectors — intentionally explicit).
+ * Adding support for a new field: add data-ceres-field="<key>" to the template element,
+ * then register a handler in lydiaBridge.ts using registerInvoiceFieldHandler.
+ */
+
+/**
+ * Updates the QR code image in the rendered template.
+ * Targets img[data-ceres-field="qrCode"] — templates must use this attribute.
+ * Toggles is-empty on the nearest [data-ceres-field-container="qrCode"] when value is absent.
+ *
+ * @param value - QR code data URL, or null/undefined to hide
+ */
+export const applyQrCodeUpdate = (value: unknown): void => {
+  const qrImg = document.querySelector<HTMLImageElement>(
+    'img[data-ceres-field="qrCode"]'
+  );
+  if (!qrImg) return;
+
+  const container = qrImg.closest<HTMLElement>(
+    '[data-ceres-field-container="qrCode"]'
+  );
+
+  if (typeof value === "string" && value.length > 0) {
+    qrImg.src = value;
+    container?.classList.remove("is-empty");
+  } else {
+    // removeAttribute (not src = "") so the browser doesn't refetch the current
+    // page URL — matches the pattern in applyPreviewAssets.
+    qrImg.removeAttribute("src");
+    container?.classList.add("is-empty");
+  }
+};
+
+/**
+ * Updates the ZATCA QR code image in the rendered template.
+ * Targets img[data-ceres-field="zatcaQrCode"] — templates must use this attribute.
+ * Toggles is-empty on the nearest [data-ceres-field-container="zatcaQrCode"] when value is absent.
+ */
+export const applyZatcaQrCodeUpdate = (value: unknown): void => {
+  const qrImg = document.querySelector<HTMLImageElement>(
+    'img[data-ceres-field="zatcaQrCode"]'
+  );
+  if (!qrImg) return;
+
+  const container = qrImg.closest<HTMLElement>(
+    '[data-ceres-field-container="zatcaQrCode"]'
+  );
+
+  if (typeof value === "string" && value.length > 0) {
+    qrImg.src = value;
+    container?.classList.remove("is-empty");
+  } else {
+    // removeAttribute (not src = "") so the browser doesn't refetch the current
+    // page URL — matches the pattern in applyPreviewAssets.
+    qrImg.removeAttribute("src");
+    container?.classList.add("is-empty");
+  }
+};
+
+/**
+ * Updates the LHDN QR code image in the rendered template.
+ * Targets img[data-ceres-field="lhdnQrCode"] — templates must use this attribute.
+ * Toggles is-empty on the nearest [data-ceres-field-container="lhdnQrCode"] when value is absent.
+ */
+export const applyLhdnQrCodeUpdate = (value: unknown): void => {
+  const qrImg = document.querySelector<HTMLImageElement>(
+    'img[data-ceres-field="lhdnQrCode"]'
+  );
+  if (!qrImg) return;
+
+  const container = qrImg.closest<HTMLElement>(
+    '[data-ceres-field-container="lhdnQrCode"]'
+  );
+
+  if (typeof value === "string" && value.length > 0) {
+    qrImg.src = value;
+    container?.classList.remove("is-empty");
+  } else {
+    // removeAttribute (not src = "") so the browser doesn't refetch the current
+    // page URL — matches the pattern in applyPreviewAssets.
+    qrImg.removeAttribute("src");
+    container?.classList.add("is-empty");
+  }
+};
+
+/**
+ * Updates the document QR code image in the rendered template.
+ * Targets img[data-ceres-field="documentQr"] — templates must use this attribute.
+ * Toggles is-empty on the nearest [data-ceres-field-container="documentQr"] when value is absent.
+ */
+export const applyDocumentQrUpdate = (value: unknown): void => {
+  const qrImg = document.querySelector<HTMLImageElement>(
+    'img[data-ceres-field="documentQr"]'
+  );
+  if (!qrImg) return;
+
+  const container = qrImg.closest<HTMLElement>(
+    '[data-ceres-field-container="documentQr"]'
+  );
+
+  if (typeof value === "string" && value.length > 0) {
+    qrImg.src = value;
+    container?.classList.remove("is-empty");
+  } else {
+    // removeAttribute (not src = "") so the browser doesn't refetch the current
+    // page URL — matches the pattern in applyPreviewAssets.
+    qrImg.removeAttribute("src");
+    container?.classList.add("is-empty");
+  }
+};
+
+/**
+ * Updates the IRN text node in the rendered template.
+ * Targets [data-ceres-field="irn"] — templates must use this attribute.
+ *
+ * @param value - IRN string, or null/undefined to clear
+ */
+export const applyIrnUpdate = (value: unknown): void => {
+  const irnEl = document.querySelector<HTMLElement>('[data-ceres-field="irn"]');
+  if (!irnEl) return;
+
+  irnEl.textContent = typeof value === "string" ? value : "";
+};
+
+const applyShowPaymentsTableUpdate = (value: unknown): void => {
+  if (typeof value !== "boolean") return;
+  const container = document.querySelector<HTMLElement>(
+    "[data-ceres-payment-table]"
+  );
+  if (container) {
+    container.style.display = value ? "" : "none";
+  }
+};
+
+const applyTaxSummaryViewUpdate = (value: unknown): void => {
+  if (typeof value !== "string") return;
+  const show = value === "TABLE" || value === "BOTH";
+  const container = document.querySelector<HTMLElement>(
+    "[data-ceres-tax-summary]"
+  );
+  if (container) {
+    container.style.display = show ? "" : "none";
+  }
+};
+
+const applyShowHsnSummaryUpdate = (value: unknown): void => {
+  if (typeof value !== "boolean") return;
+  const container = document.querySelector<HTMLElement>(
+    "[data-ceres-hsn-summary]"
+  );
+  if (container) {
+    container.style.display = value ? "" : "none";
+  }
+};
+
+export const applyAdvanceOptionsUpdate = (value: unknown): void => {
+  if (!isPlainObject(value)) return;
+  const opts = value as Record<string, unknown>;
+  applyShowPaymentsTableUpdate(opts.showPaymentsTable);
+  applyTaxSummaryViewUpdate(opts.taxSummaryView);
+  applyShowHsnSummaryUpdate(opts.showHsnSummary);
+};
+
 export const extractTemplateStyleOptions = (
   payload: unknown
 ): PlainObject | null => {
@@ -535,11 +778,11 @@ export const extractTemplateStyleOptions = (
     | "primaryBackground"
     | "secondaryBackground"
   > = [
-      "primaryColor",
-      "secondaryColor",
-      "primaryBackground",
-      "secondaryBackground",
-    ];
+    "primaryColor",
+    "secondaryColor",
+    "primaryBackground",
+    "secondaryBackground",
+  ];
 
   const templateColorSource = isPlainObject(template.templateColor)
     ? (template.templateColor as PlainObject)
@@ -579,6 +822,12 @@ export const extractTemplateStyleOptions = (
 
   if (Object.keys(templateFonts).length > 0) {
     result.template = templateFonts;
+  }
+
+  // Extract watermark — must be before the null-return guard so a payload
+  // with only watermark (no colors/fonts) still returns a non-null result.
+  if (isPlainObject(template.watermark)) {
+    result.watermark = template.watermark;
   }
 
   return Object.keys(result).length > 0 ? result : null;

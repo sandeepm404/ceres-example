@@ -1,0 +1,428 @@
+/* --- Modern Edge Template Styles --- */
+@import "https://fonts.googleapis.com/css2?family=Funnel+Display:wght@300..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Sans+Arabic:wght@100..900&display=swap";
+
+@media print {
+  .notes-modern-block,
+  .terms-modern-block {
+    break-inside: avoid;
+  }
+}
+
+:root {
+  --title-font: "Funnel Display", sans-serif;
+  --subtitle-font: "Funnel Display", sans-serif;
+  --primary-color: #3f51b5;
+  --secondary-color: #673ab7;
+  --primary-background: #f8fafd;
+  --secondary-background: #fff;
+}
+
+body {
+  font-family: var(--subtitle-font);
+
+  .invoice-modern-shell {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .invoice-letterhead,
+  .invoice-letterhead-footer {
+    display: block;
+    width: 100%;
+  }
+
+  .invoice-letterhead img,
+  .invoice-letterhead-footer img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  margin: 0;
+  color: #333;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  width: 100%;
+}
+
+.invoice-modern-shell {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.invoice-letterhead,
+.invoice-letterhead-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invoice-letterhead.is-empty,
+.invoice-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.irn-value {
+  word-break: break-all;
+  font-size: 0.75em;
+}
+
+.irn-qr-container {
+  margin-top: 6px;
+}
+
+.irn-qr-container.is-empty {
+  display: none;
+}
+
+.irn-qr-image {
+  height: 80px;
+  width: 80px;
+  display: block;
+}
+
+.regional-qr-section {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.regional-qr-container {
+  display: inline-block;
+}
+
+.regional-qr-container.is-empty {
+  display: none;
+}
+
+.regional-qr-image {
+  height: 96px;
+  width: 96px;
+  display: block;
+}
+
+.invoice-letterhead img,
+.invoice-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: none;
+  }
+
+  /* .invoice-letterhead, .invoice-letterhead-footer { display: none !important; } */
+}
+
+.invoice-modern-container {
+  padding-inline: 32px;
+  border-radius: 12px;
+}
+
+/* Header & Main Info Section */
+.invoice-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 25px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.invoice-header-modern .logo-section h1 {
+  color: var(--primary-color);
+  font-family: var(--title-font);
+  font-size: 42px;
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.invoice-header-modern .logo-section p {
+  font-size: 16px;
+  color: #666;
+  margin-top: 5px;
+}
+
+/* Consolidated Info Block */
+.info-block-modern {
+  background-color: var(--secondary-background);
+  border: 1px solid #e0e6ed;
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+
+  /* Three columns for invoice details, billed by, billed to */
+  gap: 30px;
+  box-shadow: 0 4px 15px rgb(0 0 0 / 5%);
+}
+
+.info-section {
+  padding: 0;
+}
+
+.info-section h3 {
+  color: var(--primary-color);
+  font-family: var(--title-font);
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #c5cae9;
+  padding-bottom: 8px;
+}
+
+.info-section p {
+  margin: 5px 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.info-section strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.info-section .meta-label {
+  display: inline-block;
+  min-width: 90px;
+  color: #777;
+}
+
+.info-section .vat-number-label {
+  font-weight: bold;
+  color: #444;
+}
+
+/* Line Items Table */
+.item-table-modern {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-bottom: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgb(0 0 0 / 7%);
+}
+
+.item-table-modern th,
+.item-table-modern td {
+  padding: 15px 20px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.item-table-modern thead th {
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.item-table-modern tbody td {
+  border-bottom: 1px solid #eef2f5;
+  background-color: var(--secondary-background);
+  vertical-align: top;
+}
+
+.item-table-modern tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.item-table-modern .description-col {
+  width: 35%;
+}
+
+.item-table-modern .text-right {
+  text-align: right;
+}
+
+.item-table-modern .item-name {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.item-table-modern .item-desc {
+  font-size: 12px;
+  color: #777;
+  display: block;
+  margin-top: 3px;
+}
+
+/* Creative Totals Section - Full Width */
+.totals-full-width-section {
+  background: linear-gradient(to right,
+      var(--primary-color),
+      var(--secondary-color));
+
+  /* Gradient background */
+
+  color: #fff;
+  padding: 40px 50px;
+  border-radius: 12px;
+  margin-top: 50px;
+
+  /* Space from line items */
+  box-shadow: 0 8px 25px rgb(0 0 0 / 20%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.totals-full-width-section .total-line {
+  display: flex;
+  justify-content: space-between;
+  width: 60%;
+
+  /* Control internal width of total lines */
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.totals-full-width-section .total-line.grand {
+  font-size: 32px;
+  font-weight: 700;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 2px solid rgb(255 255 255 / 30%);
+  width: 80%;
+
+  /* Grand total spans wider */
+  display: flex;
+
+  /* Ensure it's centered if content is shorter */
+  justify-content: center;
+  gap: 20px;
+  align-items: baseline;
+}
+
+.totals-full-width-section .total-line .label {
+  flex-grow: 1;
+  text-align: left;
+  color: rgb(255 255 255 / 80%);
+}
+
+.totals-full-width-section .total-line .value {
+  text-align: right;
+  flex-grow: 1;
+  font-weight: 600;
+}
+
+.totals-full-width-section .total-line.grand .label {
+  text-align: right;
+
+  /* Adjust for centering grand total */
+  flex-grow: 0;
+  margin-right: 15px;
+}
+
+.totals-full-width-section .total-line.grand .value {
+  text-align: left;
+  flex-grow: 0;
+  color: #ffd700;
+
+  /* Gold for grand total */
+}
+
+.totals-full-width-section .total-in-words {
+  margin-top: 25px;
+  font-size: 16px;
+  font-style: italic;
+  color: rgb(255 255 255 / 90%);
+  line-height: 1.5;
+  width: 80%;
+}
+
+.totals-full-width-section .total-in-words span:first-child {
+  font-weight: 600;
+  margin-right: 10px;
+}
+
+/* Notes & Terms */
+.notes-terms-modern-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 50px;
+  padding-top: 30px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.notes-modern-block,
+.terms-modern-block {
+  background-color: var(--secondary-background);
+  padding: 25px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 3%);
+}
+
+.notes-modern-block h3,
+.terms-modern-block h3 {
+  color: var(--primary-color);
+  font-family: var(--title-font);
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+.notes-modern-block p,
+.terms-modern-block li {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.terms-modern-block ul {
+  list-style-type: "✔ ";
+
+  /* Custom checkmark bullet */
+  padding-left: 20px;
+  margin: 0;
+}
+
+/* Footer */
+.invoice-footer-modern {
+  text-align: center;
+  padding-top: 30px;
+  margin-top: 40px;
+  border-top: 2px solid #e0e0e0;
+  color: #888;
+  font-size: 12px;
+}
+
+.invoice-footer-modern p {
+  margin: 0;
+}
+
+@media print {
+  .invoice-modern-container {
+    box-shadow: none;
+    max-width: 100%;
+  }
+}

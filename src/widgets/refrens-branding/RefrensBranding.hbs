@@ -1,0 +1,14 @@
+{{!-- RefrensBranding partial
+     Renders "Powered by Refrens.com" only when showBranding is truthy.
+     no-dibella class hides this in dibella PDF mode (dibella injects its own branding in the footer). --}}
+{{#if showBranding}}
+<div class="refrens-branding-widget no-dibella">
+  <a href="https://www.refrens.com" target="_blank" rel="noopener noreferrer">
+    <img
+      src="https://assets.refrens.com/powered_by_refrens_com_330ab8acf1.png"
+      alt="Powered by Refrens.com"
+      height="16"
+    />
+  </a>
+</div>
+{{/if}}

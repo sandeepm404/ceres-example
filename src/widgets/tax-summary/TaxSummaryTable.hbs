@@ -1,0 +1,76 @@
+{{#if hasRows}}
+<div class="ceres-table-section">
+  <table class="ceres-table">
+    <thead>
+      <tr>
+        <th>Tax Rate</th>
+        {{#if isIgst}}
+        <th colspan="2">IGST</th>
+        {{else}}
+        <th colspan="2">CGST</th>
+        <th colspan="2">{{#if isUtgst}}UTGST{{else}}SGST{{/if}}</th>
+        {{/if}}
+        {{#if hasCess}}<th colspan="2">Cess</th>{{/if}}
+        <th>Total</th>
+      </tr>
+      <tr>
+        <th></th>
+        {{#if isIgst}}
+        <th>Rate</th>
+        <th>Amount</th>
+        {{else}}
+        <th>Rate</th>
+        <th>Amount</th>
+        <th>Rate</th>
+        <th>Amount</th>
+        {{/if}}
+        {{#if hasCess}}<th>Rate</th><th>Amount</th>{{/if}}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each taxList}}
+      <tr>
+        <td>{{gstRate}}%</td>
+        {{#if ../isIgst}}
+        <td>{{igstRate}}%</td>
+        <td>{{formatCurrency igstAmount}}</td>
+        {{else}}
+        <td>{{cgstRate}}%</td>
+        <td>{{formatCurrency cgstAmount}}</td>
+        <td>{{sgstRate}}%</td>
+        <td>{{formatCurrency sgstAmount}}</td>
+        {{/if}}
+        {{#if ../hasCess}}
+        <td>{{cessRate}}%</td>
+        <td>{{formatCurrency cessAmount}}</td>
+        {{/if}}
+        <td>{{formatCurrency taxAmount}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td><strong>Total</strong></td>
+        {{#if isIgst}}
+        <td></td>
+        <td><strong>{{formatCurrency totalIgstAmount}}</strong></td>
+        {{else}}
+        <td></td>
+        <td><strong>{{formatCurrency totalCgstAmount}}</strong></td>
+        <td></td>
+        <td><strong>{{formatCurrency totalSgstAmount}}</strong></td>
+        {{/if}}
+        {{#if hasCess}}
+        <td></td>
+        <td><strong>{{formatCurrency totalCessAmount}}</strong></td>
+        {{/if}}
+        <td><strong>{{formatCurrency totalTaxAmount}}</strong></td>
+      </tr>
+      <tr>
+        <td colspan="99" class="ceres-table-words">Total Tax In Words: {{amountInWords totalTaxAmount}}</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{{/if}}

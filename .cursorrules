@@ -1,0 +1,31 @@
+# Ceres - Custom Document Renderer
+# Uses Handlebars for templates, plain CSS for styling.
+# Runs inside an iframe in Lydia, communicates via postMessage.
+
+# Structure:
+# src/main/       - Renderer (index.ts, commonUtils.ts, lydiaBridge.ts)
+# src/templates/  - Custom templates (HBS + CSS + index.ts per folder)
+# src/widgets/    - Reusable partials (InvoiceStatus, DemoBadge, DateTime, MarkdownViewer)
+
+# Flow:
+# 1. index.html loads main-manifest.json
+# 2. Renderer reads ?template=<name>&apiUrl=<base64>
+# 3. Loads template JS/CSS, template sets window.CeresTemplate
+# 4. Fetches API data, calls CeresTemplate(data), puts HTML in page
+
+# Lydia postMessage protocol:
+# Lydia -> Ceres: lydia:print, lydia:height-request, lydia:template-update
+# Ceres -> Lydia: ceres:content-height
+
+# For detailed skills, read .agent/skills/*/SKILL.md:
+# - scaffold-template: Create new template
+# - debug-build: Fix build failures
+# - navigate-codebase: Repo map + Lydia integration
+# - snapshot-testing: Visual regression tests
+# - design-to-template: Figma/screenshot -> HBS template
+
+# Build:
+# npm run build                                 - Build everything
+# npm run build:template --template=NAME        - Build one template
+# npm run build:widget --widget=NAME            - Build one widget
+# npm run typecheck                             - TypeScript check

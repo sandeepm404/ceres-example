@@ -1,0 +1,54 @@
+/* Shared table section styles — used by all three table widgets */
+.ceres-table-section {
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
+.ceres-table-heading {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: #333;
+  letter-spacing: 0.04em;
+}
+
+.ceres-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ceres-table th,
+.ceres-table td {
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.ceres-table th:first-child,
+.ceres-table td:first-child {
+  text-align: left;
+}
+
+.ceres-table thead th {
+  background: #f5f5f5;
+  color: #555;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+}
+
+.ceres-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.ceres-table tfoot td {
+  font-weight: 500;
+  border-top: 2px solid #333;
+}
+
+@media print {
+  .ceres-table-section {
+    break-inside: avoid;
+  }
+}

@@ -1,0 +1,41 @@
+{{#if hasRows}}
+<div class="ceres-table-section{{#if extraClass}} {{extraClass}}{{/if}}">
+  <h3 class="ceres-table-heading">{{#if heading}}{{heading}}{{else}}Payments{{/if}}</h3>
+  <table class="ceres-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Mode</th>
+        <th>Amount Received</th>
+        <th>Payment Account</th>
+        {{#if showTds}}<th>TDS</th>{{/if}}
+        {{#if showTransactionCharge}}<th>Transaction Charge</th>{{/if}}
+      </tr>
+    </thead>
+    <tbody>
+      {{#each payments}}
+      <tr>
+        <td>{{formateShortDateWithOffset paymentDate ../ownerOffset}}</td>
+        <td>{{paymentMethodLabel}}</td>
+        <td>
+          {{formatCurrency amount}}{{#if ../showBizAmount}}{{#if amountInBizCurrencyFormatted}}<br/><small>({{amountInBizCurrencyFormatted}})</small>{{/if}}{{/if}}
+        </td>
+        <td>{{paymentAccountName}}</td>
+        {{#if ../showTds}}<td>{{formatCurrency tds}}</td>{{/if}}
+        {{#if ../showTransactionCharge}}<td>{{formatCurrency transactionCharge}}</td>{{/if}}
+      </tr>
+      {{/each}}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td><strong>Total</strong></td>
+        <td></td>
+        <td><strong>{{formatCurrency totalAmount}}</strong></td>
+        <td></td>
+        {{#if showTds}}<td><strong>{{formatCurrency totalTds}}</strong></td>{{/if}}
+        {{#if showTransactionCharge}}<td><strong>{{formatCurrency totalTransactionCharge}}</strong></td>{{/if}}
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{{/if}}

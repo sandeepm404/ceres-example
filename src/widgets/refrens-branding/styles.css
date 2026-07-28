@@ -1,0 +1,23 @@
+/* RefrensBranding Widget
+ * Shows "Powered by Refrens.com" in web view and browser print-preview for trial users.
+ * Hidden in dibella PDF mode via the no-dibella class (dibella injects its own branding in the PDF footer).
+ */
+
+.refrens-branding-widget {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  padding: 8px 0;
+}
+
+.refrens-branding-widget a {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.refrens-branding-widget img {
+  height: 16px;
+  width: auto;
+}

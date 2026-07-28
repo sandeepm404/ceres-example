@@ -1,0 +1,136 @@
+/* Watermark Widget
+ * Screen: overlays on #documentOutput (absolute, centered in document).
+ * Print:  overlays on body (fixed, repeats identically on every printed page).
+ * CSS variables are set by applyPreviewStyles() in commonUtils.ts.
+ * Templates opt in by importing src/widgets/watermark/index.ts.
+ *
+ * IMPORTANT: position:fixed in Chromium's print engine breaks when combined
+ * with transform (including translate). Text watermarks use a full-page flex
+ * container instead of top:50%/left:50%/transform:translate to avoid this.
+ */
+
+/* Default values — overridden at runtime by applyPreviewStyles */
+:root {
+  --watermark-logo: none;
+  --watermark-opacity: 0.1;
+  --watermark-rotate: 0deg;
+  --watermark-scale: 1;
+  --watermark-repeated-pattern: no-repeat;
+  --watermark-z-index: 5;
+}
+
+/* Scopes the screen watermark overlay to the document output div.
+ * overflow:hidden prevents the absolutely-positioned pseudo-elements
+ * from extending body scroll height beyond the document content. */
+#documentOutput {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── SCREEN: image watermark ───────────────────────────────────────────────
+ * Always present but invisible when --watermark-logo is none. */
+#documentOutput::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--watermark-logo, none);
+  background-size: contain;
+  background-repeat: var(--watermark-repeated-pattern, no-repeat);
+  background-position: center;
+  opacity: var(--watermark-opacity);
+  rotate: var(--watermark-rotate);
+  scale: var(--watermark-scale, 1);
+  z-index: var(--watermark-z-index);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+/* ── SCREEN: text watermark ────────────────────────────────────────────────
+ * Full-size flex container centers text without transform (avoids the
+ * Chromium print-engine bug where transform breaks position:fixed). */
+#documentOutput[data-watermark-text]::before {
+  content: attr(data-watermark-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  rotate: var(--watermark-rotate);
+  scale: var(--watermark-scale);
+  opacity: var(--watermark-opacity);
+  font-size: 64px;
+  font-weight: 700;
+  color: #000;
+  white-space: nowrap;
+  z-index: var(--watermark-z-index);
+  pointer-events: none;
+}
+
+/* ── PRINT ─────────────────────────────────────────────────────────────────
+ * Use body::after / body[data-watermark-text]::before with position:fixed.
+ * position:fixed is placed relative to the page box so it repeats on every
+ * printed page — unaffected by overflow:hidden on #documentOutput.
+ * JS sets data-watermark-text on body (for print) AND #documentOutput (for
+ * screen), so both selectors are satisfied without extra DOM changes.
+ * NO transform on these rules — see note at top of file. */
+@media print {
+  /* Hide screen overlays — print overlays below replace them */
+  #documentOutput::after,
+  #documentOutput[data-watermark-text]::before {
+    display: none;
+  }
+
+  /* Print: image watermark — one per page */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: var(--watermark-logo, none);
+    background-size: contain;
+    background-repeat: var(--watermark-repeated-pattern, no-repeat);
+    background-position: center;
+    opacity: var(--watermark-opacity);
+    rotate: var(--watermark-rotate);
+    scale: var(--watermark-scale, 1);
+    z-index: var(--watermark-z-index);
+    transform-origin: center;
+    pointer-events: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Print: text watermark — one per page.
+   * Full-size flex container: no transform needed, so position:fixed
+   * stays anchored to the page box and repeats correctly on every page. */
+  body[data-watermark-text]::before {
+    content: attr(data-watermark-text);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    rotate: var(--watermark-rotate);
+    scale: var(--watermark-scale);
+    opacity: var(--watermark-opacity);
+    font-size: 64px;
+    font-weight: 700;
+    color: #000;
+    white-space: nowrap;
+    z-index: var(--watermark-z-index);
+    pointer-events: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

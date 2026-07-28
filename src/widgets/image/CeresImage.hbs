@@ -1,0 +1,20 @@
+{{!-- CeresImage — a single reusable image.
+     Reusable anywhere in a template:
+       {{> CeresImage src=logo alt="Company logo" width="120"}}
+       {{> CeresImage src=thumbnail alt=name href=fullImage}}   (href → opens in new tab)
+
+     Params (all via hash):
+       src    (required) direct image URL from the Serana response — used as-is, never optimized
+       alt    alt text
+       href   when present, the image is wrapped in a link that opens in a new tab
+       width  / height   optional pixel attributes
+       class  extra class name(s) appended to .ceres-image --}}
+{{#if src}}
+{{#if href}}
+<a class="ceres-image-link" href="{{href}}" target="_blank" rel="noopener noreferrer" aria-label="{{#if alt}}{{alt}}{{else}}Open image{{/if}}">
+  <img referrerpolicy="no-referrer" class="ceres-image{{#if class}} {{class}}{{/if}}" src="{{src}}" alt="{{alt}}" {{#if width}} width="{{width}}"{{/if}}{{#if height}} height="{{height}}"{{/if}} />
+</a>
+{{else}}
+<img referrerpolicy="no-referrer" class="ceres-image{{#if class}} {{class}}{{/if}}" src="{{src}}" alt="{{alt}}" {{#if width}} width="{{width}}"{{/if}}{{#if height}} height="{{height}}"{{/if}} />
+{{/if}}
+{{/if}}

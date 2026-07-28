@@ -1,0 +1,333 @@
+<div class="invoice-modern-shell">
+  <div class="no-dibella invoice-letterhead{{#unless letterHead}} is-empty{{/unless}}">
+    {{#if letterHead}}
+      <img src="{{letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+    {{else}}
+      <img alt="Letterhead" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="invoice-modern-container">
+  <div class="invoice-header-modern">
+    <div class="logo-section">
+      <h1>{{ invoiceTitle }}</h1>
+      <p>For Professional Services</p>
+      <div style="margin-top:8px">{{> DemoBadge }}</div>
+    </div>
+  </div>
+
+  <div class="info-block-modern">
+    <div class="info-section invoice-details">
+      <h3>Invoice Details</h3>
+      <p>
+        <span class="meta-label">{{customLabels.invoiceNumber}}</span>
+        <strong>{{invoiceNumber}}</strong>
+      </p>
+      <p>
+        <span class="meta-label">{{customLabels.invoiceDate}}:</span>
+        {{formateShortDateWithOffset invoiceDate ownerOffset}}
+      </p>
+      <p>
+        <span class="meta-label">{{customLabels.dueDate}}:</span>
+        <strong>{{formateShortDateWithOffset dueDate ownerOffset}}</strong>
+      </p>
+      {{#if irn}}
+      {{#if irn.Irn}}
+      <p>
+        <span class="meta-label">IRN:</span>
+        <span data-ceres-field="irn" class="irn-value">{{irn.Irn}}</span>
+      </p>
+      {{/if}}
+      {{#if irn.AckDt}}
+      <p>
+        <span class="meta-label">IRN Ack Date:</span>
+        {{formatDateInTimeZone irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+      </p>
+      {{/if}}
+      {{#if irn.CancelDate}}
+      <p>
+        <span class="meta-label">IRN Cancelled On:</span>
+        {{formateShortDateWithOffset irn.CancelDate ownerOffset}}
+      </p>
+      {{/if}}
+      {{#if irn.EwbDt}}
+      <p>
+        <span class="meta-label">E-Way Bill Date:</span>
+        {{formatDateInTimeZone irn.EwbDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+      </p>
+      {{/if}}
+      {{#if irn.EwbValidTill}}
+      <p>
+        <span class="meta-label">E-Way Valid Till:</span>
+        {{formatDateInTimeZone irn.EwbValidTill "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+      </p>
+      {{/if}}
+      {{#if irn.ewayCancelDate}}
+      <p>
+        <span class="meta-label">E-Way Cancelled On:</span>
+        {{formatDateInTimeZone irn.ewayCancelDate "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+      </p>
+      {{/if}}
+      {{/if}}
+      {{!-- QR code: always present in DOM; src populated via postMessage after e-invoice generation --}}
+      <div data-ceres-field-container="qrCode" class="irn-qr-container is-empty">
+        <img data-ceres-field="qrCode" src="" alt="E-Invoice QR Code" class="irn-qr-image" />
+      </div>
+      {{!-- Status tag using the minimal InvoiceStatus widget --}}
+      <p>
+        <span class="meta-label">Status:</span>
+        {{> InvoiceStatus }}
+      </p>
+      {{#if purchaseOrderNumber}}
+      <p>
+        <span class="meta-label">{{customLabels.purchaseOrderNumber}}:</span>
+        {{purchaseOrderNumber}}
+      </p>
+      {{/if}}
+    </div>
+
+    <div class="info-section billed-by">
+      <h3>{{customLabels.billedBy}}</h3>
+      <p><strong>{{billedBy.name}}</strong></p>
+      <p>
+        {{billedBy.street}}<br />{{billedBy.city}}, {{billedBy.state}}
+        {{billedBy.pincode}}<br />{{billedBy.country}}
+      </p>
+      {{#if billedBy.vatNumber}}
+      <p>
+        <span class="vat-number-label">{{billedBy.vatLabel}}:</span>
+        {{billedBy.vatNumber}}
+      </p>
+      {{/if}}
+      {{#if billedBy.phone}}
+        <p>Phone: {{formatPhoneNumber billedBy.phone}}</p>
+      {{/if}}
+    </div>
+
+    <div class="info-section billed-to">
+      <h3>{{customLabels.billedTo}}</h3>
+      <p><strong>{{billedTo.name}}</strong></p>
+      <p>
+        {{billedTo.street}}<br />{{billedTo.city}}, {{billedTo.state}}
+        {{billedTo.pincode}}<br />{{billedTo.country}}
+      </p>
+      {{#if billedTo.gstin}}
+      <p>GSTIN: {{billedTo.gstin}}</p>
+      {{/if}}
+      {{#if billedTo.phone}}
+        <p>Phone: {{formatPhoneNumber billedTo.phone}}</p>
+      {{/if}}
+    </div>
+
+    {{#if transportDetails}}
+    <div class="info-section transport-details">
+      <h3>Transport</h3>
+      {{#if transportDetails.transport}}
+      <p>
+        <span class="meta-label">Mode:</span>
+        {{transportDetails.transport}}
+      </p>
+      {{/if}}
+      {{#if transportDetails.transportMode}}
+      <p>
+        <span class="meta-label">Transport Mode:</span>
+        {{transportDetails.transportMode}}
+      </p>
+      {{/if}}
+      {{#if transportDetails.challanNumber}}
+      <p>
+        <span class="meta-label">Challan No.:</span>
+        {{transportDetails.challanNumber}}
+      </p>
+      {{/if}}
+      {{#if transportDetails.challanDate}}
+      <p>
+        <span class="meta-label">Challan Date:</span>
+        {{formateDateWithOffset transportDetails.challanDate ownerOffset}}
+      </p>
+      {{/if}}
+      {{#if transportDetails.extraInformation}}
+      <p>
+        <span class="meta-label">Notes:</span>
+        {{transportDetails.extraInformation}}
+      </p>
+      {{/if}}
+    </div>
+    {{/if}}
+  </div>
+
+  <table class="item-table-modern">
+    <thead>
+      <tr>
+        <th class="description-col">Service Description</th>
+        <th class="text-right">QTY</th>
+        <th class="text-right">Rate</th>
+        <th class="text-right">VAT Rate</th>
+        <th class="text-right">Amount</th>
+        <th class="text-right">VAT</th>
+        <th class="text-right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each items}}
+      <tr>
+        <td>
+          <span class="item-name">{{name}}</span>
+          {{#if sku}}<span class="item-sku"> (SKU: {{sku}})</span>{{/if}}
+          {{#if description}}
+            <br />
+            <div class="item-desc">
+              {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+            </div>
+          {{/if}}
+          {{#if images}}
+            {{> CeresImageGallery (prepareImageGallery images variant="thumbnail" alt=name) }}
+          {{/if}}
+          {{#if originalImages}}
+            {{> CeresImageGallery (prepareImageGallery originalImages variant="original" alt=name) }}
+          {{/if}}
+        </td>
+        <td class="text-right">{{quantity}}</td>
+        <td class="text-right">{{formatCurrency rate}}</td>
+        <td class="text-right">{{gstRate}}%</td>
+        <td class="text-right">{{formatCurrency amount}}</td>
+        <td class="text-right">{{formatCurrency igst}}</td>
+        <td class="text-right"><strong>{{formatCurrency total}}</strong></td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <div class="totals-full-width-section">
+    <div class="total-line">
+      <span class="label">{{customLabels.subTotal}}:</span>
+      <span class="value">{{formatCurrency totals.subTotal}}</span>
+    </div>
+    {{#if totals.discount}}
+    <div class="total-line">
+      <span class="label">Discount:</span>
+      <span class="value">- {{formatCurrency totals.discount}}</span>
+    </div>
+    {{/if}}
+    {{#if totals.igst}}
+    <div class="total-line">
+      <span class="label">IGST:</span>
+      <span class="value">{{formatCurrency totals.igst}}</span>
+    </div>
+    {{/if}}
+    {{#if totals.cgst}}
+    <div class="total-line">
+      <span class="label">CGST:</span>
+      <span class="value">{{formatCurrency totals.cgst}}</span>
+    </div>
+    {{/if}}
+    {{#if totals.sgst}}
+    <div class="total-line">
+      <span class="label">SGST:</span>
+      <span class="value">{{formatCurrency totals.sgst}}</span>
+    </div>
+    {{/if}}
+    {{#if totals.amountRoundOff}}
+    <div class="total-line">
+      <span class="label">Amount Round Off:</span>
+      <span class="value">{{formatCurrency totals.amountRoundOff}}</span>
+    </div>
+    {{/if}}
+    {{#if totals.totalRoundOff}}
+    <div class="total-line">
+      <span class="label">Total Round Off:</span>
+      <span class="value">{{formatCurrency totals.totalRoundOff}}</span>
+    </div>
+    {{/if}}
+    <div class="total-line grand">
+      <span class="label">{{customLabels.total}}:</span>
+      <span class="value">{{formatCurrency totals.total}}</span>
+    </div>
+    {{#if latePaymentFee}}
+    {{#if dueDate}}
+    {{#if latePaymentFee.showInInvoice}}
+    {{#if latePaymentFee.enabled}}
+    {{#unless latePaymentFee.isApplied}}
+    <div class="total-line late-fee">
+      <span class="label">Late Payment Fee:</span>
+      <span class="value">
+        {{#if latePaymentFee.finalAmount}}Additional {{latePaymentFee.finalAmount}} {{/if}}
+        {{#if latePaymentFee.when}}
+          after {{formatDateAddDays dueDate latePaymentFee.when ownerOffset}}
+        {{/if}}
+      </span>
+    </div>
+    {{/unless}}
+    {{/if}}
+    {{/if}}
+    {{/if}}
+    {{/if}}
+    <div class="total-in-words">
+      <span>{{customLabels.totalInWords}}:</span>
+      <span>{{customLabels.totalInWordsValue}}</span>
+    </div>
+  </div>
+
+  <div data-ceres-tax-summary{{#unless (taxTableVisible advanceOptions.taxSummaryView)}} style="display:none"{{/unless}}>
+  {{> TaxSummaryTable (computeTaxSummary items isIgst=isIgst isUtgst=isUtgst) }}
+  </div>
+
+  <div data-ceres-hsn-summary{{#unless advanceOptions.showHSNSummaryInInvoice}} style="display:none"{{/unless}}>
+  {{> HsnSummaryTable (computeHsnSummary items isIgst=isIgst isUtgst=isUtgst) }}
+  </div>
+
+  <div data-ceres-payment-table{{#if (eq advanceOptions.showPaymentsTable false)}} style="display:none"{{/if}}>
+  {{> PaymentTable (computePaymentColumns allPayments businessCurrency=businessCurrency currency=currency)
+      ownerOffset=ownerOffset
+      heading="Payments"
+  }}
+  </div>
+
+  <div class="notes-terms-modern-section">
+    {{#if notes}}
+    <div class="notes-modern-block">
+      <h3>{{customLabels.notes}}</h3>
+      {{> MarkdownViewer (prepareMarkdownViewerData notes) }}
+    </div>
+    {{/if}}
+    {{#if terms.0.terms.length}}
+    <div class="terms-modern-block">
+      <h3>{{customLabels.terms}}</h3>
+      <ul>
+        {{#each terms.0.terms}}
+        <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </div>
+    {{/if}}
+  </div>
+
+  {{!-- Regional QR codes: always in DOM; src populated via postMessage from Lydia --}}
+  <div class="regional-qr-section">
+    <div data-ceres-field-container="zatcaQrCode" class="regional-qr-container is-empty">
+      <img data-ceres-field="zatcaQrCode" src="" alt="ZATCA QR Code" class="regional-qr-image" />
+    </div>
+    <div data-ceres-field-container="lhdnQrCode" class="regional-qr-container is-empty">
+      <img data-ceres-field="lhdnQrCode" src="" alt="LHDN QR Code" class="regional-qr-image" />
+    </div>
+    <div data-ceres-field-container="documentQr" class="regional-qr-container is-empty">
+      <img data-ceres-field="documentQr" src="" alt="Document QR Code" class="regional-qr-image" />
+    </div>
+  </div>
+
+  <div class="invoice-footer-modern">
+    <p>&copy; 2025 {{billedBy.name}}. All rights reserved.</p>
+  </div>
+
+    {{> RefrensBranding}}
+
+  </div>
+
+  <div class="no-dibella invoice-letterhead-footer{{#unless letterHeadFooter}} is-empty{{/unless}}">
+    {{#if letterHeadFooter}}
+      <img src="{{letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+      <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>

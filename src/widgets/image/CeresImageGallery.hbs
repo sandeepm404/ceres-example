@@ -1,0 +1,16 @@
+{{!-- CeresImageGallery — a row/grid of images built from an array.
+     Feed it via the prepareImageGallery helper (normalizes strings or {url}/{src}):
+       {{> CeresImageGallery (prepareImageGallery item.images variant="thumbnail" alt=name) }}
+       {{> CeresImageGallery (prepareImageGallery item.originalImages variant="original" alt=name) }}
+
+     Payload shape (see utils.ts):
+       hasImages  boolean
+       images     [{ src, href, alt }]   href empty → rendered without a link
+       variant    string → container modifier class (e.g. thumbnail | original | default) --}}
+{{#if hasImages}}
+<div class="ceres-image-gallery ceres-image-gallery-{{variant}}">
+  {{#each images}}
+  {{> CeresImage src=src href=href alt=alt}}
+  {{/each}}
+</div>
+{{/if}}
