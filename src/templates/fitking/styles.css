@@ -11,7 +11,7 @@
 /* ===== CSS VARIABLES ===== */
 :root {
   --fk-font-size-sm: 11px;
-  --fk-font-size-base: 13px;
+  --fk-font-size-base: 12.5px;
   --fk-font-size-md: 14px;
   --fk-font-size-lg: 16px;
   --fk-font-size-xl: 20px;
@@ -742,6 +742,15 @@
    block above it so the two read as one column of labelled detail. */
 .fk-additional-notes-section {
   margin-top: 24px;
+}
+
+/* customFooters/footers are declared as blank slots on every account, so an
+   entry existing doesn't mean it was filled in — the .hbs already skips
+   blank entries and uses whitespace-control ({{~}}) so this div is truly
+   empty (no stray text nodes) when none of them are, letting :empty catch
+   it here and drop the heading + margin instead of showing an empty gap. */
+.fk-additional-notes-section:has(.fk-additional-notes-content:empty) {
+  display: none;
 }
 
 .fk-additional-notes-content {

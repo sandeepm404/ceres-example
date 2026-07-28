@@ -429,16 +429,12 @@
           <div class="fk-additional-notes-section">
             <p class="fk-section-title">{{docLabel "additionalInfo" "additionalInformation" "customFooters" "footer"
               "Additional Info"}}</p>
-            <div class="fk-additional-notes-content">
-              {{#each invoice.customFooters}}
-              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>
-              {{/if}}
-              {{/each}}
-              {{#each invoice.footers}}
-              {{#if value}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>
-              {{/if}}
-              {{/each}}
-            </div>
+            <div class="fk-additional-notes-content">{{~#each invoice.customFooters~}}
+              {{~#if value~}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>{{~/if~}}
+              {{~/each~}}
+              {{~#each invoice.footers~}}
+              {{~#if value~}}<p><span class="fk-bank-key">{{label}}:</span> <span class="fk-bank-val">{{value}}</span></p>{{~/if~}}
+              {{~/each~}}</div>
           </div>
           {{/if}}
         </div>
