@@ -121,6 +121,7 @@
   display: flex;
   flex-direction: column;
   margin-bottom: var(--fk-font-size-xl);
+  position: relative;
 }
 
 /* Closes the box's bottom edge regardless of which section — .fk-bottom-section
@@ -135,7 +136,34 @@
   font-family: var(--fk-title-font);
   padding: 8px var(--fk-font-size-lg);
   text-align: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
   border: 1px solid var(--fk-border);
+  position: relative;
+}
+
+/* ===== PAID STAMP =====
+   Only rendered when mapped.visibility.showStatusTagInPrint is true
+   (billType === "INVOICE" && status === "PAID"). Positioned relative to
+   .fk-title-bar so it sits inline beside the title text without disturbing
+   its centering. */
+.fk-paid-stamp {
+  right: var(--fk-font-size-lg);
+  background: #15b944;
+  border-radius: 10px;
+  padding: 0px 12px;
+  color: #fff;
+  font-size: var(--fk-font-size-sm);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  align-content: center;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 2;
+  z-index: 5;
 }
 
 .fk-title {
@@ -831,14 +859,14 @@
 /* ===== MARKDOWN VIEWER STYLES ===== */
 .fk-shell .toastui-editor-contents,
 .fk-shell .markdown-viewer-widget {
-  font-size: var(--fk-font-size-base) !important;
+  font-size: var(--fk-font-size-sm) !important;
   font-family: inherit !important;
   color: inherit !important;
 }
 
 .fk-shell .toastui-editor-contents p,
 .fk-shell .toastui-editor-contents span {
-  font-size: var(--fk-font-size-base) !important;
+  font-size: var(--fk-font-size-sm) !important;
   color: inherit !important;
 }
 
