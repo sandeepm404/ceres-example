@@ -1,5 +1,6 @@
-<div class="fk-shell" {{#if advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};" {{else}}{{#if
-  invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}>
+<div class="fk-shell" {{#if pdfOptions.textScale}}style="zoom: {{pdfOptions.textScale}};" {{else}}{{#if
+  advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};" {{else}}{{#if
+  invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}{{/if}}>
 
   {{!-- Letterhead --}}
   <div class="no-dibella invoice-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">

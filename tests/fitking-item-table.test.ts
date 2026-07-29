@@ -125,6 +125,7 @@ describe("fitking amount vs total columns", () => {
   it("keeps amount pre-tax and computes total as amount plus tax", () => {
     const html = render(
       basePayload({
+        taxName: "GST",
         columns,
         items: [
           {
@@ -219,11 +220,42 @@ describe("fitking amount vs total columns", () => {
     expect(cells).toContain("₹1,416");
     expect(cells).not.toContain("₹1,632");
   });
+
+  // Any non-GST taxName (VAT included) routes through the same bucket as
+  // IGST — see `chargeAmount`'s `isIgstInvoice` for the established rule
+  // this mirrors. The VAT amount is expected on `item.igst` (the field is
+  // reused); stale cgst/sgst must still be ignored.
+  it("treats a VAT invoice the same as IGST, ignoring stale cgst/sgst", () => {
+    const html = render(
+      basePayload({
+        taxName: "VAT",
+        taxRate: 5,
+        columns,
+        items: [
+          {
+            _id: "1",
+            name: "Item",
+            quantity: 1,
+            rate: 1200,
+            amount: 1200,
+            igst: 60,
+            cgst: 108, // stale — must not be added on top of the VAT amount
+            sgst: 108, // stale — must not be added on top of the VAT amount
+          },
+        ],
+      })
+    );
+
+    const cells = bodyCells(html);
+    expect(cells).toContain("₹1,260");
+  });
 });
 
 describe("fitking tax summary", () => {
   it("is hidden when the view is on but there are no tax rows", () => {
-    const html = render(basePayload({ advanceOptions: { taxSummaryView: "BOTH" } }));
+    const html = render(
+      basePayload({ advanceOptions: { taxSummaryView: "BOTH" } })
+    );
 
     expect(html).not.toContain("Tax Details");
   });
@@ -232,7 +264,9 @@ describe("fitking tax summary", () => {
     const html = render(
       basePayload({
         advanceOptions: { taxSummaryView: "BOTH" },
-        taxSummary: { taxList: [{ rate: 18, taxableAmount: 100, totalTax: 18 }] },
+        taxSummary: {
+          taxList: [{ rate: 18, taxableAmount: 100, totalTax: 18 }],
+        },
       })
     );
 
@@ -243,7 +277,9 @@ describe("fitking tax summary", () => {
     const html = render(
       basePayload({
         advanceOptions: { taxSummaryView: "NONE" },
-        taxSummary: { taxList: [{ rate: 18, taxableAmount: 100, totalTax: 18 }] },
+        taxSummary: {
+          taxList: [{ rate: 18, taxableAmount: 100, totalTax: 18 }],
+        },
       })
     );
 
