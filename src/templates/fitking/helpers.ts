@@ -335,6 +335,13 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
   HB.registerHelper("formatCurrency", formatCurrencyValue);
 
+  // The item's tax-inclusive total for the declared `total` column — see
+  // `lineItemTax` below for how the tax figure is derived.
+  HB.registerHelper("formatLineTotal", function (item: any, invoice: any, visibility: any) {
+    const amount = extractNumericValue(item?.amount) ?? 0;
+    return formatCurrencyValue(amount + lineItemTax(item, visibility), invoice);
+  });
+
   HB.registerHelper("formatPhone", function (phone: any) {
     if (typeof phone !== "string" && typeof phone !== "number") return "";
     const phoneStr = String(phone).trim();
@@ -409,7 +416,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     sgst: "sgst",
     utgst: "sgst",
     amount: "amount",
-    total: "amount",
+    total: "total",
   };
 
   // Kind -> width class on its <col>, default heading, and the `customLabels`
@@ -429,7 +436,8 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     igst: { colClass: "fk-col-tax", label: "IGST", labelKey: "igst" },
     cgst: { colClass: "fk-col-tax", label: "CGST", labelKey: "cgst" },
     sgst: { colClass: "fk-col-tax", label: "SGST", labelKey: "sgst" },
-    amount: { colClass: "fk-col-total", label: "Total", labelKey: "total" },
+    amount: { colClass: "fk-col-total", label: "Amount", labelKey: "amount" },
+    total: { colClass: "fk-col-total", label: "Total", labelKey: "total" },
     custom: { colClass: "fk-col-custom", label: "" },
   };
 
@@ -508,12 +516,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       add("photo");
     };
 
-    // Payloads ship both an `amount` and a `total` column for what this
-    // template renders as one; `total` carries the heading meant for it.
-    const totalLabel = declared.find(
-      (col) => col.kind === "amount" && normalizeColumnKey(col.key) === "total"
-    )?.label;
-
     add("sno");
     if (!declares("name")) addItemColumns();
 
@@ -528,8 +530,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
           fxReturnType: col.fxReturnType,
         });
       } else {
-        const label = col.kind === "amount" ? totalLabel || col.label : col.label;
-        add(col.kind, label ? { label } : {});
+        add(col.kind, col.label ? { label: col.label } : {});
       }
     }
 
@@ -607,6 +608,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     cgst: { min: 60, max: 130 },
     sgst: { min: 60, max: 130 },
     amount: { min: 90, max: 200 },
+    total: { min: 90, max: 200 },
     custom: { min: 70, max: 150, wraps: true },
     // A user-defined column declared as a number or currency: same treatment
     // as the built-in numeric kinds above, not the free-text `custom` rule.
@@ -631,7 +633,42 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // The text a given column prints for a given item, mirroring the row markup.
   // Anything this returns short renders clipped, so it has to stay in step with
   // the cells in template.hbs.
-  function columnCellText(kind: string, column: any, item: any, invoice: any): string {
+  // The line's tax-inclusive total: `amount` (already net of the line
+  // discount) plus whatever tax the item carries. `taxAmount` wins when the
+  // backend has already summed it. Otherwise only ONE regime applies per
+  // invoice — inter-state IGST, or intra-state CGST+SGST/UTGST, never both —
+  // so which fields to sum follows `mapped.visibility`, same as the tax
+  // summary table does; a stale/leftover value in the field that does not
+  // apply (e.g. a nonzero `igst` left over on a CGST/SGST invoice) must not
+  // get added in, or the line double-counts tax.
+  function lineItemTax(item: any, visibility?: { showIgst?: boolean; showCgstSgst?: boolean; isUtgst?: boolean }): number {
+    const explicit = extractNumericValue(item?.taxAmount);
+    if (explicit !== null) return explicit;
+
+    const cess = extractNumericValue(item?.cessAmount) ?? 0;
+
+    if (visibility?.showIgst) {
+      return (extractNumericValue(item?.igst) ?? 0) + cess;
+    }
+    if (visibility?.showCgstSgst) {
+      const stateTax = visibility.isUtgst
+        ? extractNumericValue(item?.utgst) ?? 0
+        : extractNumericValue(item?.sgst) ?? 0;
+      return (extractNumericValue(item?.cgst) ?? 0) + stateTax + cess;
+    }
+
+    // No visibility signal available (e.g. width measurement without root
+    // context) — fall back to summing whichever fields are actually present.
+    return (
+      (extractNumericValue(item?.igst) ?? 0) +
+      (extractNumericValue(item?.cgst) ?? 0) +
+      (extractNumericValue(item?.sgst) ?? 0) +
+      (extractNumericValue(item?.utgst) ?? 0) +
+      cess
+    );
+  }
+
+  function columnCellText(kind: string, column: any, item: any, invoice: any, visibility?: any): string {
     switch (kind) {
       case "model":
         return String(
@@ -659,6 +696,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         return formatCurrencyValue(item?.sgst, invoice);
       case "amount":
         return formatCurrencyValue(item?.amount, invoice);
+      case "total": {
+        const amount = extractNumericValue(item?.amount) ?? 0;
+        return formatCurrencyValue(amount + lineItemTax(item, visibility), invoice);
+      }
       case "custom":
         return customColumnValue(item, column, invoice).text;
       default:
@@ -669,6 +710,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   function assignColumnWidths(columns: Array<Record<string, any>>, root: any): void {
     const invoice = root?.invoice;
     const items = Array.isArray(invoice?.items) ? invoice.items : [];
+    const visibility = root?.mapped?.visibility;
 
     // Measured px per column, name excluded: it takes whatever is left.
     let measuredTotal = 0;
@@ -685,7 +727,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         widest = Math.max(widest, String(items.length).length);
       } else if (column.kind !== "photo") {
         for (const item of items) {
-          const text = columnCellText(column.kind, column, item, invoice);
+          const text = columnCellText(column.kind, column, item, invoice, visibility);
           widest = Math.max(widest, rule.wraps ? longestWordLength(text) : text.length);
         }
       }

@@ -73,8 +73,8 @@ describe("fitking full-width description colspan", () => {
 });
 
 describe("fitking column labels", () => {
-  // Payloads ship both `amount` and `total` columns, with `amount` first.
-  // An alias-first lookup labelled Total with the Amount label.
+  // `amount` (pre-tax) and `total` (tax-inclusive) are distinct columns, each
+  // keeping its own declared label — they are no longer merged into one.
   const columns = [
     { key: "name", label: "Item" },
     { key: "quantity", label: "كمية" },
@@ -83,11 +83,11 @@ describe("fitking column labels", () => {
     { key: "total", label: "Total label" },
   ];
 
-  it("prefers an exact key match over an alias match", () => {
+  it("keeps amount and total as separate columns, each with its own label", () => {
     const html = render(basePayload({ columns }));
 
     expect(html).toContain("Total label");
-    expect(html).not.toContain("Amount label");
+    expect(html).toContain("Amount label");
   });
 
   it("still resolves via alias when no exact key exists", () => {
@@ -103,6 +103,121 @@ describe("fitking column labels", () => {
 
     expect(html).toContain("كمية");
     expect(html).toContain("معدل");
+  });
+});
+
+describe("fitking amount vs total columns", () => {
+  const columns = [
+    { key: "name", label: "Item" },
+    { key: "quantity", label: "Qty" },
+    { key: "rate", label: "Unit Rate" },
+    { key: "amount", label: "Amount" },
+    { key: "total", label: "Total" },
+  ];
+
+  const bodyCells = (html: string) => {
+    const tbody = /<tbody>([\s\S]*?)<\/tbody>/.exec(html)?.[1] ?? "";
+    return [...tbody.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(([, text]) =>
+      text.replace(/\s+/g, " ").trim()
+    );
+  };
+
+  it("keeps amount pre-tax and computes total as amount plus tax", () => {
+    const html = render(
+      basePayload({
+        columns,
+        items: [
+          {
+            _id: "1",
+            name: "Item",
+            quantity: 1,
+            rate: 1200,
+            amount: 1200,
+            cgst: 108,
+            sgst: 108,
+          },
+        ],
+      })
+    );
+
+    const cells = bodyCells(html);
+    expect(cells).toContain("₹1,200");
+    expect(cells).toContain("₹1,416");
+  });
+
+  it("prefers taxAmount when the backend already summed it", () => {
+    const html = render(
+      basePayload({
+        columns,
+        items: [
+          {
+            _id: "1",
+            name: "Item",
+            quantity: 1,
+            rate: 1000,
+            amount: 1000,
+            taxAmount: 180,
+            igst: 999,
+          },
+        ],
+      })
+    );
+
+    expect(bodyCells(html)).toContain("₹1,180");
+  });
+
+  // Only one tax regime applies per invoice — inter-state IGST, or intra-state
+  // CGST+SGST — never both. A stale/leftover value in the field that does not
+  // apply must not get summed in on top of the one that does.
+  it("ignores a stale igst value on a CGST/SGST invoice", () => {
+    const html = render(
+      basePayload({
+        taxName: "GST",
+        columns,
+        items: [
+          {
+            _id: "1",
+            name: "Item",
+            quantity: 1,
+            rate: 1200,
+            amount: 1200,
+            cgst: 108,
+            sgst: 108,
+            igst: 216, // stale — must not be added on top of cgst+sgst
+          },
+        ],
+      })
+    );
+
+    const cells = bodyCells(html);
+    expect(cells).toContain("₹1,416");
+    expect(cells).not.toContain("₹1,632");
+  });
+
+  it("ignores stale cgst/sgst values on an IGST invoice", () => {
+    const html = render(
+      basePayload({
+        taxName: "GST",
+        igst: 216,
+        columns,
+        items: [
+          {
+            _id: "1",
+            name: "Item",
+            quantity: 1,
+            rate: 1200,
+            amount: 1200,
+            igst: 216,
+            cgst: 108, // stale — must not be added on top of igst
+            sgst: 108, // stale — must not be added on top of igst
+          },
+        ],
+      })
+    );
+
+    const cells = bodyCells(html);
+    expect(cells).toContain("₹1,416");
+    expect(cells).not.toContain("₹1,632");
   });
 });
 

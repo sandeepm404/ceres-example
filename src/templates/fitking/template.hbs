@@ -361,6 +361,8 @@
                 </td>{{/if}}
                 {{#if (eq kind "amount")}}<td class="text-center fk-total-cell">{{formatCurrency ../amount
                   ../../invoice}}</td>{{/if}}
+                {{#if (eq kind "total")}}<td class="text-center fk-total-cell">{{formatLineTotal ../this
+                  ../../invoice ../../mapped.visibility}}</td>{{/if}}
                 {{#if (eq kind "custom")}}
                 {{!-- Numeric values never wrap: a figure broken across two lines
                 reads as two numbers. Text values still wrap. --}}
