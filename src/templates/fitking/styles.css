@@ -120,7 +120,6 @@
 .fk-main-box {
   display: flex;
   flex-direction: column;
-  margin-bottom: var(--fk-font-size-xl);
   position: relative;
 }
 
@@ -726,7 +725,6 @@
 
 /* ===== SIGNATURE BOX — var(--fk-font-size-base) ===== */
 .fk-signature-container {
-  margin-top: 15px;
   text-align: center;
 }
 

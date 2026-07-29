@@ -633,7 +633,9 @@
           </div>
           {{/if}}
 
-          {{!-- Signature Box Area --}}
+          {{!-- Signature Box Area — shown when a signature image exists, or the
+          account has explicitly enabled/labelled the section via customLabels.signature --}}
+          {{#if (or invoice.customLabels.signature invoice.signature invoice.billedBy.signature invoice.signatureImage invoice.billedBy.signatureImage)}}
           <div class="fk-signature-container">
             <div class="fk-signature-box">
               {{#if invoice.signature}}
@@ -646,8 +648,9 @@
               <img class="fk-signature-img" src="{{invoice.billedBy.signatureImage}}" alt="Authorised Signature" />
               {{/if}}{{/if}}{{/if}}{{/if}}
             </div>
-            <p class="fk-sig-label">{{docLabel "signature" "Authorised Signatory"}}</p>
+            <p class="fk-sig-label">{{docLabel "signature"}}</p>
           </div>
+          {{/if}}
         </div>
       </div>
 
