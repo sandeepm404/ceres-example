@@ -1,0 +1,914 @@
+<div class="saga-shell">
+  <div class="no-dibella invoice-letterhead{{#unless letterHead}} is-empty{{/unless}}">
+    {{#if letterHead}}
+    <img src="{{letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+    {{else}}
+    <img alt="Letterhead" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="saga-container">
+    <header class="saga-header">
+      <div class="saga-title-row">
+        <h1>{{invoiceTitle}}</h1>
+        <div class="saga-status-wrap{{#unless mapped.visibility.showStatusTagInPrint}} no-print{{/unless}}">{{>
+          InvoiceStatus }}</div>
+      </div>
+      {{#if invoiceSubTitle}}
+      <div class="saga-doc-subtitle">{{invoiceSubTitle}}</div>
+      {{/if}}
+    </header>
+
+    <section class="saga-meta-qr">
+      <div class="saga-meta-list">
+        <div class="saga-meta-line">
+          <span class="label">{{customLabels.invoiceNumber}}</span>
+          <span class="value">{{invoiceNumber}}</span>
+        </div>
+        <div class="saga-meta-line">
+          <span class="label">{{customLabels.invoiceDate}}</span>
+          <span class="value">
+            {{#if invoiceDateUserInput}}
+            {{invoiceDateUserInput}}
+            {{else}}
+            {{formateShortDateWithOffset invoiceDate ownerOffset}}
+            {{/if}}
+          </span>
+        </div>
+        {{#if dueDate}}
+        <div class="saga-meta-line">
+          <span class="label">{{customLabels.dueDate}}</span>
+          <span class="value">{{formateShortDateWithOffset dueDate ownerOffset}}</span>
+        </div>
+        {{/if}}
+        {{#if purchaseOrderNumber}}
+        <div class="saga-meta-line">
+          <span class="label">{{customLabels.purchaseOrderNumber}}</span>
+          <span class="value">{{purchaseOrderNumber}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.Irn}}
+        <div class="saga-meta-line">
+          <span class="label">IRN No.</span>
+          <span class="value">{{irn.Irn}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.AckNo}}
+        <div class="saga-meta-line">
+          <span class="label">Ack No.</span>
+          <span class="value">{{irn.AckNo}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.AckDt}}
+        <div class="saga-meta-line">
+          <span class="label">Ack Date</span>
+          <span class="value">{{formatDateInTimeZone irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.CancelDate}}
+        <div class="saga-meta-line">
+          <span class="label">IRN Cancelled On</span>
+          <span class="value">{{formateShortDateWithOffset irn.CancelDate ownerOffset}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.EwbNo}}
+        <div class="saga-meta-line">
+          <span class="label">E-Way Bill No.</span>
+          <span class="value">{{irn.EwbNo}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.EwbDt}}
+        <div class="saga-meta-line">
+          <span class="label">E-Way Bill Date</span>
+          <span class="value">{{formatDateInTimeZone irn.EwbDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.EwbValidTill}}
+        <div class="saga-meta-line">
+          <span class="label">E-Way Valid Till</span>
+          <span class="value">{{formatDateInTimeZone irn.EwbValidTill "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</span>
+        </div>
+        {{/if}}
+        {{#if irn.ewayCancelDate}}
+        <div class="saga-meta-line">
+          <span class="label">E-Way Cancelled On</span>
+          <span class="value">{{formatDateInTimeZone irn.ewayCancelDate "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</span>
+        </div>
+        {{/if}}
+      </div>
+
+      {{#if mapped.qr.top}}
+      <div class="saga-meta-qr-box">
+        <img src="{{mapped.qr.top}}" alt="Document QR" />
+      </div>
+      {{/if}}
+    </section>
+
+    <section class="saga-grid two saga-billing-grid{{#unless mapped.visibility.shippedTo}} single-column{{/unless}}">
+      <article class="saga-block saga-billed-block">
+        <h3>{{customLabels.billedTo}}</h3>
+        <p class="saga-name">{{billedTo.name}}</p>
+        <p class="saga-address">
+          {{#if billedTo.building}}{{billedTo.building}}, {{/if}}
+          {{#if billedTo.street}}{{billedTo.street}}, {{/if}}
+          {{#if billedTo.city}}{{billedTo.city}}, {{/if}}
+          {{#if billedTo.district}}{{billedTo.district}}{{/if}}
+          <br />
+          {{#if billedTo.state}}{{billedTo.state}}{{/if}}
+          {{#if billedTo.gstState}}{{#if billedTo.state}}, {{/if}}{{billedTo.gstState}}{{/if}}
+          {{#if billedTo.pincode}} - {{billedTo.pincode}}{{/if}}
+          {{#if billedTo.country}} {{billedTo.country}}{{/if}}
+        </p>
+        {{#if billedTo.gstin}}
+        <p class="saga-kv"><span class="small-label">GSTIN:</span><span>{{billedTo.gstin}}</span></p>
+        {{/if}}
+        {{#if billedTo.vatNumber}}
+        <p class="saga-kv"><span class="small-label">{{#if billedTo.vatLabel}}{{billedTo.vatLabel}}{{else}}VAT
+            Number{{/if}}:</span><span>{{billedTo.vatNumber}}</span></p>
+        {{/if}}
+        {{#if billedTo.sstNumber}}
+        <p class="saga-kv"><span class="small-label">SST Number:</span><span>{{billedTo.sstNumber}}</span></p>
+        {{/if}}
+        {{#if billedTo.tinNumber}}
+        <p class="saga-kv"><span class="small-label">TIN Number:</span><span>{{billedTo.tinNumber}}</span></p>
+        {{/if}}
+        {{#if billedTo.panNumber}}
+        <p class="saga-kv"><span class="small-label">PAN Number:</span><span>{{billedTo.panNumber}}</span></p>
+        {{/if}}
+        {{#if billedTo.emailShowInInvoice}}
+        {{#if billedTo.email}}
+        <p class="saga-kv"><span class="small-label">Email:</span><span>{{billedTo.email}}</span></p>
+        {{/if}}
+        {{/if}}
+        {{#if billedTo.phoneShowInInvoice}}
+        {{#if billedTo.phone}}
+        <p class="saga-kv"><span class="small-label">Phone:</span><span>{{billedTo.phone}}</span></p>
+        {{/if}}
+        {{/if}}
+        {{#each billedTo.additionalIds}}
+        <p class="saga-kv"><span class="small-label">{{label}}</span><span>{{value}}</span></p>
+        {{/each}}
+        {{#each customHeaders}}
+        <p class="saga-kv{{#if @last}} stacked{{/if}}">
+          <span class="small-label">{{label}}</span>
+          <span>{{value}}</span>
+        </p>
+        {{/each}}
+      </article>
+
+      {{#if mapped.visibility.shippedTo}}
+      <article class="saga-block saga-shipped-block">
+        <h3>{{customLabels.shippedTo}}</h3>
+        <p class="saga-name">{{shippedTo.name}}</p>
+        <p class="saga-address">
+          {{#if shippedTo.building}}{{shippedTo.building}}, {{/if}}
+          {{#if shippedTo.street}}{{shippedTo.street}}, {{/if}}
+          {{#if shippedTo.city}}{{shippedTo.city}}, {{/if}}
+          {{#if shippedTo.district}}{{shippedTo.district}}{{/if}}
+          <br />
+          {{#if shippedTo.state}}{{shippedTo.state}}{{/if}}
+          {{#if shippedTo.gstState}}{{#if shippedTo.state}}, {{/if}}{{shippedTo.gstState}}{{/if}}
+          {{#if shippedTo.pincode}} - {{shippedTo.pincode}}{{/if}}
+          {{#if shippedTo.country}} {{shippedTo.country}}{{/if}}
+        </p>
+        {{#if shippedTo.gstin}}
+        <p class="saga-kv"><span class="small-label">GSTIN:</span><span>{{shippedTo.gstin}}</span></p>
+        {{/if}}
+        {{#if shippedTo.vatNumber}}
+        <p class="saga-kv"><span class="small-label">{{#if shippedTo.vatLabel}}{{shippedTo.vatLabel}}{{else}}VAT
+            Number{{/if}}:</span><span>{{shippedTo.vatNumber}}</span></p>
+        {{/if}}
+        {{#if shippedTo.sstNumber}}
+        <p class="saga-kv"><span class="small-label">SST Number:</span><span>{{shippedTo.sstNumber}}</span></p>
+        {{/if}}
+        {{#if shippedTo.tinNumber}}
+        <p class="saga-kv"><span class="small-label">TIN Number:</span><span>{{shippedTo.tinNumber}}</span></p>
+        {{/if}}
+        {{#if shippedTo.panNumber}}
+        <p class="saga-kv"><span class="small-label">PAN Number:</span><span>{{shippedTo.panNumber}}</span></p>
+        {{/if}}
+        {{#if shippedTo.emailShowInInvoice}}
+        {{#if shippedTo.email}}
+        <p class="saga-kv"><span class="small-label">Email:</span><span>{{shippedTo.email}}</span></p>
+        {{/if}}
+        {{/if}}
+        {{#if shippedTo.phoneShowInInvoice}}
+        {{#if shippedTo.phone}}
+        <p class="saga-kv"><span class="small-label">Phone:</span><span>{{shippedTo.phone}}</span></p>
+        {{/if}}
+        {{/if}}
+        {{#each shippedTo.additionalIds}}
+        <p class="saga-kv"><span class="small-label">{{label}}</span><span>{{value}}</span></p>
+        {{/each}}
+        {{#each shippedTo.customHeaders}}
+        <p class="saga-kv"><span class="small-label">{{label}}</span><span>{{value}}</span></p>
+        {{/each}}
+      </article>
+      {{/if}}
+    </section>
+
+    {{#if mapped.visibility.showLogistics}}
+    <section class="saga-grid two saga-logistics-grid{{#if mapped.visibility.singleLogistics}} single-column{{/if}}">
+      {{#if mapped.visibility.shippedFrom}}
+      <article class="saga-block saga-shipped-from-block">
+        <h3>{{customLabels.shippedFrom}}</h3>
+        <p class="saga-name">{{shippedFrom.name}}</p>
+        <p class="saga-address">
+          {{#if shippedFrom.building}}{{shippedFrom.building}}, {{/if}}
+          {{#if shippedFrom.street}}{{shippedFrom.street}}, {{/if}}
+          {{#if shippedFrom.city}}{{shippedFrom.city}}, {{/if}}
+          {{#if shippedFrom.district}}{{shippedFrom.district}}{{/if}}
+          <br />
+          {{#if shippedFrom.state}}{{shippedFrom.state}}{{/if}}
+          {{#if shippedFrom.gstState}}{{#if shippedFrom.state}}, {{/if}}{{shippedFrom.gstState}}{{/if}}
+          {{#if shippedFrom.pincode}} - {{shippedFrom.pincode}}{{/if}}
+          {{#if shippedFrom.country}} {{shippedFrom.country}}{{/if}}
+        </p>
+        {{#if shippedFrom.gstin}}
+        <p class="saga-kv"><span class="small-label">GSTIN:</span><span>{{shippedFrom.gstin}}</span></p>
+        {{/if}}
+        {{#if shippedFrom.vatNumber}}
+        <p class="saga-kv"><span class="small-label">{{#if shippedFrom.vatLabel}}{{shippedFrom.vatLabel}}{{else}}VAT
+            Number{{/if}}:</span><span>{{shippedFrom.vatNumber}}</span></p>
+        {{/if}}
+        {{#if shippedFrom.sstNumber}}
+        <p class="saga-kv"><span class="small-label">SST Number:</span><span>{{shippedFrom.sstNumber}}</span></p>
+        {{/if}}
+        {{#if shippedFrom.tinNumber}}
+        <p class="saga-kv"><span class="small-label">TIN Number:</span><span>{{shippedFrom.tinNumber}}</span></p>
+        {{/if}}
+        {{#if shippedFrom.panNumber}}
+        <p class="saga-kv"><span class="small-label">PAN Number:</span><span>{{shippedFrom.panNumber}}</span></p>
+        {{/if}}
+        {{#if shippedFrom.emailShowInInvoice}}
+        {{#if shippedFrom.email}}
+        <p class="saga-kv"><span class="small-label">Email:</span><span>{{shippedFrom.email}}</span></p>
+        {{/if}}
+        {{/if}}
+        {{#if shippedFrom.phoneShowInInvoice}}
+        {{#if shippedFrom.phone}}
+        <p class="saga-kv"><span class="small-label">Phone:</span><span>{{shippedFrom.phone}}</span></p>
+        {{/if}}
+        {{/if}}
+        {{#each shippedFrom.additionalIds}}
+        <p class="saga-kv"><span class="small-label">{{label}}</span><span>{{value}}</span></p>
+        {{/each}}
+        {{#each shippedFrom.customHeaders}}
+        <p class="saga-kv"><span class="small-label">{{label}}</span><span>{{value}}</span></p>
+        {{/each}}
+      </article>
+      {{/if}}
+
+      {{#if mapped.visibility.transport}}
+      <article class="saga-block saga-transport-block">
+        <h3>Transport Details</h3>
+        {{#if transportDetails.transporter.name}}
+        <p class="saga-kv"><span
+            class="small-label">{{customLabels.transportName}}:</span><span>{{transportDetails.transporter.name}}</span>
+        </p>
+        {{/if}}
+        {{#if transportDetails.transporter.transporterId}}
+        <p class="saga-kv"><span class="small-label">Transporter
+            ID:</span><span>{{transportDetails.transporter.transporterId}}</span></p>
+        {{/if}}
+        {{#if transportDetails.transportMode}}
+        <p class="saga-kv"><span class="small-label">Mode:</span><span>{{transportDetails.transportMode}}</span></p>
+        {{/if}}
+        {{#if transportDetails.distance}}
+        <p class="saga-kv"><span class="small-label">Distance:</span><span>{{transportDetails.distance}}</span></p>
+        {{/if}}
+        {{#if transportDetails.challanNumber}}
+        <p class="saga-kv"><span
+            class="small-label">{{customLabels.challanNumber}}:</span><span>{{transportDetails.challanNumber}}</span>
+        </p>
+        {{/if}}
+        {{#if transportDetails.challanDate}}
+        <p class="saga-kv"><span class="small-label">{{customLabels.challanDate}}:</span><span>{{formateDateWithOffset
+            transportDetails.challanDate ownerOffset}}</span></p>
+        {{/if}}
+        {{#if transportDetails.vehicleType}}
+        <p class="saga-kv"><span class="small-label">Vehicle Type:</span><span>{{transportDetails.vehicleType}}</span>
+        </p>
+        {{/if}}
+        {{#if transportDetails.vehicleNumber}}
+        <p class="saga-kv"><span class="small-label">Vehicle No.:</span><span>{{transportDetails.vehicleNumber}}</span>
+        </p>
+        {{/if}}
+        {{#if transportDetails.transactionType}}
+        <p class="saga-kv"><span
+            class="small-label">Transaction:</span><span>{{transportDetails.transactionType}}</span></p>
+        {{/if}}
+        {{#if transportDetails.subSupplyType}}
+        <p class="saga-kv"><span class="small-label">Sub Supply:</span><span>{{transportDetails.subSupplyType}}</span>
+        </p>
+        {{/if}}
+        {{#if transportDetails.extraInformation}}
+        <p class="saga-kv"><span
+            class="small-label">{{customLabels.transportExtraInfo}}:</span><span>{{transportDetails.extraInformation}}</span>
+        </p>
+        {{/if}}
+      </article>
+      {{/if}}
+    </section>
+    {{/if}}
+
+    <section class="saga-table-wrap">
+      <table class="saga-items-table">
+        <thead>
+          <tr>
+            <th class="col-serial">#</th>
+            {{#each mapped.columns}}
+            {{#unless isHidden}}
+            <th class="{{className}}">{{label}}</th>
+            {{/unless}}
+            {{/each}}
+          </tr>
+        </thead>
+        <tbody class="saga-item-body">
+          {{#each items}}
+          {{#if isGroup}}
+          <tr class="item-group-row">
+            <td colspan="{{../mapped.visibility.visibleColumnCount}}" class="item-name">{{name}}</td>
+          </tr>
+          {{#if images.length}}
+          <tr class="images">
+            <td colspan="{{../mapped.visibility.visibleColumnCount}}">
+              <div class="item-images">
+                {{#each images}}
+                <img src="{{this}}" alt="Item image" />
+                {{/each}}
+              </div>
+            </td>
+          </tr>
+          {{/if}}
+          {{else}}
+          {{#if ../mapped.visibility.itemNameFullWidth}}
+          <tr class="full-width item-name-row {{#if isSummaryRow}}summary-row{{/if}}">
+            <td colspan="{{../mapped.visibility.visibleColumnCount}}">
+              <div class="item-title-wrap">
+                <span class="serial-inline">{{displayIndex}}</span>
+                <div class="item-title-content">
+                  <span class="item-name">{{name}}</span>
+                  {{#if ../mapped.visibility.showThumbnailAsColumn}}
+                  {{#if thumbnail}}
+                  <img src="{{thumbnail}}" alt="" class="item-thumbnail-inline" />
+                  {{/if}}
+                  {{/if}}
+                  <span class="item-meta">
+                    {{#if ../mapped.visibility.showInlineHsn}}{{#if hsnRaw}}<span class="small-meta"> (HSN/SAC:
+                      {{hsnRaw}})</span>{{/if}}{{/if}}
+                    {{#if ../mapped.visibility.showInlineClassification}}{{#if classification}}<span class="small-meta">
+                      (Classification Code: {{classification}})</span>{{/if}}{{/if}}
+                    {{#if ../mapped.visibility.showSkuInName}}{{#if showSku}}<span class="small-meta"> (SKU:
+                      {{sku}})</span>{{/if}}{{/if}}
+                    {{#if ../mapped.visibility.showUnitInName}}{{#if unitLabel}}<span class="small-meta"> (Unit:
+                      {{unitLabel}})</span>{{/if}}{{/if}}
+                  </span>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {{/if}}
+
+          <tr class="{{#if isSummaryRow}}summary-row{{/if}}">
+            <td class="serial{{#if ../mapped.visibility.itemNameFullWidth}} empty{{/if}}">
+              {{#unless ../mapped.visibility.itemNameFullWidth}}{{displayIndex}}{{/unless}}
+            </td>
+            {{#each cells}}
+            {{#unless isHidden}}
+            {{#if isItemInfo}}
+            <td class="item-col">
+              {{#unless ../../mapped.visibility.itemNameFullWidth}}
+              <div class="item-title-wrap">
+                <div class="item-title-content">
+                  <p class="item-name">{{../name}}</p>
+                  {{#if ../../mapped.visibility.showThumbnailAsColumn}}
+                  {{#if ../thumbnail}}
+                  <img src="{{../thumbnail}}" alt="" class="item-thumbnail-inline" />
+                  {{/if}}
+                  {{/if}}
+                </div>
+              </div>
+              {{/unless}}
+              {{#unless ../isSummaryRow}}
+              {{#unless ../../mapped.visibility.isDescriptionFullWidth}}
+              {{#if ../description}}
+              <div class="item-description">
+                {{> MarkdownViewer (prepareMarkdownViewerData ../description) }}
+              </div>
+              {{/if}}
+              {{/unless}}
+              {{#unless ../../mapped.visibility.itemNameFullWidth}}
+              <p class="item-meta">
+                {{#if ../../mapped.visibility.showInlineHsn}}{{#if ../hsnRaw}}<span class="small-meta">HSN/SAC:
+                  {{../hsnRaw}}</span>{{/if}}{{/if}}
+                {{#if ../../mapped.visibility.showInlineClassification}}{{#if ../classification}}<span
+                  class="small-meta">Classification Code: {{../classification}}</span>{{/if}}{{/if}}
+                {{#if ../../mapped.visibility.showSkuInName}}{{#if ../showSku}}<span class="small-meta">SKU:
+                  {{../sku}}</span>{{/if}}{{/if}}
+                {{#if ../../mapped.visibility.showUnitInName}}{{#if ../unitLabel}}<span class="small-meta">Unit:
+                  {{../unitLabel}}</span>{{/if}}{{/if}}
+              </p>
+              {{/unless}}
+              {{#if ../images}}
+              <div class="item-images">
+                {{#each ../images}}
+                <img src="{{this}}" alt="Item image" />
+                {{/each}}
+              </div>
+              {{/if}}
+              {{/unless}}
+            </td>
+            {{else}}
+            <td class="{{className}} num center">{{{value}}}</td>
+            {{/if}}
+            {{/unless}}
+            {{/each}}
+          </tr>
+
+          {{#unless isSummaryRow}}
+          {{#if ../mapped.visibility.isDescriptionFullWidth}}
+          {{#if description}}
+          <tr class="full-width-description">
+            <td colspan="{{../mapped.visibility.visibleColumnCount}}">
+              <div class="item-description">
+                {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+              </div>
+            </td>
+          </tr>
+          {{/if}}
+          {{/if}}
+          {{/unless}}
+          {{/if}}
+          {{/each}}
+        </tbody>
+      </table>
+    </section>
+
+
+    <section class="saga-post-grid">
+      <article class="saga-post-left">
+        <div class="saga-word-block">
+          <h3>{{customLabels.totalInWords}}</h3>
+          <p>{{customLabels.totalInWordsValue}}</p>
+        </div>
+
+        {{#if mapped.visibility.showBankUpiSection}}
+        <div
+          class="saga-bank-scan{{#unless mapped.visibility.showUpi}} no-upi{{/unless}}{{#unless mapped.visibility.showBankAccount}} no-bank{{/unless}}">
+          {{#if mapped.visibility.showBankAccount}}
+          <div class="saga-bank-block">
+            <h3>
+              {{#if bankAccount.customLabels.bankDetails}}
+              {{bankAccount.customLabels.bankDetails}}
+              {{else}}
+              Bank details
+              {{/if}}
+            </h3>
+            {{#if bankAccount.name}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.accountHolderName}}
+                {{bankAccount.customLabels.accountHolderName}}:
+                {{else}}
+                Account Holder Name:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.name}}</span>
+            </p>
+            {{/if}}
+            {{#if bankAccount.accountNo}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.accountNumber}}
+                {{bankAccount.customLabels.accountNumber}}:
+                {{else}}
+                Account Number:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.accountNo}}</span>
+            </p>
+            {{/if}}
+            {{#if bankAccount.sortCode}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.sortCode}}
+                {{bankAccount.customLabels.sortCode}}:
+                {{else}}
+                Sort Code:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.sortCode}}</span>
+            </p>
+            {{/if}}
+            {{#if bankAccount.ifsc}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.ifsc}}
+                {{bankAccount.customLabels.ifsc}}:
+                {{else}}
+                IFSC:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.ifsc}}</span>
+            </p>
+            {{/if}}
+            {{#if bankAccount.iban}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.iban}}
+                {{bankAccount.customLabels.iban}}:
+                {{else}}
+                IBAN:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.iban}}</span>
+            </p>
+            {{/if}}
+            {{#if bankAccount.swift}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.swiftCode}}
+                {{bankAccount.customLabels.swiftCode}}:
+                {{else}}
+                Swift Code:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.swift}}</span>
+            </p>
+            {{/if}}
+            {{#if bankAccount.accountType}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.accountType}}
+                {{bankAccount.customLabels.accountType}}:
+                {{else}}
+                Account Type:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.accountType}}</span>
+            </p>
+            {{/if}}
+            {{#if bankAccount.bank}}
+            <p class="saga-kv">
+              <span class="small-label">
+                {{#if bankAccount.customLabels.bankName}}
+                {{bankAccount.customLabels.bankName}}:
+                {{else}}
+                Bank Name:
+                {{/if}}
+              </span>
+              <span>{{bankAccount.bank}}</span>
+            </p>
+            {{/if}}
+            {{#each bankAccount.customFields}}
+            <p class="saga-kv"><span class="small-label">{{label}}</span><span>{{value}}</span></p>
+            {{/each}}
+          </div>
+          {{/if}}
+
+          {{#if mapped.visibility.showUpi}}
+          <div class="saga-scan-block">
+            <h3>Scan to pay via UPI</h3>
+            {{#if mapped.qr.upi}}
+            {{qrCodeImg mapped.qr.upi size=120}}
+            {{else}}
+            <div class="qr-placeholder">QR</div>
+            {{/if}}
+
+            <div class="saga-upi-details">
+              {{#if mapped.upi.id}}
+              <p
+                class="saga-kv saga-upi-id {{#if mapped.visibility.upiShrink}}shrinkable-upi{{else}}unshrinkable-upi{{/if}}">
+                <span class="small-label">UPI:</span><span>{{mapped.upi.id}}</span>
+              </p>
+              {{else}}
+              {{#if upi.upi}}
+              <p
+                class="saga-kv saga-upi-id {{#if mapped.visibility.upiShrink}}shrinkable-upi{{else}}unshrinkable-upi{{/if}}">
+                <span class="small-label">UPI:</span><span>{{upi.upi}}</span>
+              </p>
+              {{else}}
+              {{#if upi.vpa}}
+              <p
+                class="saga-kv saga-upi-id {{#if mapped.visibility.upiShrink}}shrinkable-upi{{else}}unshrinkable-upi{{/if}}">
+                <span class="small-label">UPI:</span><span>{{upi.vpa}}</span>
+              </p>
+              {{/if}}
+              {{/if}}
+              {{/if}}
+            </div>
+
+            <p class="scan-note">Minimum of 1 lakh can be transferred via UPI in a single day</p>
+          </div>
+          {{/if}}
+        </div>
+        {{/if}}
+
+        {{#if terms.0.terms.length}}
+        <div class="saga-text-block saga-terms-block">
+          <h3>{{customLabels.terms}}</h3>
+          <ol class="term-list">
+            {{#each terms.0.terms}}
+            <li>{{this}}</li>
+            {{/each}}
+          </ol>
+        </div>
+        {{/if}}
+
+        {{#if notes}}
+        <div class="saga-text-block saga-notes-block">
+          <h3>{{customLabels.notes}}</h3>
+          <div class="notes-wrap">{{> MarkdownViewer (prepareMarkdownViewerData notes) }}</div>
+        </div>
+        {{/if}}
+
+        {{#if allPayments.length}}
+        <div class="saga-text-block">
+          <h3>Payments</h3>
+          <table class="saga-mini-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Mode</th>
+                <th class="num">Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each allPayments}}
+              <tr>
+                <td>{{formateShortDateWithOffset paymentDate ../ownerOffset}}</td>
+                <td>{{paymentMethod}}</td>
+                <td class="num">{{amount}}</td>
+                <td>{{status}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+        {{/if}}
+
+        {{#if customFooters.length}}
+        <div class="saga-text-block saga-additional-info-block">
+          <h3>Additional Information</h3>
+          {{#each customFooters}}
+          <p class="saga-kv"><span class="small-label">{{label}}</span><span>{{value}}</span></p>
+          {{/each}}
+        </div>
+        {{/if}}
+
+        {{#if attachments.length}}
+        <div class="saga-text-block">
+          <h3>{{customLabels.attachment}}</h3>
+          <ul class="attachment-list">
+            {{#each attachments}}
+            <li>{{attachmentIndex}}. <a href="{{url}}" target="_blank" rel="noopener noreferrer">{{name}}</a></li>
+            {{/each}}
+          </ul>
+        </div>
+        {{/if}}
+      </article>
+
+      <aside class="saga-post-right">
+        <div class="saga-invoice-details">
+          {{#if invoiceDetails.mainRows.length}}
+          <table class="saga-detail-table saga-detail-main-table">
+            <tbody>
+              {{#each invoiceDetails.mainRows}}
+              <tr class="{{rowClass}}">
+                <th class="{{#if isDue}}due-amount{{/if}}">{{label}}</th>
+                <td class="{{#if isDue}}due-amount{{/if}}">{{value}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+          {{/if}}
+
+          {{#if invoiceDetails.extraRows.length}}
+          <table class="saga-detail-table saga-detail-extra-table">
+            <tbody>
+              {{#each invoiceDetails.extraRows}}
+              <tr>
+                <th>{{label}}</th>
+                <td>{{value}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+          {{/if}}
+
+          {{#if invoiceDetails.dueRows.length}}
+          <table class="saga-detail-table saga-detail-due-table">
+            <tbody>
+              {{#each invoiceDetails.dueRows}}
+              <tr class="{{rowClass}}">
+                <th class="{{#if isDue}}due-amount{{/if}}">{{label}}</th>
+                <td class="{{#if isDue}}due-amount{{/if}}">{{value}}</td>
+              </tr>
+              {{/each}}
+            </tbody>
+          </table>
+          {{/if}}
+        </div>
+
+        {{#if signature}}
+        <div class="saga-signature-block">
+          <p>For {{billedBy.name}}</p>
+          <img src="{{signature}}" alt="Signature" />
+          <p>{{customLabels.signature}}</p>
+        </div>
+        {{/if}}
+      </aside>
+    </section>
+
+    {{#if mapped.visibility.showTaxTable}}
+    <section class="saga-summary-section">
+      <h3>Tax Summary</h3>
+      <table class="saga-summary-table">
+        <thead>
+          <tr>
+            <th rowspan="2" class="left">Tax Rate</th>
+            {{#if mapped.visibility.showIgst}}
+            <th colspan="2" class="center">IGST</th>
+            {{else}}
+            <th colspan="2" class="center">CGST</th>
+            <th colspan="2" class="center">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</th>
+            {{/if}}
+            {{#if mapped.visibility.showSummaryCess}}
+            <th colspan="2" class="center">Cess</th>
+            {{/if}}
+            <th rowspan="2">Total Tax</th>
+          </tr>
+          <tr>
+            {{#if mapped.visibility.showIgst}}
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            {{else}}
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            {{/if}}
+            {{#if mapped.visibility.showSummaryCess}}
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            {{/if}}
+          </tr>
+        </thead>
+        <tbody>
+          {{#each taxSummary.taxList}}
+          <tr>
+            <td class="left">{{gstRate}}</td>
+            {{#if ../mapped.visibility.showIgst}}
+            <td>{{igstRate}}</td>
+            <td>{{igstAmount}}</td>
+            {{else}}
+            <td>{{cgstRate}}</td>
+            <td>{{cgstAmount}}</td>
+            <td>{{sgstRate}}</td>
+            <td>{{sgstAmount}}</td>
+            {{/if}}
+            {{#if ../mapped.visibility.showSummaryCess}}
+            <td>{{cessRate}}</td>
+            <td>{{cessAmount}}</td>
+            {{/if}}
+            <td>{{taxAmount}}</td>
+          </tr>
+          {{/each}}
+          <tr class="total-row">
+            <td class="left">Total</td>
+            {{#if mapped.visibility.showIgst}}
+            <td></td>
+            <td>{{taxSummary.totalIgstAmount}}</td>
+            {{else}}
+            <td></td>
+            <td>{{taxSummary.totalCgstAmount}}</td>
+            <td></td>
+            <td>{{taxSummary.totalSgstAmount}}</td>
+            {{/if}}
+            {{#if mapped.visibility.showSummaryCess}}
+            <td></td>
+            <td>{{taxSummary.totalCessAmount}}</td>
+            {{/if}}
+            <td>{{taxSummary.totalTaxAmount}}</td>
+          </tr>
+        </tbody>
+      </table>
+      {{#if taxSummary.totalTaxInWords}}
+      <div class="saga-summary-words">
+        <span>Total Tax In Words:</span>
+        <span class="words">{{taxSummary.totalTaxInWords}}</span>
+      </div>
+      {{/if}}
+    </section>
+    {{/if}}
+
+    {{#if mapped.visibility.showHsnSummary}}
+    <section class="saga-summary-section">
+      <h3>HSN Summary</h3>
+      <table class="saga-summary-table">
+        <thead>
+          <tr>
+            <th rowspan="2" class="left">HSN/SAC</th>
+            <th rowspan="2" class="center">Taxable Value</th>
+            {{#if mapped.visibility.showIgst}}
+            <th colspan="2" class="center">IGST</th>
+            {{else}}
+            <th colspan="2" class="center">CGST</th>
+            <th colspan="2" class="center">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}</th>
+            {{/if}}
+            {{#if mapped.visibility.showSummaryCess}}
+            <th colspan="2" class="center">Cess</th>
+            {{/if}}
+            <th rowspan="2">Total Tax</th>
+          </tr>
+          <tr>
+            {{#if mapped.visibility.showIgst}}
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            {{else}}
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            {{/if}}
+            {{#if mapped.visibility.showSummaryCess}}
+            <th class="center">Rate</th>
+            <th class="center">Amount</th>
+            {{/if}}
+          </tr>
+        </thead>
+        <tbody>
+          {{#each hsnSummary.hsnList}}
+          <tr>
+            <td class="left">{{hsn}}</td>
+            <td>{{taxableValue}}</td>
+            {{#if showIgst}}
+            <td>{{igstRate}}</td>
+            <td>{{igstAmount}}</td>
+            {{else}}
+            <td>{{cgstRate}}</td>
+            <td>{{cgstAmount}}</td>
+            <td>{{sgstRate}}</td>
+            <td>{{sgstAmount}}</td>
+            {{/if}}
+            {{#if ../mapped.visibility.showSummaryCess}}
+            <td>{{cessRate}}</td>
+            <td>{{cessAmount}}</td>
+            {{/if}}
+            <td>{{taxAmount}}</td>
+          </tr>
+          {{/each}}
+          <tr class="total-row">
+            <td class="left">Total</td>
+            <td>{{hsnSummary.totalTaxableValue}}</td>
+            {{#if mapped.visibility.showIgst}}
+            <td></td>
+            <td>{{hsnSummary.totalIgstAmount}}</td>
+            {{else}}
+            <td></td>
+            <td>{{hsnSummary.totalCgstAmount}}</td>
+            <td></td>
+            <td>{{hsnSummary.totalSgstAmount}}</td>
+            {{/if}}
+            {{#if mapped.visibility.showSummaryCess}}
+            <td></td>
+            <td>{{hsnSummary.totalCessAmount}}</td>
+            {{/if}}
+            <td>{{hsnSummary.totalTaxAmount}}</td>
+          </tr>
+        </tbody>
+      </table>
+      {{#if hsnSummary.totalTaxInWords}}
+      <div class="saga-summary-words">
+        <span>Total Tax In Words:</span>
+        <span class="words">{{hsnSummary.totalTaxInWords}}</span>
+      </div>
+      {{/if}}
+    </section>
+    {{/if}}
+
+    {{#if mapped.visibility.contactStrip}}
+    <section class="saga-contact-strip">
+      <p>
+        {{customLabels.contact}}
+        {{#if contact.email}}
+        {{customLabels.contactEmail}} <strong>{{contact.email}}</strong>
+        {{/if}}
+        {{#if contact.phone}}
+        {{#if contact.email}}, {{/if}}{{customLabels.contactPhone}} <strong>{{contact.phone}}</strong>
+        {{/if}}
+      </p>
+    </section>
+    {{/if}}
+  </div>
+
+  <div class="no-dibella invoice-letterhead-footer{{#unless letterHeadFooter}} is-empty{{/unless}}">
+    {{#if letterHeadFooter}}
+    <img src="{{letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+    <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>
