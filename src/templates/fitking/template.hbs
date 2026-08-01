@@ -344,9 +344,7 @@
                 </td>
                 {{/if}}
                 {{#if (eq kind "model")}}
-                <td class="text-center fk-model-cell">{{#if ../model}}{{../model}}{{else}}{{#if
-                  ../custom.modelNo}}{{../custom.modelNo}}{{else}}{{#if
-                  ../custom.model}}{{../custom.model}}{{else}}{{../sku}}{{/if}}{{/if}}{{/if}}</td>
+                <td class="text-center fk-model-cell">{{../sku}}</td>
                 {{/if}}
                 {{#if (eq kind "hsn")}}<td class="text-center fk-hsn-cell">{{../hsn}}</td>{{/if}}
                 {{#if (eq kind "rate")}}<td class="text-center fk-price-cell">{{formatCurrency ../rate ../../invoice}}

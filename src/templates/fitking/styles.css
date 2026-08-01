@@ -510,6 +510,7 @@
 .fk-model-cell {
   font-size: var(--fk-font-size-base);
   color: #333;
+  white-space: nowrap;
 }
 
 .fk-custom-cell {

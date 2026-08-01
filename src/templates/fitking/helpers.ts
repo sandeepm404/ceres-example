@@ -229,23 +229,15 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return resolveAssetUrl(val);
   });
 
-  // A line item's pictures. The contract declares three fields for them —
-  // `originalImages`, `images` and `thumbnail` (see InvoiceItem in
-  // src/main/invoicePayloadContract.ts) — and which one a document fills
-  // depends on how its images were uploaded, so reading only the first leaves
-  // the photo column blank for the others.
+  // A line item's pictures. The photo column always shows the thumbnail
+  // array (`images`), never `originalImages` — those are full-resolution
+  // uploads that are too heavy for the small in-table photo.
   function resolveItemImages(item: any): string[] {
     if (!item || typeof item !== "object") return [];
 
-    for (const key of ["originalImages", "images"]) {
-      const urls = (Array.isArray(item[key]) ? item[key] : [])
-        .map(resolveAssetUrl)
-        .filter(Boolean);
-      if (urls.length) return urls;
-    }
-
-    const thumbnail = resolveAssetUrl(item.thumbnail);
-    return thumbnail ? [thumbnail] : [];
+    return (Array.isArray(item.images) ? item.images : [])
+      .map(resolveAssetUrl)
+      .filter(Boolean);
   }
 
   HB.registerHelper("itemImages", function (item: any) {
@@ -501,7 +493,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     sno: { colClass: "fk-col-sno", label: "" },
     name: { colClass: "fk-col-desc", label: "Item", labelKey: "item" },
     photo: { colClass: "fk-col-photo", label: "" },
-    model: { colClass: "fk-col-model", label: "Model  No", labelKey: "model" },
+    model: { colClass: "fk-col-model", label: "Model No.", labelKey: "model" },
     hsn: { colClass: "fk-col-hsn", label: "HSN/SAC", labelKey: "hsn" },
     rate: { colClass: "fk-col-price", label: "Unit Price", labelKey: "rate" },
     qty: { colClass: "fk-col-qty", label: "Qty", labelKey: "quantity" },
@@ -557,7 +549,13 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       const key = String(col.key || col.id || col.name || "").trim();
       if (!key) continue;
       const label = typeof col.label === "string" ? col.label.trim() : "";
-      const kind = COLUMN_KEY_KINDS[normalizeColumnKey(key)];
+      // A business's own custom column (e.g. one it named "Model No.") has a
+      // random generated key, so it never matches by key. Falling back to the
+      // label catches that case and routes it through the "model" kind, which
+      // always renders the item's SKU rather than that column's stored value.
+      const kind =
+        COLUMN_KEY_KINDS[normalizeColumnKey(key)] ||
+        (COLUMN_KEY_KINDS[normalizeColumnKey(label)] === "model" ? "model" : undefined);
 
       // An unrecognised key is a user-defined column, rendered from item data.
       if (!kind && !label) continue;
@@ -691,7 +689,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   > = {
     sno: { min: 30, max: 46 },
     photo: { min: 152, max: 152 },
-    model: { min: 70, max: 150, wraps: true },
+    model: { min: 70, max: 200 },
     hsn: { min: 66, max: 110 },
     rate: { min: 82, max: 190 },
     qty: { min: 46, max: 90 },
@@ -776,13 +774,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   ): string {
     switch (kind) {
       case "model":
-        return String(
-          item?.model ||
-            item?.custom?.modelNo ||
-            item?.custom?.model ||
-            item?.sku ||
-            ""
-        );
+        return String(item?.sku || "");
       case "hsn":
         return String(item?.hsn || "");
       case "rate":
