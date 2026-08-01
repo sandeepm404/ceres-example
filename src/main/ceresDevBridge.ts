@@ -12,7 +12,7 @@ export function initDevBridge(): boolean {
     const newParams = new URLSearchParams(window.location.search);
     newParams.set("template", DEFAULT_TEMPLATE);
     window.location.replace(
-      window.location.pathname + "?" + newParams.toString()
+      `${window.location.pathname}?${newParams.toString()}`
     );
     return true;
   }
@@ -40,18 +40,18 @@ export function initDevBridge(): boolean {
       fetch(`./templates/${tplName}/manifest.json`)
         .then((r) => {
           if (!r.ok)
-            throw new Error("Could not load local manifest for " + tplName);
+            throw new Error(`Could not load local manifest for ${tplName}`);
           return r.json();
         })
         .then((manifest) => {
-          const fullPath =
+          const fullPath = `${
             window.location.origin +
-            window.location.pathname.replace("index.html", "") +
-            `templates/${tplName}/${manifest.version}/manifest.json`;
+            window.location.pathname.replace("index.html", "")
+          }templates/${tplName}/${manifest.version}/manifest.json`;
           const newParams = new URLSearchParams(window.location.search);
           newParams.set("template", btoa(fullPath));
           window.location.replace(
-            window.location.pathname + "?" + newParams.toString()
+            `${window.location.pathname}?${newParams.toString()}`
           );
         })
         .catch((e) => {
@@ -80,7 +80,7 @@ export function initDevBridge(): boolean {
           const newParams = new URLSearchParams(window.location.search);
           newParams.set("apiUrl", firstSample);
           window.location.replace(
-            window.location.pathname + "?" + newParams.toString()
+            `${window.location.pathname}?${newParams.toString()}`
           );
         }
       });
@@ -225,6 +225,9 @@ async function injectModal(
     }
     #ceresManifestBadge.copied .path { color: #166534; }
     #ceresManifestBadge.copied .copy-icon { color: #15803d; }
+    @media print {
+      #ceresManifestBadge { display: none !important; }
+    }
   `;
   document.head.appendChild(style);
 

@@ -17,8 +17,8 @@ Handlebars.registerHelper("increment", function (value: number) {
 
 // ─── DOM Pagination ──────────────────────────────────────────────────────────
 // To provide a true "PDF Viewer" experience on the web where the user sees
-// discrete A4 pages, we must physically paginate the DOM. 
-// This script runs once the template is rendered and splits the table rows 
+// discrete A4 pages, we must physically paginate the DOM.
+// This script runs once the template is rendered and splits the table rows
 // across multiple `.dt-page` containers.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -53,22 +53,27 @@ function paginateTable(): void {
     const rowRect = row.getBoundingClientRect();
 
     // If the bottom of the row extends past the bottom padding boundary of the page
-    if (rowRect.bottom > pageRect.bottom - PAGE_BOTTOM_PADDING && currentItemsBody.children.length > 1) {
+    if (
+      rowRect.bottom > pageRect.bottom - PAGE_BOTTOM_PADDING &&
+      currentItemsBody.children.length > 1
+    ) {
       // Remove the row that caused overflow
       row.remove();
-      
+
       // Create a new page clone
       const newPage = originalPage.cloneNode(true) as HTMLElement;
-      
+
       // Strip out the company header & info row to save space on subsequent pages
       newPage.querySelector(".dt-company-header")?.remove();
       newPage.querySelector(".dt-info-row")?.remove();
       newPage.querySelector(".dt-invoice-title-bar")?.remove();
-      
+
       // Clear the cloned table body
-      const newItemsBody = newPage.querySelector(".dt-items-body") as HTMLElement;
+      const newItemsBody = newPage.querySelector(
+        ".dt-items-body"
+      ) as HTMLElement;
       if (newItemsBody) newItemsBody.innerHTML = "";
-      
+
       // Insert the new page before the letterhead footer
       const footer = document.querySelector(".dt-letterhead-footer");
       if (footer) {
@@ -76,10 +81,10 @@ function paginateTable(): void {
       } else {
         shell.appendChild(newPage);
       }
-      
+
       currentPage = newPage;
       currentItemsBody = newItemsBody;
-      
+
       // Append the overflowed row to the new page
       currentItemsBody.appendChild(row);
     }
@@ -88,24 +93,26 @@ function paginateTable(): void {
   // Append bottom content to the last page
   if (bottomContent) {
     currentPage.appendChild(bottomContent);
-    
+
     // Check if bottom content caused an overflow
     const pageRect = currentPage.getBoundingClientRect();
     const bottomRect = bottomContent.getBoundingClientRect();
-    
+
     if (bottomRect.bottom > pageRect.bottom - PAGE_BOTTOM_PADDING) {
       bottomContent.remove();
-      
+
       const newPage = originalPage.cloneNode(true) as HTMLElement;
       newPage.querySelector(".dt-company-header")?.remove();
       newPage.querySelector(".dt-info-row")?.remove();
       newPage.querySelector(".dt-invoice-title-bar")?.remove();
-      
-      const newItemsBody = newPage.querySelector(".dt-items-body") as HTMLElement;
+
+      const newItemsBody = newPage.querySelector(
+        ".dt-items-body"
+      ) as HTMLElement;
       if (newItemsBody) newItemsBody.innerHTML = "";
-      
+
       newPage.appendChild(bottomContent);
-      
+
       const footer = document.querySelector(".dt-letterhead-footer");
       if (footer) {
         shell.insertBefore(newPage, footer);
@@ -119,7 +126,7 @@ function paginateTable(): void {
   // Restore the spacer row to all pages so the table stretches cleanly
   if (spacerRow) {
     const allPages = document.querySelectorAll(".dt-page");
-    allPages.forEach(page => {
+    allPages.forEach((page) => {
       const body = page.querySelector(".dt-items-body");
       if (body) {
         body.appendChild(spacerRow.cloneNode(true));

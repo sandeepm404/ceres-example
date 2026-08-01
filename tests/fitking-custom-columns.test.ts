@@ -13,7 +13,15 @@ const systemColumn = (key: string, label: string) => ({
 const basePayload = (extra: Record<string, unknown> = {}) => ({
   invoiceTitle: "Quotation",
   invoiceNumber: "A00004",
-  items: [{ _id: "1", name: "Elliptical Cross Trainer", quantity: 1, rate: 100, amount: 100 }],
+  items: [
+    {
+      _id: "1",
+      name: "Elliptical Cross Trainer",
+      quantity: 1,
+      rate: 100,
+      amount: 100,
+    },
+  ],
   columns: [systemColumn("name", "Item"), systemColumn("rate", "Rate")],
   ...extra,
 });
@@ -23,17 +31,25 @@ const render = (payload: Record<string, unknown>) =>
 
 const headerLabels = (html: string) => {
   const thead = /<thead>([\s\S]*?)<\/thead>/.exec(html)?.[1] ?? "";
-  return [...thead.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(([, text]) => text.trim());
+  return [...thead.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(([, text]) =>
+    text.trim()
+  );
 };
 
 const customCells = (html: string) =>
-  [...html.matchAll(/<td class="text-center fk-custom-cell[^"]*">([\s\S]*?)<\/td>/g)].map(
-    ([, text]) => text.trim()
-  );
+  [
+    ...html.matchAll(
+      /<td class="text-center fk-custom-cell[^"]*">([\s\S]*?)<\/td>/g
+    ),
+  ].map(([, text]) => text.trim());
 
 // Cells whose value came out numeric are marked so they never wrap mid-number.
 const nowrapCells = (html: string) =>
-  [...html.matchAll(/<td class="text-center fk-custom-cell( fk-nowrap)?">([\s\S]*?)<\/td>/g)]
+  [
+    ...html.matchAll(
+      /<td class="text-center fk-custom-cell( fk-nowrap)?">([\s\S]*?)<\/td>/g
+    ),
+  ]
     .filter(([, nowrap]) => nowrap)
     .map(([, , text]) => text.trim());
 
@@ -46,14 +62,19 @@ const headerCount = (html: string) => {
   }, 0);
 };
 const colCount = (html: string) =>
-  (/<colgroup>([\s\S]*?)<\/colgroup>/.exec(html)?.[1].match(/<col /g) ?? []).length;
+  (/<colgroup>([\s\S]*?)<\/colgroup>/.exec(html)?.[1].match(/<col /g) ?? [])
+    .length;
 
 beforeAll(registerFitkingHelpers);
 
 describe("fitking user-defined item columns", () => {
   const withCustom = (columns: unknown[], items?: unknown[]) =>
     basePayload({
-      columns: [systemColumn("name", "Item"), ...columns, systemColumn("rate", "Rate")],
+      columns: [
+        systemColumn("name", "Item"),
+        ...columns,
+        systemColumn("rate", "Rate"),
+      ],
       ...(items ? { items } : {}),
     });
 
@@ -61,7 +82,16 @@ describe("fitking user-defined item columns", () => {
     const html = render(
       withCustom(
         [{ key: "warranty", label: "Warranty", dataType: "text" }],
-        [{ _id: "1", name: "Trainer", quantity: 1, rate: 100, amount: 100, custom: { warranty: "2 yrs" } }]
+        [
+          {
+            _id: "1",
+            name: "Trainer",
+            quantity: 1,
+            rate: 100,
+            amount: 100,
+            custom: { warranty: "2 yrs" },
+          },
+        ]
       )
     );
 
@@ -155,7 +185,12 @@ describe("fitking user-defined item columns", () => {
       })
     );
 
-    expect(headerLabels(html).slice(1)).toEqual(["Item", "Warranty", "Model No", "Total"]);
+    expect(headerLabels(html).slice(1)).toEqual([
+      "Item",
+      "Warranty",
+      "Model No",
+      "Total",
+    ]);
   });
 
   it("keeps the colgroup, header and description colspan in step", () => {
@@ -228,14 +263,7 @@ describe("fitking user-defined item columns", () => {
       )
     );
 
-    expect(customCells(html)).toEqual([
-      "₹1,500",
-      "",
-      "",
-      "₹200",
-      "ok",
-      "here",
-    ]);
+    expect(customCells(html)).toEqual(["₹1,500", "", "", "₹200", "ok", "here"]);
   });
 
   // A `number` column prints as the document stores it — only a column that
@@ -245,7 +273,11 @@ describe("fitking user-defined item columns", () => {
       withCustom(
         [
           { key: "grandTotalField", label: "Total", dataType: "number" },
-          { key: "installCost", label: "Install Cost", fxReturnType: "currency" },
+          {
+            key: "installCost",
+            label: "Install Cost",
+            fxReturnType: "currency",
+          },
         ],
         [
           {
@@ -271,7 +303,14 @@ describe("fitking user-defined item columns", () => {
         [{ key: "code", label: "Code" }],
         [
           { _id: "1", name: "Trainer", quantity: 1, rate: 100, amount: 100 },
-          { _id: "2", name: "Trainer 2", quantity: 1, rate: 200, amount: 200, custom: { code: "" } },
+          {
+            _id: "2",
+            name: "Trainer 2",
+            quantity: 1,
+            rate: 200,
+            amount: 200,
+            custom: { code: "" },
+          },
         ]
       )
     );
@@ -286,7 +325,14 @@ describe("fitking user-defined item columns", () => {
         [{ key: "code", label: "Code" }],
         [
           { _id: "1", name: "Trainer", quantity: 1, rate: 100, amount: 100 },
-          { _id: "2", name: "Trainer 2", quantity: 1, rate: 200, amount: 200, custom: { code: "C-2" } },
+          {
+            _id: "2",
+            name: "Trainer 2",
+            quantity: 1,
+            rate: 200,
+            amount: 200,
+            custom: { code: "C-2" },
+          },
         ]
       )
     );
@@ -310,7 +356,10 @@ describe("fitking user-defined item columns", () => {
             quantity: 1,
             rate: 100,
             amount: 100,
-            custom: { grandTotalField: "20,13,20,21,562", note: "Some long remark" },
+            custom: {
+              grandTotalField: "20,13,20,21,562",
+              note: "Some long remark",
+            },
           },
         ]
       )

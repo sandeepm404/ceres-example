@@ -3,7 +3,7 @@
    Clean professional layout with centered title, split
    header, and right-aligned totals
    ===================================================== */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap";
 
 /* ===== CSS VARIABLES ===== */
 :root {
@@ -89,9 +89,9 @@
   max-width: var(--amt-page-width);
   min-height: var(--amt-page-min-height);
   padding: var(--amt-page-padding);
-  margin: 0 auto 24px auto;
+  margin: 0 auto 24px;
   background: var(--amt-bg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
   display: flex;
   flex-direction: column;
 }
@@ -412,7 +412,7 @@
 
 /* ===== BOTTOM FOOTER ===== */
 .amt-bottom-footer {
-  margin-top: auto;
+  margin: auto -40px -32px;
   background-color: var(--amt-footer-bg);
   color: var(--amt-footer-text);
   text-align: center;
@@ -420,9 +420,6 @@
   font-size: 10px;
   line-height: 1.6;
   border-radius: 0;
-  margin-left: -40px;
-  margin-right: -40px;
-  margin-bottom: -32px;
 }
 
 .amt-footer-line {
@@ -433,7 +430,7 @@
 /* ===== PRINT STYLES ===== */
 @media print {
   @page {
-    size: A4 portrait;
+    size: a4 portrait;
     margin: 0;
   }
 

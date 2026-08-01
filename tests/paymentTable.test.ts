@@ -302,7 +302,9 @@ describe("computePaymentColumns", () => {
     it("falls back to 'CURRENCY amount' string when bizCurrency is not a valid ISO 4217 code", () => {
       const payments = [{ amount: 1000, conversionRates: { CUSTOM: 0.5 } }];
       const result = computePaymentColumns(payments, { currency: "INR" });
-      expect(result.payments[0].amountInBizCurrencyFormatted).toBe("CUSTOM 500.00");
+      expect(result.payments[0].amountInBizCurrencyFormatted).toBe(
+        "CUSTOM 500.00"
+      );
     });
   });
 
@@ -314,13 +316,19 @@ describe("computePaymentColumns", () => {
     });
 
     it("rounds totalTds to 2 decimal places", () => {
-      const payments = [{ amount: 100, tds: 0.1 }, { amount: 100, tds: 0.2 }];
+      const payments = [
+        { amount: 100, tds: 0.1 },
+        { amount: 100, tds: 0.2 },
+      ];
       const result = computePaymentColumns(payments);
       expect(result.totalTds).toBe(0.3);
     });
 
     it("rounds totalTransactionCharge to 2 decimal places", () => {
-      const payments = [{ amount: 100, transactionCharge: 0.1 }, { amount: 100, transactionCharge: 0.2 }];
+      const payments = [
+        { amount: 100, transactionCharge: 0.1 },
+        { amount: 100, transactionCharge: 0.2 },
+      ];
       const result = computePaymentColumns(payments);
       expect(result.totalTransactionCharge).toBe(0.3);
     });

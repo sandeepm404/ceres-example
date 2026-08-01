@@ -33,7 +33,7 @@ describe("fitking UPI QR", () => {
 
     const src = srcOf(html, "fk-upi-qr");
     expect(src).toMatch(/^data:image\/gif;base64,/);
-    expect(html).not.toContain("src=\"upi://");
+    expect(html).not.toContain('src="upi://');
     expect(html).toContain("Scan to pay via UPI");
   });
 
@@ -54,7 +54,7 @@ describe("fitking UPI QR", () => {
       bankAccount: { accountNo: "1", qrCode: "z".repeat(5000) },
     });
 
-    expect(html).not.toContain("fk-upi-qr\"");
+    expect(html).not.toContain('fk-upi-qr"');
     // Whitespace between the literal "UPI:" and the id is insignificant HTML
     // (the formatter is free to wrap template.hbs across lines here), so this
     // matches on content rather than an exact run of spaces.

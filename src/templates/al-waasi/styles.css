@@ -1,11 +1,11 @@
 /* Al Waasi Invoice Template Styles */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500&display=swap");
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500&display=swap";
 
 :root {
   --aw-font: var(--ceres-font-family, "Arial", "Inter", sans-serif);
   --aw-accent: #521751;
-  --aw-accent-alpha: rgba(82, 23, 81, 0.75);
-  --aw-accent-text: rgba(82, 23, 81, 0.8);
+  --aw-accent-alpha: rgb(82 23 81 / 75%);
+  --aw-accent-text: rgb(82 23 81 / 80%);
   --aw-text: #22272f;
   --aw-muted: #696f77;
   --aw-border-dark: #2b2b2b;
@@ -248,7 +248,7 @@
   font-weight: 400;
   font-size: 12px;
   padding: 6px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgb(255 255 255 / 60%);
   text-transform: uppercase;
   text-align: left;
   height: 30px;
@@ -530,7 +530,7 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--aw-accent);
-  font-family: "Inter", "Noto Sans Arabic", sans-serif;
+  font-family: Inter, "Noto Sans Arabic", sans-serif;
   line-height: 16px;
 }
 
@@ -540,7 +540,7 @@
   font-size: 11px;
   font-weight: 500;
   color: var(--aw-accent);
-  font-family: "Inter", "Noto Sans Arabic", sans-serif;
+  font-family: Inter, "Noto Sans Arabic", sans-serif;
   gap: 8px;
 }
 

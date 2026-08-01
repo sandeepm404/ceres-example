@@ -25,4 +25,4 @@ import "./styles.css";
   }
 })();
 
-export { };
+export {};

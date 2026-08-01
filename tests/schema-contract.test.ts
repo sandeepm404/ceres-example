@@ -22,7 +22,11 @@ addFormats(ajv);
 ajv.addSchema(payloadSchema);
 ajv.addSchema(normalizedStateSchema);
 
-const validateAgainst = (schemaId: string, definition: string, data: unknown) => {
+const validateAgainst = (
+  schemaId: string,
+  definition: string,
+  data: unknown
+) => {
   const validate = ajv.getSchema(`${schemaId}#/definitions/${definition}`);
   if (!validate) {
     throw new Error(`Definition ${definition} missing from ${schemaId}`);
@@ -71,7 +75,11 @@ describe("generated schemas validate the contract payload shapes", () => {
 
   it("rejects a payload that violates the contract", () => {
     const broken = { ...wrappedSample, invoice: "not-an-object" };
-    const { valid } = validateAgainst(payloadSchema.$id, "CeresTemplatePayload", broken);
+    const { valid } = validateAgainst(
+      payloadSchema.$id,
+      "CeresTemplatePayload",
+      broken
+    );
     expect(valid).toBe(false);
   });
 });
@@ -109,7 +117,9 @@ describe("schema generation tooling", () => {
 
       // Simulate a contract change without regeneration: the committed schema
       // no longer matches what the TypeScript types produce.
-      const driftedDir = fs.mkdtempSync(path.join(os.tmpdir(), "ceres-schemas-drift-"));
+      const driftedDir = fs.mkdtempSync(
+        path.join(os.tmpdir(), "ceres-schemas-drift-")
+      );
       try {
         fs.readdirSync(path.join(repoRoot, "schemas")).forEach((file) => {
           fs.copyFileSync(
@@ -122,9 +132,9 @@ describe("schema generation tooling", () => {
         delete drifted.definitions.CeresTemplatePayload.properties.invoice;
         fs.writeFileSync(driftedFile, `${JSON.stringify(drifted, null, 2)}\n`);
 
-        expect(() => runGenerator(["--check", "--schemas-dir", driftedDir])).toThrow(
-          /Stale schemas/
-        );
+        expect(() =>
+          runGenerator(["--check", "--schemas-dir", driftedDir])
+        ).toThrow(/Stale schemas/);
       } finally {
         fs.rmSync(driftedDir, { recursive: true, force: true });
       }

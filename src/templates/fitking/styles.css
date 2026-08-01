@@ -6,7 +6,7 @@
    - SKU ID = var(--fk-font-size-sm)
    - Rest all = var(--fk-font-size-base)
    ===================================================== */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap";
 
 /* ===== CSS VARIABLES ===== */
 :root {
@@ -39,6 +39,7 @@
   font-family: var(--fk-font);
   font-size: var(--fk-font-size-base);
   color: var(--fk-text);
+
   /* No backdrop: the shell is only as wide as the page, so a grey background
      plus bottom padding rendered as a grey band under the letterhead footer. */
   background: transparent;
@@ -63,7 +64,7 @@
   width: 100%;
   max-width: var(--fk-page-width);
   min-height: var(--fk-page-min-height);
-  padding: 0px var(--fk-page-padding-horizontal, 24px) 24px var(--fk-page-padding-horizontal, 24px);
+  padding: 0 var(--fk-page-padding-horizontal, 24px) 24px var(--fk-page-padding-horizontal, 24px);
   margin: 0 auto;
   background: var(--fk-bg);
   display: flex;
@@ -152,14 +153,13 @@
   right: var(--fk-font-size-lg);
   background: #15b944;
   border-radius: 10px;
-  padding: 0px 12px;
+  padding: 0 12px;
   color: #fff;
   font-size: var(--fk-font-size-sm);
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  align-content: center;
-  justify-content: center;
+  place-content: center center;
   pointer-events: none;
   line-height: 2;
   z-index: 5;
@@ -262,7 +262,7 @@
   border-top: 1px solid var(--fk-border-light);
   border-right: 1px solid var(--fk-border-light);
   padding: 4px 8px;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
   word-break: break-all;
 }
 
@@ -326,7 +326,7 @@
   border-collapse: collapse;
   font-size: var(--fk-font-size-base);
   table-layout: fixed;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .fk-item-table thead th {
@@ -341,7 +341,7 @@
 
 .fk-item-table tbody td {
   border: 1px solid var(--fk-border-light);
-  padding: 8px 8px;
+  padding: 8px;
   vertical-align: top;
   font-size: var(--fk-font-size-base);
 }
@@ -591,7 +591,7 @@
 
 .fk-terms-list {
   padding-left: var(--fk-font-size-lg);
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
 }
 
 .fk-terms-list li {
@@ -696,7 +696,7 @@
 
 .fk-summary-table td {
   border: 1px solid var(--fk-border-light);
-  padding: 8px 8px;
+  padding: 8px;
   vertical-align: top;
   color: #333;
 }
@@ -805,11 +805,11 @@
 }
 
 .fk-additional-notes-content p {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
 }
 
 .fk-bank-kv p {
-  margin: 0 0 4px 0;
+  margin: 0 0 4px;
 }
 
 .fk-bank-key {
@@ -838,7 +838,7 @@
 .fk-upi-title {
   font-size: var(--fk-font-size-base);
   color: var(--fk-text);
-  margin: 0 0 8px 0;
+  margin: 0 0 8px;
 }
 
 .fk-upi-qr {

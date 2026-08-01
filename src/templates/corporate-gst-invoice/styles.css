@@ -1,5 +1,5 @@
 /* --- Corporate GST Invoice Template Styles --- */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap";
 
 :root {
   --corp-font: var(--ceres-font-family, "Inter", "Helvetica Neue", Arial, sans-serif);
@@ -177,7 +177,7 @@
 }
 
 .corp-item-table tbody td {
-  padding: 14px 14px;
+  padding: 14px;
   border-bottom: 1px solid #eee;
   vertical-align: top;
 }
