@@ -9,8 +9,12 @@ const base = {
 };
 
 const taxRows = { taxList: [{ rate: 18, taxableAmount: 100, totalTax: 18 }] };
-const hsnRows = { hsnList: [{ hsn: "9403", taxableAmount: 100, totalTax: 18 }] };
-const payments = [{ _id: "p1", amount: 50, mode: "UPI", referenceNumber: "R1" }];
+const hsnRows = {
+  hsnList: [{ hsn: "9403", taxableAmount: 100, totalTax: 18 }],
+};
+const payments = [
+  { _id: "p1", amount: 50, mode: "UPI", referenceNumber: "R1" },
+];
 
 const render = (payload: Record<string, unknown>) =>
   template(normalizeInvoiceTemplateState({ ...base, ...payload } as any));
@@ -26,7 +30,9 @@ describe("Tax Details visibility", () => {
   const off = { advanceOptions: { taxSummaryView: "NONE" } };
 
   it("shows when configured on and rows exist", () => {
-    expect(shows(render({ ...on, taxSummary: taxRows }), "Tax Details")).toBe(true);
+    expect(shows(render({ ...on, taxSummary: taxRows }), "Tax Details")).toBe(
+      true
+    );
   });
 
   it("hides when configured on but there are no rows", () => {
@@ -34,7 +40,9 @@ describe("Tax Details visibility", () => {
   });
 
   it("hides when configured off even though rows exist", () => {
-    expect(shows(render({ ...off, taxSummary: taxRows }), "Tax Details")).toBe(false);
+    expect(shows(render({ ...off, taxSummary: taxRows }), "Tax Details")).toBe(
+      false
+    );
   });
 
   it("hides when the view setting is absent", () => {
@@ -56,7 +64,9 @@ describe("HSN Summary visibility", () => {
   const off = { advanceOptions: { showHSNSummaryInInvoice: false } };
 
   it("shows when configured on and rows exist", () => {
-    expect(shows(render({ ...on, hsnSummary: hsnRows }), "HSN Summary")).toBe(true);
+    expect(shows(render({ ...on, hsnSummary: hsnRows }), "HSN Summary")).toBe(
+      true
+    );
   });
 
   it("hides when configured on but there are no rows", () => {
@@ -64,7 +74,9 @@ describe("HSN Summary visibility", () => {
   });
 
   it("hides when configured off even though rows exist", () => {
-    expect(shows(render({ ...off, hsnSummary: hsnRows }), "HSN Summary")).toBe(false);
+    expect(shows(render({ ...off, hsnSummary: hsnRows }), "HSN Summary")).toBe(
+      false
+    );
   });
 
   it("hides when the flag is absent", () => {
@@ -89,7 +101,9 @@ describe("Payments History visibility", () => {
   });
 
   it("hides when configured on but there are no payments", () => {
-    expect(shows(render({ showPaymentsTable: true }), "Payments History")).toBe(false);
+    expect(shows(render({ showPaymentsTable: true }), "Payments History")).toBe(
+      false
+    );
   });
 
   it("hides when configured off even though payments exist", () => {
@@ -99,6 +113,8 @@ describe("Payments History visibility", () => {
   });
 
   it("hides when the flag is absent", () => {
-    expect(shows(render({ allPayments: payments }), "Payments History")).toBe(false);
+    expect(shows(render({ allPayments: payments }), "Payments History")).toBe(
+      false
+    );
   });
 });

@@ -188,7 +188,11 @@ const toBooleanValue = (value: unknown, fallback = false): boolean => {
 
 const toNonEmptyString = (value: unknown): string | null => {
   const normalized = toStringValue(value);
-  return normalized.length > 0 && normalized !== "null" && normalized !== "undefined" ? normalized : null;
+  return normalized.length > 0 &&
+    normalized !== "null" &&
+    normalized !== "undefined"
+    ? normalized
+    : null;
 };
 
 const hasValue = (value: unknown): boolean => {
@@ -453,12 +457,12 @@ const normalizeInvoiceColumns = (
         // cgst/sgst labels are derived from igst/utgst flags, not column.label — accounts can mislabel it (e.g. cgst tagged "IGST")
         label:
           key === "sgst"
-            ? Boolean(invoice.utgst)
+            ? invoice.utgst
               ? "UTGST"
               : toStringValue(column.label)
             : key === "cgst"
-              ? "CGST"
-              : toStringValue(column.label),
+            ? "CGST"
+            : toStringValue(column.label),
         className: getColumnClass(key),
         isHidden: Boolean(column.isHidden) || !visible,
         dataType,

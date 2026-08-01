@@ -1,5 +1,5 @@
 /* --- Advocate Bill Template Styles --- */
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap");
+@import "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap";
 
 :root {
   --advocate-font-serif: var(--ceres-font-family, "Libre Baskerville", "Georgia", serif);

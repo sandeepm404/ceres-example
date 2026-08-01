@@ -5,7 +5,15 @@ import template from "../src/templates/fitking/template.hbs";
 const basePayload = (extra: Record<string, unknown> = {}) => ({
   invoiceTitle: "Quotation",
   invoiceNumber: "A00004",
-  items: [{ _id: "1", name: "Elliptical Cross Trainer", quantity: 1, rate: 100, amount: 100 }],
+  items: [
+    {
+      _id: "1",
+      name: "Elliptical Cross Trainer",
+      quantity: 1,
+      rate: 100,
+      amount: 100,
+    },
+  ],
   ...extra,
 });
 
@@ -29,10 +37,22 @@ describe("fitking party custom fields", () => {
   it("renders custom fields on every party block", () => {
     const html = render(
       basePayload({
-        billedBy: { name: "Fitking", customFields: [{ label: "Client ID", value: "C-1" }] },
-        billedTo: { name: "Buyer", customFields: [{ label: "Buyer Code", value: "B-2" }] },
-        shippedFrom: { name: "Warehouse", customFields: [{ label: "Dock", value: "D-3" }] },
-        shippedTo: { name: "Site", customFields: [{ label: "Site Ref", value: "S-4" }] },
+        billedBy: {
+          name: "Fitking",
+          customFields: [{ label: "Client ID", value: "C-1" }],
+        },
+        billedTo: {
+          name: "Buyer",
+          customFields: [{ label: "Buyer Code", value: "B-2" }],
+        },
+        shippedFrom: {
+          name: "Warehouse",
+          customFields: [{ label: "Dock", value: "D-3" }],
+        },
+        shippedTo: {
+          name: "Site",
+          customFields: [{ label: "Site Ref", value: "S-4" }],
+        },
       })
     );
 
@@ -56,7 +76,11 @@ describe("fitking party custom fields", () => {
       })
     );
 
-    expect(customRows(html)).toEqual(["Client ID=C-1", "CIN=U74999", "Region=West"]);
+    expect(customRows(html)).toEqual([
+      "Client ID=C-1",
+      "CIN=U74999",
+      "Region=West",
+    ]);
   });
 
   // showInInvoice is absent far more often than it is false, so it has to be
@@ -71,7 +95,9 @@ describe("fitking party custom fields", () => {
             { label: "Default", value: "yes" },
             { label: "Hidden", value: "no", params: { showInInvoice: false } },
           ],
-          additionalIds: [{ label: "HiddenId", value: "x", showInInvoice: false }],
+          additionalIds: [
+            { label: "HiddenId", value: "x", showInInvoice: false },
+          ],
         },
       })
     );

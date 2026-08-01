@@ -94,12 +94,21 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // keyword are mapped; anything else (unset, "auto", a value we don't know)
   // falls back to A4, matching the previous hardcoded behaviour.
   const PAGE_SIZE_KEYWORDS: Record<string, string> = {
-    a3: "A3", a4: "A4", a5: "A5", b4: "B4", b5: "B5",
-    letter: "letter", legal: "legal", ledger: "ledger", tabloid: "ledger",
+    a3: "A3",
+    a4: "A4",
+    a5: "A5",
+    b4: "B4",
+    b5: "B5",
+    letter: "letter",
+    legal: "legal",
+    ledger: "ledger",
+    tabloid: "ledger",
   };
 
   HB.registerHelper("pageSizeKeyword", function (format: any) {
-    const key = String(format ?? "").trim().toLowerCase();
+    const key = String(format ?? "")
+      .trim()
+      .toLowerCase();
     return PAGE_SIZE_KEYWORDS[key] || "A4";
   });
 
@@ -112,7 +121,16 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       return isNaN(parsed) ? null : parsed;
     }
     if (typeof val === "object" && val !== null) {
-      const candidateKeys = ["amount", "total", "value", "totalDiscount", "discountAmount", "val", "price", "rate"];
+      const candidateKeys = [
+        "amount",
+        "total",
+        "value",
+        "totalDiscount",
+        "discountAmount",
+        "val",
+        "price",
+        "rate",
+      ];
       for (const k of candidateKeys) {
         if (val[k] !== undefined && val[k] !== null) {
           const res = extractNumericValue(val[k]);
@@ -173,7 +191,11 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     // `showInInvoice` is opt-out: it is frequently absent on records that are
     // meant to print, so only an explicit false hides the row.
     for (const field of asArray(party.customFields)) {
-      add(field?.label ?? field?.name, field?.value, field?.params?.showInInvoice === false);
+      add(
+        field?.label ?? field?.name,
+        field?.value,
+        field?.params?.showInInvoice === false
+      );
     }
     for (const id of asArray(party.additionalIds)) {
       add(id?.label, id?.value, id?.showInInvoice === false);
@@ -238,20 +260,44 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // `holderName` the markup used to read, so those rows printed empty or fell
   // back to the biller. Rows with no value are dropped, so an account that has
   // no SWIFT/IBAN prints exactly what it did before.
-  const BANK_ROWS: Array<{ valueKeys: string[]; labelKeys: string[]; label: string }> = [
-    { valueKeys: ["bankName", "bank"], labelKeys: ["bankName", "bank"], label: "Bank Name" },
+  const BANK_ROWS: Array<{
+    valueKeys: string[];
+    labelKeys: string[];
+    label: string;
+  }> = [
+    {
+      valueKeys: ["bankName", "bank"],
+      labelKeys: ["bankName", "bank"],
+      label: "Bank Name",
+    },
     {
       valueKeys: ["accountHolderName", "holderName", "name"],
       labelKeys: ["accountName", "accountHolderName", "holderName"],
       label: "Account Name",
     },
-    { valueKeys: ["accountNo", "accountNumber"], labelKeys: ["accountNo", "accountNumber"], label: "Account No" },
-    { valueKeys: ["ifsc", "ifscCode"], labelKeys: ["ifsc", "ifscCode"], label: "IFSC" },
-    { valueKeys: ["swift", "swiftCode"], labelKeys: ["swift", "swiftCode"], label: "SWIFT" },
+    {
+      valueKeys: ["accountNo", "accountNumber"],
+      labelKeys: ["accountNo", "accountNumber"],
+      label: "Account No",
+    },
+    {
+      valueKeys: ["ifsc", "ifscCode"],
+      labelKeys: ["ifsc", "ifscCode"],
+      label: "IFSC",
+    },
+    {
+      valueKeys: ["swift", "swiftCode"],
+      labelKeys: ["swift", "swiftCode"],
+      label: "SWIFT",
+    },
     { valueKeys: ["iban"], labelKeys: ["iban"], label: "IBAN" },
     { valueKeys: ["branch"], labelKeys: ["branch"], label: "Branch" },
     { valueKeys: ["sortCode"], labelKeys: ["sortCode"], label: "Sort Code" },
-    { valueKeys: ["accountType"], labelKeys: ["accountType"], label: "Account Type" },
+    {
+      valueKeys: ["accountType"],
+      labelKeys: ["accountType"],
+      label: "Account Type",
+    },
   ];
 
   HB.registerHelper("bankFields", function (invoice: any) {
@@ -297,7 +343,9 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     }
 
     // Whatever else the account has been configured to carry.
-    for (const field of Array.isArray(account.customFields) ? account.customFields : []) {
+    for (const field of Array.isArray(account.customFields)
+      ? account.customFields
+      : []) {
       if (field?.params?.showInInvoice === false) continue;
       const label = typeof field?.label === "string" ? field.label.trim() : "";
       const value = stringifyFieldValue(field?.value);
@@ -324,23 +372,38 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     let customCurrencySymbol: any;
     if (typeof invoiceOrSymbol === "string") {
       customCurrencySymbol = invoiceOrSymbol;
-    } else if (typeof invoiceOrSymbol === "object" && invoiceOrSymbol !== null) {
+    } else if (
+      typeof invoiceOrSymbol === "object" &&
+      invoiceOrSymbol !== null
+    ) {
       currency = invoiceOrSymbol.currency;
       subUnitLength = invoiceOrSymbol.subUnitLength;
       customCurrencySymbol = invoiceOrSymbol.customCurrencySymbol;
     }
 
-    return formatCurrency(num, currency, undefined, subUnitLength, customCurrencySymbol);
+    return formatCurrency(
+      num,
+      currency,
+      undefined,
+      subUnitLength,
+      customCurrencySymbol
+    );
   }
 
   HB.registerHelper("formatCurrency", formatCurrencyValue);
 
   // The item's tax-inclusive total for the declared `total` column — see
   // `lineItemTax` below for how the tax figure is derived.
-  HB.registerHelper("formatLineTotal", function (item: any, invoice: any, visibility: any) {
-    const amount = extractNumericValue(item?.amount) ?? 0;
-    return formatCurrencyValue(amount + lineItemTax(item, visibility), invoice);
-  });
+  HB.registerHelper(
+    "formatLineTotal",
+    function (item: any, invoice: any, visibility: any) {
+      const amount = extractNumericValue(item?.amount) ?? 0;
+      return formatCurrencyValue(
+        amount + lineItemTax(item, visibility),
+        invoice
+      );
+    }
+  );
 
   HB.registerHelper("formatPhone", function (phone: any) {
     if (typeof phone !== "string" && typeof phone !== "number") return "";
@@ -362,30 +425,40 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     sgst: ["sgst"],
   };
 
-  HB.registerHelper("getColumnLabel", function (key: string, fallback: string, options: any) {
-    const root = options?.data?.root;
-    const columns = root?.columns || root?.invoice?.columns;
-    const target = (key || "").toLowerCase();
-    if (Array.isArray(columns)) {
-      const keyOf = (c: any) => (c.key || c.id || c.name || "").toLowerCase();
-      // Exact key first. Aliases are only a fallback: payloads ship both `amount`
-      // and `total` columns, and `amount` sits earlier in the array, so an
-      // alias-first search would label the Total column with the Amount label.
-      const col =
-        columns.find((c: any) => keyOf(c) === target) ||
-        columns.find((c: any) => (COLUMN_ALIASES[target] || []).includes(keyOf(c)));
-      if (col && col.label && typeof col.label === "string" && col.label.trim()) {
-        return col.label.trim();
+  HB.registerHelper(
+    "getColumnLabel",
+    function (key: string, fallback: string, options: any) {
+      const root = options?.data?.root;
+      const columns = root?.columns || root?.invoice?.columns;
+      const target = (key || "").toLowerCase();
+      if (Array.isArray(columns)) {
+        const keyOf = (c: any) => (c.key || c.id || c.name || "").toLowerCase();
+        // Exact key first. Aliases are only a fallback: payloads ship both `amount`
+        // and `total` columns, and `amount` sits earlier in the array, so an
+        // alias-first search would label the Total column with the Amount label.
+        const col =
+          columns.find((c: any) => keyOf(c) === target) ||
+          columns.find((c: any) =>
+            (COLUMN_ALIASES[target] || []).includes(keyOf(c))
+          );
+        if (
+          col &&
+          col.label &&
+          typeof col.label === "string" &&
+          col.label.trim()
+        ) {
+          return col.label.trim();
+        }
       }
-    }
 
-    const customLabels = root?.invoice?.customLabels;
-    if (customLabels && customLabels[key]) {
-      return customLabels[key];
-    }
+      const customLabels = root?.invoice?.customLabels;
+      if (customLabels && customLabels[key]) {
+        return customLabels[key];
+      }
 
-    return fallback;
-  });
+      return fallback;
+    }
+  );
 
   // ── Item table columns ───────────────────────────────────────────────────
   //
@@ -432,7 +505,11 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     hsn: { colClass: "fk-col-hsn", label: "HSN/SAC", labelKey: "hsn" },
     rate: { colClass: "fk-col-price", label: "Unit Price", labelKey: "rate" },
     qty: { colClass: "fk-col-qty", label: "Qty", labelKey: "quantity" },
-    discount: { colClass: "fk-col-disc", label: "Discount", labelKey: "discount" },
+    discount: {
+      colClass: "fk-col-disc",
+      label: "Discount",
+      labelKey: "discount",
+    },
     igst: { colClass: "fk-col-tax", label: "IGST", labelKey: "igst" },
     cgst: { colClass: "fk-col-tax", label: "CGST", labelKey: "cgst" },
     sgst: { colClass: "fk-col-tax", label: "SGST", labelKey: "sgst" },
@@ -442,7 +519,9 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   };
 
   const normalizeColumnKey = (key: any) =>
-    String(key || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    String(key || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
 
   // Tax, discount and HSN columns stay subject to the document's visibility
   // flags: a declared column set lists every column the account has configured,
@@ -451,11 +530,15 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   function isKindVisible(kind: string, root: any): boolean {
     const visibility = root?.mapped?.visibility || {};
     if (kind === "hsn") return Boolean(root?.derived?.showHsnColumn);
-    if (kind === "discount") return Boolean(root?.invoice?.finalTotal?.discount);
+    if (kind === "discount")
+      return Boolean(root?.invoice?.finalTotal?.discount);
     if (kind === "igst") return Boolean(visibility.showIgst);
-    if (kind === "cgst" || kind === "sgst") return Boolean(visibility.showCgstSgst);
+    if (kind === "cgst" || kind === "sgst")
+      return Boolean(visibility.showCgstSgst);
     if (kind === "photo") {
-      const items = Array.isArray(root?.invoice?.items) ? root.invoice.items : [];
+      const items = Array.isArray(root?.invoice?.items)
+        ? root.invoice.items
+        : [];
       return items.some((item: any) => resolveItemImages(item).length > 0);
     }
     return true;
@@ -489,7 +572,8 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     const columns: Array<Record<string, any>> = [];
     const usedKinds = new Set<string>();
-    const declares = (kind: string) => declared.some((col) => col.kind === kind);
+    const declares = (kind: string) =>
+      declared.some((col) => col.kind === kind);
 
     const add = (kind: string, extra: Record<string, any> = {}) => {
       // Every kind but `custom` is a single column; payloads legitimately
@@ -503,7 +587,12 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         extra.label ||
         (meta.labelKey && customLabels[meta.labelKey]) ||
         meta.label;
-      columns.push({ ...extra, kind, colClass: extra.colClass || meta.colClass, label });
+      columns.push({
+        ...extra,
+        kind,
+        colClass: extra.colClass || meta.colClass,
+        label,
+      });
     };
 
     // The item name and its photo are one visual unit, so the photo is pinned
@@ -558,7 +647,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     const visibleColumns = columns.filter(
       (column) =>
         column.kind !== "custom" ||
-        items.some((item: any) => customColumnValue(item, column, root?.invoice).text !== "")
+        items.some(
+          (item: any) =>
+            customColumnValue(item, column, root?.invoice).text !== ""
+        )
     );
 
     assignColumnWidths(visibleColumns, root);
@@ -641,7 +733,14 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // summary table does; a stale/leftover value in the field that does not
   // apply (e.g. a nonzero `igst` left over on a CGST/SGST invoice) must not
   // get added in, or the line double-counts tax.
-  function lineItemTax(item: any, visibility?: { showIgst?: boolean; showCgstSgst?: boolean; isUtgst?: boolean }): number {
+  function lineItemTax(
+    item: any,
+    visibility?: {
+      showIgst?: boolean;
+      showCgstSgst?: boolean;
+      isUtgst?: boolean;
+    }
+  ): number {
     const explicit = extractNumericValue(item?.taxAmount);
     if (explicit !== null) return explicit;
 
@@ -668,23 +767,38 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     );
   }
 
-  function columnCellText(kind: string, column: any, item: any, invoice: any, visibility?: any): string {
+  function columnCellText(
+    kind: string,
+    column: any,
+    item: any,
+    invoice: any,
+    visibility?: any
+  ): string {
     switch (kind) {
       case "model":
         return String(
-          item?.model || item?.custom?.modelNo || item?.custom?.model || item?.sku || ""
+          item?.model ||
+            item?.custom?.modelNo ||
+            item?.custom?.model ||
+            item?.sku ||
+            ""
         );
       case "hsn":
         return String(item?.hsn || "");
       case "rate":
         return formatCurrencyValue(item?.rate, invoice);
       case "qty": {
-        const qty = item?.quantity !== undefined && item?.quantity !== null ? item.quantity : item?.qty;
+        const qty =
+          item?.quantity !== undefined && item?.quantity !== null
+            ? item.quantity
+            : item?.qty;
         if (qty === undefined || qty === null) return "";
         // The unit prints on its own line under the figure, so the column only
         // has to fit whichever of the two is wider.
         const unit = resolveUnit(item?.unit, item, invoice);
-        return String(qty).length >= String(unit || "").length ? String(qty) : String(unit);
+        return String(qty).length >= String(unit || "").length
+          ? String(qty)
+          : String(unit);
       }
       case "discount":
         return String(item?.discountLabel || "");
@@ -698,7 +812,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         return formatCurrencyValue(item?.amount, invoice);
       case "total": {
         const amount = extractNumericValue(item?.amount) ?? 0;
-        return formatCurrencyValue(amount + lineItemTax(item, visibility), invoice);
+        return formatCurrencyValue(
+          amount + lineItemTax(item, visibility),
+          invoice
+        );
       }
       case "custom":
         return customColumnValue(item, column, invoice).text;
@@ -707,7 +824,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     }
   }
 
-  function assignColumnWidths(columns: Array<Record<string, any>>, root: any): void {
+  function assignColumnWidths(
+    columns: Array<Record<string, any>>,
+    root: any
+  ): void {
     const invoice = root?.invoice;
     const items = Array.isArray(invoice?.items) ? invoice.items : [];
     const visibility = root?.mapped?.visibility;
@@ -721,18 +841,32 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         column.kind === "custom" && isNumericColumnType(column)
           ? COLUMN_WIDTH_RULES.customNumeric
           : COLUMN_WIDTH_RULES[column.kind] || COLUMN_WIDTH_RULES.custom;
-      let widest = rule.wraps ? longestWordLength(column.label) : String(column.label || "").length;
+      let widest = rule.wraps
+        ? longestWordLength(column.label)
+        : String(column.label || "").length;
 
       if (column.kind === "sno") {
         widest = Math.max(widest, String(items.length).length);
       } else if (column.kind !== "photo") {
         for (const item of items) {
-          const text = columnCellText(column.kind, column, item, invoice, visibility);
-          widest = Math.max(widest, rule.wraps ? longestWordLength(text) : text.length);
+          const text = columnCellText(
+            column.kind,
+            column,
+            item,
+            invoice,
+            visibility
+          );
+          widest = Math.max(
+            widest,
+            rule.wraps ? longestWordLength(text) : text.length
+          );
         }
       }
 
-      const px = Math.min(rule.max, Math.max(rule.min, widest * CHAR_PX + CELL_CHROME_PX));
+      const px = Math.min(
+        rule.max,
+        Math.max(rule.min, widest * CHAR_PX + CELL_CHROME_PX)
+      );
       column.widthPx = px;
       measuredTotal += px;
     }
@@ -740,17 +874,22 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     let measuredPct = (measuredTotal / TABLE_PX) * 100;
     // Too many columns to fit alongside a readable description: give them their
     // share of what is left over instead of their measured width.
-    const scale = measuredPct > 100 - MIN_NAME_PCT ? (100 - MIN_NAME_PCT) / measuredPct : 1;
+    const scale =
+      measuredPct > 100 - MIN_NAME_PCT ? (100 - MIN_NAME_PCT) / measuredPct : 1;
     measuredPct *= scale;
 
     for (const column of columns) {
       if (column.kind === "name") continue;
-      column.widthPct = Number(((column.widthPx / TABLE_PX) * 100 * scale).toFixed(3));
+      column.widthPct = Number(
+        ((column.widthPx / TABLE_PX) * 100 * scale).toFixed(3)
+      );
     }
 
     const nameColumn = columns.find((column) => column.kind === "name");
     if (nameColumn) {
-      nameColumn.widthPct = Number(Math.max(MIN_NAME_PCT, 100 - measuredPct).toFixed(3));
+      nameColumn.widthPct = Number(
+        Math.max(MIN_NAME_PCT, 100 - measuredPct).toFixed(3)
+      );
     }
   }
 
@@ -770,7 +909,9 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     let value = item.custom?.[key];
 
     if (value === undefined || value === null || value === "") {
-      const match = (Array.isArray(item.customFields) ? item.customFields : []).find((field: any) => {
+      const match = (
+        Array.isArray(item.customFields) ? item.customFields : []
+      ).find((field: any) => {
         const candidates = [field?.key, field?.name, field?.label];
         return candidates.some(
           (candidate: any) =>
@@ -787,8 +928,13 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     // Currency formatting only where the column declares it: everything else,
     // `number` included, prints the value as the document stores it.
-    const declaredType = `${column.dataType || ""} ${column.fxReturnType || ""}`;
-    if (declaredType.includes("currency") && extractNumericValue(value) !== null) {
+    const declaredType = `${column.dataType || ""} ${
+      column.fxReturnType || ""
+    }`;
+    if (
+      declaredType.includes("currency") &&
+      extractNumericValue(value) !== null
+    ) {
       return { text: formatCurrencyValue(value, invoice), isNumber: true };
     }
 
@@ -797,7 +943,8 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     // to be blank or unparsable — the column's shape doesn't change row to row.
     return {
       text: stringifyFieldValue(value),
-      isNumber: isNumericColumnType(column) || extractNumericValue(value) !== null,
+      isNumber:
+        isNumericColumnType(column) || extractNumericValue(value) !== null,
     };
   }
 
@@ -816,7 +963,9 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // when no item has an image, so the colspan has to shrink to match or the
   // header claims a column the body no longer has.
   HB.registerHelper("hasPhotoColumn", function (options: any) {
-    return getItemColumns(options?.data?.root).some((col) => col.kind === "photo");
+    return getItemColumns(options?.data?.root).some(
+      (col) => col.kind === "photo"
+    );
   });
 
   // Every heading the document names for itself. The account configures these
@@ -838,8 +987,11 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // `Additional Info` are all the same key.
   function documentLabel(...args: any[]) {
     const options = args[args.length - 1];
-    const positional = args.slice(0, -1).filter((arg) => typeof arg === "string");
-    const fallback = positional.length > 1 ? positional[positional.length - 1] : "";
+    const positional = args
+      .slice(0, -1)
+      .filter((arg) => typeof arg === "string");
+    const fallback =
+      positional.length > 1 ? positional[positional.length - 1] : "";
     const keys = positional.length > 1 ? positional.slice(0, -1) : positional;
 
     const customLabels = options?.data?.root?.invoice?.customLabels;
@@ -872,7 +1024,9 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     const columns = options?.data?.root?.invoice?.columns;
     const normalizedKey = normalizeColumnKey(key);
     const match = Array.isArray(columns)
-      ? columns.find((col: any) => normalizeColumnKey(col?.key) === normalizedKey)
+      ? columns.find(
+          (col: any) => normalizeColumnKey(col?.key) === normalizedKey
+        )
       : undefined;
     const label = typeof match?.label === "string" ? match.label.trim() : "";
 
@@ -926,7 +1080,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         : (extractNumericValue(finalTotal.cgst) ?? 0) +
           (extractNumericValue(finalTotal.sgst) ?? 0);
       const base = (extractNumericValue(finalTotal.subTotal) ?? 0) + taxTotal;
-      return ((rawAmount / 100) * base) * multiplier;
+      return (rawAmount / 100) * base * multiplier;
     }
 
     return rawAmount * multiplier;
@@ -950,17 +1104,24 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   function isDatabaseId(str: string): boolean {
     if (!str) return false;
     const trimmed = str.trim();
-    return /^[a-z0-9]{10,}$/i.test(trimmed) || /^[0-9a-fA-F]{24}$/.test(trimmed);
+    return (
+      /^[a-z0-9]{10,}$/i.test(trimmed) || /^[0-9a-fA-F]{24}$/.test(trimmed)
+    );
   }
 
   function lookupUnitInObjectOrArray(unitId: string, src: any): string {
     if (!src || !unitId) return "";
-  
+
     if (typeof src === "object" && !Array.isArray(src)) {
       const match = src[unitId];
       if (typeof match === "string" && !isDatabaseId(match)) return match;
       if (typeof match === "object" && match !== null) {
-        const name = match.symbol || match.name || match.shortName || match.label || match.title;
+        const name =
+          match.symbol ||
+          match.name ||
+          match.shortName ||
+          match.label ||
+          match.title;
         if (name && !isDatabaseId(name)) return name;
       }
     }
@@ -978,7 +1139,13 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       if (match) {
         if (typeof match === "string" && !isDatabaseId(match)) return match;
         if (typeof match === "object" && match !== null) {
-          const name = match.symbol || match.name || match.shortName || match.label || match.title || match.code;
+          const name =
+            match.symbol ||
+            match.name ||
+            match.shortName ||
+            match.label ||
+            match.title ||
+            match.code;
           if (name && !isDatabaseId(name)) return name;
         }
       }
@@ -988,7 +1155,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   }
 
   function resolveUnit(unitRaw: any, item?: any, invoice?: any): string {
-    let candidates = [
+    const candidates = [
       item?.unitName,
       item?.unit_name,
       item?.unitSymbol,
@@ -1012,14 +1179,20 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     if (typeof unitRaw === "string") {
       rawStr = unitRaw.trim();
     } else if (typeof unitRaw === "object" && unitRaw !== null) {
-      rawStr = unitRaw.symbol || unitRaw.name || unitRaw.shortName || unitRaw.label || "";
+      rawStr =
+        unitRaw.symbol ||
+        unitRaw.name ||
+        unitRaw.shortName ||
+        unitRaw.label ||
+        "";
     }
 
     if (rawStr && !isDatabaseId(rawStr)) {
       return rawStr;
     }
 
-    const unitIdToLookup = rawStr || (typeof item?.unit === "string" ? item.unit : "");
+    const unitIdToLookup =
+      rawStr || (typeof item?.unit === "string" ? item.unit : "");
     if (unitIdToLookup && invoice) {
       const sources = [
         invoice.units,
@@ -1047,26 +1220,35 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return rawStr;
   }
 
-  HB.registerHelper("formatQtyCell", function (item: any, invoice: any, advanceOptions: any) {
-    if (!item) return "";
-    const qty = item.quantity !== undefined && item.quantity !== null ? item.quantity : item.qty;
-    if (qty === undefined || qty === null) return "";
+  HB.registerHelper(
+    "formatQtyCell",
+    function (item: any, invoice: any, advanceOptions: any) {
+      if (!item) return "";
+      const qty =
+        item.quantity !== undefined && item.quantity !== null
+          ? item.quantity
+          : item.qty;
+      if (qty === undefined || qty === null) return "";
 
-    const unitCol = (
-      advanceOptions?.unitColumn ||
-      invoice?.advanceOptions?.unitColumn ||
-      "MERGE_QUANTITY"
-    ).toUpperCase();
+      const unitCol = (
+        advanceOptions?.unitColumn ||
+        invoice?.advanceOptions?.unitColumn ||
+        "MERGE_QUANTITY"
+      ).toUpperCase();
 
-    if (["MERGE_NAME", "SEPARATE", "HIDE", "NONE", "FALSE"].includes(unitCol)) {
+      if (
+        ["MERGE_NAME", "SEPARATE", "HIDE", "NONE", "FALSE"].includes(unitCol)
+      ) {
+        return String(qty);
+      }
+
+      const unit = resolveUnit(item.unit, item, invoice);
+      if (unit) {
+        return new HB.SafeString(
+          `<div class="fk-qty-num">${qty}</div><div class="fk-qty-unit">${unit}</div>`
+        );
+      }
       return String(qty);
     }
-
-    const unit = resolveUnit(item.unit, item, invoice);
-    if (unit) {
-      return new HB.SafeString(`<div class="fk-qty-num">${qty}</div><div class="fk-qty-unit">${unit}</div>`);
-    }
-    return String(qty);
-  });
-
+  );
 }

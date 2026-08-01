@@ -1,0 +1,529 @@
+@import "https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap";
+
+.sg-shell {
+  --sg-page-width: 750pt;
+  --sg-font-size-xs: 9pt;
+  --sg-font-size-s: 9.75pt;
+  --sg-font-size-base: 10.5pt;
+  --sg-font-size-m: 12pt;
+  --sg-font-size-lg: 15pt;
+  --sg-font-size-xl: 18pt;
+
+  /* Defaults to Open Sans for both body and headings; `--ceres-font-family`
+     (body) and `--title-font` (headings) let the account override either one
+     independently without touching this file. */
+  --sg-font: var(--subtitle-font, var(--ceres-font-family, "Open Sans", "Helvetica Neue", Arial, sans-serif));
+  --sg-title-font: var(--title-font, var(--sg-font));
+
+  font-family: var(--sg-font);
+  font-size: var(--sg-font-size-base);
+  line-height: 1.5;
+  color: var(--ceres-primary-color, #222);
+  background: #fff;
+}
+
+p {
+  margin: 0 !important;
+}
+
+/* Same box as `.sg-page` (width + centering), so the banner's edges line up
+   with the content's edges instead of spanning the full, uncapped shell
+   width while the padded content below sits centered and indented. */
+.sg-letterhead,
+.sg-letterhead-footer {
+  width: 100%;
+  max-width: var(--sg-page-width);
+  margin: 0 auto;
+}
+
+.sg-letterhead img,
+.sg-letterhead-footer img {
+  display: block;
+  width: 100%;
+}
+
+.sg-letterhead.is-empty,
+.sg-letterhead-footer.is-empty {
+  display: none;
+}
+
+.sg-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12pt;
+  max-width: var(--sg-page-width);
+  margin: 0 auto;
+  padding: 18pt 24pt 30pt;
+}
+
+/* TaxSummaryTable/HsnSummaryTable (shared widgets) carry their own margin
+   for use outside a flex context; flex items never collapse margins with
+   their container or siblings, so left as-is that margin would stack on
+   top of `.sg-page`'s gap instead of being absorbed by it. */
+.sg-page>.ceres-table-section {
+  margin: 0;
+}
+
+/* Title + subtitle: kept tighter (3pt) than the page's 12pt rhythm. */
+.sg-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3pt;
+}
+
+/* Item table + totals breakdown + total-in-words: kept tighter (9pt) than
+   the page's 12pt rhythm. */
+.sg-totals-block {
+  display: flex;
+  flex-direction: column;
+  gap: 9pt;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Title */
+
+.sg-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9pt;
+}
+
+.sg-title {
+  font-family: var(--sg-title-font);
+  font-size: var(--sg-font-size-xl);
+  font-weight: 600;
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.sg-subtitle {
+  text-align: center;
+  color: #666;
+  font-size: var(--sg-font-size-base);
+}
+
+/* Shared boxed section */
+
+.sg-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3pt;
+}
+
+.sg-section-title {
+  font-family: var(--sg-title-font);
+  font-weight: 600;
+  font-size: var(--sg-font-size-base);
+}
+
+.sg-kv-key {
+  color: #555;
+}
+
+/* Quotation meta */
+
+.sg-meta-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12pt;
+}
+
+.sg-meta-box {
+  flex: 1;
+}
+
+.sg-meta-line {
+  display: flex;
+  gap: 6pt;
+  font-size: var(--sg-font-size-base);
+}
+
+.sg-meta-label {
+  color: #666;
+  min-width: 97.5pt;
+}
+
+.sg-meta-value {
+  font-weight: 600;
+}
+
+.sg-meta-qr img {
+  width: 63pt;
+  height: 63pt;
+}
+
+/* Parties */
+
+.sg-parties-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12pt;
+}
+
+.sg-parties-row:has(.sg-party:only-child) {
+  grid-template-columns: 1fr;
+}
+
+.sg-party-heading {
+  font-family: var(--sg-title-font);
+  font-weight: 600;
+  font-size: var(--sg-font-size-m) !important;
+  margin: 0;
+}
+
+.sg-party-name {
+  font-family: var(--sg-title-font);
+  font-weight: 600;
+  font-size: var(--sg-font-size-m) !important;
+  margin: 0;
+}
+
+.sg-party p {
+  font-size: var(--sg-font-size-base);
+}
+
+/* `.sg-box`'s own 3pt gap already separates every line; this pushes the
+   "Kind Attn" line further away as a deliberate, larger break. */
+.sg-contact-person {
+  margin-top: 6pt !important;
+}
+
+/* Sub / Ref / salutation */
+
+.sg-salutation {
+  font-size: var(--sg-font-size-base);
+}
+
+/* Same as `.sg-contact-person` above: a deliberate extra break before the
+   closing salutation line, on top of `.sg-box`'s own 3pt gap. */
+.sg-dear {
+  margin-top: 6pt !important;
+}
+
+/* Item table */
+
+.sg-table-wrap {
+  overflow-x: auto;
+}
+
+.sg-item-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--sg-font-size-s);
+}
+
+.sg-item-table th,
+.sg-item-table td {
+  border-right: 0.75pt solid #333;
+  border-bottom: 0.75pt solid #333;
+  padding: 2pt 4pt;
+  vertical-align: top;
+}
+
+.sg-item-table th:first-child,
+.sg-item-table td:first-child {
+  border-left: 0.75pt solid #333;
+}
+
+.sg-item-table thead th {
+  border-top: 0.75pt solid #333;
+  white-space: nowrap;
+}
+
+.sg-item-table thead th {
+  font-weight: 600;
+  text-align: center;
+}
+
+.sg-item-table thead th.sg-col-sno,
+.sg-item-table thead th.sg-col-desc {
+  text-align: left;
+}
+
+th.sg-col-desc {
+  min-width: 160pt;
+  max-width: 240pt;
+}
+
+.sg-col-sno {
+  width: auto;
+}
+
+.sg-col-hsn,
+.sg-col-qty,
+.sg-col-rate,
+.sg-col-amount {
+  width: auto;
+  min-width: 56pt;
+}
+
+.sg-cell-strong {
+  font-weight: 600;
+}
+
+.sg-item-name {
+  font-weight: 600;
+  margin: 0;
+}
+
+.sg-item-sku {
+  color: #666;
+  font-size: var(--sg-font-size-s);
+  margin: 3pt 0 0;
+}
+
+/* NOT white-space: pre-line — this wraps only MarkdownViewer's output
+   (real <p>/<br> elements from Toast UI, not raw text), and `pre-line`
+   inherits into that markup. Toast UI's stylesheet never resets white-space
+   back to normal, so `pre-line` treats every incidental newline in Toast
+   UI's own serialized HTML (not just genuine line breaks) as a forced
+   visual break — that's what kept showing up as a dead extra line. */
+.sg-item-desc {
+  color: #444;
+  font-size: var(--sg-font-size-s);
+  display: flex !important;
+}
+
+/* A blank line in the source (two-plus consecutive `<br>`s) renders as a
+   dead gap under `white-space: pre-line`. Hiding every `<br>` that's
+   immediately preceded by another one collapses any run down to a single
+   visible break — sibling selectors match DOM adjacency regardless of the
+   earlier `<br>`'s own display value, so runs longer than two collapse too. */
+.sg-item-desc br+br {
+  display: none;
+  padding: 4px 0;
+}
+
+/* A markdown table embedded in an item description is rendered by Toast UI's
+   viewer, which ships its own table skin (auto width, dark #555 header,
+   translucent borders) — override it to match `.sg-item-table` so a table
+   in the description doesn't look like a foreign component. */
+.sg-item-desc .toastui-editor-contents table {
+  width: 100% !important;
+  margin: 6pt 0 !important;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: inherit;
+  font-size: var(--sg-font-size-s);
+}
+
+.sg-item-desc .toastui-editor-contents table th,
+.sg-item-desc .toastui-editor-contents table td {
+  border-right: 0.75pt solid #333 !important;
+  border-bottom: 0.75pt solid #333 !important;
+  padding: 2pt 4pt !important;
+  height: auto !important;
+  vertical-align: top;
+}
+
+.sg-item-desc .toastui-editor-contents table {
+  margin: 0 !important;
+}
+
+/* NOT display:flex — a bare `<br>` from a single-newline soft break sits as
+   a direct sibling here (not nested in a `<p>`), and flexbox turns every
+   in-flow child into its own flex item. Under normal block flow that `<br>`
+   is weightless (just forces the next line); as a flex item it becomes a
+   full row with its own line-height, showing up as a dead empty gap. */
+.sg-item-desc .toastui-editor-contents {
+  padding: 4pt 0;
+}
+
+.sg-item-desc .toastui-editor-contents table th:first-child,
+.sg-item-desc .toastui-editor-contents table td:first-child {
+  border-left: 0.75pt solid #333 !important;
+}
+
+.sg-item-desc .toastui-editor-contents table thead th,
+.sg-item-desc .toastui-editor-contents table tr:first-child th {
+  border-top: 0.75pt solid #333 !important;
+}
+
+.sg-item-desc .toastui-editor-contents table th {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-weight: 600 !important;
+  text-align: center;
+  padding-top: 2pt !important;
+}
+
+.sg-item-desc .toastui-editor-contents th p,
+.sg-item-desc .toastui-editor-contents td p {
+  margin: 0 !important;
+  padding: 0;
+  color: inherit !important;
+}
+
+.sg-total-label {
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Totals breakdown */
+
+/* Groups "total in words" with the totals box in one row — words on the
+   left absorb the remaining width, the box stays pinned to the right. */
+.sg-totals-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12pt;
+}
+
+.sg-totals-area {
+  display: flex;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.sg-totals-box {
+  width: 225pt;
+}
+
+.sg-total-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 3pt 0;
+  font-size: var(--sg-font-size-base);
+  border-bottom: 0.75pt solid #eee;
+}
+
+.sg-grand-total {
+  font-weight: 700;
+  font-size: var(--sg-font-size-base);
+  border-bottom: 1.5pt solid #333;
+}
+
+.sg-total-words {
+  font-size: var(--sg-font-size-base);
+  flex: 1;
+}
+
+/* Bank / UPI */
+
+.sg-bank-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12pt;
+}
+
+.sg-upi-box {
+  text-align: center;
+  align-items: center;
+}
+
+.sg-upi-qr {
+  width: 75pt;
+  height: 75pt;
+}
+
+/* Terms / Notes / Additional Info */
+
+.sg-terms-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 9pt;
+}
+
+.sg-terms-block,
+.sg-notes-block,
+.sg-additional-info {
+  font-size: var(--sg-font-size-base);
+}
+
+/* Notes render through MarkdownViewer, whose Toast UI wrapper ships its own
+   explicit font-size — an inherited size from `.sg-notes-block` never reaches
+   the text, so the widget's own selectors have to be overridden. */
+.sg-notes-block .toastui-editor-contents,
+.sg-notes-block .toastui-editor-contents p,
+.sg-notes-block .toastui-editor-contents span {
+  font-size: var(--sg-font-size-base) !important;
+}
+
+.sg-terms-block ol {
+  margin: 0;
+  padding-left: 15pt;
+}
+
+.sg-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 3pt;
+  font-size: var(--sg-font-size-base);
+}
+
+.sg-attachments ol {
+  margin: 0;
+  padding-left: 15pt;
+}
+
+.sg-signature {
+  text-align: right;
+  display: none;
+  font-size: var(--sg-font-size-base);
+}
+
+.sg-signature-img {
+  max-height: 45pt;
+  display: block;
+  margin-left: auto;
+}
+
+.sg-contact-strip {
+  text-align: center;
+  font-size: var(--sg-font-size-base);
+  color: #555;
+}
+
+.sg-item-table markdown-viewer-widget br {
+  display: none !important;
+}
+
+@media print {
+  .sg-shell {
+    --sg-font-size-xs: 7.5pt;
+    --sg-font-size-s: 8pt;
+    --sg-font-size-base: 9.5pt;
+    --sg-font-size-m: 10.25pt;
+    --sg-font-size-lg: 11.75pt;
+    --sg-font-size-xl: 14.75pt;
+
+    background: transparent;
+  }
+
+  .sg-page {
+    padding: 0;
+  }
+
+  .sg-table-wrap {
+    overflow-x: visible;
+  }
+
+  .sg-item-table {
+    break-inside: auto;
+  }
+
+  .sg-item-table thead {
+    display: table-header-group;
+  }
+
+  .sg-item-table tbody tr {
+    break-inside: avoid;
+  }
+
+  .sg-col-hsn,
+  .sg-col-qty,
+  .sg-col-rate,
+  .sg-col-amount {
+    min-width: 48pt;
+  }
+}

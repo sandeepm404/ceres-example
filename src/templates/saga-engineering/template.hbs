@@ -1,0 +1,413 @@
+<div class="sg-shell">
+
+  {{!-- Letterhead --}}
+  <div class="no-dibella sg-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
+    {{#if (assetUrl invoice.letterHead)}}
+    <img src="{{assetUrl invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+    {{else}}
+    <img alt="Letterhead" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="sg-page">
+
+    {{!-- Title --}}
+    <div class="sg-header-block">
+      <div class="sg-title-row">
+        <h1 class="sg-title">{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}Quotation{{/if}}</h1>
+        {{#with (computePrintStatus invoice) as |ctx|}}
+        {{#each ctx.tags}}{{#if @first}}<span class="{{finalClass}}">{{text}}</span>{{/if}}{{/each}}
+        {{/with}}
+      </div>
+      {{#if invoice.invoiceSubTitle}}<p class="sg-subtitle">{{invoice.invoiceSubTitle}}</p>{{/if}}
+    </div>
+
+    {{!-- Quotation meta: number / date / custom fields, + document QR --}}
+    <div class="sg-meta-row">
+      <div class="sg-box sg-meta-box">
+        <div class="sg-meta-line">
+          <span class="sg-meta-label">{{invoice.customLabels.invoiceNumber}}</span>
+          <span class="sg-meta-value">{{invoice.invoiceNumber}}</span>
+        </div>
+        <div class="sg-meta-line">
+          <span class="sg-meta-label">{{invoice.customLabels.invoiceDate}}</span>
+          <span class="sg-meta-value">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</span>
+        </div>
+        {{#each invoice.customFields}}
+        <div class="sg-meta-line">
+          <span class="sg-meta-label">{{label}}</span>
+          <span class="sg-meta-value">{{value}}</span>
+        </div>
+        {{/each}}
+      </div>
+      {{#with (qrSrc mapped.qr.top) as |docQrSrc|}}
+      <div class="sg-meta-qr">
+        <img src="{{docQrSrc}}" alt="Document QR" />
+      </div>
+      {{/with}}
+    </div>
+
+    {{!-- Billed To / Shipped To --}}
+    <div class="sg-parties-row">
+      <div class="sg-box sg-party">
+        {{#if invoice.customLabels.billedTo}}
+        <p class="sg-party-heading">{{invoice.customLabels.billedTo}}</p>
+        {{/if}}
+        <p class="sg-party-name">{{invoice.billedTo.name}}</p>
+        {{#if invoice.billedTo.street}}<p>{{invoice.billedTo.street}}</p>{{/if}}
+        {{#if invoice.billedTo.city}}
+        <p>{{invoice.billedTo.city}}{{#if invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}{{#if
+          invoice.billedTo.pincode}} {{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}},
+          {{invoice.billedTo.country}}{{/if}}</p>
+        {{/if}}
+        {{#if invoice.billedTo.gstin}}<p>GSTIN: {{invoice.billedTo.gstin}}</p>{{/if}}
+        {{#if invoice.billedTo.phone}}<p>{{formatPhone invoice.billedTo.phone}}</p>{{/if}}
+        {{#each (partyFields invoice.billedTo)}}<p>{{label}}: {{value}}</p>{{/each}}
+        {{#if invoice.billedTo.contactPerson.name}}
+        <p class="sg-contact-person">{{#if
+          invoice.customLabels.contactPersonLabel}}<strong>{{invoice.customLabels.contactPersonLabel}}:</strong>
+          {{/if}}{{invoice.billedTo.contactPerson.name}}</p>
+        {{/if}}
+      </div>
+
+      {{#if mapped.visibility.shippedTo}}
+      <div class="sg-box sg-party">
+        {{#if invoice.customLabels.shippedTo}}<p class="sg-party-heading">{{invoice.customLabels.shippedTo}}</p>{{/if}}
+        <p class="sg-party-name">{{invoice.shippedTo.name}}</p>
+        {{#if invoice.shippedTo.street}}<p>{{invoice.shippedTo.street}}</p>{{/if}}
+        {{#if invoice.shippedTo.city}}
+        <p>{{invoice.shippedTo.city}}{{#if invoice.shippedTo.state}}, {{invoice.shippedTo.state}}{{/if}}{{#if
+          invoice.shippedTo.pincode}} {{invoice.shippedTo.pincode}}{{/if}}{{#if invoice.shippedTo.country}},
+          {{invoice.shippedTo.country}}{{/if}}</p>
+        {{/if}}
+        {{#if invoice.shippedTo.gstin}}<p>GSTIN: {{invoice.shippedTo.gstin}}</p>{{/if}}
+        {{#each (partyFields invoice.shippedTo)}}<p>{{label}}: {{value}}</p>{{/each}}
+      </div>
+      {{/if}}
+    </div>
+
+    {{!-- Shipped From / Transport Details --}}
+    {{#if (or mapped.visibility.shippedFrom mapped.visibility.transport)}}
+    <div class="sg-parties-row">
+      {{#if mapped.visibility.shippedFrom}}
+      <div class="sg-box sg-party">
+        {{#if invoice.customLabels.shippedFrom}}<p class="sg-party-heading">{{invoice.customLabels.shippedFrom}}</p>
+        {{/if}}
+        <p class="sg-party-name">{{invoice.shippedFrom.name}}</p>
+        {{#if invoice.shippedFrom.street}}<p>{{invoice.shippedFrom.street}}</p>{{/if}}
+        {{#if invoice.shippedFrom.city}}
+        <p>{{invoice.shippedFrom.city}}{{#if invoice.shippedFrom.state}}, {{invoice.shippedFrom.state}}{{/if}}{{#if
+          invoice.shippedFrom.pincode}} {{invoice.shippedFrom.pincode}}{{/if}}{{#if invoice.shippedFrom.country}},
+          {{invoice.shippedFrom.country}}{{/if}}</p>
+        {{/if}}
+        {{#if invoice.shippedFrom.gstin}}<p>GSTIN: {{invoice.shippedFrom.gstin}}</p>{{/if}}
+        {{#each (partyFields invoice.shippedFrom)}}<p>{{label}}: {{value}}</p>{{/each}}
+      </div>
+      {{/if}}
+
+      {{#if mapped.visibility.transport}}
+      <div class="sg-box sg-party">
+        {{#if invoice.customLabels.transport}}<p class="sg-party-heading">{{invoice.customLabels.transport}}</p>{{/if}}
+        {{#if invoice.transportDetails.transporter.name}}<p><span class="sg-kv-key">Transport Name:</span>
+          {{invoice.transportDetails.transporter.name}}</p>{{/if}}
+        {{#if invoice.transportDetails.transportMode}}<p><span class="sg-kv-key">Transport Mode:</span>
+          {{invoice.transportDetails.transportMode}}</p>{{/if}}
+        {{#if invoice.transportDetails.vehicleNumber}}<p><span class="sg-kv-key">Vehicle No:</span>
+          {{invoice.transportDetails.vehicleNumber}}</p>{{/if}}
+        {{#if invoice.transportDetails.challanNumber}}<p><span class="sg-kv-key">Challan No:</span>
+          {{invoice.transportDetails.challanNumber}}</p>{{/if}}
+        {{#if invoice.transportDetails.challanDate}}<p><span class="sg-kv-key">Challan Date:</span>
+          {{formateDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</p>{{/if}}
+        {{#if invoice.transportDetails.extraInformation}}<p><span class="sg-kv-key">Notes:</span>
+          {{invoice.transportDetails.extraInformation}}</p>{{/if}}
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- Sub / Ref / Dear Sir, salutation body — data-driven via
+    invoice.customHeaders, one entry per line. The last entry is always the
+    salutation itself (e.g. "Dear Sir,"), so it renders with its label on its
+    own line and the body text below, rather than inline like the rest. --}}
+    {{#if invoice.customHeaders.length}}
+    <div class="sg-box sg-salutation">
+      {{#each invoice.customHeaders}}
+      {{#if value}}
+      {{#if @last}}
+      <p class="sg-dear"><strong>{{headerLabel label}},</strong></p>
+      <p>{{value}}</p>
+      {{else}}
+      <p><strong>{{headerLabel label}}:</strong> {{value}}</p>
+      {{/if}}
+      {{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{!-- Line Items, totals breakdown, and total-in-words: grouped so their
+    tighter internal spacing (9pt) doesn't inherit the page's 12pt rhythm. --}}
+    <div class="sg-totals-block">
+      <div class="sg-table-wrap">
+        <table class="sg-item-table">
+          <thead>
+            <tr>
+              <th class="sg-col-sno"></th>
+              {{!-- Column headings are the account's own `invoice.columns[].label`,
+              not customLabels — that's where the item table's headings live (the
+              description column's key is `name`). --}}
+              <th class="sg-col-desc">{{#each mapped.columns}}{{#if (eq key "name")}}{{label}}{{/if}}{{/each}}</th>
+              {{#if (hasHsn invoice.items)}}<th class="sg-col-hsn">{{#each mapped.columns}}{{#if (eq key
+                "hsn")}}{{label}}{{/if}}{{/each}}</th>{{/if}}
+              <th class="sg-col-qty text-center">{{#each mapped.columns}}{{#if (eq key
+                "quantity")}}{{label}}{{/if}}{{/each}}</th>
+              <th class="sg-col-rate text-center">{{#each mapped.columns}}{{#if (eq key
+                "rate")}}{{label}}{{/if}}{{/each}}</th>
+              <th class="sg-col-amount text-right">{{#each mapped.columns}}{{#if (eq key
+                "amount")}}{{label}}{{/if}}{{/each}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each invoice.items}}
+            <tr>
+              <td class="text-center">{{increment @index}}.</td>
+              <td class="sg-desc-cell">
+                <p class="sg-item-name">{{name}}</p>
+                {{#if ../advanceOptions.showSkuInInvoice}}{{#if sku}}<p class="sg-item-sku">SKU: {{sku}}</p>
+                {{/if}}{{/if}}
+                {{#if description}}
+                <div class="sg-item-desc">
+                  {{> MarkdownViewer (prepareMarkdownViewerData (collapseBlankLines description)) }}
+                </div>
+                {{/if}}
+              </td>
+              {{#if (hasHsn ../invoice.items)}}<td class="text-center sg-cell-strong">{{hsn}}</td>{{/if}}
+              <td class="text-center sg-cell-strong">{{formatQty this}}</td>
+              <td class="text-center sg-cell-strong">{{formatCurrency rate ../invoice.currency ../invoice.locale
+                ../invoice.subUnitLength ../invoice.customCurrencySymbol}}</td>
+              <td class="text-center sg-cell-strong">{{formatCurrency amount ../invoice.currency ../invoice.locale
+                ../invoice.subUnitLength ../invoice.customCurrencySymbol}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+          {{!-- The item table's own totals row answers to the same
+          `hideTotals` switch as the totals breakdown below. --}}
+          {{#unless invoice.hideTotals}}
+          <tfoot>
+            <tr>
+              <td></td>
+              <td class="sg-total-label">{{invoice.customLabels.total}}</td>
+              {{#if (hasHsn invoice.items)}}<td class="text-center sg-cell-strong"></td>{{/if}}
+              <td class="text-center sg-cell-strong">{{sumQuantities invoice.items}}</td>
+              <td class="text-center sg-cell-strong"></td>
+              <td class="text-center sg-cell-strong">{{formatCurrency invoice.finalTotal.subTotal invoice.currency
+                invoice.locale
+                invoice.subUnitLength invoice.customCurrencySymbol}}</td>
+            </tr>
+          </tfoot>
+          {{/unless}}
+        </table>
+      </div>
+
+      <div class="sg-totals-row">
+        {{!-- Total in words, grouped alongside the totals breakdown so it sits
+        to the left of it in the same row instead of below, full-width. --}}
+        {{#unless invoice.hideTotalInWords}}
+        {{#if invoice.customLabels.totalInWordsValue}}
+        <p class="sg-total-words">
+          {{#if invoice.customLabels.totalInWords}}<strong>{{invoice.customLabels.totalInWords}}:</strong>{{/if}}
+          {{invoice.customLabels.totalInWordsValue}}
+        </p>
+        {{/if}}
+        {{/unless}}
+
+        {{!-- Totals breakdown — hidden outright when the account has turned it
+        off via `hideTotals` — a top-level invoice field, sibling to `hideTaxes`
+        and the `hideTotalInWords` this template already reads, NOT the
+        `advanceOptions.hideTotals` the payload contract also declares. --}}
+        {{#unless invoice.hideTotals}}
+        <div class="sg-totals-area">
+          <div class="sg-totals-box">
+            {{!-- Every label here comes from the payload: `mapped.columns[].label`
+            is the account's own column label (normalizeInvoiceColumns passes
+            `column.label` straight through, and resolves cgst/sgst to CGST/UTGST
+            from the document's flags), and the remaining rows read customLabels.
+            Sub Total mirrors the item table's "amount" column, which the account
+            names for itself just like every other column heading. --}}
+            <div class="sg-total-line">
+              <span>{{#each mapped.columns}}{{#if (eq key "amount")}}{{label}}{{/if}}{{/each}}</span>
+              <span>{{formatCurrency invoice.finalTotal.subTotal invoice.currency invoice.locale invoice.subUnitLength
+                invoice.customCurrencySymbol}}</span>
+            </div>
+            {{!-- Discount follows its column's `isHidden` (that rule is just
+            `discountEnabled`, with no document-type gate). --}}
+            {{#each mapped.columns}}
+            {{#unless isHidden}}
+            {{#if (eq key "discount")}}
+            <div class="sg-total-line">
+              <span>{{label}}</span>
+              <span>- {{formatCurrency @root.invoice.finalTotal.discount @root.invoice.currency @root.invoice.locale
+                @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</span>
+            </div>
+            {{/if}}
+            {{/unless}}
+            {{/each}}
+            {{!-- Tax rows deliberately do NOT use the columns' `isHidden`:
+            normalizeInvoiceColumns gates those on `isTaxInvoice` (invoiceType ===
+            "INVOICE"), which a quotation never is, so every tax column reports
+            hidden here and the rows would disappear entirely — the same trap the
+            `hasHsn` helper documents. `showIgst`/`showCgstSgst` carry no such
+            document-type gate, and neither is keyed off the amount, so a zero-rated
+            document still prints its declared taxes as 0. Labels still come from
+            the payload's own column entries (cgst/sgst already resolved to
+            CGST/UTGST there by the document's flags). --}}
+            {{#if mapped.visibility.showIgst}}
+            <div class="sg-total-line">
+              <span>{{#each mapped.columns}}{{#if (eq key "igst")}}{{label}}{{/if}}{{/each}}</span>
+              <span>{{formatCurrency invoice.finalTotal.igst invoice.currency invoice.locale invoice.subUnitLength
+                invoice.customCurrencySymbol}}</span>
+            </div>
+            {{/if}}
+            {{#if mapped.visibility.showCgstSgst}}
+            <div class="sg-total-line">
+              <span>{{#each mapped.columns}}{{#if (eq key "cgst")}}{{label}}{{/if}}{{/each}}</span>
+              <span>{{formatCurrency invoice.finalTotal.cgst invoice.currency invoice.locale invoice.subUnitLength
+                invoice.customCurrencySymbol}}</span>
+            </div>
+            <div class="sg-total-line">
+              <span>{{#each mapped.columns}}{{#if (eq key "sgst")}}{{label}}{{/if}}{{/each}}</span>
+              <span>{{formatCurrency invoice.finalTotal.sgst invoice.currency invoice.locale invoice.subUnitLength
+                invoice.customCurrencySymbol}}</span>
+            </div>
+            {{/if}}
+            <div class="sg-total-line sg-grand-total">
+              <span>{{invoice.customLabels.total}}</span>
+              <span>{{formatCurrency invoice.finalTotal.total invoice.currency invoice.locale invoice.subUnitLength
+                invoice.customCurrencySymbol}}</span>
+            </div>
+          </div>
+        </div>
+        {{/unless}}
+      </div>
+    </div>
+
+    {{!-- Authorised signature image, when the document carries one --}}
+    {{#if (or invoice.signature invoice.billedBy.signature)}}
+    <div class="sg-signature">
+      {{#if invoice.signature}}
+      <img src="{{assetUrl invoice.signature}}" alt="Signature" class="sg-signature-img" />
+      {{else}}
+      <img src="{{assetUrl invoice.billedBy.signature}}" alt="Signature" class="sg-signature-img" />
+      {{/if}}
+      {{#if invoice.customLabels.signature}}<p>{{invoice.customLabels.signature}}</p>{{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- Bank & UPI details --}}
+    {{#if mapped.visibility.showBankUpiSection}}
+    <div class="sg-bank-row">
+      {{#if mapped.visibility.showBankAccount}}
+      <div class="sg-box sg-bank-box">
+        <p class="sg-section-title">Bank Details</p>
+        {{#if invoice.bankAccount.bankName}}<p><span class="sg-kv-key">Bank Name:</span>
+          {{invoice.bankAccount.bankName}}</p>{{/if}}
+        {{#if invoice.bankAccount.accountHolderName}}<p><span class="sg-kv-key">Account Holder Name:</span>
+          {{invoice.bankAccount.accountHolderName}}</p>{{/if}}
+        {{#if invoice.bankAccount.accountNo}}<p><span class="sg-kv-key">Account Number:</span>
+          {{invoice.bankAccount.accountNo}}</p>{{/if}}
+        {{#if invoice.bankAccount.ifsc}}<p><span class="sg-kv-key">IFSC:</span> {{invoice.bankAccount.ifsc}}</p>{{/if}}
+        {{#if invoice.bankAccount.accountType}}<p><span class="sg-kv-key">Account Type:</span>
+          {{invoice.bankAccount.accountType}}</p>{{/if}}
+      </div>
+      {{/if}}
+      {{#if mapped.visibility.showUpi}}
+      <div class="sg-box sg-upi-box">
+        <p class="sg-section-title">Scan to pay via UPI</p>
+        {{#with (qrSrc mapped.qr.upi) as |upiQrSrc|}}
+        <img src="{{upiQrSrc}}" alt="UPI QR" class="sg-upi-qr" />
+        {{/with}}
+        {{#if mapped.upi.id}}<p>{{mapped.upi.id}}</p>{{/if}}
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- Tax rate / HSN summary tables --}}
+    {{#if mapped.visibility.showTaxTable}}
+    {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=mapped.visibility.showIgst
+    isUtgst=mapped.visibility.isUtgst) }}
+    {{/if}}
+    {{#if mapped.visibility.showHsnSummary}}
+    {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=mapped.visibility.showIgst
+    isUtgst=mapped.visibility.isUtgst) }}
+    {{/if}}
+
+    {{!-- Note / Terms & Conditions --}}
+    <div class="sg-terms-wrap">
+      {{#each invoice.terms}}
+      {{#if terms.length}}
+      <div class="sg-box sg-terms-block">
+        <p class="sg-section-title">{{#if label}}{{label}}{{else}}Terms and Conditions{{/if}}</p>
+        <ol>
+          {{#each terms}}
+          <li>{{this}}</li>
+          {{/each}}
+        </ol>
+      </div>
+      {{/if}}
+      {{/each}}
+    </div>
+
+    {{!-- Additional Notes (Thanking you / signature) --}}
+    {{#if invoice.notes}}
+    <div class="sg-box sg-notes-block">
+      {{#if invoice.customLabels.notes}}<p class="sg-section-title">{{invoice.customLabels.notes}}</p>{{/if}}
+      {{> MarkdownViewer (prepareMarkdownViewerData (collapseBlankLines invoice.notes)) }}
+    </div>
+    {{/if}}
+
+    {{!-- Additional Information --}}
+    {{#if (or invoice.customFooters.length invoice.footers.length)}}
+    <div class="sg-box sg-additional-info">
+      <p class="sg-section-title">Additional Info</p>
+      {{#each invoice.customFooters}}
+      {{#if value}}<p><span class="sg-kv-key">{{label}}:</span> {{value}}</p>{{/if}}
+      {{/each}}
+      {{#each invoice.footers}}
+      {{#if value}}<p><span class="sg-kv-key">{{label}}:</span> {{value}}</p>{{/if}}
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{!-- Attachments --}}
+    {{#if invoice.attachments.length}}
+    <div class="sg-attachments">
+      {{#if invoice.customLabels.attachment}}<p class="sg-section-title">{{invoice.customLabels.attachment}}</p>{{/if}}
+      <ol>
+        {{#each invoice.attachments}}
+        <li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{filenameFromUrl this}}</a></li>
+        {{/each}}
+      </ol>
+    </div>
+    {{/if}}
+
+    {{!-- Contact strip --}}
+    {{#if mapped.visibility.contactStrip}}
+    <p class="sg-contact-strip">
+      {{#if invoice.contact.email}}For any enquiry, reach out via email at
+      <strong>{{invoice.contact.email}}</strong>{{/if}}
+      {{#if invoice.contact.phone}}{{#if invoice.contact.email}}, {{/if}}call on <strong>{{formatPhone
+        invoice.contact.phone}}</strong>{{/if}}
+    </p>
+    {{/if}}
+
+  </div>
+
+  {{!-- Letterhead Footer (dealer / stockist banner) --}}
+  <div class="no-dibella sg-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
+    {{#if (assetUrl invoice.letterHeadFooter)}}
+    <img src="{{assetUrl invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+    <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>

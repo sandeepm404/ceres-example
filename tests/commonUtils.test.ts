@@ -39,7 +39,11 @@ describe("commonUtils", () => {
   });
 
   describe("applyQrCodeUpdate", () => {
-    let mockImg: { src: string; closest: jest.Mock; removeAttribute: jest.Mock };
+    let mockImg: {
+      src: string;
+      closest: jest.Mock;
+      removeAttribute: jest.Mock;
+    };
     let mockContainer: { classList: { remove: jest.Mock; add: jest.Mock } };
 
     beforeEach(() => {
@@ -54,7 +58,9 @@ describe("commonUtils", () => {
 
     it("no-ops when img element is not found", () => {
       (global as any).document.querySelector.mockReturnValue(null);
-      expect(() => applyQrCodeUpdate("data:image/png;base64,abc")).not.toThrow();
+      expect(() =>
+        applyQrCodeUpdate("data:image/png;base64,abc")
+      ).not.toThrow();
     });
 
     it("sets src and removes is-empty when value is a non-empty string", () => {
