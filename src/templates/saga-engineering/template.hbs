@@ -222,6 +222,21 @@
               {{else if (eq key "amount")}}
               <td class="text-center sg-cell-strong">{{formatCurrency ../amount ../../invoice.currency
                 ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+              {{else if (eq key "discount")}}
+              {{!-- Each item carries its own `discount` object (`{amount,
+              discountType, discountMethod}`), not a flat number — under
+              discountMethod "EQUAL" every item's object mirrors the same
+              document-level value, but the display logic per item is the
+              same either way: a PERCENTAGE amount prints as-is with a %
+              sign, anything else is a currency figure. --}}
+              <td class="text-center sg-cell-strong">
+                {{#if (eq ../discount.discountType "PERCENTAGE")}}
+                {{../discount.amount}}%
+                {{else}}
+                {{formatCurrency ../discount.amount ../../invoice.currency ../../invoice.locale
+                ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}
+                {{/if}}
+              </td>
               {{else}}
               <td class="sg-col-custom">{{customColumnValue .. this}}</td>
               {{/if}}
