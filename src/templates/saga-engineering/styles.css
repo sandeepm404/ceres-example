@@ -261,9 +261,14 @@ th.sg-col-desc {
 .sg-col-hsn,
 .sg-col-qty,
 .sg-col-rate,
-.sg-col-amount {
+.sg-col-amount,
+.sg-col-custom {
   width: auto;
   min-width: 56pt;
+}
+
+.sg-item-table td.sg-col-custom {
+  text-align: center;
 }
 
 .sg-cell-strong {

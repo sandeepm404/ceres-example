@@ -1,7 +1,7 @@
 <div class="sg-shell">
 
   {{!-- Letterhead --}}
-  <div class="no-dibella sg-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
+  <div class="no-dibella invoice-letterhead sg-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
     {{#if (assetUrl invoice.letterHead)}}
     <img src="{{assetUrl invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
     {{else}}
@@ -172,40 +172,60 @@
           <thead>
             <tr>
               <th class="sg-col-sno"></th>
-              {{!-- Column headings are the account's own `invoice.columns[].label`,
-              not customLabels — that's where the item table's headings live (the
-              description column's key is `name`). --}}
-              <th class="sg-col-desc">{{#each mapped.columns}}{{#if (eq key "name")}}{{label}}{{/if}}{{/each}}</th>
-              {{#if (hasHsn invoice.items)}}<th class="sg-col-hsn">{{#each mapped.columns}}{{#if (eq key
-                "hsn")}}{{label}}{{/if}}{{/each}}</th>{{/if}}
-              <th class="sg-col-qty text-center">{{#each mapped.columns}}{{#if (eq key
-                "quantity")}}{{label}}{{/if}}{{/each}}</th>
-              <th class="sg-col-rate text-center">{{#each mapped.columns}}{{#if (eq key
-                "rate")}}{{label}}{{/if}}{{/each}}</th>
-              <th class="sg-col-amount text-right">{{#each mapped.columns}}{{#if (eq key
-                "amount")}}{{label}}{{/if}}{{/each}}</th>
+              {{!-- Columns render in the account's own `invoice.columns` order.
+              `itemTableColumns` is the single place that decides what's
+              visible — isHidden alone, for every key, no exceptions. A tax
+              column (igst/gstRate/total/...) that isn't hidden for this
+              document renders here as an ordinary per-item column, same as
+              any other; the totals-breakdown block below still shows its own
+              document-level subtotal/tax/grand-total rows independently. --}}
+              {{#each (itemTableColumns mapped.columns)}}
+              {{#if (eq key "name")}}
+              <th class="sg-col-desc">{{label}}</th>
+              {{else if (eq key "hsn")}}
+              <th class="sg-col-hsn">{{label}}</th>
+              {{else if (eq key "quantity")}}
+              <th class="sg-col-qty text-center">{{label}}</th>
+              {{else if (eq key "rate")}}
+              <th class="sg-col-rate text-center">{{label}}</th>
+              {{else if (eq key "amount")}}
+              <th class="sg-col-amount text-right">{{label}}</th>
+              {{else}}
+              <th class="sg-col-custom">{{label}}</th>
+              {{/if}}
+              {{/each}}
             </tr>
           </thead>
           <tbody>
             {{#each invoice.items}}
             <tr>
               <td class="text-center">{{increment @index}}.</td>
+              {{#each (itemTableColumns ../mapped.columns)}}
+              {{#if (eq key "name")}}
               <td class="sg-desc-cell">
-                <p class="sg-item-name">{{name}}</p>
-                {{#if ../advanceOptions.showSkuInInvoice}}{{#if sku}}<p class="sg-item-sku">SKU: {{sku}}</p>
+                <p class="sg-item-name">{{../name}}</p>
+                {{#if ../../advanceOptions.showSkuInInvoice}}{{#if ../sku}}<p class="sg-item-sku">SKU: {{../sku}}</p>
                 {{/if}}{{/if}}
-                {{#if description}}
+                {{#if ../description}}
                 <div class="sg-item-desc">
-                  {{> MarkdownViewer (prepareMarkdownViewerData (collapseBlankLines description)) }}
+                  {{> MarkdownViewer (prepareMarkdownViewerData (collapseBlankLines ../description)) }}
                 </div>
                 {{/if}}
               </td>
-              {{#if (hasHsn ../invoice.items)}}<td class="text-center sg-cell-strong">{{hsn}}</td>{{/if}}
-              <td class="text-center sg-cell-strong">{{formatQty this}}</td>
-              <td class="text-center sg-cell-strong">{{formatCurrency rate ../invoice.currency ../invoice.locale
-                ../invoice.subUnitLength ../invoice.customCurrencySymbol}}</td>
-              <td class="text-center sg-cell-strong">{{formatCurrency amount ../invoice.currency ../invoice.locale
-                ../invoice.subUnitLength ../invoice.customCurrencySymbol}}</td>
+              {{else if (eq key "hsn")}}
+              <td class="text-center sg-cell-strong">{{../hsn}}</td>
+              {{else if (eq key "quantity")}}
+              <td class="text-center sg-cell-strong">{{formatQty ..}}</td>
+              {{else if (eq key "rate")}}
+              <td class="text-center sg-cell-strong">{{formatCurrency ../rate ../../invoice.currency
+                ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+              {{else if (eq key "amount")}}
+              <td class="text-center sg-cell-strong">{{formatCurrency ../amount ../../invoice.currency
+                ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+              {{else}}
+              <td class="sg-col-custom">{{customColumnValue .. this}}</td>
+              {{/if}}
+              {{/each}}
             </tr>
             {{/each}}
           </tbody>
@@ -215,13 +235,22 @@
           <tfoot>
             <tr>
               <td></td>
-              <td class="sg-total-label">{{invoice.customLabels.total}}</td>
-              {{#if (hasHsn invoice.items)}}<td class="text-center sg-cell-strong"></td>{{/if}}
-              <td class="text-center sg-cell-strong">{{sumQuantities invoice.items}}</td>
+              {{#each (itemTableColumns mapped.columns)}}
+              {{#if (eq key "name")}}
+              <td class="sg-total-label">{{../invoice.customLabels.total}}</td>
+              {{else if (eq key "hsn")}}
               <td class="text-center sg-cell-strong"></td>
-              <td class="text-center sg-cell-strong">{{formatCurrency invoice.finalTotal.subTotal invoice.currency
-                invoice.locale
-                invoice.subUnitLength invoice.customCurrencySymbol}}</td>
+              {{else if (eq key "quantity")}}
+              <td class="text-center sg-cell-strong">{{sumQuantities ../invoice.items}}</td>
+              {{else if (eq key "rate")}}
+              <td class="text-center sg-cell-strong"></td>
+              {{else if (eq key "amount")}}
+              <td class="text-center sg-cell-strong">{{formatCurrency ../invoice.finalTotal.subTotal
+                ../invoice.currency ../invoice.locale ../invoice.subUnitLength ../invoice.customCurrencySymbol}}</td>
+              {{else}}
+              <td></td>
+              {{/if}}
+              {{/each}}
             </tr>
           </tfoot>
           {{/unless}}
@@ -274,8 +303,11 @@
             {{!-- Tax rows deliberately do NOT use the columns' `isHidden`:
             normalizeInvoiceColumns gates those on `isTaxInvoice` (invoiceType ===
             "INVOICE"), which a quotation never is, so every tax column reports
-            hidden here and the rows would disappear entirely — the same trap the
-            `hasHsn` helper documents. `showIgst`/`showCgstSgst` carry no such
+            hidden here and the rows would disappear entirely — unlike the item
+            table above, which trusts `isHidden` as-is via `itemTableColumns`
+            since a document-level total is meant to print even when a
+            quotation's own tax columns read hidden. `showIgst`/`showCgstSgst`
+            carry no such
             document-type gate, and neither is keyed off the amount, so a zero-rated
             document still prints its declared taxes as 0. Labels still come from
             the payload's own column entries (cgst/sgst already resolved to
@@ -423,7 +455,7 @@
   </div>
 
   {{!-- Letterhead Footer (dealer / stockist banner) --}}
-  <div class="no-dibella sg-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
+  <div class="no-dibella invoice-letterhead-footer sg-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
     {{#if (assetUrl invoice.letterHeadFooter)}}
     <img src="{{assetUrl invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}

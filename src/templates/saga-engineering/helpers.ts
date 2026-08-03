@@ -230,13 +230,62 @@ export function registerSagaEngineeringTemplateHelpers(HB: any): void {
     return decodeURIComponent(segments[segments.length - 1] || url);
   });
 
-  // Whether to show the HSN column. `derived.showHsnColumn` (from the shared
-  // invoiceTemplateNormalization) gates this on the document being a GST tax
-  // INVOICE, which a quotation never is — so a quotation whose line items
-  // carry a real HSN code (this design's own reference documents all do)
-  // would otherwise lose the column entirely. Showing it whenever any item
-  // actually has one is simpler and matches what the account typed in.
-  HB.registerHelper("hasHsn", function (items: any) {
-    return Array.isArray(items) && items.some((item) => Boolean(item?.hsn));
+  // The item table's columns, in the account's own `invoice.columns` order,
+  // filtered to what's actually visible. `isHidden` — as computed by the
+  // shared invoiceTemplateNormalization for every key (taxType/country/
+  // isTaxInvoice/discountEnabled gates included) — is the single source of
+  // truth for whether a column shows, with no per-key exception: a tax
+  // column the shared logic correctly hides for this document (e.g. hsn/
+  // cgst/sgst on a GLOBAL-taxType invoice) stays hidden, and one it correctly
+  // shows (e.g. igst/gstRate/total) renders as an ordinary per-item column
+  // right here, not only in the totals breakdown below the table.
+  //
+  // name/quantity/rate/amount must never vanish outright — a payload that
+  // omits `invoice.columns` entirely (legacy senders, minimal test fixtures)
+  // would otherwise lose the whole item row instead of just its labels.
+  // Falls back to the end of the list in that order; real payloads declare
+  // all four, so this only matters when the account's own columns are absent.
+  const ALWAYS_PRESENT_COLUMN_KEYS = ["name", "quantity", "rate", "amount"];
+
+  HB.registerHelper("itemTableColumns", function (columns: any) {
+    const list = Array.isArray(columns) ? columns : [];
+    const visible = list.filter((column: any) => column && !column.isHidden);
+
+    const seenKeys = new Set(visible.map((column: any) => column.key));
+    ALWAYS_PRESENT_COLUMN_KEYS.forEach((key) => {
+      if (!seenKeys.has(key)) visible.push({ key, label: "" });
+    });
+
+    return visible;
+  });
+
+  // A custom column's per-item value: payloads put these on `item.custom`
+  // keyed by the column's key, on an `item.customFields` list matched by
+  // key/name/label, or occasionally flat on the item itself — checked in
+  // that order before giving up.
+  HB.registerHelper("customColumnValue", function (item: any, column: any) {
+    if (!item || !column?.key) return "";
+    const key = String(column.key);
+    let value = item.custom?.[key];
+
+    if (value === undefined || value === null || value === "") {
+      const match = (
+        Array.isArray(item.customFields) ? item.customFields : []
+      ).find((field: any) => {
+        const candidates = [field?.key, field?.name, field?.label];
+        return candidates.some(
+          (candidate: any) =>
+            typeof candidate === "string" &&
+            candidate.trim().toLowerCase() === key.toLowerCase()
+        );
+      });
+      value = match?.value;
+    }
+
+    if (value === undefined || value === null || value === "") {
+      value = item[key];
+    }
+
+    return stringifyFieldValue(value);
   });
 }
