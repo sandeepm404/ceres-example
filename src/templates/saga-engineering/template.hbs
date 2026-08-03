@@ -33,6 +33,21 @@
           <span class="sg-meta-label">{{invoice.customLabels.invoiceDate}}</span>
           <span class="sg-meta-value">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</span>
         </div>
+        {{#if invoice.dueDate}}
+        <div class="sg-meta-line">
+          <span class="sg-meta-label">{{invoice.customLabels.dueDate}}</span>
+          <span class="sg-meta-value">{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</span>
+        </div>
+        {{/if}}
+        {{#if (or (eq invoice.billType "CREDITNOTE") (eq invoice.billType "DEBITNOTE"))}}
+        {{#if invoice.ecommerceOperator.name}}
+        <div class="sg-meta-line">
+          <span class="sg-meta-label">E-commerce Operator</span>
+          <span class="sg-meta-value">{{invoice.ecommerceOperator.name}}{{#if invoice.ecommerceOperator.gstin}}
+            ({{invoice.ecommerceOperator.gstin}}){{/if}}</span>
+        </div>
+        {{/if}}
+        {{/if}}
         {{#each invoice.customFields}}
         <div class="sg-meta-line">
           <span class="sg-meta-label">{{label}}</span>
@@ -61,8 +76,13 @@
           {{invoice.billedTo.country}}{{/if}}</p>
         {{/if}}
         {{#if invoice.billedTo.gstin}}<p>GSTIN: {{invoice.billedTo.gstin}}</p>{{/if}}
-        {{#if invoice.billedTo.phone}}<p>{{formatPhone invoice.billedTo.phone}}</p>{{/if}}
-        {{#each (partyFields invoice.billedTo)}}<p>{{label}}: {{value}}</p>{{/each}}
+        {{#if invoice.billedTo.panNumber}}<p>PAN: {{invoice.billedTo.panNumber}}</p>{{else}}{{#if
+          invoice.billedTo.pan}}<p>PAN: {{invoice.billedTo.pan}}</p>{{/if}}{{/if}}
+        {{#unless (eq invoice.billedTo.emailShowInInvoice false)}}{{#if invoice.billedTo.email}}<p>Email:
+          {{invoice.billedTo.email}}</p>{{/if}}{{/unless}}
+        {{#unless (eq invoice.billedTo.phoneShowInInvoice false)}}{{#if invoice.billedTo.phone}}<p>Phone:
+          {{formatPhone invoice.billedTo.phone}}</p>{{/if}}{{/unless}}
+        {{#each (partyFields invoice.billedTo)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}
         {{#if invoice.billedTo.contactPerson.name}}
         <p class="sg-contact-person">{{#if
           invoice.customLabels.contactPersonLabel}}<strong>{{invoice.customLabels.contactPersonLabel}}:</strong>
@@ -81,7 +101,7 @@
           {{invoice.shippedTo.country}}{{/if}}</p>
         {{/if}}
         {{#if invoice.shippedTo.gstin}}<p>GSTIN: {{invoice.shippedTo.gstin}}</p>{{/if}}
-        {{#each (partyFields invoice.shippedTo)}}<p>{{label}}: {{value}}</p>{{/each}}
+        {{#each (partyFields invoice.shippedTo)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}
       </div>
       {{/if}}
     </div>
@@ -101,7 +121,7 @@
           {{invoice.shippedFrom.country}}{{/if}}</p>
         {{/if}}
         {{#if invoice.shippedFrom.gstin}}<p>GSTIN: {{invoice.shippedFrom.gstin}}</p>{{/if}}
-        {{#each (partyFields invoice.shippedFrom)}}<p>{{label}}: {{value}}</p>{{/each}}
+        {{#each (partyFields invoice.shippedFrom)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}
       </div>
       {{/if}}
 
