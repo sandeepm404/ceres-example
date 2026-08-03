@@ -20,6 +20,8 @@
   line-height: 1.5;
   color: var(--ceres-primary-color, #222);
   background: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 p {
