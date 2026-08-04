@@ -459,6 +459,10 @@ th.sg-col-desc {
   font-size: var(--sg-font-size-base) !important;
 }
 
+.sg-notes-block .toastui-editor-contents p {
+  margin-top: 8pt !important;
+}
+
 .sg-terms-block ol {
   margin: 0;
   padding-left: 15pt;
