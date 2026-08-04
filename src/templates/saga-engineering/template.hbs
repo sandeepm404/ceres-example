@@ -77,7 +77,7 @@
         {{/if}}
         {{#if invoice.billedTo.gstin}}<p>GSTIN: {{invoice.billedTo.gstin}}</p>{{/if}}
         {{#if invoice.billedTo.panNumber}}<p>PAN: {{invoice.billedTo.panNumber}}</p>{{else}}{{#if
-          invoice.billedTo.pan}}<p>PAN: {{invoice.billedTo.pan}}</p>{{/if}}{{/if}}
+        invoice.billedTo.pan}}<p>PAN: {{invoice.billedTo.pan}}</p>{{/if}}{{/if}}
         {{#unless (eq invoice.billedTo.emailShowInInvoice false)}}{{#if invoice.billedTo.email}}<p>Email:
           {{invoice.billedTo.email}}</p>{{/if}}{{/unless}}
         {{#unless (eq invoice.billedTo.phoneShowInInvoice false)}}{{#if invoice.billedTo.phone}}<p>Phone:
@@ -470,7 +470,8 @@
   </div>
 
   {{!-- Letterhead Footer (dealer / stockist banner) --}}
-  <div class="no-dibella invoice-letterhead-footer sg-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
+  <div
+    class="no-dibella invoice-letterhead-footer sg-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
     {{#if (assetUrl invoice.letterHeadFooter)}}
     <img src="{{assetUrl invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}

@@ -1,7 +1,7 @@
 @import "https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap";
 
 .sg-shell {
-  --sg-page-width: 750pt;
+  --sg-page-width: 100%;
   --sg-font-size-xs: 9pt;
   --sg-font-size-s: 9.75pt;
   --sg-font-size-base: 10.5pt;
@@ -117,7 +117,7 @@ p {
 .sg-box {
   display: flex;
   flex-direction: column;
-  gap: 3pt;
+  gap: 4pt;
 }
 
 .sg-section-title {
@@ -140,6 +140,7 @@ p {
 
 .sg-meta-box {
   flex: 1;
+  gap: 6pt !important;
 }
 
 .sg-meta-line {
@@ -195,19 +196,20 @@ p {
 /* `.sg-box`'s own 3pt gap already separates every line; this pushes the
    "Kind Attn" line further away as a deliberate, larger break. */
 .sg-contact-person {
-  margin-top: 6pt !important;
+  margin-top: 1pt !important;
 }
 
 /* Sub / Ref / salutation */
 
 .sg-salutation {
   font-size: var(--sg-font-size-base);
+  gap: 6pt;
 }
 
 /* Same as `.sg-contact-person` above: a deliberate extra break before the
    closing salutation line, on top of `.sg-box`'s own 3pt gap. */
 .sg-dear {
-  margin-top: 6pt !important;
+  margin-top: 3pt !important;
 }
 
 /* Item table */
@@ -278,6 +280,7 @@ th.sg-col-desc {
 }
 
 .sg-item-name {
+  font-size: var(--sg-font-size-base);
   font-weight: 600;
   margin: 0;
 }
