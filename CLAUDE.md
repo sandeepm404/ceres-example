@@ -36,6 +36,7 @@ For detailed instructions on specific tasks, read these files:
 - **Navigate the codebase**: `.agent/skills/navigate-codebase/SKILL.md`
 - **Snapshot testing**: `.agent/skills/snapshot-testing/SKILL.md`
 - **Convert design to template**: `.agent/skills/design-to-template/SKILL.md`
+- **Decide what a template must render (before markup)**: `.agent/skills/architect-template/SKILL.md`
 - **Audit a payload against a template**: `.agent/skills/data-mapping/SKILL.md`
 
 ## Build Commands
