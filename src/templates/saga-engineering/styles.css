@@ -193,6 +193,11 @@ p {
   font-size: var(--sg-font-size-base);
 }
 
+.sg-party-address {
+  max-width: 400px;
+  white-space: normal;
+}
+
 /* `.sg-box`'s own 3pt gap already separates every line; this pushes the
    "Kind Attn" line further away as a deliberate, larger break. */
 .sg-contact-person {

@@ -1,4 +1,6 @@
-<div class="sg-shell">
+<div class="sg-shell" {{#if pdfOptions.textScale}}style="zoom: {{pdfOptions.textScale}};" {{else}}{{#if
+  advanceOptions.textScale}}style="zoom: {{advanceOptions.textScale}};" {{else}}{{#if
+  invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}{{/if}}>
 
   {{!-- Letterhead --}}
   <div class="no-dibella invoice-letterhead sg-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
@@ -69,11 +71,12 @@
         <p class="sg-party-heading">{{invoice.customLabels.billedTo}}</p>
         {{/if}}
         <p class="sg-party-name">{{invoice.billedTo.name}}</p>
-        {{#if invoice.billedTo.street}}<p>{{invoice.billedTo.street}}</p>{{/if}}
-        {{#if invoice.billedTo.city}}
-        <p>{{invoice.billedTo.city}}{{#if invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}{{#if
+        {{#if (or invoice.billedTo.street invoice.billedTo.city)}}
+        <p class="sg-party-address">{{#if invoice.billedTo.street}}{{invoice.billedTo.street}}{{/if}}{{#if
+          invoice.billedTo.city}}{{#if invoice.billedTo.street}}<br>{{/if}}{{invoice.billedTo.city}}{{#if
+          invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}{{#if
           invoice.billedTo.pincode}} {{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}},
-          {{invoice.billedTo.country}}{{/if}}</p>
+          {{invoice.billedTo.country}}{{/if}}{{/if}}</p>
         {{/if}}
         {{!-- GST/PAN visibility is a business-wide toggle
         (invoice.owner.configuration.experimental.fieldVisibility.gst/pan.showInDocument
@@ -103,11 +106,12 @@
       <div class="sg-box sg-party">
         {{#if invoice.customLabels.shippedTo}}<p class="sg-party-heading">{{invoice.customLabels.shippedTo}}</p>{{/if}}
         <p class="sg-party-name">{{invoice.shippedTo.name}}</p>
-        {{#if invoice.shippedTo.street}}<p>{{invoice.shippedTo.street}}</p>{{/if}}
-        {{#if invoice.shippedTo.city}}
-        <p>{{invoice.shippedTo.city}}{{#if invoice.shippedTo.state}}, {{invoice.shippedTo.state}}{{/if}}{{#if
+        {{#if (or invoice.shippedTo.street invoice.shippedTo.city)}}
+        <p class="sg-party-address">{{#if invoice.shippedTo.street}}{{invoice.shippedTo.street}}{{/if}}{{#if
+          invoice.shippedTo.city}}{{#if invoice.shippedTo.street}}<br>{{/if}}{{invoice.shippedTo.city}}{{#if
+          invoice.shippedTo.state}}, {{invoice.shippedTo.state}}{{/if}}{{#if
           invoice.shippedTo.pincode}} {{invoice.shippedTo.pincode}}{{/if}}{{#if invoice.shippedTo.country}},
-          {{invoice.shippedTo.country}}{{/if}}</p>
+          {{invoice.shippedTo.country}}{{/if}}{{/if}}</p>
         {{/if}}
         {{#if invoice.shippedTo.gstin}}<p>GSTIN: {{invoice.shippedTo.gstin}}</p>{{/if}}
         {{#each (partyFields invoice.shippedTo)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}
@@ -123,11 +127,12 @@
         {{#if invoice.customLabels.shippedFrom}}<p class="sg-party-heading">{{invoice.customLabels.shippedFrom}}</p>
         {{/if}}
         <p class="sg-party-name">{{invoice.shippedFrom.name}}</p>
-        {{#if invoice.shippedFrom.street}}<p>{{invoice.shippedFrom.street}}</p>{{/if}}
-        {{#if invoice.shippedFrom.city}}
-        <p>{{invoice.shippedFrom.city}}{{#if invoice.shippedFrom.state}}, {{invoice.shippedFrom.state}}{{/if}}{{#if
+        {{#if (or invoice.shippedFrom.street invoice.shippedFrom.city)}}
+        <p class="sg-party-address">{{#if invoice.shippedFrom.street}}{{invoice.shippedFrom.street}}{{/if}}{{#if
+          invoice.shippedFrom.city}}{{#if invoice.shippedFrom.street}}<br>{{/if}}{{invoice.shippedFrom.city}}{{#if
+          invoice.shippedFrom.state}}, {{invoice.shippedFrom.state}}{{/if}}{{#if
           invoice.shippedFrom.pincode}} {{invoice.shippedFrom.pincode}}{{/if}}{{#if invoice.shippedFrom.country}},
-          {{invoice.shippedFrom.country}}{{/if}}</p>
+          {{invoice.shippedFrom.country}}{{/if}}{{/if}}</p>
         {{/if}}
         {{#if invoice.shippedFrom.gstin}}<p>GSTIN: {{invoice.shippedFrom.gstin}}</p>{{/if}}
         {{#each (partyFields invoice.shippedFrom)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}
