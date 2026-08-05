@@ -535,7 +535,21 @@ th.sg-col-desc {
     display: table-header-group;
   }
 
+  /* Browsers default `tfoot` to `table-footer-group`, which print engines
+     repeat at the bottom of every page a table spans — the same mechanism
+     that makes `thead` repeat as a running header. The summary row
+     (`showTotalsRow`) is meant to print exactly once, at the true end of the
+     table, so `table-row-group` opts it out of that repeat behaviour and
+     keeps it in its natural DOM position instead. */
+  .sg-item-table tfoot {
+    display: table-row-group;
+  }
+
   .sg-item-table tbody tr {
+    break-inside: avoid;
+  }
+
+  .sg-item-table tfoot tr {
     break-inside: avoid;
   }
 
