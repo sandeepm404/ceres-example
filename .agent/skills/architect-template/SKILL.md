@@ -56,10 +56,27 @@ For every row in the group, classify:
 |---|---|---|
 | **Present** | Visible in the design, data in the payload | Build and verify |
 | **Latent** | Not in the design, but the contract can supply it | **Build it, gated.** This is the class that gets skipped |
-| **Unsourced** | Visible in the design, no contract field | Ask — it is the only category worth interrupting for |
+| **Derived** | No payload key holds this text, but it is computable from data that is present | **Build it from a shared widget or helper.** Never ask about these |
+| **Unsourced** | Visible in the design, no contract field and nothing to compute it from | Ask — it is the only category worth interrupting for |
 | **Excluded** | Deliberately not on this document type | Record the decision and why |
 
 The output of this step is the spec: one line per row, with its class, its path, its resolved gate expression, and a confidence score.
+
+### Check derivability before scoring
+
+**"No payload key holds this string" is not the same as "no source".** Before scoring a row low, ask whether it is computable from data already on the document. If it is, it is Derived, and it scores on the **source figure**, not on the printed string — a words rendering of a tax total that is itself 90% confident is a 90% row, not a 20% one.
+
+Rows that look unsourced and are not:
+
+| Row | Actually |
+|---|---|
+| `Tax Amount (in words)` | `amountInWords` over the tax total — no payload key needed |
+| Quantity total in a table footer | Σ `items[n].quantity`, computed in the template |
+| `Amount Paid` in the settlement band | `mapped.payments.paid` = received + transaction charge, a derived figure with no payload key |
+| Summary table `Total` row | Σ of the rows above it, or the summary's own `total*` aggregates |
+| A tax rate shown beside a totals label | composed from the column label + the rate |
+
+Getting this wrong fires a blocking question that did not need asking.
 
 ### Confidence, and the 40% rule
 
@@ -70,11 +87,13 @@ Score every mapping. The score is about **the path**, not the layout:
 | **90–100%** | Direct contract field, verified present in the supplied payload | Build it |
 | **70–89%** | Contract field, but composed, reformatted, or aliased — the value is assembled from more than one key, or the key exists in the contract but not in this payload | Build it, state the assumption in the spec |
 | **40–69%** | A plausible candidate exists but a different key would be equally defensible | Build it against the best candidate, flag the row in the spec, and confirm at review |
-| **Below 40%** | **Stop and ask.** No contract field found, or several unrelated candidates with nothing to choose between them | Ask before writing markup for that row |
+| **Below 40%** | **Stop and ask.** No contract field found, nothing derives it, and no widget already renders it — or several unrelated candidates with nothing to choose between them | Ask before writing markup for that row |
 
 **Below 40% is a blocking question for that row, not a guess to be resolved later.** Guessing here is how a Mongo-style `_id` ends up printed as a `Client ID`, or how a visible figure gets bound to a key that happens to hold a similar number on one document.
 
 Batch the sub-40% rows into a single question — one message listing each row, the candidates considered, and the reason none of them wins. Ask for the source field and one sample value. Keep building every other row while you wait; a blocked row must not stall the block it sits in.
+
+Before asking, check the widget inventory below and the derivability table above. A row that an existing widget already renders is not a question — it is a partial you have not registered yet.
 
 Never silently downgrade a sub-40% row to "hardcoded" to avoid asking. A hardcoded label is a deliberate decision recorded in the spec, not a fallback for an unresolved path.
 
@@ -96,6 +115,31 @@ These are absent from most reference designs and present in production payloads.
 A design showing a fully-paid invoice hides the entire settlement band. A design with one tax rate hides multi-rate summaries. A design for an intra-state customer hides IGST forever. None of these are optional.
 
 ## Step 4 — Build rules
+
+### Reuse the shared widgets — do not rebuild them per template
+
+Whole blocks and every derived value already exist under `src/widgets/`. Check there **before** writing block markup or a template-local helper. A second implementation of a summary table or a number-to-words routine is a defect: it drifts from the original and only one of the two gets fixed.
+
+| Need | Use |
+|---|---|
+| Tax summary block | `tax-summary` (`TaxSummaryTable` partial) |
+| HSN summary block | `hsn-summary` (`HsnSummaryTable` partial) |
+| Payments table block | `payment-table` |
+| Any amount in words | `amountInWords` helper, from `src/widgets/shared/amountInWords.ts` |
+| Money formatting | `formatCurrency` / `registerFormatCurrencyHelper`, `currency-format` |
+| Phone formatting | `phone-number` |
+| Dates | `date-time` |
+| QR rendering | `qr-code` |
+| Markdown in notes and item descriptions | `markdown-viewer` |
+| Status tag, watermark, images, branding | `invoice-status`, `watermark`, `image`, `refrens-branding` |
+
+Rules:
+
+- A widget registers its own Handlebars partial and helpers and hangs itself off `window.CeresWidgets`. Import it in the template's `index.ts` — importing nothing means the partial is not registered and the block renders empty.
+- Import only the widgets `template.hbs` actually uses.
+- Logic shared by more than one widget or template goes in `src/widgets/shared/`, not inline in a template's `helpers.ts`. `amountInWords`, `formatCurrency` and `registerFormatCurrencyHelper` already live there.
+- Needing a new derived value is a signal to add a shared helper, not to add a payload field. Ask for a payload field only when the data itself is missing, never when only its rendering is.
+- Keep template-local `helpers.ts` for genuinely template-local decisions — this layout's column grouping, its print-status rule — not for anything another template would want.
 
 ### Columns are data, not layout
 
@@ -133,21 +177,17 @@ Decide ownership per label, and write the decision down:
 
 No name, address, GSTIN, bank, term, or footer string from the reference document belongs in the markup. If a row has no source yet, it stays conditional and empty — not filled with the picture's text.
 
-## Traps this skill exists to prevent
+## Two traps the build rules do not cover
 
-- **Design-shaped item table.** Columns hardcoded in the design's order, so an account that reorders or renames them gets the wrong table.
-- **`colspan` drift.** A literal colspan that was right for the reference and wrong the moment a tax column appears.
-- **The vanished heading.** An empty `customLabels` override on a guarded heading removes the header but leaves its bordered container.
-- **Latent-row arithmetic.** Totals that reconcile only because the reference had no charges, no cess and no settlement rows.
-- **Fixed-height table body.** Correct on a 5-item document, clipped on a 40-item one.
-- **A block built from the picture's tax path.** An intra-state reference gives CGST/SGST; the same template must render IGST for inter-state and the single-tax slot for non-India.
+- **Latent-row arithmetic.** Totals that reconcile only because the reference document had no charges, no cess and no settlement rows. Check the sum against a payload that carries all three.
+- **A block built from the picture's tax path.** An intra-state reference gives CGST/SGST; the same template must render IGST for inter-state and the single generic tax slot for non-India. Resolve the tax path before reading any per-key rule.
 
 ## What to ask about
 
 Only data-shaped conflicts — ones where proceeding either way changes numbers or invents a field:
 
-- **Any row scored below 40%** in Step 2 — the threshold is the rule, not a judgement call.
-- A visible row with no contract source (`e-Way Bill No.`, `Tax Amount (in words)`, bank branch name).
+- **Any row still scored below 40%** after Step 2's derivability check — the threshold is the rule, not a judgement call.
+- A visible row with no contract source and nothing to compute it from (`e-Way Bill No.`, the bank's branch name, `Mode/Terms of Payment`).
 - A row the design omits where the contract would render one, and including it would change the arithmetic (a discount netted into the amount column with no discount row).
 - Whether one layout serves several `billType` variants, per the contract skill's consistency rule.
 
