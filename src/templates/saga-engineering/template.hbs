@@ -75,9 +75,18 @@
           invoice.billedTo.pincode}} {{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}},
           {{invoice.billedTo.country}}{{/if}}</p>
         {{/if}}
+        {{!-- GST/PAN visibility is a business-wide toggle
+        (invoice.owner.configuration.experimental.fieldVisibility.gst/pan.showInDocument
+        — nested under `experimental`, not directly under `configuration`),
+        not a per-party flag — hidden only on an explicit `false`, same
+        opt-out convention as emailShowInInvoice/phoneShowInInvoice below. --}}
+        {{#unless (eq invoice.owner.configuration.experimental.fieldVisibility.gst.showInDocument false)}}
         {{#if invoice.billedTo.gstin}}<p>GSTIN: {{invoice.billedTo.gstin}}</p>{{/if}}
+        {{/unless}}
+        {{#unless (eq invoice.owner.configuration.experimental.fieldVisibility.pan.showInDocument false)}}
         {{#if invoice.billedTo.panNumber}}<p>PAN: {{invoice.billedTo.panNumber}}</p>{{else}}{{#if
         invoice.billedTo.pan}}<p>PAN: {{invoice.billedTo.pan}}</p>{{/if}}{{/if}}
+        {{/unless}}
         {{#unless (eq invoice.billedTo.emailShowInInvoice false)}}{{#if invoice.billedTo.email}}<p>Email:
           {{invoice.billedTo.email}}</p>{{/if}}{{/unless}}
         {{#unless (eq invoice.billedTo.phoneShowInInvoice false)}}{{#if invoice.billedTo.phone}}<p>Phone:
@@ -244,9 +253,10 @@
             </tr>
             {{/each}}
           </tbody>
-          {{!-- The item table's own totals row answers to the same
-          `hideTotals` switch as the totals breakdown below. --}}
-          {{#unless invoice.hideTotals}}
+          {{!-- The item table's own summary row is its own opt-in
+          (`showTotalsRow`), independent of `hideTotals` (which only gates
+          the totals breakdown below the table). --}}
+          {{#if invoice.showTotalsRow}}
           <tfoot>
             <tr>
               <td></td>
@@ -268,7 +278,7 @@
               {{/each}}
             </tr>
           </tfoot>
-          {{/unless}}
+          {{/if}}
         </table>
       </div>
 
