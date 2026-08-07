@@ -25,12 +25,15 @@ Runs inside an iframe. Communication via postMessage:
 
 ## Skills (read .agent/skills/*/SKILL.md for detailed instructions)
 
+- `architect-template` - Plan layout and data contract before writing markup
 - `scaffold-template` - Create a new template with all required files
-- `debug-build` - Diagnose and fix build failures
-- `navigate-codebase` - Understand repo structure and Lydia integration
-- `snapshot-testing` - Manage visual regression tests
 - `design-to-template` - Convert Figma/screenshot into a Ceres template
 - `ceres-template-data-contract` - Map template designs to the normalized invoice data contract and ask for missing data from provided images
+- `data-mapping` - Audit a payload against a template
+- `data-binding-tests` - Write and maintain Jest tests for data binding
+- `snapshot-testing` - Manage visual regression tests; required for every new template
+- `debug-build` - Diagnose and fix build failures
+- `navigate-codebase` - Understand repo structure and Lydia integration
 
 ## Local Preview
 

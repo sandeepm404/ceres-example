@@ -1,9 +1,27 @@
 ---
 name: snapshot-testing
-description: Manage visual regression tests for Ceres templates
+description: Manage visual regression tests for Ceres templates. Required as the last step of creating a new template, and whenever a change touches template.hbs or styles.css.
 ---
 
 # Snapshot Testing
+
+## When to run this — required, not optional
+
+**Every new template gets snapshot baselines before it is handed over.** A template with binding
+tests but no baselines is unverified visually: `data-binding-tests` proves a value reached the DOM,
+never that the page it landed on is laid out correctly. Nothing else in the workflow looks at the
+rendered document.
+
+Also run it on **any** change to `template.hbs` or `styles.css` — that is what a regression test is
+for. Review the diff image before updating a baseline; `npm run test:snapshots:update` on an
+unexamined diff silently blesses the regression it was meant to catch.
+
+At least two samples per template, per Tips below.
+
+> **Harness status: not yet wired up.** As of this writing the repo has no `test:snapshots` /
+> `test:snapshots:update` scripts, no Playwright dependency, no `playwright.config.*`, and no
+> `__snapshots__/` directory — the commands below describe the intended setup, not a working one.
+> Build the harness before relying on this step, and delete this note once it runs.
 
 ## What snapshots do
 

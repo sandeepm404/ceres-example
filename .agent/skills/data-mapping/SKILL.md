@@ -21,6 +21,30 @@ Given a payload JSON and a template, produce a record per rendered element that 
 3. `src/main/invoiceTemplateNormalization.ts` — resolves every `mapped.*` and `derived.*` value. A `mapped.visibility.x` in the markup is **never** a payload field; trace it to its expression here.
 4. `src/main/invoicePayloadContract.ts` — only when a payload key's meaning is unclear.
 
+The platform's own document renderer is the behavioral ground truth this inventory was verified
+against. Where normalization or a template disagrees with a rule stated here (tax-row branching,
+settlement gating, label fallbacks), that disagreement is a **finding to report**, not a reason to
+soften the rule.
+
+## Shared widgets — prefer them, audit for them
+
+`src/widgets/` is the shared layer that already encodes the platform's formatting rules. A template
+that re-implements one of these locally will drift — report a hand-rolled variant as a finding and
+prefer the widget when building or fixing:
+
+| Widget | Use for | Rule it owns |
+|---|---|---|
+| `shared/formatCurrency` (`registerFormatCurrencyHelper`) | every money figure | locale, `subUnitLength` fraction forcing, `customCurrencySymbol`, special symbols; integers print without decimals when `subUnitLength` is absent |
+| `date-time` (`formatShortDateWithOffset` + aliases) | every date | `ownerOffset` shifting (defaults `+5:30` when absent); invalid input → `""` |
+| `shared/amountInWords` | total in words | computes words from `finalTotal.total` — never rely only on the stored `customLabels.totalInWordsValue` |
+| `phone-number` (`formatPhone`) | every phone | intl formatting with raw-string fallback |
+| `markdown-viewer` (`MarkdownViewer` + `prepareMarkdownViewerData`) | `notes`, item `description` | markdown/HTML rendering; pair with `collapseBlankLines` |
+| `tax-summary` / `hsn-summary` partials | summary tables | column set and grouping |
+| `payment-table` partial | payments record table | conditional TDS/charge columns |
+| `refrens-branding`, `invoice-status`, `image` partials | branding, status badge, images | consistent chrome |
+| `qrSrc` | any QR (`mapped.qr.*`) | URL passes through, raw `upi://` intent → data URI; a raw intent dropped into `src` renders nothing |
+| `image` partial / asset-resize helper | logo, signature, item photos | `{w, h}` resize box + responsive `srcSet` — see §14 for the exact box per element; QR data-URLs must NOT go through this |
+
 ## One record per rendered element
 
 A label and its value are two separate elements on the page, each with its own source. Split them:
@@ -71,7 +95,7 @@ The text **as printed**, not the raw JSON: dates through `formateShortDateWithOf
 
 Check each of these before reporting; they were all real in production payloads:
 
-- **Key-name mismatch.** The template reads `bankAccount.bankName` / `accountHolderName`; payloads often carry `bank` / `name`. The row renders as nothing. Grep the payload for a near-miss key before writing "absent".
+- **Key-name mismatch.** The platform renderer reads `bankAccount.name` for the account holder (and that is what real payloads carry); the payload contract instead declares `bankName`/`accountHolderName`. A template reading only the contract names renders blank rows against a real payload; one reading only `name` breaks on contract-shaped fixtures. Check both shapes before writing "absent", and report whichever side the template misses.
 - **Empty `customLabels`.** `total`, `billedTo`, `shippedFrom` commonly arrive as `""`. Guarded headings disappear; the grand-total label prints blank.
 - **`hsnView: "MERGE"`** hides the whole `hsn` column (`showHsnColumn` needs `SPLIT`, or `DEFAULT` on an allow-listed template) and routes HSN inline instead.
 - **`invoiceType !== "INVOICE"`** hides every tax column, `gstRate`, and `total` via `isTaxInvoice`. Quotations lose them all.
@@ -93,6 +117,19 @@ The rules that decide it, from `invoiceTemplateNormalization.ts`:
 
 - **`showIgst = Boolean(invoice.igst) || taxName !== "GST"`.** The second clause is the whole non-India story: a VAT document with `igst: false` still routes through the `igst` slot, because its `taxName` is not `"GST"`.
 - **`showCgstSgst = !showIgst && taxName === "GST"`** — India-GST-only by construction. It can never be true on a global document.
+- **Known divergence from the platform renderer — report it when it bites.** The platform's own
+  renderer branches the totals tax rows on **`taxType`** (`igst || taxType !== "INDIA"` → the igst
+  slot; `!igst && taxType === "INDIA"` → CGST/SGST), while normalization keys off **`taxName`** as
+  above. The two disagree on three payload shapes: `taxType: "GLOBAL"` with `taxName: "GST"`
+  (normalization prints CGST/SGST, the platform prints the single-tax slot), `taxType: "INDIA"`
+  with a non-GST `taxName`, and an **absent `taxName`** (resolves `""` ≠ `"GST"` → igst slot, where
+  the platform's `"GST"` default keeps CGST/SGST). On such payloads the engine renders a different
+  tax branch than the platform — an engine-level defect to report, not correct behavior.
+- **The platform renderer also honors two totals-area guards normalization ignores:**
+  `invoice.hideTaxes` (hides the tax rows inside the totals block) and `supplyType: "EXPWOP"` with
+  zero tax amounts (suppresses the tax rows). A payload carrying either renders tax rows through
+  this engine that the platform would hide — check both keys on every audit even though no
+  `mapped.*` flag exists for them.
 - **`gstRate` has no taxType gate**, only `isTaxInvoice`. An India-named key therefore renders on non-India documents, where the account relabels it (`"VAT Rate"`).
 - **`hsn` needs `isTaxInvoice` AND owner country `IN` AND `taxType === "INDIA"` AND the `hsnView` rule**; `showInlineHsn` needs `isTaxInvoice` AND `taxType === "INDIA"`. On a global document **both** are false, so a populated `item.hsn` prints nowhere at all — not as a column, not inline.
 - **`classification` keys off owner country `MY` alone**, independent of `taxType`.
@@ -109,6 +146,13 @@ Two payload-level checks worth making on any non-India document: `locale` agains
 Emit one JSON object per document-section group, in template order (header/meta → parties → logistics → item table → totals → footer blocks), using the schema in the reference below. Drop groups the template does not render. Use a markdown table instead only if the user asks for one.
 
 Mark any record that depends on data missing from the supplied payload with `"missing": "<key>"` and say which key is missing — a truncated paste is common, and a guess presented as a value is worse than a gap.
+
+**Absent from the payload is not absent from scope.** One payload never exercises every block. For
+every inventory group the supplied document does not exercise (no shipping, no IRN, no batch, no
+settlement, no cesses…), still read the markup and record whether the template **would** render that
+block if it arrived — `"missing": "<key>"` plus a one-line verdict (`handled` / `not handled — block
+never renders`). A template audited only against one payload's blocks silently drops data on the
+next payload; the not-handled list is usually the most valuable part of the report.
 
 Close with a short **findings** list: blank labels, hardcoded labels that should read `customLabels`, key mismatches, and unread payload data. Do not fix anything unless asked; offer.
 
@@ -172,10 +216,10 @@ The standard grouping and the resolved rules for a Ceres invoice/document payloa
     {
       "name": "Logo",
       "path": "logo",
-      "visibility": "Non-empty URL",
+      "visibility": "assetUrl(logo) non-empty — see §14 for sizing (useOriginalLogo vs the resized/srcSet default)",
       "labelVariable": null,
       "defaultLabel": null,
-      "valueVariable": "{logo}"
+      "valueVariable": "see §14"
     },
     {
       "name": "Letterhead header",
@@ -196,11 +240,10 @@ The standard grouping and the resolved rules for a Ceres invoice/document payloa
     {
       "name": "Watermark",
       "path": "template.watermark",
-      "visibility": "{template.watermark.isEnabled} true",
+      "visibility": "{template.watermark.logo} non-empty — NOT an isEnabled flag; there is no such key on the reference config. See §14: this is a CSS background pattern, not an <img>",
       "labelVariable": null,
       "defaultLabel": null,
-      "valueVariable": "{template.watermark.logo}, {.opacity}, {.rotation}, {.scale}",
-      "unverified": true
+      "valueVariable": "see §14"
     },
     {
       "name": "Invoice Title",
@@ -329,7 +372,7 @@ The standard grouping and the resolved rules for a Ceres invoice/document payloa
     {
       "name": "Document custom fields Label Text",
       "path": "customFields[n].label",
-      "visibility": "Array non-empty",
+      "visibility": "Array non-empty, per-entry {value} non-empty AND {params.showInInvoice} not false (opt-out) — an empty value drops the whole row, label included",
       "labelVariable": null,
       "defaultLabel": null,
       "valueVariable": "{customFields[n].label} — every entry in array order"
@@ -337,7 +380,7 @@ The standard grouping and the resolved rules for a Ceres invoice/document payloa
     {
       "name": "Document custom fields",
       "path": "customFields[n].value",
-      "visibility": "Array non-empty",
+      "visibility": "Array non-empty, per-entry {value} non-empty AND {params.showInInvoice} not false (opt-out)",
       "labelVariable": null,
       "defaultLabel": null,
       "valueVariable": "{customFields[n].value} — every entry in array order"
@@ -775,7 +818,15 @@ The whole block is gated by `mapped.visibility.transport` = `hasTransportData()`
 
 ## 7. Line item columns
 
-Columns render in the account's own `columns[]` order. A column is hidden when `column.isHidden` **or** its key-specific rule fails — the rules below are from `normalizeInvoiceColumns`, where `isTaxInvoice` = `invoiceType === "INVOICE"`. Each column is two elements: a header printed once, and a cell printed per item.
+Columns render in the account's own `columns[]` order. A column is hidden when `column.isHidden` **or** its key-specific rule fails — the rules below are from `normalizeInvoiceColumns`, where `isTaxInvoice` = `invoiceType === "INVOICE"`.
+
+**Headers are not audited per column.** Every visible column prints `columns[<key>].label` from the same loop that prints its cells — no template authors item-table header text, so a per-column `Label Text` record only restates the loop. Emit one record per column *cell*; record a header only where it deviates:
+
+- **`cgst` / `sgst`** — normalization forces `CGST`, and `UTGST` when `invoice.utgst`, discarding the account's label. Flag it when the payload disagrees.
+- **A hardcoded header** in the markup instead of `{{label}}` off the loop — a finding, not a record.
+- **A header printing blank** because `columns[n].label` is `""` — a payload defect.
+
+The per-column `Label Text` entries stay in the inventory below as a path reference — `columns[<key>].label` and its default — not as records to reproduce in an audit.
 
 ```json
 {
@@ -976,18 +1027,26 @@ Columns render in the account's own `columns[]` order. A column is hidden when `
     {
       "name": "Thumbnail col",
       "path": "items[n].thumbnail",
-      "visibility": "advanceOptions.showThumbnailAsColumn",
+      "visibility": "advanceOptions.showThumbnailAsColumn AND {items[n].thumbnail} non-empty — see §14 for sizing",
       "labelVariable": null,
       "defaultLabel": null,
-      "valueVariable": "{items[n].thumbnail}"
+      "valueVariable": "see §14"
     },
     {
       "name": "Item images",
       "path": "items[n].images",
-      "visibility": "inline with item",
+      "visibility": "inline with item, array non-empty — see §14 for sizing",
       "labelVariable": null,
       "defaultLabel": null,
-      "valueVariable": "{items[n].images[]}"
+      "valueVariable": "see §14"
+    },
+    {
+      "name": "Item original images",
+      "path": "items[n].originalImages",
+      "visibility": "inline with item, array non-empty — a SEPARATE field from images[], not a size variant. See §14 for sizing",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "see §14"
     },
     {
       "name": "SKU",
@@ -1249,7 +1308,7 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
       "visibility": "Always",
       "labelVariable": null,
       "defaultLabel": "Total",
-      "valueVariable": "{customLabels.total} ({currency}) — the currency code is appended in parentheses"
+      "valueVariable": "{customLabels.total}, falling back to the total column's own label — then \" ({currency})\" appended UNLESS owner.configuration.experimental.hideCurrencyCode is true (the suffix is gated, not unconditional)"
     },
     {
       "name": "Total",
@@ -1262,18 +1321,18 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
     {
       "name": "Total in words Label Text",
       "path": "customLabels.totalInWords",
-      "visibility": "hideTotalInWords false AND {customLabels.totalInWordsValue} non-empty AND {customLabels.totalInWords} non-empty — guarded, hidden outright when the override is empty",
+      "visibility": "hideTotalInWords false AND the words value resolves non-empty",
       "labelVariable": null,
       "defaultLabel": "IN WORDS",
       "valueVariable": "{customLabels.totalInWords}"
     },
     {
       "name": "Total in words",
-      "path": "customLabels.totalInWordsValue",
-      "visibility": "hideTotalInWords false AND value non-empty",
+      "path": "customLabels.totalInWordsValue, computed fallback",
+      "visibility": "hideTotalInWords false — NOT gated on the stored value existing: the platform renderer COMPUTES the words from finalTotal.total (shared amountInWords widget, language from locale) and prints {customLabels.totalInWordsValue} only as an override. A template that prints only the stored key drops the words on every payload that omits it, and prints STALE words when the stored string disagrees with finalTotal.total — check both. Use src/widgets/shared/amountInWords",
       "labelVariable": null,
       "defaultLabel": null,
-      "valueVariable": "{customLabels.totalInWordsValue}"
+      "valueVariable": "{customLabels.totalInWordsValue} else amountInWords({finalTotal.total}, {currency}, locale-language)"
     },
     {
       "name": "Extra total fields Label Text",
@@ -1294,10 +1353,34 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
     {
       "name": "Late payment fee",
       "path": "latePaymentFee.finalAmount",
-      "visibility": "{latePaymentFee.enabled} AND {.showInInvoice} AND {.isApplied}",
+      "visibility": "{latePaymentFee.enabled} AND {.isApplied} — the platform renderer does NOT check showInInvoice for this row",
       "labelVariable": "Late Payment Fee",
       "defaultLabel": null,
       "valueVariable": "{latePaymentFee.finalAmount}"
+    },
+    {
+      "name": "Tax under RCM",
+      "path": "finalTotal.igst, else finalTotal.cgst + finalTotal.sgst",
+      "visibility": "{reverseCharge} true AND {isExpenditure} true AND the tax figure non-zero — a settlement-band row on expenditure documents; finalTotal.rcmTax also ships on the payload",
+      "labelVariable": "Tax under RCM",
+      "defaultLabel": null,
+      "valueVariable": "{finalTotal.igst} || ({finalTotal.cgst} + {finalTotal.sgst})"
+    },
+    {
+      "name": "Dual-currency grand total",
+      "path": "conversionRates[businessCurrency]",
+      "visibility": "businessCurrency present AND businessCurrency != {currency} — the grand total repeats in the business's home currency beneath the document-currency figure (the item Amount cell does the same)",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "{finalTotal.total} × {conversionRates[businessCurrency]} in businessCurrency"
+    },
+    {
+      "name": "Settled amount",
+      "path": "balance.settledAmount",
+      "visibility": "Non-zero — settlement row",
+      "labelVariable": "Settled Amount",
+      "defaultLabel": null,
+      "valueVariable": "{balance.settledAmount}"
     },
     {
       "name": "TDS Amount Withheld",
@@ -1334,7 +1417,7 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
     {
       "name": "Due amount Label Text",
       "path": "customLabels.dueAmount",
-      "visibility": "{balance.due} > 0 — settlement row, absent when fully settled",
+      "visibility": "{balance.due} > 0 AND {balance.due} ≠ {finalTotal.total} — settlement row, absent when fully settled AND when fully unpaid (due still equal to the grand total)",
       "labelVariable": null,
       "defaultLabel": "Due Amount",
       "valueVariable": "{customLabels.dueAmount}"
@@ -1342,7 +1425,7 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
     {
       "name": "Due amount",
       "path": "balance.due",
-      "visibility": "{balance.due} > 0",
+      "visibility": "{balance.due} > 0 AND {balance.due} ≠ {finalTotal.total}",
       "labelVariable": null,
       "defaultLabel": null,
       "valueVariable": "{balance.due}"
@@ -1394,17 +1477,34 @@ The block is three bands separated by the grand total. Audit them in this order 
 - **The deductions are drawn in accounting parentheses** — `TDS Amount Withheld` and `Amount Paid` print as `($1,000.0000)` and `($205.0000)`. **`Due Amount` is not a deduction**: it prints positive and unparenthesised (`$15.0000`), as do both child rows. A record whose `valueVariable` is a `balance.*` figure is not simply "the number formatted".
 - **`Amount Paid` is derived, not a field.** It is `balance.paid + balance.transactionCharge`, with the two components repeated beneath it as indented child rows (`Amount Received`, `Transaction Charge`) in smaller, lighter type. There is no payload key holding 205.
 - **Their labels are hardcoded, not `customLabels`.** `TDS Amount Withheld`, `Amount Paid`, `Amount Received` and `Transaction Charge` are all fixed strings in the markup. A payload carrying `customLabels.paidAmount: "Paid Amount"` still renders `Amount Paid`, and `TDS Amount Withheld` has no `customLabels` key at all. Only `Due Amount` reads its override (`customLabels.dueAmount`).
-- **Every row gates independently on its own `balance.*` key existing** — not on `paymentOptions.meta.allowTDS`, not on the derived sum, and the child rows do not inherit from `Amount Paid`:
+- **The paid-block rows share an outer gate, then gate on their own key** — the platform renderer
+  wraps TDS / Amount Paid / Amount Received / Transaction Charge in
+  `billType !== "CREDITNOTE" && balance.paid` truthy, so **TDS does not print on a document with no
+  payment received**, whatever `balance.tds` says. Credit is billType-routed: on ordinary documents
+  a non-zero `balance.credit` prints (negated); on a CREDITNOTE the credit/due pair renders its own
+  variant; on a DEBITNOTE credit is suppressed. None of this reads `paymentOptions.meta.allowTDS`:
 
 | Row | Gate |
 |---|---|
-| TDS Amount Withheld | `balance.tds` exists |
-| Amount Paid | `balance.paid` exists |
-| Amount Received | `balance.paid` exists |
-| Transaction Charge | `balance.transactionCharge` exists |
-| Due Amount | `balance.due` > 0 |
+| TDS Amount Withheld | paid-block gate AND `balance.tds` truthy |
+| Amount Paid | paid-block gate |
+| Amount Received | paid-block gate |
+| Transaction Charge | paid-block gate AND `balance.transactionCharge` truthy |
+| Settled Amount | `balance.settledAmount` truthy |
+| Due Amount | `balance.due` > 0 AND `balance.due` ≠ the grand total |
+| Credit | `balance.credit` truthy AND billType rules above |
 
-  So a payment recorded with no transaction charge shows `Amount Paid` and `Amount Received` but drops `Transaction Charge`, and a fully-settled document drops the Due row.
+  So a payment recorded with no transaction charge shows `Amount Paid` and `Amount Received` but drops `Transaction Charge`, a fully-settled document drops the Due row, and a TDS-only document with zero received shows nothing at all.
+
+- **Due Amount also hides on a fully-unpaid document.** `balance.due` still equal to the grand total
+  means nothing has been paid, withheld or credited — the row would only restate the Total line
+  above it, so it does not print. `due > 0` alone is not the gate: Due appears only once the due
+  figure has diverged from `finalTotal.total`.
+
+- **Settlement figures live in two payload places.** The platform renderer reads `balance.*`;
+  normalization's `mapped.payments` reads `totalConversions[currency]` (the only reliable source on
+  conversion-settled documents). On most payloads they agree — when they disagree, report the
+  disagreement and say which one the audited template reads.
 
 ### Composed labels
 
@@ -1413,7 +1513,8 @@ Two rows in this block build their label from more than one source — an audit 
 | Row | Renders | Composed from |
 |---|---|---|
 | Tax row | `IGST (18%)` | `{columns[igst].label}` + the tax rate in parentheses |
-| Grand total | `Total (USD)` | `{customLabels.total}` + `{currency}` in parentheses |
+| Cess row | `Health Cess (5%)` | `{cesses[n].cessName}` + rate — the platform computes the breakup per applied cess and prints only rows with amount > 0 |
+| Grand total | `Total (USD)` | `{customLabels.total}` (falling back to the total column label) + `{currency}` in parentheses — suffix suppressed when `owner.configuration.experimental.hideCurrencyCode` is true |
 
 ### Decimal places
 
@@ -1446,10 +1547,10 @@ Each summary needs **both** a configuration opt-in and rows to put in it — con
     {
       "name": "Stock Summary",
       "path": "batchSummary[]",
-      "visibility": "advanceOptions.showStockSummary AND array non-empty",
+      "visibility": "{stockSummaryConfig.isEnabled} true AND array non-empty — the platform renderer reads stockSummaryConfig, NOT advanceOptions; column set and order come from {stockSummaryConfig.batchSummaryColumns[]} (isHidden per column), falling back to the platform's default batch column list",
       "labelVariable": null,
       "defaultLabel": null,
-      "valueVariable": "{batchSummary[n]} — columns per {defaultBatchColumns}"
+      "valueVariable": "{batchSummary[n].itemName}, {.batchName}, {.quantity}, {.warehouse}, {.manufacturingDate}, {.expiryDate} — per the configured columns"
     },
     {
       "name": "Payments table Label Text",
@@ -1498,10 +1599,10 @@ Each summary needs **both** a configuration opt-in and rows to put in it — con
     {
       "name": "Bank account",
       "path": "bankAccount",
-      "visibility": "mapped.visibility.showBankAccount = (not expenditure, or invoiceAccepted ACCEPTED) AND paymentOptions.accountTransfer AND {accountNo} present",
+      "visibility": "mapped.visibility.showBankAccount = (not expenditure, or invoiceAccepted ACCEPTED) AND paymentOptions.accountTransfer AND {accountNo} present (normalization also accepts accountNumber — check which the template reads)",
       "labelVariable": "Bank Details",
       "defaultLabel": null,
-      "valueVariable": "{bankAccount.bankName}, {.accountHolderName}, {.accountNo}, {.ifsc}, {.accountType}"
+      "valueVariable": "Platform value keys: {bankAccount.name} (account holder — NOT accountHolderName), {.accountNo}, {.sortCode}, {.ifsc}, {.iban}, {.swift}, {.accountType}. Row labels are customLabels-driven with translated fallbacks: {customLabels.accountHolderName} → \"Account Name\", {customLabels.ifsc} → \"IFSC\", {customLabels.iban} → \"IBAN\", {customLabels.swiftCode} → \"SWIFT Code\" — hardcoding them is a finding. Each row guards on its own value"
     },
     {
       "name": "UPI",
@@ -1562,8 +1663,8 @@ Each summary needs **both** a configuration opt-in and rows to put in it — con
       "path": "customLabels.notes",
       "visibility": "{notes} non-empty AND {customLabels.notes} non-empty — guarded heading, hidden outright when the override is empty",
       "labelVariable": null,
-      "defaultLabel": "Notes",
-      "valueVariable": "{customLabels.notes}"
+      "defaultLabel": "Additional Notes",
+      "valueVariable": "{customLabels.notes} — the platform widget's own fallback is \"Additional Notes\", not \"Notes\""
     },
     {
       "name": "Notes",
@@ -1599,11 +1700,11 @@ Each summary needs **both** a configuration opt-in and rows to put in it — con
     },
     {
       "name": "Signature",
-      "path": "signature, fallback billedBy.signature",
-      "visibility": "Non-empty",
+      "path": "signature",
+      "visibility": "See §14 (Signature image / Digital signature flow) — the gate depends on signatureMethod, not just non-empty {signature}, and has three states when DIGITAL",
       "labelVariable": null,
       "defaultLabel": null,
-      "valueVariable": "{signature}"
+      "valueVariable": "see §14"
     },
     {
       "name": "Contact line Label Text",
@@ -1611,7 +1712,7 @@ Each summary needs **both** a configuration opt-in and rows to put in it — con
       "visibility": "mapped.visibility.contactStrip",
       "labelVariable": null,
       "defaultLabel": "For any enquiry, reach out via",
-      "valueVariable": "{customLabels.contact}, {customLabels.contactEmail}, {customLabels.contactPhone}"
+      "valueVariable": "{customLabels.contact} → \"For any enquiry, reach out via\"; {customLabels.contactEmail} → \"email at\"; {customLabels.contactPhone} → \"call on\" (platform fallbacks); a joining comma prints between email and phone when both exist"
     },
     {
       "name": "Contact line",
@@ -1661,6 +1762,175 @@ Each summary needs **both** a configuration opt-in and rows to put in it — con
       "defaultLabel": null,
       "valueVariable": "{creator.name}",
       "unverified": true
+    }
+  ]
+}
+```
+
+## 13. Compliance fields — e-invoice (India), ZATCA (Saudi), LHDN (Malaysia)
+
+Regulatory elements are not optional chrome: a market template that drops them produces a
+non-compliant document. Audit this group on **every** document — when the payload carries none of
+these keys, the completeness rule still applies: record whether the template *would* render the
+block if it arrived. Invoices from the same account will carry them, and "QR renders nowhere" is a
+compliance failure, not a cosmetic gap.
+
+**The platform renders the compliance QRs as independent elements, not one slot:** the IRN QR
+(`irn.qrCode`, suppressed when cancelled), `zatcaQrCode` and `lhdnQrCode` each render off their own
+value and can coexist; only `documentQr` is a true fallback, shown when none of the other three is
+present. Normalization's `mapped.qr.top` collapses this to a single value by precedence — an
+approximation that is only equivalent while at most one QR key is populated. A UPI QR is a separate
+element again (`mapped.qr.upi`); never merge them.
+
+```json
+{
+  "group": "13. Compliance",
+  "fields": [
+    {
+      "name": "IRN / e-way bill block (India)",
+      "path": "irn.Irn, irn.AckNo, irn.AckDt, irn.EwbNo, irn.EwbDt, irn.EwbValidTill, irn.CancelDate, irn.ewayCancelDate",
+      "visibility": "(irn.Irn or irn.EwbNo present) AND placed per {irnPosition}: IN_INVOICE_DETAILS (default, the platform's 'old method' — rows inside the invoice-details block) or ABOVE_LINEITEMS (recommended — its own table above the item table). The contract also declares BELOW_LINEITEMS, which the platform's config does not offer. Then PER-FIELD opt-ins from the owner's config: einvoiceConfig.irnNumber / .irnAcknowledgementNumber / .irnAcknowledgementDate / .irnCancelledDate and ewayConfig.billNumber / .billDate / .billValidTillDate / .billCancelledDate — each row needs its flag AND its value",
+      "labelVariable": "IRN / Ack No / Ack Date / E-way Bill / E-way Date / Valid Till (translated)",
+      "defaultLabel": null,
+      "valueVariable": "raw identifiers; AckDt / EwbDt / EwbValidTill are IST-encoded timestamps — format them in the UTC zone (do NOT re-shift by ownerOffset) or the printed date drifts a day"
+    },
+    {
+      "name": "IRN QR (India)",
+      "path": "irn.qrCode (host-resolved image data-URL), heads the mapped.qr.top chain via qrCode",
+      "visibility": "irn.qrCode present AND NOT cancelled. The host resolves it BEFORE the payload reaches the template: owner.configuration.showSignedIrnQr true → encodes irn.SignedQRCode (the signed payload), else irn.qr — the template never encodes it. Placement per owner.configuration.experimental.qrCodePlacement: IN_DOCUMENT_DETAILS or BESIDE_DOCUMENT_TITLE",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "render via the qrSrc shared helper"
+    },
+    {
+      "name": "IRN cancelled state",
+      "path": "irn.CancelDate (+ irn.AckDt, irn.Status)",
+      "visibility": "The platform treats the IRN as cancelled when CancelDate is set and falls after AckDt (mapped.irn.isCancelled uses CancelDate alone). Cancellation SUPPRESSES the IRN QR and the Ack No / Ack Date rows but KEEPS the IRN number row — plus the irnCancelledDate row where einvoiceConfig.irnCancelledDate opts in",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "state; the cancelled-date row prints irn.CancelDate"
+    },
+    {
+      "name": "ZATCA (Saudi) — phases 1 & 2",
+      "path": "zatcaQrCode + owner.configuration.isZatcaBusiness + signedPDF",
+      "visibility": "{zatcaQrCode} non-empty — renders unconditionally when present, alongside any IRN QR. Phase 1's printed requirement is this TLV QR; under phase 2 the payload delivers the QR from the cleared/signed XML through the same key, so the template's job is unchanged. Clearance metadata (clearanceStatus, generatedOn, validationResults) is app-side only — never expect it printed",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "QR via qrSrc. Bilingual Arabic/English labels come from customLabels (see Traps) — a Saudi-market template hardcoding English-only labels is a finding"
+    },
+    {
+      "name": "LHDN / MyInvois (Malaysia)",
+      "path": "lhdnQrCode + einvoiceGeneratedStatus",
+      "visibility": "{lhdnQrCode} non-empty — the MyInvois validation QR is the printed artifact. acceptedUuid / longId / dateTimeIssued / eInvoiceStatus are app-side only. A Malaysia document also needs the classification column visible (owner country MY); msic NEVER renders as a column even though LHDN uses MSIC codes — the MSIC lives on the business profile",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "QR via qrSrc"
+    },
+    {
+      "name": "e-invoice generation state",
+      "path": "einvoiceGeneratedStatus",
+      "visibility": "State key — drives app behavior, never printed directly",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": null
+    }
+  ]
+}
+```
+
+## 14. Images & QR codes
+
+Every image and QR on the document, gathered in one place because they were previously scattered
+across §1/§7/§11/§13 as thin single-line records with no visibility rule, sizing, or fallback
+chain. Two structural facts govern all of them:
+
+- **QR images arrive PRE-RESOLVED.** `irn.qrCode`, `zatcaQrCode`, `lhdnQrCode`, `documentQr`, and
+  the UPI QR are encoded to image data-URLs (`qrcode.toDataURL(...)`) by the host **before** the
+  payload reaches the template — none of them are raw asset URLs. Do **not** pass them through
+  `assetUrl`/`getOptimizedImage`-style asset resolution; render them as a direct `<img src>`.
+  `qrSrc` is the one exception: it exists specifically to also accept a raw `upi://…` intent string
+  (for payloads that ship one instead of a pre-rendered QR) and encode it client-side — call it on
+  the UPI path, never on the compliance QRs, which are always already images.
+- **Ordinary asset images** (logo, signature, item photos) route through
+  `getOptimizedImage`/`getSrcSet`-equivalent resizing with a `{w, h}` box and a responsive `srcSet`.
+  A template that drops straight to the raw payload URL loses the optimization/CDN pass — report it,
+  and prefer a shared image widget over a bare `<img src="{{url}}">`.
+
+```json
+{
+  "group": "14. Images & QR codes",
+  "fields": [
+    {
+      "name": "Logo",
+      "path": "logo",
+      "visibility": "assetUrl(logo) non-empty",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "advanceOptions.useOriginalLogo true → raw {logo} URL, no resize, no srcSet; false (default) → resized to 220×120 with a 440×240/220×120/180×100 responsive srcSet"
+    },
+    {
+      "name": "Watermark",
+      "path": "template.watermark",
+      "visibility": "{template.watermark.logo} non-empty",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "NOT an <img> element — a CSS background pattern: --watermark-logo url(), --watermark-opacity = {opacity}/100 (0-100 scale, default 0.1), --watermark-rotate = {rotation}deg (default 0), --watermark-scale = {scale} (default 1), --watermark-repeated-pattern = repeat-y when {repeatedPatterns} else no-repeat. A template rendering this as a plain <img> has the wrong mechanism entirely"
+    },
+    {
+      "name": "Line item thumbnail",
+      "path": "items[n].thumbnail",
+      "visibility": "advanceOptions.showThumbnailAsColumn true AND {items[n].thumbnail} non-empty",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "resized to 100×100 with a 200×200/100×100 srcSet; the full-size original is the link href for opening in a new tab"
+    },
+    {
+      "name": "Line item images",
+      "path": "items[n].images[]",
+      "visibility": "Array non-empty",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "each resized to 100×100 with a 200×200/100×100 srcSet; each links to its own full-size original (unsized href)"
+    },
+    {
+      "name": "Line item original images",
+      "path": "items[n].originalImages[]",
+      "visibility": "Array non-empty — a SEPARATE field from images[], not a size variant of it",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "each resized to 1000w with a 2000w/1000w srcSet; each links to its own unsized full-size original"
+    },
+    {
+      "name": "Signature image",
+      "path": "signature",
+      "visibility": "{signatureMethod} !== DIGITAL AND {signature} non-empty. There is NO billedBy.signature fallback in the reference — a template implementing one is engine-specific behavior, flag it as unverified against the platform rather than assumed-correct",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "resized to 240×120 with a 240×120/180×100 srcSet"
+    },
+    {
+      "name": "Digital signature flow",
+      "path": "signatureMethod, documentSignatureRequest.status, .signers[0].signerName, share.pdf",
+      "visibility": "signatureMethod === DIGITAL drives THREE mutually exclusive states, none of which is the plain signature image above: (1) awaiting — documentSignatureRequest.status !== SIGNED → an invisible 160pt×90pt placeholder (kept in the DOM so the PDF pipeline can measure its position) plus a visible 'Awaiting Digital Signature' banner; (2) signed — status === SIGNED → a 'Digitally signed' banner with the signer's name and a link to share.pdf; (3) neither → nothing renders. A template that only checks {signature} non-empty MISSES this entire flow — every digitally-signed or pending document renders wrong",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "banner text + optional signer name + optional verify-PDF link; no image in the signed/awaiting states"
+    },
+    {
+      "name": "UPI QR",
+      "path": "upi.qr (host pre-resolved), fallback client-built from upi.upi/.vpa/.upiId",
+      "visibility": "mapped.visibility.showUpi",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "PREFER the pre-resolved image. When building client-side from the id, the platform's own intent string is NOT just \"upi://pay?pa={id}\" — it also carries pn (payee name), am (amount, capped at 100000, OMITTED — not zero — when the business allows partial QR payment), and tn (narration, truncated to 50 chars). A client-side fallback missing pn/am/tn produces a materially thinner QR (no payee name shown, no prefilled amount) than the platform ships — note this gap explicitly rather than treating a bare pa-only intent as equivalent. Render at 127px fixed width to match reference sizing"
+    },
+    {
+      "name": "Document / compliance QRs (IRN, ZATCA, LHDN, generic)",
+      "path": "irn.qrCode, zatcaQrCode, lhdnQrCode, documentQr — see §13 for the precedence/coexistence rules",
+      "visibility": "see §13",
+      "labelVariable": null,
+      "defaultLabel": null,
+      "valueVariable": "direct <img src> — these are ALREADY data-URLs; do not run them through asset resizing/optimization helpers, that pipeline does not apply to data URIs and doing so is itself a finding"
     }
   ]
 }
