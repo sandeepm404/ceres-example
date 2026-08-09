@@ -260,7 +260,15 @@
           </tbody>
           {{!-- The item table's own summary row is its own opt-in
           (`showTotalsRow`), independent of `hideTotals` (which only gates
-          the totals breakdown below the table). --}}
+          the totals breakdown below the table) — and on this account's
+          documents `hideTotals` is true, so this row is the only total the
+          page prints.
+
+          Both figures are summed from the items rather than read off
+          `finalTotal`: a column total has to equal the column above it, and
+          `finalTotal.subTotal` is the gross pre-discount figure while the
+          Amount column prints each item's discounted `amount`. See
+          `sumAmounts` in helpers.ts. --}}
           {{#if invoice.showTotalsRow}}
           <tfoot>
             <tr>
@@ -275,7 +283,7 @@
               {{else if (eq key "rate")}}
               <td class="text-center sg-cell-strong"></td>
               {{else if (eq key "amount")}}
-              <td class="text-center sg-cell-strong">{{formatCurrency ../invoice.finalTotal.subTotal
+              <td class="text-center sg-cell-strong">{{formatCurrency (sumAmounts ../invoice.items)
                 ../invoice.currency ../invoice.locale ../invoice.subUnitLength ../invoice.customCurrencySymbol}}</td>
               {{else}}
               <td></td>
@@ -324,8 +332,8 @@
             {{#if (eq key "discount")}}
             <div class="sg-total-line">
               <span>{{label}}</span>
-              <span>- {{formatCurrency @root.invoice.finalTotal.discount @root.invoice.currency @root.invoice.locale
-                @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</span>
+              <span>- {{formatCurrency (absAmount @root.invoice.finalTotal.discount) @root.invoice.currency
+                @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</span>
             </div>
             {{/if}}
             {{/unless}}

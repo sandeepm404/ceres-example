@@ -18,10 +18,16 @@ unexamined diff silently blesses the regression it was meant to catch.
 
 At least two samples per template, per Tips below.
 
-> **Harness status: not yet wired up.** As of this writing the repo has no `test:snapshots` /
-> `test:snapshots:update` scripts, no Playwright dependency, no `playwright.config.*`, and no
-> `__snapshots__/` directory — the commands below describe the intended setup, not a working one.
-> Build the harness before relying on this step, and delete this note once it runs.
+> **Harness status: half wired up.** Rendering works — `npm run render` (see
+> `.agent/skills/render-check/SKILL.md`) boots headless Chrome, captures `screen.png`, per-page
+> PNGs and `print.pdf`, and lints the result. **Use that for every new template and every
+> hbs/CSS change.**
+>
+> What is still missing is the *baseline diffing* this file describes: there are no
+> `test:snapshots` / `test:snapshots:update` scripts and no `__snapshots__/` directory, so nothing
+> compares today's render against a committed one. The commands below describe the intended setup,
+> not a working one. Building it is mostly wiring `scripts/render.mjs`'s existing capture step to a
+> pixel comparison — delete this note once it runs.
 
 ## What snapshots do
 

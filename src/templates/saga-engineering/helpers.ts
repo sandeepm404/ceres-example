@@ -190,6 +190,37 @@ export function registerSagaEngineeringTemplateHelpers(HB: any): void {
     return total;
   });
 
+  // The item table's footer totals the Amount column, and the Amount column
+  // prints each item's own `amount` — which the platform reports NET of that
+  // item's discount (qty 2 x rate 7,442 less 27.5% renders 10,790.90, not
+  // 14,884). `finalTotal.subTotal` is the GROSS figure the totals breakdown
+  // below the table starts from before subtracting `finalTotal.discount`, so on
+  // any discounted document it is larger than the column it would be sitting
+  // under: 17,276 against a 12,525.10 column on quotation 6a75c4b2. Summing the
+  // column keeps the footer equal to what is printed above it whichever way the
+  // platform assembles its aggregates.
+  //
+  // This matters more here than the mismatch alone suggests: this account's
+  // documents ship `hideTotals: true`, which hides the totals breakdown
+  // entirely, leaving this row as the only total the page shows.
+  HB.registerHelper("sumAmounts", function (items: any) {
+    if (!Array.isArray(items)) return "";
+    return items.reduce((sum, item) => {
+      const raw = item?.amount;
+      const amount = typeof raw === "number" ? raw : parseFloat(raw);
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    }, 0);
+  });
+
+  // `finalTotal.discount` arrives signed — real payloads carry it negative
+  // (-4750.9) — while the markup writes its own "- " ahead of the figure and
+  // formatCurrency parenthesises anything below zero. Left alone that prints
+  // "- (₹4,750.90)"; the magnitude is what the row wants.
+  HB.registerHelper("absAmount", function (value: any) {
+    const num = typeof value === "number" ? value : parseFloat(value);
+    return Number.isFinite(num) ? Math.abs(num) : value;
+  });
+
   // A customHeaders label as typed by the account ("Dear Sir,", "Kind Attn")
   // — the markup appends its own ":" after every label, so one that already
   // ends in a comma (a salutation line, typically) would otherwise print as

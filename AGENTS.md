@@ -30,6 +30,7 @@ Runs inside an iframe. Communication via postMessage:
 - `design-to-template` - Convert Figma/screenshot into a Ceres template
 - `ceres-template-data-contract` - Map template designs to the normalized invoice data contract and ask for missing data from provided images
 - `data-mapping` - Audit a payload against a template
+- `render-check` - Render headlessly and look at the result; run after any hbs/CSS change
 - `data-binding-tests` - Write and maintain Jest tests for data binding
 - `snapshot-testing` - Manage visual regression tests; required for every new template
 - `debug-build` - Diagnose and fix build failures
