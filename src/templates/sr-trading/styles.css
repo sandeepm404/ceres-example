@@ -1,0 +1,781 @@
+.sr-shell,
+.sr-brand-header,
+.sr-letterhead-footer {
+  --sr-font-size-xs: 10px;
+  --sr-font-size-s: 11px;
+  --sr-font-size-base: 13px;
+  --sr-font-size-m: 15px;
+  --sr-font-size-lg: 18px;
+  --sr-font-size-xl: 24px;
+  --sr-border: #374151;
+  --sr-muted: #4b5563;
+  --sr-ink: #20252d;
+  --sr-accent: var(--ceres-primary-color, #c71f26);
+
+  width: 100%;
+  max-width: 1000px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  color: var(--sr-ink);
+  background: #fff;
+  border: 1px solid var(--sr-border);
+  font-family: var(--ceres-font-family, Arial, Helvetica, sans-serif);
+  font-size: var(--sr-font-size-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sr-brand-header,
+.sr-letterhead-footer {
+  width: 100%;
+  max-width: 1000px;
+  box-sizing: border-box;
+  margin-right: auto;
+  margin-left: auto;
+  border: 0;
+}
+
+.sr-brand-header {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.sr-letterhead-footer {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.sr-shell *,
+.sr-shell *::before,
+.sr-shell *::after {
+  box-sizing: border-box;
+}
+
+.sr-shell p,
+.sr-shell h1,
+.sr-shell h2,
+.sr-shell h3,
+.sr-shell dl,
+.sr-shell dd,
+.sr-shell ol {
+  margin: 0;
+}
+
+.sr-shell a {
+  color: inherit;
+}
+
+.sr-brand-header.is-empty,
+.sr-letterhead-footer.is-empty {
+  display: none;
+}
+
+.sr-letterhead-image,
+.sr-letterhead-footer-image {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  object-fit: contain;
+}
+
+.sr-title-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 40px;
+  border-top: 0;
+  border-bottom: 1px solid var(--sr-border);
+  padding: 4px 16px;
+}
+
+.sr-title-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sr-title-bar h2 {
+  font-family: var(--title-font, var(--ceres-font-family, Arial, sans-serif));
+  font-size: var(--sr-font-size-xl);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.sr-title-bar > p {
+  color: var(--sr-muted);
+  font-size: var(--sr-font-size-m);
+}
+
+.sr-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--sr-border);
+}
+
+.sr-details-grid-no-transport {
+  grid-template-columns: 1fr 1fr;
+}
+
+.sr-details-grid > * {
+  padding: 8px;
+}
+
+.sr-details-grid > * + * {
+  border-left: 1px solid var(--sr-border);
+}
+
+.sr-muted-heading {
+  color: var(--sr-ink);
+  font-weight: 400;
+}
+
+.sr-party h3 {
+  font-size: var(--sr-font-size-base);
+  margin: 4px 0;
+}
+
+.sr-party p {
+  font-size: var(--sr-font-size-base);
+}
+
+.sr-document-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sr-meta-list {
+  width: 100%;
+}
+
+.sr-catalogue-callout {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 8px;
+  break-inside: avoid;
+}
+
+.sr-catalogue-logo {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.sr-catalogue-copy {
+  min-width: 0;
+  color: var(--sr-muted);
+  font-size: var(--sr-font-size-s);
+  line-height: 1.25;
+}
+
+.sr-catalogue-copy strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--sr-ink);
+  font-size: var(--sr-font-size-base);
+  line-height: 1.25;
+}
+
+.sr-meta-list > div,
+.sr-transport-list > div,
+.sr-additional-info-list > div,
+.sr-payment dl > div {
+  display: grid;
+  grid-template-columns: minmax(104px, 44%) minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sr-meta-list dd,
+.sr-transport-list dd {
+  text-align: left;
+  font-weight: 700;
+}
+
+.sr-additional-info-list dd {
+  text-align: left;
+  font-weight: 700;
+}
+
+.sr-break-all {
+  overflow-wrap: anywhere;
+}
+
+.sr-shipping-row {
+  min-height: 144px;
+  border-bottom: 1px solid var(--sr-border);
+  padding: 8px;
+}
+
+.sr-transport-list dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sr-items {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+  font-size: var(--sr-font-size-base);
+}
+
+.sr-items th,
+.sr-items td {
+  padding: 4px 8px;
+  border-right: 1px solid var(--sr-border);
+  border-bottom: 1px solid var(--sr-border);
+  vertical-align: top;
+}
+
+.sr-items th:last-child,
+.sr-items td:last-child {
+  border-right: 0;
+}
+
+.sr-items thead th {
+  text-align: center;
+  font-weight: 700;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.sr-items thead th.sr-col-name {
+  text-align: left;
+}
+
+.sr-items tbody tr {
+  min-height: 40px;
+}
+
+.sr-items col:not(.sr-width-name) {
+  width: 1%;
+}
+
+.sr-col-sno,
+.sr-sno-cell {
+  width: 1%;
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+.sr-col-name,
+.sr-item-cell {
+  width: auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sr-col-hsn,
+.sr-col-classification,
+.sr-col-unit,
+.sr-col-quantity,
+.sr-col-rate,
+.sr-col-amount,
+[class~="sr-col-gstRate"],
+.sr-col-discount,
+.sr-col-igst,
+.sr-col-cgst,
+.sr-col-sgst,
+.sr-col-total,
+[class~="sr-col-taxRate"],
+[class~="sr-col-taxAmount"] {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.sr-items:not(.sr-totals) tbody td:not(.sr-item-cell) {
+  text-align: center;
+}
+
+.sr-center {
+  text-align: center;
+}
+
+.sr-money {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sr-nowrap {
+  white-space: nowrap;
+}
+
+.sr-item-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sr-item-hsn {
+  font-size: var(--sr-font-size-s);
+}
+
+.sr-item-description {
+  margin-top: 4px;
+  color: var(--sr-muted);
+  font-size: var(--sr-font-size-base);
+}
+
+.sr-item-description .toastui-editor-contents,
+.sr-item-description .toastui-editor-contents p {
+  font-size: var(--sr-font-size-base) !important;
+}
+
+.sr-item-description .toastui-editor-contents p {
+  margin: 8px 0;
+}
+
+.sr-items tfoot th,
+.sr-totals th {
+  text-align: right;
+}
+
+.sr-items tfoot td,
+.sr-items tfoot th,
+.sr-totals td,
+.sr-totals th {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.sr-items .sr-grand-total th,
+.sr-items .sr-grand-total td {
+  font-weight: 800;
+  font-size: var(--sr-font-size-base);
+}
+
+.sr-items.sr-totals th,
+.sr-items.sr-totals td,
+.sr-items.sr-totals strong {
+  font-weight: 600;
+}
+
+.sr-totals {
+  break-inside: avoid;
+}
+
+.sr-totals th {
+  width: auto;
+}
+
+.sr-totals td {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.sr-total-words {
+  padding: 4px;
+  border-bottom: 1px solid var(--sr-border);
+}
+
+/* Summary tables share one compact, print-friendly visual system. */
+.sr-tax-summary-group {
+  break-inside: avoid;
+}
+
+.sr-shell [data-ceres-tax-summary],
+.sr-shell [data-ceres-hsn-summary],
+.sr-shell [data-ceres-payment-table] {
+  padding: 16px 16px 0;
+}
+
+.sr-shell [data-ceres-payment-table] {
+  padding-bottom: 24px;
+}
+
+/* Empty widget hosts otherwise add invisible padding between the totals and
+   the following sections. */
+.sr-shell [data-ceres-tax-summary]:not(:has(.ceres-table-section)),
+.sr-shell [data-ceres-hsn-summary]:not(:has(.ceres-table-section)),
+.sr-shell [data-ceres-payment-table]:not(:has(.ceres-table-section)) {
+  display: none;
+}
+
+.sr-shell .ceres-table-section {
+  margin: 0;
+  overflow-x: auto;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+.sr-shell .ceres-table-heading {
+  margin: 0 0 8px;
+  color: var(--sr-ink);
+  font-size: var(--sr-font-size-base);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+}
+
+.sr-shell .ceres-table {
+  width: 100%;
+  border: 1px solid #000;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 4px;
+  table-layout: auto;
+  overflow: hidden;
+  color: var(--sr-ink);
+  font-size: var(--sr-font-size-s);
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-shell .ceres-table th,
+.sr-shell .ceres-table td {
+  padding: 8px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #000;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.sr-shell .ceres-table thead tr > :last-child,
+.sr-shell .ceres-table tbody tr > :last-child,
+.sr-shell .ceres-table tfoot tr > :last-child {
+  border-right: 0;
+}
+
+.sr-shell .ceres-table thead th {
+  background: #f8f9fa;
+  color: var(--sr-ink);
+  font-size: var(--sr-font-size-s);
+  font-weight: 700;
+  letter-spacing: 0.015em;
+}
+
+.sr-shell .ceres-table thead tr + tr th {
+  background: #f8f9fa;
+  color: var(--sr-ink);
+  font-size: var(--sr-font-size-xs);
+  font-weight: 700;
+}
+
+.sr-shell .ceres-table thead tr:first-child th:not([rowspan]) {
+  border-bottom: 1px solid #000;
+}
+
+/* Chromium's PDF painter can drop the shared edge between the two adjacent
+   rowspan headers in the HSN table. Own that divider from Taxable Value's
+   left edge instead of HSN's right edge so preview and PDF paint the same
+   one-pixel rule. */
+.sr-shell
+  [data-ceres-hsn-summary]
+  .ceres-table
+  thead
+  tr:first-child
+  > th:first-child {
+  border-right: 0;
+}
+
+.sr-shell
+  [data-ceres-hsn-summary]
+  .ceres-table
+  thead
+  tr:first-child
+  > th:nth-child(2) {
+  border-left: 1px solid #000;
+}
+
+.sr-shell .ceres-table thead,
+.sr-shell .ceres-table tbody,
+.sr-shell .ceres-table tfoot,
+.sr-shell .ceres-table tr {
+  break-inside: avoid;
+}
+
+.sr-shell .ceres-table tbody tr,
+.sr-shell .ceres-table tbody tr:nth-child(even) {
+  background: #fff;
+}
+
+.sr-shell .ceres-table tfoot td {
+  border-top: 1px solid #000;
+  background: #fff;
+  font-weight: 700;
+}
+
+.sr-shell .ceres-table tfoot tr:last-child td,
+.sr-shell .ceres-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.sr-shell .ceres-table tfoot tr + tr td {
+  border-top: 0;
+}
+
+.sr-shell .ceres-table th:first-child,
+.sr-shell .ceres-table td:first-child,
+.sr-shell .ceres-table .ceres-table-label,
+.sr-shell .ceres-table .ceres-table-date,
+.sr-shell .ceres-table .ceres-table-code {
+  text-align: left;
+}
+
+.sr-shell .ceres-table .ceres-table-amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sr-shell .ceres-table .ceres-table-rate {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sr-shell .ceres-table-words {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background: #fff !important;
+  color: var(--sr-muted);
+  font-size: var(--sr-font-size-xs);
+  font-weight: 500 !important;
+  letter-spacing: 0.02em;
+  text-align: left !important;
+}
+
+.sr-closing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--sr-border);
+}
+
+.sr-closing-grid > * {
+  padding: 16px;
+}
+
+.sr-closing-grid > * + * {
+  border-left: 1px solid var(--sr-border);
+}
+
+.sr-closing-grid > :only-child {
+  grid-column: 1 / -1;
+}
+
+.sr-additional-info:has(.sr-additional-info-list:empty) {
+  display: none;
+}
+
+.sr-additional-info:has(.sr-additional-info-list:empty) + .sr-signature {
+  grid-column: 1 / -1;
+  border-left: 0;
+}
+
+.sr-additional-info h3 {
+  margin-bottom: 8px;
+  font-size: var(--sr-font-size-base);
+}
+
+.sr-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 280px;
+  border-top: 1px solid var(--sr-border);
+  border-bottom: 1px solid var(--sr-border);
+}
+
+.sr-bottom-grid > * {
+  padding: 16px;
+}
+
+.sr-bottom-grid > * + * {
+  border-left: 1px solid var(--sr-border);
+}
+
+.sr-bottom-grid h3 {
+  font-size: var(--sr-font-size-base);
+  margin-bottom: 8px;
+}
+
+.sr-terms-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sr-terms ol,
+.sr-attachments ol {
+  padding-left: 20px;
+}
+
+.sr-terms li,
+.sr-attachments li,
+.sr-notes {
+  color: var(--sr-muted);
+  font-size: var(--sr-font-size-base);
+}
+
+.sr-notes .toastui-editor-contents,
+.sr-notes .toastui-editor-contents p {
+  font-size: var(--sr-font-size-base) !important;
+}
+
+/* Chromium may economize away Toast UI's dark Markdown table header when the
+   document is printed. Preserve the authored table colours so Additional
+   Notes looks the same in the preview and the generated PDF. */
+.sr-notes .markdown-viewer-widget table th {
+  background-color: #555 !important;
+  color: #fff !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.sr-notes h3 {
+  color: var(--sr-ink);
+}
+
+.sr-payment dl > div {
+  grid-template-columns: 128px 1fr;
+  font-size: var(--sr-font-size-base);
+}
+
+.sr-payment .sr-bank-split > div {
+  grid-template-columns: 128px minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.sr-payment dd {
+  overflow-wrap: anywhere;
+}
+
+.sr-payment .sr-bank-secondary {
+  text-align: left;
+}
+
+.sr-upi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.sr-upi img {
+  display: block;
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+}
+
+.sr-signature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 4px;
+  text-align: right;
+}
+
+.sr-signature-image {
+  display: block;
+  max-width: 160px;
+  max-height: 80px;
+  object-fit: contain;
+}
+
+.sr-signature-placeholder {
+  display: block;
+  width: 160px;
+  height: 88px;
+}
+
+.sr-contact-strip {
+  padding: 12px 16px;
+  text-align: center;
+  color: var(--sr-muted);
+}
+
+@media (width <= 720px) {
+  .sr-details-grid,
+  .sr-bottom-grid,
+  .sr-closing-grid,
+  .sr-masthead-contact {
+    grid-template-columns: 1fr;
+  }
+
+  .sr-details-grid > * + *,
+  .sr-bottom-grid > * + *,
+  .sr-closing-grid > * + * {
+    border-left: 0;
+    border-top: 1px solid var(--sr-border);
+  }
+
+  .sr-table-wrap {
+    overflow-x: auto;
+  }
+
+}
+
+@page {
+  size: a4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  .sr-shell,
+  .sr-brand-header,
+  .sr-letterhead-footer {
+    --sr-font-size-xs: 10px;
+    --sr-font-size-s: 11px;
+    --sr-font-size-base: 13px;
+    --sr-font-size-m: 14px;
+    --sr-font-size-lg: 16px;
+    --sr-font-size-xl: 22px;
+  }
+
+  /* The watermark widget makes #documentOutput a positioned, clipped screen
+     container. Printing needs a plain page-level container so content can
+     paginate without being clipped. */
+  /* stylelint-disable-next-line selector-id-pattern -- renderer-owned id */
+  #documentOutput {
+    overflow: visible;
+    position: static;
+  }
+
+  .sr-items thead {
+    display: table-header-group;
+  }
+
+  .sr-shell .ceres-table-section {
+    overflow: visible;
+  }
+
+  .sr-items tfoot {
+    display: table-row-group;
+  }
+
+  .sr-items tbody tr,
+  .sr-bottom-grid,
+  .sr-closing-grid,
+  .sr-settlement,
+  .sr-additional-info,
+  .sr-signature {
+    break-inside: avoid;
+  }
+
+  .sr-items {
+    break-inside: auto;
+  }
+
+  .sr-totals,
+  .sr-totals tbody,
+  .sr-totals tbody tr {
+    break-inside: avoid;
+  }
+
+  .sr-letterhead-footer {
+    break-inside: avoid;
+  }
+
+  .sr-catalogue-callout {
+    break-inside: avoid;
+  }
+}
