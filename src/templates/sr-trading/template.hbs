@@ -81,18 +81,18 @@
       <tr>
         <td class="sr-sno-cell">{{increment @index}}.</td>
         {{#each (visibleColumns ../mapped.columns)}}
-        {{#if (eq key "name")}}<td class="sr-col-name sr-item-cell"><div class="sr-item-title"><strong>{{../name}}</strong></div>{{#if ../../mapped.visibility.showSkuInName}}{{#if ../showSku}}<p>SKU: {{../sku}}</p>{{/if}}{{/if}}{{#if ../../mapped.visibility.showInlineHsn}}{{#if ../hsn}}<p class="sr-item-hsn">HSN/SAC: {{../hsn}}</p>{{/if}}{{/if}}{{#each (itemCustomFields .. ../../mapped.columns)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}{{#if ../description}}<div class="sr-item-description">{{> MarkdownViewer (prepareMarkdownViewerData ../description)}}</div>{{/if}}</td>
+        {{#if (eq key "name")}}<td class="sr-col-name sr-item-cell"><div class="sr-item-title"><strong>{{../name}}</strong></div>{{#if ../../mapped.visibility.showSkuInName}}{{#if ../showSku}}<p>SKU: {{../sku}}</p>{{/if}}{{/if}}{{#if ../../mapped.visibility.showInlineHsn}}{{#if ../hsn}}<p class="sr-item-hsn">HSN/SAC: {{../hsn}}</p>{{/if}}{{/if}}{{#each (itemCustomFields .. (visibleColumns ../../mapped.columns))}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}{{#if ../description}}<div class="sr-item-description">{{> MarkdownViewer (prepareMarkdownViewerData ../description)}}</div>{{/if}}</td>
         {{else if (eq key "hsn")}}<td class="sr-col-hsn sr-center">{{../hsn}}</td>
         {{else if (eq key "classification")}}<td class="sr-col-classification sr-center">{{../classification}}</td>
         {{else if (eq key "quantity")}}<td class="sr-col-quantity sr-center">{{formatQty ..}}</td>
-        {{else if (eq key "rate")}}<td class="sr-col-rate sr-center">{{formatCurrency ../rate ../../invoice.currency ../../invoice.locale 2 ../../invoice.customCurrencySymbol}}</td>
-        {{else if (eq key "amount")}}<td class="sr-col-amount sr-center">{{formatCurrency ../amount ../../invoice.currency ../../invoice.locale 2 ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "rate")}}<td class="sr-col-rate sr-center">{{formatCurrency ../rate ../../invoice.currency ../../invoice.locale 0 ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "amount")}}<td class="sr-col-amount sr-center">{{formatCurrency ../amount ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
         {{else if (eq key "gstRate")}}<td class="sr-col-gstRate sr-center">{{../gstRate}}%</td>
-        {{else if (eq key "discount")}}<td class="sr-col-discount sr-center">{{#if (eq ../discount.discountType "PERCENTAGE")}}{{../discount.amount}}%{{else}}{{formatCurrency ../discount.amount ../../invoice.currency ../../invoice.locale 2 ../../invoice.customCurrencySymbol}}{{/if}}</td>
-        {{else if (eq key "igst")}}<td class="sr-col-igst sr-center">{{formatCurrency ../igst ../../invoice.currency ../../invoice.locale 2 ../../invoice.customCurrencySymbol}}</td>
-        {{else if (eq key "cgst")}}<td class="sr-col-cgst sr-center">{{formatCurrency ../cgst ../../invoice.currency ../../invoice.locale 2 ../../invoice.customCurrencySymbol}}</td>
-        {{else if (eq key "sgst")}}<td class="sr-col-sgst sr-center">{{formatCurrency ../sgst ../../invoice.currency ../../invoice.locale 2 ../../invoice.customCurrencySymbol}}</td>
-        {{else if (eq key "total")}}<td class="sr-col-total sr-center">{{formatCurrency ../total ../../invoice.currency ../../invoice.locale 2 ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "discount")}}<td class="sr-col-discount sr-center">{{#if (eq ../discount.discountType "PERCENTAGE")}}{{../discount.amount}}%{{else}}{{formatCurrency ../discount.amount ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}{{/if}}</td>
+        {{else if (eq key "igst")}}<td class="sr-col-igst sr-center">{{formatCurrency ../igst ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "cgst")}}<td class="sr-col-cgst sr-center">{{formatCurrency ../cgst ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "sgst")}}<td class="sr-col-sgst sr-center">{{formatCurrency ../sgst ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "total")}}<td class="sr-col-total sr-center">{{formatCurrency ../total ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
         {{else}}<td class="sr-col-{{key}} sr-center">{{customColumnValue .. this}}</td>{{/if}}
         {{/each}}
       </tr>
@@ -103,23 +103,23 @@
   {{#unless invoice.hideTotals}}
   <table class="sr-items sr-totals" aria-label="Invoice totals">
     <tbody>
-      <tr><th>{{columnLabel mapped.columns "amount" "Sub Total"}}</th><td class="sr-money">{{formatCurrency (subTotalAmount invoice) invoice.currency invoice.locale 2 invoice.customCurrencySymbol}}</td></tr>
-      {{#each mapped.columns}}{{#unless isHidden}}{{#if (eq key "discount")}}<tr><th>{{label}}</th><td class="sr-money">- {{formatCurrency (discountAmount @root.invoice) @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}{{/unless}}{{/each}}
-      {{#if mapped.visibility.showIgst}}<tr><th>{{columnLabel mapped.columns "igst" "IGST"}}{{#with (taxRatePercent invoice.finalTotal.igst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.igst invoice.currency invoice.locale 2 invoice.customCurrencySymbol}}</td></tr>{{/if}}
-      {{#if mapped.visibility.showCgstSgst}}<tr><th>CGST{{#with (taxRatePercent invoice.finalTotal.cgst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.cgst invoice.currency invoice.locale 2 invoice.customCurrencySymbol}}</td></tr><tr><th>{{columnLabel mapped.columns "sgst" "SGST"}}{{#with (taxRatePercent invoice.finalTotal.sgst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.sgst invoice.currency invoice.locale 2 invoice.customCurrencySymbol}}</td></tr>{{/if}}
-      {{#if mapped.visibility.showSummaryCess}}{{#each invoice.cesses}}{{#if isApplied}}<tr><th>{{#if label}}{{label}}{{else}}Cess{{/if}}</th><td class="sr-money">{{formatCurrency amount @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}{{/each}}{{/if}}
-      {{#each invoice.additionalCharges}}<tr><th>{{label}}</th><td class="sr-money">{{#if (eq multiplier -1)}}({{/if}}{{formatCurrency amount @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}}{{#if (eq multiplier -1)}}){{/if}}</td></tr>{{/each}}
-      {{#if invoice.finalTotal.totalRoundOff}}<tr><th>Round Off</th><td class="sr-money">{{formatCurrency invoice.finalTotal.totalRoundOff invoice.currency invoice.locale 2 invoice.customCurrencySymbol}}</td></tr>{{/if}}
-      <tr class="sr-grand-total"><th>{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}{{#unless invoice.owner.configuration.experimental.hideCurrencyCode}} ({{invoice.currency}}){{/unless}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.total invoice.currency invoice.locale 2 invoice.customCurrencySymbol}}</td></tr>
+      <tr><th>{{columnLabel mapped.columns "amount" "Sub Total"}}</th><td class="sr-money">{{formatCurrency (subTotalAmount invoice) invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>
+      {{#each mapped.columns}}{{#unless isHidden}}{{#if (eq key "discount")}}<tr><th>{{label}}</th><td class="sr-money">- {{formatCurrency (discountAmount @root.invoice) @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}{{/unless}}{{/each}}
+      {{#if mapped.visibility.showIgst}}<tr><th>{{columnLabel mapped.columns "igst" "IGST"}}{{#with (taxRatePercent invoice.finalTotal.igst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.igst invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      {{#if mapped.visibility.showCgstSgst}}<tr><th>CGST{{#with (taxRatePercent invoice.finalTotal.cgst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.cgst invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr><tr><th>{{columnLabel mapped.columns "sgst" "SGST"}}{{#with (taxRatePercent invoice.finalTotal.sgst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.sgst invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      {{#if mapped.visibility.showSummaryCess}}{{#each invoice.cesses}}{{#if isApplied}}<tr><th>{{#if label}}{{label}}{{else}}Cess{{/if}}</th><td class="sr-money">{{formatCurrency amount @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}{{/each}}{{/if}}
+      {{#each invoice.additionalCharges}}<tr><th>{{label}}</th><td class="sr-money">{{#if (eq multiplier -1)}}({{/if}}{{formatCurrency amount @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}{{#if (eq multiplier -1)}}){{/if}}</td></tr>{{/each}}
+      {{#if invoice.finalTotal.totalRoundOff}}<tr><th>Round Off</th><td class="sr-money">{{formatCurrency invoice.finalTotal.totalRoundOff invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      <tr class="sr-grand-total"><th>{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}{{#unless invoice.owner.configuration.experimental.hideCurrencyCode}} ({{invoice.currency}}){{/unless}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.total invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>
       {{#with (settlement invoice mapped.payments) as |payment|}}
-      {{#if payment.settledAmount}}<tr class="sr-settlement-row"><th>Settled Amount</th><td class="sr-money"><strong>{{formatCurrency payment.settledAmount @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}}</strong></td></tr>{{/if}}
+      {{#if payment.settledAmount}}<tr class="sr-settlement-row"><th>Settled Amount</th><td class="sr-money"><strong>{{formatCurrency payment.settledAmount @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</strong></td></tr>{{/if}}
       {{#if payment.hasPaid}}
-      {{#if payment.tds}}<tr class="sr-settlement-row"><th>TDS Amount Withheld</th><td class="sr-money"><strong>({{formatCurrency payment.tds @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}})</strong></td></tr>{{/if}}
-      <tr class="sr-settlement-row"><th>Amount Paid</th><td class="sr-money"><strong>({{formatCurrency payment.paid @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}})</strong></td></tr>
-      <tr class="sr-settlement-row"><th>Amount Received</th><td class="sr-money">{{formatCurrency payment.received @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}}</td></tr>
-      {{#if payment.transactionCharge}}<tr class="sr-settlement-row"><th>Transaction Charge</th><td class="sr-money">{{formatCurrency payment.transactionCharge @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      {{#if payment.tds}}<tr class="sr-settlement-row"><th>TDS Amount Withheld</th><td class="sr-money"><strong>({{formatCurrency payment.tds @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}})</strong></td></tr>{{/if}}
+      <tr class="sr-settlement-row"><th>Amount Paid</th><td class="sr-money"><strong>({{formatCurrency payment.paid @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}})</strong></td></tr>
+      <tr class="sr-settlement-row"><th>Amount Received</th><td class="sr-money">{{formatCurrency payment.received @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>
+      {{#if payment.transactionCharge}}<tr class="sr-settlement-row"><th>Transaction Charge</th><td class="sr-money">{{formatCurrency payment.transactionCharge @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}
       {{/if}}
-      {{#if payment.showDue}}<tr class="sr-settlement-row"><th>{{#if @root.invoice.customLabels.dueAmount}}{{@root.invoice.customLabels.dueAmount}}{{else}}Due Amount{{/if}}</th><td class="sr-money"><strong>{{formatCurrency payment.due @root.invoice.currency @root.invoice.locale 2 @root.invoice.customCurrencySymbol}}</strong></td></tr>{{/if}}
+      {{#if payment.showDue}}<tr class="sr-settlement-row"><th>{{#if @root.invoice.customLabels.dueAmount}}{{@root.invoice.customLabels.dueAmount}}{{else}}Due Amount{{/if}}</th><td class="sr-money"><strong>{{formatCurrency payment.due @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</strong></td></tr>{{/if}}
       {{/with}}
       {{!-- Document-level subtotal custom fields are free-text rows at the end
       of the totals table. They are intentionally not passed through formatCurrency. --}}
@@ -166,7 +166,7 @@
         extraClass="sr-payments-table"
         currency=invoice.currency
         locale=invoice.locale
-        subUnitLength=2
+        subUnitLength=invoice.subUnitLength
         customCurrencySymbol=invoice.customCurrencySymbol
         transactionChargeFirst=true
         hideTotal=true

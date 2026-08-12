@@ -167,6 +167,23 @@ function formatCountryName(value: any): string {
   const raw = asText(value);
   if (!raw) return "";
 
+  const normalized = raw
+    .toLowerCase()
+    .replace(/[.()_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (
+    [
+      "us",
+      "usa",
+      "united states",
+      "united states of america",
+      "united states of america usa",
+    ].includes(normalized)
+  ) {
+    return "United States of America (USA)";
+  }
+
   const code = raw.toUpperCase();
   if (!/^[A-Z]{2}$/.test(code)) return raw;
 
@@ -330,10 +347,101 @@ function transportRows(invoice: any): TransportRow[] {
   return rows;
 }
 
-function visibleColumns(columns: any): any[] {
+function isMissingValue(value: any): boolean {
+  return value === undefined || value === null || value === "";
+}
+
+function columnIdentities(column: any): string[] {
+  return [column?.key, column?.label, column?._id, column?.id]
+    .map(asText)
+    .map((value) => value.toLowerCase())
+    .filter(Boolean);
+}
+
+function customFieldIdentities(field: any): string[] {
+  return [field?.key, field?.label, field?.name, field?._id, field?.id]
+    .map(asText)
+    .map((value) => value.toLowerCase())
+    .filter(Boolean);
+}
+
+function isNumericItemField(field: any): boolean {
+  const declaredType = `${asText(field?.dataType)} ${asText(
+    field?.fxReturnType
+  )}`.toLowerCase();
+  return (
+    /\b(?:number|numeric|decimal|float|double|currency)\b/.test(declaredType) ||
+    asFiniteNumber(field?.value) !== null
+  );
+}
+
+function inferredNumericColumns(invoice: any, columns: any[]): any[] {
+  const represented = new Set(columns.flatMap(columnIdentities));
+  const inferred: any[] = [];
+
+  const add = (field: any, fallbackKey?: string) => {
+    if (
+      field?.params?.showInInvoice === false ||
+      field?.showInInvoice === false ||
+      !isNumericItemField(field)
+    ) {
+      return;
+    }
+
+    const label =
+      asText(field?.label) || asText(field?.name) || asText(fallbackKey);
+    const key =
+      asText(field?.key) || asText(field?._id) || asText(field?.id) || label;
+    const identities = [key, label].map((value) => value.toLowerCase());
+    if (
+      !key ||
+      !label ||
+      identities.some((identity) => represented.has(identity))
+    ) {
+      return;
+    }
+
+    inferred.push({
+      key,
+      label,
+      dataType: asText(field?.dataType) || "number",
+      fxReturnType: asText(field?.fxReturnType),
+      isHidden: false,
+    });
+    identities.forEach((identity) => represented.add(identity));
+  };
+
+  (Array.isArray(invoice?.items) ? invoice.items : []).forEach((item: any) => {
+    (Array.isArray(item?.customFields) ? item.customFields : []).forEach(add);
+    if (
+      item?.custom &&
+      typeof item.custom === "object" &&
+      !Array.isArray(item.custom)
+    ) {
+      Object.entries(item.custom).forEach(([key, value]) =>
+        add({ key, label: key, value }, key)
+      );
+    }
+  });
+
+  return inferred;
+}
+
+function visibleColumns(columns: any, options?: any): any[] {
   const declared = Array.isArray(columns) ? columns.filter(Boolean) : [];
-  if (!declared.length) return CORE_COLUMNS;
-  return declared.filter((column: any) => !column.isHidden);
+  const baseColumns = declared.length ? declared : CORE_COLUMNS;
+  const visible = baseColumns.filter((column: any) => !column.isHidden);
+  const invoice = options?.data?.root?.invoice ?? options?.data?.root;
+  const inferred = inferredNumericColumns(invoice, baseColumns);
+  if (!inferred.length) return visible;
+
+  const nameIndex = visible.findIndex((column: any) => column?.key === "name");
+  const insertAt = nameIndex === -1 ? 0 : nameIndex + 1;
+  return [
+    ...visible.slice(0, insertAt),
+    ...inferred,
+    ...visible.slice(insertAt),
+  ];
 }
 
 function unitLabel(unit: any): string {
@@ -411,6 +519,7 @@ type CustomFieldRow = {
   value: string;
   key: string;
   name: string;
+  _id: string;
 };
 
 function customFieldRows(fields: any): CustomFieldRow[] {
@@ -431,6 +540,7 @@ function customFieldRows(fields: any): CustomFieldRow[] {
           value,
           key: asText(field?.key),
           name: asText(field?.name),
+          _id: asText(field?._id ?? field?.id),
         });
       }
       return rows;
@@ -544,7 +654,7 @@ function registerSrTradingTemplateHelpers(HB: any): void {
   HB.registerHelper("customFields", customFieldRows);
 
   HB.registerHelper("countryOfSupply", (invoice: any) =>
-    formatCountryName(invoice?.billedBy?.country)
+    formatCountryName(invoice?.billedTo?.country)
   );
 
   HB.registerHelper("placeOfSupply", (invoice: any) =>
@@ -579,18 +689,27 @@ function registerSrTradingTemplateHelpers(HB: any): void {
     (item: any, column: any, options: any) => {
       if (!item || !column?.key) return "";
       const key = String(column.key);
+      const identities = new Set(columnIdentities(column));
       let value = item.custom?.[key];
-      if (value === undefined || value === null || value === "") {
+      if (
+        isMissingValue(value) &&
+        item.custom &&
+        typeof item.custom === "object"
+      ) {
+        const customKey = Object.keys(item.custom).find((candidate) =>
+          identities.has(candidate.trim().toLowerCase())
+        );
+        value = customKey ? item.custom[customKey] : value;
+      }
+      if (isMissingValue(value)) {
         const match = customFieldRows(item.customFields).find((field) =>
-          [field.label, field.name, field.key].some(
-            (candidate) =>
-              asText(candidate).toLowerCase() === key.trim().toLowerCase()
+          customFieldIdentities(field).some((identity) =>
+            identities.has(identity)
           )
         );
         value = match?.value;
       }
-      if (value === undefined || value === null || value === "")
-        value = item[key];
+      if (isMissingValue(value)) value = item[key];
 
       if (isDecimalCustomColumn(column)) {
         const invoice = options?.data?.root?.invoice ?? options?.data?.root;

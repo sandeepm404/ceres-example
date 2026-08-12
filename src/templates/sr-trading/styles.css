@@ -334,6 +334,24 @@
   margin: 8px 0;
 }
 
+/* Toast UI assigns fixed grey colours to list markers. In item descriptions,
+   keep bullets, counters, and future marker symbols in sync with the text. */
+.sr-item-description .toastui-editor-contents ul,
+.sr-item-description .toastui-editor-contents ol,
+.sr-item-description .toastui-editor-contents li {
+  color: inherit;
+}
+
+.sr-item-description li::marker,
+.sr-item-description .toastui-editor-contents li::before {
+  color: inherit;
+  border-color: currentcolor;
+}
+
+.sr-item-description .toastui-editor-contents ul > li::before {
+  background-color: currentcolor;
+}
+
 .sr-items tfoot th,
 .sr-totals th {
   text-align: right;
@@ -392,6 +410,10 @@
   padding-bottom: 24px;
 }
 
+.sr-shell .sr-tax-summary-group > :last-child {
+  padding-bottom: 16px;
+}
+
 /* Empty widget hosts otherwise add invisible padding between the totals and
    the following sections. */
 .sr-shell [data-ceres-tax-summary]:not(:has(.ceres-table-section)),
@@ -425,7 +447,7 @@
   table-layout: auto;
   overflow: hidden;
   color: var(--sr-ink);
-  font-size: var(--sr-font-size-s);
+  font-size: var(--sr-font-size-base);
   font-variant-numeric: tabular-nums;
 }
 
@@ -449,7 +471,7 @@
 .sr-shell .ceres-table thead th {
   background: #f8f9fa;
   color: var(--sr-ink);
-  font-size: var(--sr-font-size-s);
+  font-size: var(--sr-font-size-base);
   font-weight: 700;
   letter-spacing: 0.015em;
 }
@@ -457,7 +479,7 @@
 .sr-shell .ceres-table thead tr + tr th {
   background: #f8f9fa;
   color: var(--sr-ink);
-  font-size: var(--sr-font-size-xs);
+  font-size: var(--sr-font-size-base);
   font-weight: 700;
 }
 
@@ -537,7 +559,7 @@
   padding-bottom: 8px;
   background: #fff !important;
   color: var(--sr-muted);
-  font-size: var(--sr-font-size-xs);
+  font-size: var(--sr-font-size-base);
   font-weight: 500 !important;
   letter-spacing: 0.02em;
   text-align: left !important;
