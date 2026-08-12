@@ -1,0 +1,223 @@
+<header class="sr-brand-header invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+  {{#if invoice.letterHead}}
+  <img src="{{invoice.letterHead}}" alt="S. R. Trading Company letterhead" class="sr-letterhead-image" data-ceres-height="letterhead" />
+  {{else}}
+  <img alt="S. R. Trading Company letterhead" class="sr-letterhead-image" data-ceres-height="letterhead" />
+  {{/if}}
+</header>
+
+<div class="sr-shell">
+  {{#if invoice.template.watermark.logo}}<div class="sr-watermark"></div>{{/if}}
+
+  <section class="sr-title-bar">
+    <div class="sr-title-line">
+      <h2>{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}Quotation{{/if}}</h2>
+      {{#if mapped.visibility.showStatusTagInPrint}}{{> InvoiceStatus invoice}}{{/if}}
+    </div>
+    {{#if invoice.invoiceSubTitle}}<p>{{invoice.invoiceSubTitle}}</p>{{/if}}
+  </section>
+
+  <section class="sr-details-grid{{#unless mapped.visibility.transport}} sr-details-grid-no-transport{{/unless}}">
+    <div class="sr-party sr-buyer">
+      <p class="sr-muted-heading">{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}Quotation To{{/if}}</p>
+      <h3>{{invoice.billedTo.name}}</h3>
+      {{#each (partyAddressLines invoice.billedTo)}}<p>{{this}}</p>{{/each}}
+      {{#unless (eq invoice.owner.configuration.experimental.fieldVisibility.gst.showInDocument false)}}{{#if invoice.billedTo.gstin}}<p><strong>GSTIN:</strong> {{invoice.billedTo.gstin}}</p>{{/if}}{{/unless}}
+      {{#unless (eq invoice.owner.configuration.experimental.fieldVisibility.pan.showInDocument false)}}{{#if invoice.billedTo.panNumber}}<p><strong>PAN:</strong> {{invoice.billedTo.panNumber}}</p>{{else}}{{#if invoice.billedTo.pan}}<p><strong>PAN:</strong> {{invoice.billedTo.pan}}</p>{{/if}}{{/if}}{{/unless}}
+      {{#unless (eq invoice.billedTo.emailShowInInvoice false)}}{{#if invoice.billedTo.email}}<p><strong>Email:</strong> {{invoice.billedTo.email}}</p>{{/if}}{{/unless}}
+      {{#unless (eq invoice.billedTo.phoneShowInInvoice false)}}{{#if invoice.billedTo.phone}}<p><strong>Phone:</strong> {{formatPhone invoice.billedTo.phone}}</p>{{/if}}{{/unless}}
+      {{#if invoice.billedTo.contactPerson.name}}<p><strong>{{#if invoice.customLabels.contactPersonLabel}}{{invoice.customLabels.contactPersonLabel}}{{else}}Contact Person{{/if}}:</strong> {{invoice.billedTo.contactPerson.name}}</p>{{/if}}
+      {{#each (partyFields invoice.billedTo)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}
+    </div>
+
+    {{#if mapped.visibility.transport}}
+    <div class="sr-party sr-transport-details">
+      <p class="sr-muted-heading">{{#if invoice.customLabels.transport}}{{invoice.customLabels.transport}}{{else}}Transport Details{{/if}}</p>
+      <dl class="sr-transport-list">
+        {{#each (transportRows invoice)}}
+        <div><dt>{{label}}:</dt><dd>{{#if isDate}}{{formateShortDateWithOffset value ../invoice.ownerOffset}}{{else}}{{value}}{{/if}}</dd></div>
+        {{/each}}
+      </dl>
+    </div>
+    {{/if}}
+
+    <div class="sr-document-panel">
+      <dl class="sr-meta-list">
+        <div><dt>{{#if invoice.customLabels.invoiceNumber}}{{invoice.customLabels.invoiceNumber}}{{else}}Quotation No{{/if}}</dt><dd>{{invoice.invoiceNumber}}</dd></div>
+        <div><dt>{{#if invoice.customLabels.invoiceDate}}{{invoice.customLabels.invoiceDate}}{{else}}Quotation Date{{/if}}</dt><dd>{{#if invoice.invoiceDateUserInput}}{{invoice.invoiceDateUserInput}}{{else}}{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}{{/if}}</dd></div>
+        {{#if invoice.dueDate}}<div><dt>{{#if invoice.customLabels.dueDate}}{{invoice.customLabels.dueDate}}{{else}}Valid Till Date{{/if}}</dt><dd>{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</dd></div>{{/if}}
+        {{#if invoice.purchaseOrderNumber}}<div><dt>{{#if invoice.customLabels.purchaseOrderNumber}}{{invoice.customLabels.purchaseOrderNumber}}{{else}}PO Number{{/if}}</dt><dd>{{invoice.purchaseOrderNumber}}</dd></div>{{/if}}
+        {{#unless invoice.advanceOptions.hideCountryOfSupply}}
+        {{#with (countryOfSupply invoice)}}<div><dt>Country of Supply</dt><dd>{{this}}</dd></div>{{/with}}
+        {{#with (placeOfSupply invoice)}}<div><dt>Place of Supply</dt><dd>{{this}}</dd></div>{{/with}}
+        {{/unless}}
+        {{#if invoice.reverseCharge}}<div><dt>Reverse Charge</dt><dd>Yes</dd></div>{{/if}}
+        {{#each (customFields invoice.customFields)}}<div><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/each}}
+        {{#each (customFields invoice.customHeaders)}}<div><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/each}}
+        {{#if invoice.irn.Irn}}<div><dt>IRN</dt><dd class="sr-break-all">{{invoice.irn.Irn}}</dd></div>{{/if}}
+        {{#unless mapped.irn.isCancelled}}{{#if invoice.irn.AckNo}}<div><dt>Ack No</dt><dd>{{invoice.irn.AckNo}}</dd></div>{{/if}}{{/unless}}
+        {{#if invoice.irn.EwbNo}}<div><dt>E-way Bill</dt><dd>{{invoice.irn.EwbNo}}</dd></div>{{/if}}
+      </dl>
+      {{#with (documentLogo invoice) as |documentLogo|}}
+      <div class="sr-catalogue-callout">
+        <img src="{{qrSrc documentLogo}}" alt="Product catalogue QR code" class="sr-catalogue-logo" referrerpolicy="no-referrer" />
+        <div class="sr-catalogue-copy">
+          <strong>Scan here to view our product catalogue</strong>
+          <p>(This catalogue contains a selected range of our products. Please contact us for products not listed here)</p>
+        </div>
+      </div>
+      {{/with}}
+    </div>
+  </section>
+
+  {{#if mapped.visibility.shippedTo}}<section class="sr-shipping-row sr-party"><p class="sr-muted-heading">{{#if invoice.customLabels.shippedTo}}{{invoice.customLabels.shippedTo}}{{else}}Shipped To{{/if}}</p><h3>{{invoice.shippedTo.name}}</h3>{{#each (partyAddressLines invoice.shippedTo)}}<p>{{this}}</p>{{/each}}{{#if invoice.shippedTo.gstin}}<p><strong>GSTIN:</strong> {{invoice.shippedTo.gstin}}</p>{{/if}}{{#each (partyFields invoice.shippedTo)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}</section>{{/if}}
+  {{#if mapped.visibility.shippedFrom}}<section class="sr-shipping-row sr-party"><p class="sr-muted-heading">{{#if invoice.customLabels.shippedFrom}}{{invoice.customLabels.shippedFrom}}{{else}}Shipped From{{/if}}</p><h3>{{invoice.shippedFrom.name}}</h3>{{#each (partyAddressLines invoice.shippedFrom)}}<p>{{this}}</p>{{/each}}{{#if invoice.shippedFrom.gstin}}<p><strong>GSTIN:</strong> {{invoice.shippedFrom.gstin}}</p>{{/if}}{{#each (partyFields invoice.shippedFrom)}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}</section>{{/if}}
+
+  <table class="sr-items">
+    <colgroup><col class="sr-width-sno" />{{#each (visibleColumns mapped.columns)}}<col class="sr-width-{{key}}" />{{/each}}</colgroup>
+    <thead><tr><th class="sr-col-sno" aria-label="Serial number"></th>{{#each (visibleColumns mapped.columns)}}<th class="sr-col-{{key}}">{{label}}</th>{{/each}}</tr></thead>
+    <tbody>
+      {{#each invoice.items}}
+      <tr>
+        <td class="sr-sno-cell">{{increment @index}}.</td>
+        {{#each (visibleColumns ../mapped.columns)}}
+        {{#if (eq key "name")}}<td class="sr-col-name sr-item-cell"><div class="sr-item-title"><strong>{{../name}}</strong></div>{{#if ../../mapped.visibility.showSkuInName}}{{#if ../showSku}}<p>SKU: {{../sku}}</p>{{/if}}{{/if}}{{#if ../../mapped.visibility.showInlineHsn}}{{#if ../hsn}}<p class="sr-item-hsn">HSN/SAC: {{../hsn}}</p>{{/if}}{{/if}}{{#each (itemCustomFields .. (visibleColumns ../../mapped.columns))}}<p><strong>{{label}}:</strong> {{value}}</p>{{/each}}{{#if ../description}}<div class="sr-item-description">{{> MarkdownViewer (prepareMarkdownViewerData ../description)}}</div>{{/if}}</td>
+        {{else if (eq key "hsn")}}<td class="sr-col-hsn sr-center">{{../hsn}}</td>
+        {{else if (eq key "classification")}}<td class="sr-col-classification sr-center">{{../classification}}</td>
+        {{else if (eq key "quantity")}}<td class="sr-col-quantity sr-center">{{formatQty ..}}</td>
+        {{else if (eq key "rate")}}<td class="sr-col-rate sr-center">{{formatCurrency ../rate ../../invoice.currency ../../invoice.locale 0 ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "amount")}}<td class="sr-col-amount sr-center">{{formatCurrency ../amount ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "gstRate")}}<td class="sr-col-gstRate sr-center">{{../gstRate}}%</td>
+        {{else if (eq key "discount")}}<td class="sr-col-discount sr-center">{{#if (eq ../discount.discountType "PERCENTAGE")}}{{../discount.amount}}%{{else}}{{formatCurrency ../discount.amount ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}{{/if}}</td>
+        {{else if (eq key "igst")}}<td class="sr-col-igst sr-center">{{formatCurrency ../igst ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "cgst")}}<td class="sr-col-cgst sr-center">{{formatCurrency ../cgst ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "sgst")}}<td class="sr-col-sgst sr-center">{{formatCurrency ../sgst ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "total")}}<td class="sr-col-total sr-center">{{formatCurrency ../total ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else}}<td class="sr-col-{{key}} sr-center">{{customColumnValue .. this}}</td>{{/if}}
+        {{/each}}
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  {{#unless invoice.hideTotals}}
+  <table class="sr-items sr-totals" aria-label="Invoice totals">
+    <tbody>
+      <tr><th>{{columnLabel mapped.columns "amount" "Sub Total"}}</th><td class="sr-money">{{formatCurrency (subTotalAmount invoice) invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>
+      {{#each mapped.columns}}{{#unless isHidden}}{{#if (eq key "discount")}}<tr><th>{{label}}</th><td class="sr-money">- {{formatCurrency (discountAmount @root.invoice) @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}{{/unless}}{{/each}}
+      {{#if mapped.visibility.showIgst}}<tr><th>{{columnLabel mapped.columns "igst" "IGST"}}{{#with (taxRatePercent invoice.finalTotal.igst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.igst invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      {{#if mapped.visibility.showCgstSgst}}<tr><th>CGST{{#with (taxRatePercent invoice.finalTotal.cgst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.cgst invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr><tr><th>{{columnLabel mapped.columns "sgst" "SGST"}}{{#with (taxRatePercent invoice.finalTotal.sgst invoice)}} ({{this}}%){{/with}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.sgst invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      {{#if mapped.visibility.showSummaryCess}}{{#each invoice.cesses}}{{#if isApplied}}<tr><th>{{#if label}}{{label}}{{else}}Cess{{/if}}</th><td class="sr-money">{{formatCurrency amount @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}{{/each}}{{/if}}
+      {{#each invoice.additionalCharges}}<tr><th>{{label}}</th><td class="sr-money">{{#if (eq multiplier -1)}}({{/if}}{{formatCurrency amount @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}{{#if (eq multiplier -1)}}){{/if}}</td></tr>{{/each}}
+      {{#if invoice.finalTotal.totalRoundOff}}<tr><th>Round Off</th><td class="sr-money">{{formatCurrency invoice.finalTotal.totalRoundOff invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      <tr class="sr-grand-total"><th>{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}{{#unless invoice.owner.configuration.experimental.hideCurrencyCode}} ({{invoice.currency}}){{/unless}}</th><td class="sr-money">{{formatCurrency invoice.finalTotal.total invoice.currency invoice.locale invoice.subUnitLength invoice.customCurrencySymbol}}</td></tr>
+      {{#with (settlement invoice mapped.payments) as |payment|}}
+      {{#if payment.settledAmount}}<tr class="sr-settlement-row"><th>Settled Amount</th><td class="sr-money"><strong>{{formatCurrency payment.settledAmount @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</strong></td></tr>{{/if}}
+      {{#if payment.hasPaid}}
+      {{#if payment.tds}}<tr class="sr-settlement-row"><th>TDS Amount Withheld</th><td class="sr-money"><strong>({{formatCurrency payment.tds @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}})</strong></td></tr>{{/if}}
+      <tr class="sr-settlement-row"><th>Amount Paid</th><td class="sr-money"><strong>({{formatCurrency payment.paid @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}})</strong></td></tr>
+      <tr class="sr-settlement-row"><th>Amount Received</th><td class="sr-money">{{formatCurrency payment.received @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>
+      {{#if payment.transactionCharge}}<tr class="sr-settlement-row"><th>Transaction Charge</th><td class="sr-money">{{formatCurrency payment.transactionCharge @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</td></tr>{{/if}}
+      {{/if}}
+      {{#if payment.showDue}}<tr class="sr-settlement-row"><th>{{#if @root.invoice.customLabels.dueAmount}}{{@root.invoice.customLabels.dueAmount}}{{else}}Due Amount{{/if}}</th><td class="sr-money"><strong>{{formatCurrency payment.due @root.invoice.currency @root.invoice.locale @root.invoice.subUnitLength @root.invoice.customCurrencySymbol}}</strong></td></tr>{{/if}}
+      {{/with}}
+      {{!-- Document-level subtotal custom fields are free-text rows at the end
+      of the totals table. They are intentionally not passed through formatCurrency. --}}
+      {{#each invoice.extraTotalFields}}
+      <tr class="sr-extra-total-row"><th>{{label}}</th><td class="sr-money">{{value}}</td></tr>
+      {{/each}}
+    </tbody>
+  </table>
+  {{/unless}}
+
+  {{#unless invoice.hideTotalInWords}}{{#with (totalWords invoice) as |words|}}{{#if words}}<p class="sr-total-words"><span>{{#if invoice.customLabels.totalInWords}}{{invoice.customLabels.totalInWords}}{{else}}Total (in words){{/if}}:</span> <strong>{{words}}</strong></p>{{/if}}{{/with}}{{/unless}}
+
+  {{#if (or (showTaxSummaryTable invoice advanceOptions) mapped.visibility.showHsnSummary)}}
+  <div class="sr-tax-summary-group">
+    {{#if (showTaxSummaryTable invoice advanceOptions)}}
+    <div data-ceres-tax-summary>
+      <h3 class="ceres-table-heading">Tax Summary</h3>
+      {{> TaxSummaryTable (computeTaxSummary invoice.items
+          isIgst=mapped.visibility.showIgst
+          isUtgst=mapped.visibility.isUtgst)
+      }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showHsnSummary}}
+    <div data-ceres-hsn-summary>
+      {{> HsnSummaryTable (computeHsnSummary invoice.items
+          isIgst=mapped.visibility.showIgst
+          isUtgst=mapped.visibility.isUtgst)
+          heading="HSN Summary"
+      }}
+    </div>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  {{#if (showPaymentsTable invoice advanceOptions)}}
+  <div data-ceres-payment-table>
+    {{> PaymentTable (computePaymentColumns (summaryPayments invoice)
+        businessCurrency=invoice.businessCurrency
+        currency=invoice.currency)
+        ownerOffset=invoice.ownerOffset
+        heading="Payments"
+        extraClass="sr-payments-table"
+        currency=invoice.currency
+        locale=invoice.locale
+        subUnitLength=invoice.subUnitLength
+        customCurrencySymbol=invoice.customCurrencySymbol
+        transactionChargeFirst=true
+        hideTotal=true
+    }}
+  </div>
+  {{/if}}
+
+  <section class="sr-bottom-grid">
+    <div class="sr-terms-notes">
+      {{#each invoice.terms}}{{#if terms.length}}<div class="sr-terms"><h3>{{#if label}}{{label}}{{else}}{{@root.invoice.customLabels.terms}}{{/if}}</h3><ol>{{#each terms}}<li>{{this}}</li>{{/each}}</ol></div>{{/if}}{{/each}}
+      {{#if invoice.notes}}<div class="sr-notes">{{#if invoice.customLabels.notes}}<h3>{{invoice.customLabels.notes}}</h3>{{/if}}{{> MarkdownViewer (prepareMarkdownViewerData invoice.notes)}}</div>{{/if}}
+      {{#if invoice.attachments.length}}<div class="sr-attachments"><h3>{{invoice.customLabels.attachment}}</h3><ol>{{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{filenameFromUrl this}}</a></li>{{/each}}</ol></div>{{/if}}
+    </div>
+
+    {{#if mapped.visibility.showBankUpiSection}}
+    <div class="sr-payment">
+      <h3>Bank and UPI details</h3>
+      {{#if mapped.visibility.showBankAccount}}{{#with (bankDetails invoice.bankAccount)}}<dl class="{{#if hasSecondary}}sr-bank-split{{/if}}">{{#each rows}}<div><dt>{{label}}</dt><dd>{{primary}}</dd>{{#if ../hasSecondary}}<dd class="sr-bank-secondary">{{secondary}}</dd>{{/if}}</div>{{/each}}</dl>{{/with}}{{/if}}
+      {{#if mapped.visibility.showUpi}}<div class="sr-upi"><strong>Scan To Pay</strong>{{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img src="{{upiQr}}" alt="UPI QR" />{{/with}}</div>{{/if}}
+    </div>
+    {{/if}}
+  </section>
+
+  {{#if (or invoice.customFooters.length invoice.footers.length (eq invoice.signatureMethod "DIGITAL") invoice.signature)}}
+  <div class="sr-closing-grid">
+    {{#if (or invoice.customFooters.length invoice.footers.length)}}
+    <section class="sr-additional-info">
+      <h3>{{#if invoice.customLabels.additionalInformation}}{{invoice.customLabels.additionalInformation}}{{else}}{{#if invoice.customLabels.additionalInfo}}{{invoice.customLabels.additionalInfo}}{{else}}Additional Information{{/if}}{{/if}}</h3>
+      <dl class="sr-additional-info-list">{{~#each invoice.customFooters~}}
+        {{~#if value~}}<div><dt>{{#if label}}{{label}}{{else}}{{defaultValue}}{{/if}}</dt><dd>{{value}}</dd></div>{{~/if~}}
+        {{~/each~}}
+        {{~#each invoice.footers~}}
+        {{~#if value~}}<div><dt>{{label}}</dt><dd>{{value}}</dd></div>{{~/if~}}
+        {{~/each~}}</dl>
+    </section>
+    {{/if}}
+
+    {{#if (eq invoice.signatureMethod "DIGITAL")}}
+      {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}<section class="sr-signature"><strong>Digitally signed</strong>{{#with (signedName invoice.documentSignatureRequest) as |name|}}{{#if name}}<p>{{name}}</p>{{/if}}{{/with}}{{#if invoice.share.pdf}}<a href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">Verify signed PDF</a>{{/if}}</section>{{else}}<section class="sr-signature sr-awaiting-signature"><span class="sr-signature-placeholder"></span><strong>Awaiting Digital Signature</strong></section>{{/if}}
+    {{else}}{{#if invoice.signature}}<section class="sr-signature">{{> CeresImage src=invoice.signature alt="Signature" class="sr-signature-image"}}{{#if invoice.customLabels.signature}}<p>{{invoice.customLabels.signature}}</p>{{/if}}</section>{{/if}}{{/if}}
+  </div>
+  {{/if}}
+  {{#if mapped.visibility.contactStrip}}<p class="sr-contact-strip">{{#if invoice.customLabels.contact}}{{invoice.customLabels.contact}}{{else}}For any enquiry, reach out via{{/if}} {{#if invoice.contact.email}}{{#if invoice.customLabels.contactEmail}}{{invoice.customLabels.contactEmail}}{{else}}email at{{/if}} <strong>{{invoice.contact.email}}</strong>{{/if}}{{#if invoice.contact.phone}}{{#if invoice.contact.email}}, {{/if}}{{#if invoice.customLabels.contactPhone}}{{invoice.customLabels.contactPhone}}{{else}}call on{{/if}} <strong>{{formatPhone invoice.contact.phone}}</strong>{{/if}}</p>{{/if}}
+
+</div>
+
+<footer class="sr-letterhead-footer no-dibella invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+  {{#if invoice.letterHeadFooter}}
+  <img src="{{invoice.letterHeadFooter}}" alt="S. R. Trading Company footer" class="sr-letterhead-footer-image" data-ceres-height="letterhead-footer" />
+  {{else}}
+  <img alt="S. R. Trading Company footer" class="sr-letterhead-footer-image" data-ceres-height="letterhead-footer" />
+  {{/if}}
+</footer>
+{{#if invoice.showBranding}}{{> RefrensBranding}}{{/if}}
