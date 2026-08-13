@@ -7,9 +7,9 @@
   --sr-font-size-m: 15px;
   --sr-font-size-lg: 18px;
   --sr-font-size-xl: 24px;
-  --sr-border: #374151;
-  --sr-muted: #4b5563;
-  --sr-ink: #20252d;
+  --sr-border: #9ca3af;
+  --sr-muted: #60646c;
+  --sr-ink: #1f2328;
   --sr-accent: var(--ceres-primary-color, #c71f26);
 
   width: 100%;
@@ -21,7 +21,8 @@
   border: 1px solid var(--sr-border);
   font-family: var(--ceres-font-family, Arial, Helvetica, sans-serif);
   font-size: var(--sr-font-size-base);
-  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -36,13 +37,17 @@
 }
 
 .sr-brand-header {
-  border-top: 0;
+  aspect-ratio: 117 / 25;
+  overflow: hidden;
+  border: 1px solid var(--sr-border);
   border-bottom: 0;
 }
 
 .sr-letterhead-footer {
+  aspect-ratio: 5 / 1;
+  overflow: hidden;
+  border: 1px solid var(--sr-border);
   border-top: 0;
-  border-bottom: 0;
 }
 
 .sr-shell *,
@@ -74,8 +79,20 @@
 .sr-letterhead-footer-image {
   display: block;
   width: 100%;
-  max-width: none;
+  max-width: 100%;
   height: auto;
+  object-fit: contain;
+}
+
+.sr-letterhead-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sr-letterhead-footer-image {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -85,7 +102,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 40px;
+  min-height: 52px;
   border-top: 0;
   border-bottom: 1px solid var(--sr-border);
   padding: 4px 16px;
@@ -102,7 +119,7 @@
   font-family: var(--title-font, var(--ceres-font-family, Arial, sans-serif));
   font-size: var(--sr-font-size-xl);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .sr-title-bar > p {
@@ -121,7 +138,7 @@
 }
 
 .sr-details-grid > * {
-  padding: 8px;
+  padding: 16px;
 }
 
 .sr-details-grid > * + * {
@@ -154,19 +171,20 @@
 
 .sr-catalogue-callout {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 88px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  width: 100%;
-  margin-top: auto;
-  padding-top: 8px;
+  width: calc(100% + 32px);
+  margin: 16px -16px -16px;
+  border-top: 1px solid var(--sr-border);
+  padding: 16px;
   break-inside: avoid;
 }
 
 .sr-catalogue-logo {
   display: block;
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
 }
 
@@ -174,15 +192,19 @@
   min-width: 0;
   color: var(--sr-muted);
   font-size: var(--sr-font-size-s);
-  line-height: 1.25;
+  line-height: 1.35;
 }
 
 .sr-catalogue-copy strong {
   display: block;
   margin-bottom: 4px;
   color: var(--sr-ink);
-  font-size: var(--sr-font-size-base);
-  line-height: 1.25;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.sr-catalogue-copy p {
+  font-size: 13px;
 }
 
 .sr-meta-list > div,
@@ -195,7 +217,18 @@
   margin-bottom: 4px;
 }
 
-.sr-meta-list dd,
+.sr-meta-list > div:last-child,
+.sr-transport-list > div:last-child,
+.sr-additional-info-list > div:last-child,
+.sr-payment dl > div:last-child {
+  margin-bottom: 0;
+}
+
+.sr-meta-list dd {
+  text-align: right;
+  font-weight: 700;
+}
+
 .sr-transport-list dd {
   text-align: left;
   font-weight: 700;
@@ -211,9 +244,8 @@
 }
 
 .sr-shipping-row {
-  min-height: 144px;
   border-bottom: 1px solid var(--sr-border);
-  padding: 8px;
+  padding: 16px;
 }
 
 .sr-transport-list dd {
@@ -230,7 +262,7 @@
 
 .sr-items th,
 .sr-items td {
-  padding: 4px 8px;
+  padding: 8px;
   border-right: 1px solid var(--sr-border);
   border-bottom: 1px solid var(--sr-border);
   vertical-align: top;
@@ -331,7 +363,7 @@
 }
 
 .sr-item-description .toastui-editor-contents p {
-  margin: 8px 0;
+  margin: 4px 0;
 }
 
 /* Toast UI assigns fixed grey colours to list markers. In item descriptions,
@@ -361,8 +393,8 @@
 .sr-items tfoot th,
 .sr-totals td,
 .sr-totals th {
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 
 .sr-items .sr-grand-total th,
@@ -391,7 +423,7 @@
 }
 
 .sr-total-words {
-  padding: 4px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--sr-border);
 }
 
@@ -440,10 +472,10 @@
 
 .sr-shell .ceres-table {
   width: 100%;
-  border: 1px solid #000;
+  border: 1px solid var(--sr-border);
   border-collapse: separate;
   border-spacing: 0;
-  border-radius: 4px;
+  border-radius: 0;
   table-layout: auto;
   overflow: hidden;
   color: var(--sr-ink);
@@ -456,8 +488,8 @@
   padding: 8px;
   border-top: 0;
   border-left: 0;
-  border-right: 1px solid #000;
-  border-bottom: 1px solid #000;
+  border-right: 1px solid var(--sr-border);
+  border-bottom: 1px solid var(--sr-border);
   text-align: center;
   vertical-align: middle;
 }
@@ -469,7 +501,7 @@
 }
 
 .sr-shell .ceres-table thead th {
-  background: #f8f9fa;
+  background: #fff;
   color: var(--sr-ink);
   font-size: var(--sr-font-size-base);
   font-weight: 700;
@@ -477,14 +509,14 @@
 }
 
 .sr-shell .ceres-table thead tr + tr th {
-  background: #f8f9fa;
+  background: #fff;
   color: var(--sr-ink);
   font-size: var(--sr-font-size-base);
   font-weight: 700;
 }
 
 .sr-shell .ceres-table thead tr:first-child th:not([rowspan]) {
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid var(--sr-border);
 }
 
 /* Chromium's PDF painter can drop the shared edge between the two adjacent
@@ -506,7 +538,7 @@
   thead
   tr:first-child
   > th:nth-child(2) {
-  border-left: 1px solid #000;
+  border-left: 1px solid var(--sr-border);
 }
 
 .sr-shell .ceres-table thead,
@@ -522,7 +554,7 @@
 }
 
 .sr-shell .ceres-table tfoot td {
-  border-top: 1px solid #000;
+  border-top: 1px solid var(--sr-border);
   background: #fff;
   font-weight: 700;
 }
@@ -600,9 +632,13 @@
 .sr-bottom-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 280px;
-  border-top: 1px solid var(--sr-border);
   border-bottom: 1px solid var(--sr-border);
+}
+
+/* The shell already owns the document's outer bottom edge. Avoid painting an
+   adjacent second rule when this grid is the final section. */
+.sr-shell > .sr-bottom-grid:last-child {
+  border-bottom: 0;
 }
 
 .sr-bottom-grid > * {
@@ -611,6 +647,10 @@
 
 .sr-bottom-grid > * + * {
   border-left: 1px solid var(--sr-border);
+}
+
+.sr-bottom-grid > :only-child {
+  grid-column: 1 / -1;
 }
 
 .sr-bottom-grid h3 {

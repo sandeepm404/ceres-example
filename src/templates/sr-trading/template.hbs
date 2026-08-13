@@ -85,8 +85,8 @@
         {{else if (eq key "hsn")}}<td class="sr-col-hsn sr-center">{{../hsn}}</td>
         {{else if (eq key "classification")}}<td class="sr-col-classification sr-center">{{../classification}}</td>
         {{else if (eq key "quantity")}}<td class="sr-col-quantity sr-center">{{formatQty ..}}</td>
-        {{else if (eq key "rate")}}<td class="sr-col-rate sr-center">{{formatCurrency ../rate ../../invoice.currency ../../invoice.locale 0 ../../invoice.customCurrencySymbol}}</td>
-        {{else if (eq key "amount")}}<td class="sr-col-amount sr-center">{{formatCurrency ../amount ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
+        {{else if (eq key "rate")}}<td class="sr-col-rate sr-center">{{formatAmountNumber ../rate ../../invoice}}</td>
+        {{else if (eq key "amount")}}<td class="sr-col-amount sr-center">{{formatAmountNumber ../amount ../../invoice}}</td>
         {{else if (eq key "gstRate")}}<td class="sr-col-gstRate sr-center">{{../gstRate}}%</td>
         {{else if (eq key "discount")}}<td class="sr-col-discount sr-center">{{#if (eq ../discount.discountType "PERCENTAGE")}}{{../discount.amount}}%{{else}}{{formatCurrency ../discount.amount ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}{{/if}}</td>
         {{else if (eq key "igst")}}<td class="sr-col-igst sr-center">{{formatCurrency ../igst ../../invoice.currency ../../invoice.locale ../../invoice.subUnitLength ../../invoice.customCurrencySymbol}}</td>
@@ -174,12 +174,15 @@
   </div>
   {{/if}}
 
+  {{#if (or (hasTermsNotes invoice) mapped.visibility.showBankUpiSection)}}
   <section class="sr-bottom-grid">
+    {{#if (hasTermsNotes invoice)}}
     <div class="sr-terms-notes">
-      {{#each invoice.terms}}{{#if terms.length}}<div class="sr-terms"><h3>{{#if label}}{{label}}{{else}}{{@root.invoice.customLabels.terms}}{{/if}}</h3><ol>{{#each terms}}<li>{{this}}</li>{{/each}}</ol></div>{{/if}}{{/each}}
-      {{#if invoice.notes}}<div class="sr-notes">{{#if invoice.customLabels.notes}}<h3>{{invoice.customLabels.notes}}</h3>{{/if}}{{> MarkdownViewer (prepareMarkdownViewerData invoice.notes)}}</div>{{/if}}
-      {{#if invoice.attachments.length}}<div class="sr-attachments"><h3>{{invoice.customLabels.attachment}}</h3><ol>{{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{filenameFromUrl this}}</a></li>{{/each}}</ol></div>{{/if}}
+      {{#each invoice.terms}}{{#if terms.length}}<div class="sr-terms"><h3>{{#if label}}{{label}}{{else}}{{#if @root.invoice.customLabels.terms}}{{@root.invoice.customLabels.terms}}{{else}}Terms and Conditions{{/if}}{{/if}}</h3><ol>{{#each terms}}<li>{{this}}</li>{{/each}}</ol></div>{{/if}}{{/each}}
+      {{#if invoice.notes}}<div class="sr-notes"><h3>{{#if invoice.customLabels.notes}}{{invoice.customLabels.notes}}{{else}}Additional Notes{{/if}}</h3>{{> MarkdownViewer (prepareMarkdownViewerData invoice.notes)}}</div>{{/if}}
+      {{#if invoice.attachments.length}}<div class="sr-attachments"><h3>{{#if invoice.customLabels.attachment}}{{invoice.customLabels.attachment}}{{else}}Attachments{{/if}}</h3><ol>{{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{filenameFromUrl this}}</a></li>{{/each}}</ol></div>{{/if}}
     </div>
+    {{/if}}
 
     {{#if mapped.visibility.showBankUpiSection}}
     <div class="sr-payment">
@@ -189,6 +192,7 @@
     </div>
     {{/if}}
   </section>
+  {{/if}}
 
   {{#if (or invoice.customFooters.length invoice.footers.length (eq invoice.signatureMethod "DIGITAL") invoice.signature)}}
   <div class="sr-closing-grid">
@@ -206,7 +210,7 @@
 
     {{#if (eq invoice.signatureMethod "DIGITAL")}}
       {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}<section class="sr-signature"><strong>Digitally signed</strong>{{#with (signedName invoice.documentSignatureRequest) as |name|}}{{#if name}}<p>{{name}}</p>{{/if}}{{/with}}{{#if invoice.share.pdf}}<a href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">Verify signed PDF</a>{{/if}}</section>{{else}}<section class="sr-signature sr-awaiting-signature"><span class="sr-signature-placeholder"></span><strong>Awaiting Digital Signature</strong></section>{{/if}}
-    {{else}}{{#if invoice.signature}}<section class="sr-signature">{{> CeresImage src=invoice.signature alt="Signature" class="sr-signature-image"}}{{#if invoice.customLabels.signature}}<p>{{invoice.customLabels.signature}}</p>{{/if}}</section>{{/if}}{{/if}}
+    {{else}}{{#if invoice.signature}}<section class="sr-signature">{{> CeresImage src=invoice.signature alt="Signature" class="sr-signature-image"}}<p>{{#if invoice.customLabels.signature}}{{invoice.customLabels.signature}}{{else}}Authorized Signatory{{/if}}</p></section>{{/if}}{{/if}}
   </div>
   {{/if}}
   {{#if mapped.visibility.contactStrip}}<p class="sr-contact-strip">{{#if invoice.customLabels.contact}}{{invoice.customLabels.contact}}{{else}}For any enquiry, reach out via{{/if}} {{#if invoice.contact.email}}{{#if invoice.customLabels.contactEmail}}{{invoice.customLabels.contactEmail}}{{else}}email at{{/if}} <strong>{{invoice.contact.email}}</strong>{{/if}}{{#if invoice.contact.phone}}{{#if invoice.contact.email}}, {{/if}}{{#if invoice.customLabels.contactPhone}}{{invoice.customLabels.contactPhone}}{{else}}call on{{/if}} <strong>{{formatPhone invoice.contact.phone}}</strong>{{/if}}</p>{{/if}}
