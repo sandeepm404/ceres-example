@@ -342,7 +342,7 @@
 .fk-item-table tbody td {
   border: 1px solid var(--fk-border-light);
   padding: 8px;
-  vertical-align: top;
+  vertical-align: middle !important;
   font-size: var(--fk-font-size-base);
 }
 
