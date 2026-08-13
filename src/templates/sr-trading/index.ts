@@ -430,8 +430,18 @@ function inferredNumericColumns(invoice: any, columns: any[]): any[] {
 function visibleColumns(columns: any, options?: any): any[] {
   const declared = Array.isArray(columns) ? columns.filter(Boolean) : [];
   const baseColumns = declared.length ? declared : CORE_COLUMNS;
-  const visible = baseColumns.filter((column: any) => !column.isHidden);
   const invoice = options?.data?.root?.invoice ?? options?.data?.root;
+  const items = Array.isArray(invoice?.items) ? invoice.items : [];
+  const hasHsn = items.some((item: any) => asText(item?.hsn));
+  const hasClassification = items.some((item: any) =>
+    asText(item?.classification)
+  );
+  const visible = baseColumns.filter(
+    (column: any) =>
+      !column.isHidden ||
+      (column.key === "hsn" && hasHsn) ||
+      (column.key === "classification" && hasClassification)
+  );
   const inferred = inferredNumericColumns(invoice, baseColumns);
   if (!inferred.length) return visible;
 
@@ -585,6 +595,16 @@ function registerSrTradingTemplateHelpers(HB: any): void {
     args.slice(0, -1).some((value) => Boolean(value))
   );
   HB.registerHelper("increment", (value: number) => Number(value || 0) + 1);
+  HB.registerHelper("hasTermsNotes", (invoice: any) => {
+    const hasTerms = (Array.isArray(invoice?.terms) ? invoice.terms : []).some(
+      (group: any) => Array.isArray(group?.terms) && group.terms.length > 0
+    );
+    return (
+      hasTerms ||
+      Boolean(asText(invoice?.notes)) ||
+      (Array.isArray(invoice?.attachments) && invoice.attachments.length > 0)
+    );
+  });
   HB.registerHelper("summaryPayments", (invoice: any) => {
     if (Array.isArray(invoice?.allPayments) && invoice.allPayments.length) {
       return invoice.allPayments;
@@ -615,6 +635,7 @@ function registerSrTradingTemplateHelpers(HB: any): void {
   );
   HB.registerHelper("subTotalAmount", subTotalAmount);
   HB.registerHelper("discountAmount", discountAmount);
+  HB.registerHelper("formatAmountNumber", formatCustomNumber);
 
   // The payload has per-item gstRate values, but no dependable invoice-level
   // IGST/CGST/SGST rate. Derive the totals-row rate from the aggregate tax
