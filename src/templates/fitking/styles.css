@@ -342,7 +342,7 @@
 .fk-item-table tbody td {
   border: 1px solid var(--fk-border-light);
   padding: 8px;
-  vertical-align: top;
+  vertical-align: middle !important;
   font-size: var(--fk-font-size-base);
 }
 
@@ -474,7 +474,7 @@
    the photo column is a flat 144px and the image scales to fit inside it. */
 .fk-img-cell {
   text-align: center;
-  vertical-align: top !important;
+  vertical-align: middle !important;
   padding: 4px !important;
 }
 
@@ -510,7 +510,6 @@
 .fk-model-cell {
   font-size: var(--fk-font-size-base);
   color: #333;
-  white-space: nowrap;
 }
 
 .fk-custom-cell {
