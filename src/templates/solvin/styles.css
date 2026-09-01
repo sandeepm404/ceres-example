@@ -1,0 +1,1656 @@
+.solvin-invoice {
+  box-sizing: border-box;
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  max-width: 980px;
+  min-height: 0;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--primary-background, #fff);
+  color: var(--secondary-color, #11151e);
+  font-family: var(--subtitle-font, Inter, Arial, Helvetica, sans-serif);
+  font-size: 13px;
+  line-height: 1.3;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* The local renderer places the document output inside a centered flex body.
+   Give only the Solvin preview host a definite width so its 100%-wide invoice
+   cannot collapse to its min-content width after a template-only build. */
+[id="documentOutput"]:has(> .solvin-invoice) {
+  width: 100%;
+  min-width: 0;
+}
+
+.solvin-invoice,
+.solvin-invoice * {
+  box-sizing: border-box;
+}
+
+.solvin-invoice p,
+.solvin-invoice h1,
+.solvin-invoice h2 {
+  margin: 0;
+}
+
+.solvin-money {
+  display: inline;
+  white-space: nowrap;
+}
+
+.solvin-currency-symbol {
+  font-family: Roboto, "Noto Sans", "DejaVu Sans", "Arial Unicode MS",
+    "Segoe UI Symbol", Arial, sans-serif !important;
+}
+
+/* Letterhead (header) and footer image — filled from invoice.letterHead /
+   invoice.letterHeadFooter by applyPreviewAssets (img[data-ceres-height]). */
+.solvin-invoice > .invoice-letterhead,
+.solvin-invoice > .invoice-letterhead-footer {
+  display: block;
+  width: 100%;
+}
+
+/* The live business shell also defines generic letterhead positioning. Keep
+   Solvin's populated assets in normal document flow so they reserve their
+   rendered height instead of sitting behind invoice content. */
+.solvin-invoice > .invoice-letterhead:not(.is-empty),
+.solvin-invoice > .invoice-letterhead-footer:not(.is-empty) {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  clear: both;
+  float: none !important;
+  height: auto !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.solvin-invoice > .invoice-letterhead.is-empty,
+.solvin-invoice > .invoice-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.solvin-invoice > .invoice-letterhead img,
+.solvin-invoice > .invoice-letterhead-footer img {
+  display: block;
+  position: static !important;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  transform: none !important;
+}
+
+.solvin-title {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  border-bottom: 1px solid #21272e;
+  text-align: center;
+}
+
+.solvin-title h1 {
+  color: var(--primary-color, #001f5c);
+  font-family: var(--title-font, Arial, Helvetica, sans-serif);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 32px;
+  text-transform: uppercase;
+}
+
+.party-meta-grid {
+  display: grid;
+  grid-template-columns: 31.3% 31.4% 37.3%;
+  margin-top: 16px;
+  border: 1px solid #bec3c8;
+}
+
+.party-card {
+  min-width: 0;
+  min-height: 228px;
+  padding: 16px;
+  border-right: 1px solid #bec3c8;
+}
+
+.party-card p,
+.shipped-card p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.section-label {
+  margin-bottom: 12px !important;
+  color: #545e68;
+  font-weight: 500;
+}
+
+.party-name {
+  margin-bottom: 12px !important;
+  color: #11151e;
+  font-weight: 600;
+}
+
+.address-lines {
+  margin-bottom: 12px;
+}
+
+.address-lines p {
+  min-height: 17px;
+  color: #282828;
+  font-weight: 400;
+}
+
+.id-line {
+  margin-top: 3px !important;
+  color: #11151e;
+  font-weight: 600;
+}
+
+.invoice-meta-table {
+  display: grid;
+  grid-template-columns: 50% 50%;
+  align-content: start;
+}
+
+.invoice-meta-table > div {
+  min-height: 28px;
+  padding: 4px;
+  border-bottom: 1px solid #bfbfbf;
+}
+
+/* Solvin does not display supply metadata, regardless of payload defaults. */
+.solvin-invoice [data-ceres-country-of-supply],
+.solvin-invoice [data-ceres-place-of-supply] {
+  display: none !important;
+}
+
+.invoice-meta-table > div:nth-child(odd) {
+  border-right: 1px solid #bfbfbf;
+  color: #191919;
+  font-weight: 600;
+}
+
+.invoice-meta-table > div:nth-child(even) {
+  color: #282828;
+  font-weight: 400;
+}
+
+.invoice-meta-table > div:nth-last-child(-n + 2) {
+  position: relative;
+  border-bottom: 0;
+}
+
+.invoice-meta-table > div:nth-last-child(-n + 2)::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  z-index: 1;
+  height: 1px;
+  background: #bec3c8;
+  content: "";
+}
+
+.meta-label {
+  font-weight: 600;
+}
+
+.shipped-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid #bec3c8;
+}
+
+.shipped-grid.is-single {
+  grid-template-columns: 1fr;
+}
+
+.shipped-card {
+  min-width: 0;
+  min-height: 166px;
+  padding: 16px;
+  border-right: 1px solid #bec3c8;
+}
+
+.shipped-card:last-child {
+  border-right: 0;
+}
+
+.items-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 16px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.items-table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.3;
+  table-layout: auto;
+}
+
+.items-table th,
+.items-table td {
+  padding: 4px 6px;
+  border: 1px solid #bec3c8;
+  overflow: visible;
+  overflow-wrap: normal;
+  text-align: center;
+  vertical-align: top;
+  word-break: normal;
+}
+
+/* Short values stay on one line while there is enough room. Tables with many
+   columns opt into compact wrapping below so their final column stays on-page. */
+.items-table th.center,
+.items-table td.center,
+.items-table th.right,
+.items-table td.right,
+.items-table th.align-right,
+.items-table td.align-right {
+  white-space: nowrap;
+}
+
+.items-table th {
+  height: 31px;
+  background: #f9fafc;
+  color: #11151e;
+  font-weight: 700;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Let descriptive/custom columns absorb the remaining width and wrap only
+   when their content cannot fit. Numeric cells use the alignment classes
+   below and always remain on one line. */
+.items-table
+  td:not(
+    .center,
+    .right,
+    .col-index,
+    .col-qty,
+    .col-unit,
+    .col-rate,
+    .col-discount,
+    .col-amount,
+    .col-total,
+    .col-gst-rate,
+    .col-cess-rate,
+    .col-tax,
+    .col-igst,
+    .col-cess,
+    .col-cess-amount,
+    .col-hsn-sac
+  ) {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.items-table col {
+  width: auto;
+}
+
+.items-table col.col-item {
+  width: 30%;
+}
+
+.items-table col.col-index {
+  width: 6%;
+}
+
+.items-table th.col-item,
+.items-table td.col-item {
+  text-align: left;
+}
+
+.items-table th.col-index {
+  white-space: nowrap;
+}
+
+.items-table th.col-index,
+.items-table td.col-index {
+  text-align: center;
+}
+
+.items-table col.col-qty,
+.items-table col.col-unit,
+.items-table col.col-rate,
+.items-table col.col-discount,
+.items-table col.col-amount,
+.items-table col.col-total,
+.items-table col.col-gst-rate,
+.items-table col.col-cess-rate,
+.items-table col.col-tax,
+.items-table col.col-igst,
+.items-table col.col-cess,
+.items-table col.col-cess-amount,
+.items-table col.col-hsn-sac {
+  width: auto;
+}
+
+/* Keep the common ten-column invoice layout balanced. With automatic table
+   sizing the item column consumes the spare width and the final custom tax
+   columns can collapse to a single character, making headers run vertically. */
+.items-table-wrap[data-column-count="10"] .items-table {
+  table-layout: fixed;
+}
+
+.items-table-wrap[data-column-count="10"] col.col-index {
+  width: 6%;
+}
+
+.items-table-wrap[data-column-count="10"] col.col-item {
+  width: 22%;
+}
+
+.items-table-wrap[data-column-count="10"] col.col-qty {
+  width: 8%;
+}
+
+.items-table-wrap[data-column-count="10"] col.col-rate,
+.items-table-wrap[data-column-count="10"] col.col-amount,
+.items-table-wrap[data-column-count="10"] col.col-total {
+  width: 9.5%;
+}
+
+.items-table-wrap[data-column-count="10"] col.col-gst-rate,
+.items-table-wrap[data-column-count="10"] col.col-igst,
+.items-table-wrap[data-column-count="10"] col.col-taxrate {
+  width: 8.5%;
+}
+
+.items-table-wrap[data-column-count="10"] col.col-taxamount {
+  width: 10%;
+}
+
+.items-table-wrap[data-column-count="10"] th.col-taxamount {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+
+/* Dense previews keep the same readable typography as every other item table.
+   Compact spacing and column widths provide the extra horizontal room. */
+.items-table-wrap.is-dense .items-table {
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.items-table-wrap.is-dense .items-table th,
+.items-table-wrap.is-dense .items-table td {
+  padding-right: 3px;
+  padding-left: 3px;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.items-table-wrap.is-dense col.col-index {
+  width: 4%;
+}
+
+.items-table-wrap.is-dense col.col-item {
+  width: 18%;
+}
+
+.items-table-wrap.is-dense .solvin-money {
+  white-space: normal;
+}
+
+.item-row {
+  min-height: 101px;
+}
+
+.item-name {
+  margin-bottom: 4px !important;
+  color: #11151e;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: normal;
+}
+
+.item-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: #66666f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+  line-height: 1.15;
+  white-space: normal;
+}
+
+.item-codes b {
+  color: #282828;
+  font-weight: 400;
+}
+
+.item-description {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  color: #666670;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+.item-description strong,
+.item-description b {
+  color: #11151e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.item-description p,
+.item-description .markdown-viewer-widget,
+.item-description .toastui-editor-contents {
+  margin: 0 !important;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: normal;
+}
+
+/* Toast UI loads after the template and sets its own text colors. */
+.item-description .toastui-editor-contents p,
+.item-description .toastui-editor-contents ul,
+.item-description .toastui-editor-contents ol,
+.item-description .toastui-editor-contents menu,
+.item-description .toastui-editor-contents dir,
+.item-description .toastui-editor-contents li {
+  color: #666670 !important;
+}
+
+.item-description .ceres-markdown-viewer {
+  margin: 0;
+}
+
+/* Description content can contain API-authored Markdown/HTML tables. Keep
+   those tables visually and functionally aligned with the main item table,
+   while overriding Toast UI's asynchronously loaded default table theme. */
+.solvin-invoice .item-description table {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0;
+  border-collapse: collapse;
+  background: #fff;
+  color: #11151e;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  table-layout: auto !important;
+}
+
+.solvin-invoice .item-description table th,
+.solvin-invoice .item-description table td {
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid #bec3c8;
+  background: #fff;
+  color: #11151e;
+  font-size: inherit;
+  line-height: inherit;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
+  word-break: normal;
+}
+
+.solvin-invoice .item-description table th {
+  background: #f9fafc;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.solvin-invoice .item-description table [align="left"] {
+  text-align: left !important;
+}
+
+.solvin-invoice .item-description table [align="center"] {
+  text-align: center !important;
+}
+
+.solvin-invoice .item-description table [align="right"] {
+  text-align: right !important;
+}
+
+.solvin-invoice .item-description table [valign="top"] {
+  vertical-align: top !important;
+}
+
+.solvin-invoice .item-description table [valign="middle"] {
+  vertical-align: middle !important;
+}
+
+.solvin-invoice .item-description table [valign="bottom"] {
+  vertical-align: bottom !important;
+}
+
+.item-description-row > td {
+  padding: 8px 6px;
+  text-align: left;
+}
+
+.item-description-row .item-description {
+  margin-top: 0;
+}
+
+/* Solvin line items are text-only, including images embedded in descriptions. */
+.item-row img,
+.item-row .ceres-image-gallery,
+.item-description-row img,
+.item-description-row .ceres-image-gallery {
+  display: none !important;
+}
+
+.item-po {
+  margin-top: 5px !important;
+  color: #66666f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.items-total-row {
+  height: 31px;
+  font-weight: 700;
+}
+
+.items-table .items-total-row td,
+.items-table .items-total-row td * {
+  font-weight: 700 !important;
+}
+
+.items-table .items-total-row .solvin-money {
+  font-family: inherit !important;
+}
+
+.items-table thead th,
+.items-table .items-total-row td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.items-table .items-total-row td.col-item {
+  text-align: left;
+}
+
+.center {
+  text-align: center;
+}
+
+.right {
+  text-align: right;
+}
+
+.align-left {
+  text-align: left;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.totals-wrap {
+  display: grid;
+  grid-template-columns: 59.4% 40.6%;
+  min-height: 134px;
+  border-right: 1px solid #bec3c8;
+  border-bottom: 1px solid #bec3c8;
+  border-left: 1px solid #bec3c8;
+}
+
+.totals-spacer {
+  border-right: 1px solid #bec3c8;
+}
+
+.totals-table {
+  display: grid;
+  grid-template-columns: 56% 44%;
+  font-weight: 400;
+}
+
+.totals-table > div {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 31px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #bec3c8;
+  text-align: left;
+}
+
+.totals-table > div:nth-child(odd) {
+  border-right: 1px solid #bec3c8;
+}
+
+.totals-table > div:nth-child(even) {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.totals-table > div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.totals-label {
+  font-weight: 700;
+}
+
+.grand-total {
+  background: #f9fafc;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* The formatted amount has its own currency-safe wrapper. Force it to use the
+   same face and weight as the Total label so both sides match in every PDF. */
+.totals-table > .grand-total,
+.totals-table > .grand-total * {
+  font-weight: 700 !important;
+}
+
+.totals-table > .grand-total .solvin-money {
+  font-family: inherit !important;
+}
+
+/* Due Amount is the final payable amount, so keep the same visual emphasis
+   as Total even when payment/balance rows appear between them. */
+.totals-table > .due-total {
+  background: #f9fafc;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.totals-table > .totals-footer-label,
+.totals-table > .totals-footer-value {
+  display: flex;
+  min-height: 31px;
+  align-items: center;
+  font-weight: 400;
+}
+
+.totals-table > .totals-footer-child {
+  min-height: 40px;
+  padding: 4px 6px;
+  color: #53657a;
+  font-size: 13px;
+}
+
+.amount-words-row {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  min-height: 38px;
+  margin-top: 16px;
+  border: 1px solid #bec3c8;
+}
+
+.amount-words-row > * {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4px 6px;
+  text-align: left;
+}
+
+.amount-words-row strong {
+  background: #f9fafc;
+  border-right: 1px solid #bec3c8;
+  color: #11151e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.amount-words-row span {
+  color: #11151e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.notes-section {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  color: #21272e;
+}
+
+.notes-section h2 {
+  margin-bottom: 11px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.notes-content,
+.notes-content .markdown-viewer-widget,
+.notes-content .toastui-editor-contents {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: #21272e;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: normal;
+}
+
+.notes-content .ceres-markdown-viewer,
+.notes-content .toastui-editor-contents {
+  margin: 0;
+}
+
+.notes-content .toastui-editor-contents p {
+  margin: 0 0 8px;
+  color: #21272e !important;
+  white-space: pre-wrap;
+}
+
+.notes-content .toastui-editor-contents > :last-child {
+  margin-bottom: 0;
+}
+
+.lower-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) minmax(250px, 1.15fr) minmax(0, 1fr);
+  min-height: 0;
+  margin-top: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.lower-grid.without-terms {
+  grid-template-columns: minmax(250px, 1fr) minmax(0, 1fr);
+}
+
+.lower-grid h2 {
+  margin-bottom: 11px;
+  color: #21272e;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.terms-panel,
+.bank-panel {
+  min-width: 0;
+  border-right: 1px solid #e0e0e0;
+}
+
+.terms-panel {
+  padding: 12px;
+}
+
+.terms-panel h2 {
+  text-align: left;
+}
+
+.terms-panel ol {
+  margin: 0;
+  padding-left: 17px;
+}
+
+.terms-panel li {
+  margin-bottom: 6px;
+  padding-left: 1px;
+  color: #21272e;
+  font-weight: 400;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.bank-panel {
+  padding-top: 12px;
+}
+
+.bank-table {
+  width: 100%;
+  border-top: 1px solid #e0e0e0;
+  border-collapse: collapse;
+
+  /* Let unbreakable account identifiers claim the space they need while
+     ordinary text cells wrap within the remaining width. */
+  table-layout: auto;
+}
+
+.bank-table th,
+.bank-table td {
+  padding: 7px 12px;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: 400;
+  line-height: 1.25;
+  text-align: left;
+  vertical-align: middle;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.bank-table th {
+  width: 42%;
+  border-right: 1px solid #e0e0e0;
+  color: #1d1d1d;
+}
+
+.bank-table td {
+  color: #21272e;
+}
+
+.bank-table .bank-nowrap-value,
+.solvin-hsn-table .hsn-nowrap-value,
+.solvin-hsn-table .solvin-hsn-meta-row td,
+.solvin-hsn-table .solvin-hsn-tax-values td,
+.solvin-hsn-table .solvin-hsn-total-row td,
+.solvin-hsn-table .solvin-money {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.hsn-panel {
+  min-width: 0;
+}
+
+.solvin-hsn-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #21272e;
+  font-size: 13px;
+  line-height: 1.3;
+  table-layout: auto;
+}
+
+.solvin-hsn-table th,
+.solvin-hsn-table td {
+  min-height: 34px;
+  padding: 8px 10px;
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  overflow-wrap: normal;
+  text-align: center;
+  vertical-align: middle;
+  word-break: normal;
+}
+
+.solvin-hsn-table tr > :last-child {
+  border-right: 0;
+}
+
+.solvin-hsn-total-row th {
+  font-weight: 700;
+}
+
+.solvin-hsn-table tr > :first-child {
+  width: 50%;
+}
+
+.solvin-hsn-meta-row th {
+  text-align: left;
+}
+
+.solvin-hsn-meta-row td {
+  text-align: right;
+}
+
+.solvin-hsn-tax-title th,
+.solvin-hsn-tax-head th,
+.solvin-hsn-tax-values td {
+  text-align: center;
+}
+
+.solvin-hsn-tax-title th {
+  font-weight: 700;
+}
+
+.solvin-hsn-tax-head th {
+  font-weight: 600;
+}
+
+.solvin-hsn-total-row th {
+  text-align: center;
+}
+
+.solvin-hsn-total-row td,
+.solvin-hsn-tax-values td:last-child {
+  text-align: right;
+}
+
+.solvin-hsn-total-row > * {
+  border-top: 1px solid #21272e;
+}
+
+.solvin-hsn-words {
+  padding: 10px !important;
+  border-bottom: 0 !important;
+  text-align: left !important;
+}
+
+.solvin-hsn-words strong,
+.solvin-hsn-words span {
+  display: block;
+}
+
+.solvin-hsn-words span {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.hsn-panel .ceres-table-section {
+  margin: 0;
+}
+
+.hsn-panel .ceres-table {
+  width: 100%;
+  font-size: 13px;
+  line-height: 1.35;
+  table-layout: auto;
+}
+
+.hsn-panel .ceres-hsn-summary .ceres-hsn-summary-table th,
+.hsn-panel .ceres-hsn-summary .ceres-hsn-summary-table td {
+  padding: 6px 8px;
+  border: 0;
+  border-right: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+.hsn-panel .ceres-table tr > :last-child {
+  border-right: 0;
+}
+
+.hsn-panel .ceres-table tfoot tr:last-child > * {
+  border-bottom: 0;
+}
+
+.hsn-panel .ceres-table th {
+  color: #21272e;
+  font-weight: 600;
+}
+
+.hsn-panel .ceres-table td {
+  color: #21272e;
+  font-weight: 400;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-meta-row th {
+  color: #000;
+  font-weight: 600;
+  text-align: left;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-meta-row td {
+  color: #21272e;
+  font-weight: 400;
+  text-align: right;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-tax-title th {
+  color: #21272e;
+  font-weight: 600;
+  text-align: center;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-column-headings th,
+.hsn-panel .ceres-table .ceres-hsn-summary-tax-values td,
+.hsn-panel .ceres-table .ceres-hsn-summary-total-row th,
+.hsn-panel .ceres-table .ceres-hsn-summary-total-row td {
+  text-align: center;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-tax-values td {
+  color: #21272e;
+  font-weight: 400;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-total-row th {
+  color: #21272e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-total-row td {
+  color: #11151e;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.hsn-panel .ceres-table .ceres-hsn-summary-words {
+  padding: 8px;
+  color: #11151e;
+  text-align: left;
+}
+
+.hsn-panel .ceres-hsn-summary-words strong {
+  margin-bottom: 4px;
+  color: #11151e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hsn-panel .ceres-hsn-summary-words span {
+  color: #11151e;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.signature-section {
+  min-height: 240px;
+  margin-top: 16px;
+  border-top: 1px solid #21272e;
+  position: relative;
+}
+
+.signature-box {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  width: 266px;
+  text-align: center;
+}
+
+.signature-box h2 {
+  margin-bottom: 19px;
+  color: #11151e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.signature-box img {
+  display: block;
+  width: 121px;
+  height: 98px;
+  margin: 0 auto 25px;
+  object-fit: contain;
+}
+
+.signature-box .signature-image {
+  object-fit: contain;
+}
+
+.signature-line {
+  border-top: 1px dashed #545e68;
+  margin-bottom: 10px;
+}
+
+.signature-box > strong {
+  color: #11151e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Adapt the preview layout without shrinking its normal typography. */
+@media screen and (width <= 900px) {
+  .solvin-invoice {
+    padding: 18px;
+  }
+
+  .party-card,
+  .shipped-card {
+    padding: 12px;
+  }
+
+  .items-table th,
+  .items-table td {
+    padding: 4px 6px;
+  }
+
+  .bank-table th,
+  .bank-table td {
+    padding: 7px 8px;
+  }
+}
+
+@media (width <= 760px) {
+  .solvin-invoice {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 12px;
+  }
+
+  .party-meta-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .party-card:nth-child(2) {
+    border-right: 0;
+  }
+
+  .invoice-meta-table {
+    grid-column: 1 / -1;
+    border-top: 1px solid #bec3c8;
+  }
+
+  .items-table-wrap {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .items-table th,
+  .items-table td {
+    padding: 4px 6px;
+  }
+
+  .items-table col.col-item {
+    width: 30%;
+  }
+
+  .items-table-wrap[data-column-count="10"] .items-table th,
+  .items-table-wrap[data-column-count="10"] .items-table td {
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+
+  .items-table-wrap[data-column-count="10"] col.col-item {
+    width: 22%;
+  }
+
+  .totals-wrap {
+    grid-template-columns: 40% 60%;
+  }
+
+  .signature-section {
+    min-height: 220px;
+  }
+}
+
+@media (width <= 520px) {
+  .solvin-invoice {
+    padding: 8px;
+  }
+
+  .solvin-title {
+    min-height: 44px;
+    height: auto;
+    padding: 6px 0;
+  }
+
+  .party-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .party-card {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid #bec3c8;
+  }
+
+  .shipped-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shipped-card {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid #bec3c8;
+  }
+
+  .shipped-card:last-child {
+    border-bottom: 0;
+  }
+
+  .invoice-meta-table {
+    grid-column: auto;
+    border-top: 0;
+  }
+
+  .totals-wrap {
+    display: block;
+    min-height: 0;
+    border-top: 1px solid #bec3c8;
+  }
+
+  .totals-spacer {
+    display: none;
+  }
+
+  .amount-words-row {
+    grid-template-columns: 1fr;
+  }
+
+  .amount-words-row strong {
+    border-right: 0;
+    border-bottom: 1px solid #bec3c8;
+  }
+
+  .lower-grid,
+  .lower-grid.without-terms {
+    grid-template-columns: 1fr;
+  }
+
+  .terms-panel,
+  .bank-panel {
+    border-right: 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .signature-box {
+    right: 50%;
+    width: 100%;
+    max-width: 266px;
+    transform: translateX(50%);
+  }
+}
+
+/* Page geometry (including Pageless PDF's continuous page height) belongs to
+   the parent PDF engine. Solvin intentionally does not declare an @page box,
+   because even a margin-only rule can make Chromium prefer its paged sheet. */
+
+@container (width <= 520px) {
+  .lower-grid,
+  .lower-grid.without-terms {
+    grid-template-columns: 1fr;
+  }
+
+  .terms-panel,
+  .bank-panel {
+    border-right: 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+}
+
+@media print {
+  html,
+  body,
+  [id="documentOutput"] {
+    width: auto;
+    height: auto;
+    overflow: visible !important;
+  }
+
+  .solvin-invoice {
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .solvin-invoice > .invoice-letterhead:not(.is-empty),
+  .solvin-invoice > .invoice-letterhead-footer:not(.is-empty),
+  .solvin-invoice > .invoice-letterhead:not(.is-empty) img,
+  .solvin-invoice > .invoice-letterhead-footer:not(.is-empty) img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-width: 100%;
+    break-inside: avoid-page;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .solvin-invoice > .invoice-letterhead-footer:not(.is-empty) {
+    break-before: avoid-page;
+  }
+
+  /* Printed pages can report a narrow viewport and accidentally activate the
+     responsive rules above. Preserve the preview's three-column header and
+     horizontal shipping layout in the generated PDF. */
+  .party-meta-grid {
+    grid-template-columns: 31.3% 31.4% 37.3%;
+  }
+
+  .party-card,
+  .party-card:nth-child(2) {
+    border-right: 1px solid #bec3c8;
+    border-bottom: 0;
+  }
+
+  .invoice-meta-table {
+    grid-column: auto;
+    border-top: 0;
+  }
+
+  .shipped-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shipped-grid.is-single {
+    grid-template-columns: 1fr;
+  }
+
+  .shipped-card {
+    border-right: 1px solid #bec3c8;
+    border-bottom: 0;
+  }
+
+  .shipped-card:last-child {
+    border-right: 0;
+  }
+
+  .solvin-invoice,
+  .solvin-invoice p,
+  .solvin-invoice li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .items-table thead {
+    display: table-header-group;
+  }
+
+  .items-table-wrap {
+    overflow: visible;
+  }
+
+  .item-description {
+    overflow: visible;
+  }
+
+  .item-description table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    table-layout: auto !important;
+  }
+
+  .item-description table thead {
+    display: table-header-group;
+  }
+
+  .item-description table tr {
+    break-inside: avoid-page;
+  }
+
+  /* Print can't scroll. Content-aware column sizing gives short numeric
+     columns only the space they need and leaves the balance to text columns. */
+  .items-table {
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .items-table-wrap:is(
+      [data-column-count="8"],
+      [data-column-count="9"],
+      [data-column-count="10"]
+    )
+    .items-table
+    th,
+  .items-table-wrap:is(
+      [data-column-count="8"],
+      [data-column-count="9"],
+      [data-column-count="10"]
+    )
+    .items-table
+    td {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .items-table col,
+  .items-table col.col-item,
+  .items-table col.col-qty,
+  .items-table col.col-unit,
+  .items-table col.col-rate,
+  .items-table col.col-discount,
+  .items-table col.col-amount,
+  .items-table col.col-total,
+  .items-table col.col-gst-rate,
+  .items-table col.col-cess-rate,
+  .items-table col.col-tax,
+  .items-table col.col-igst,
+  .items-table col.col-cess,
+  .items-table col.col-cess-amount,
+  .items-table col.col-hsn-sac {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+
+  /* Numeric and short-code columns must never wrap in print. */
+  .items-table td.center,
+  .items-table td.right,
+  .items-table td.align-right,
+  .items-table td.col-index,
+  .items-table td.col-qty,
+  .items-table td.col-unit,
+  .items-table td.col-rate,
+  .items-table td.col-discount,
+  .items-table td.col-amount,
+  .items-table td.col-total,
+  .items-table td.col-gst-rate,
+  .items-table td.col-cess-rate,
+  .items-table td.col-tax,
+  .items-table td.col-igst,
+  .items-table td.col-cess,
+  .items-table td.col-cess-amount,
+  .items-table td.col-hsn-sac {
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
+  /* The compact many-column rule above must not make numeric headers wrap. */
+  .items-table th.center,
+  .items-table th.right,
+  .items-table th.align-right {
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
+  /* The text/item column wraps so long names and descriptions are never
+     cropped, while staying compact for the numeric columns beside them. */
+  .items-table th.col-item,
+  .items-table td.col-item,
+  .items-table td.col-item p,
+  .items-table td.col-item span,
+  .items-table td.col-item div {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Dense layouts keep their bounded geometry. Font compaction is applied
+     only after the real 13px print layout is measured and found to overflow. */
+  .items-table-wrap.is-dense .items-table {
+    table-layout: fixed;
+  }
+
+  .items-table-wrap.is-dense .items-table th,
+  .items-table-wrap.is-dense .items-table td,
+  .items-table-wrap.is-dense .items-table span,
+  .items-table-wrap.is-dense .items-table .solvin-money {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  /* Measure the table's natural 13px print width with numeric values kept on
+     one line. Descriptive item text can still wrap while fit is calculated. */
+  .solvin-invoice.is-measuring-print-fit .items-table {
+    width: 100%;
+    table-layout: auto !important;
+    font-size: 13px !important;
+  }
+
+  .solvin-invoice.is-measuring-print-fit .items-table thead th {
+    overflow-wrap: normal !important;
+    white-space: nowrap !important;
+  }
+
+  .solvin-invoice.is-measuring-print-fit
+    .items-table
+    :is(
+      .center,
+      .right,
+      .align-right,
+      .col-index,
+      .col-qty,
+      .col-unit,
+      .col-rate,
+      .col-discount,
+      .col-amount,
+      .col-total,
+      .col-gst-rate,
+      .col-cess-rate,
+      .col-tax,
+      .col-igst,
+      .col-cess,
+      .col-cess-amount,
+      .col-hsn-sac,
+      .solvin-money
+    ) {
+    overflow-wrap: normal !important;
+    white-space: nowrap !important;
+  }
+
+  /* Reduce typography only when the measured 13px table does not fit. Keep
+     the item table, its subtotal row, and the totals area fully consistent. */
+  .solvin-invoice.is-compact-print-table .items-table,
+  .solvin-invoice.is-compact-print-table .totals-table {
+    font-size: 11px;
+  }
+
+  .solvin-invoice.is-compact-print-table .items-table *,
+  .solvin-invoice.is-compact-print-table .totals-table * {
+    font-size: inherit;
+  }
+
+  .solvin-invoice.is-compact-print-table .items-table thead th {
+    overflow-wrap: normal;
+    white-space: nowrap;
+  }
+
+  .solvin-invoice.is-compact-print-table .items-table th,
+  .solvin-invoice.is-compact-print-table .items-table td,
+  .solvin-invoice.is-compact-print-table .totals-table > div {
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+
+  /* Force the shaded cells' backgrounds into the PDF — needed because some
+     engines ignore print-color-adjust set only on the root container. */
+  .items-table th,
+  .items-total-row,
+  .grand-total,
+  .due-total,
+  .amount-words-row strong {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Let sections size to their content so the PDF pages break naturally
+     instead of carrying tall fixed-min-height gaps across pages. */
+  .party-card,
+  .shipped-card,
+  .item-row,
+  .totals-wrap,
+  .lower-grid {
+    min-height: 0;
+  }
+
+  /* Reserve the complete compact signature block in normal flow. This keeps
+     the footer on the final content page without allowing either to overlap. */
+  .signature-section {
+    min-height: 125px;
+    margin-top: 12px;
+  }
+
+  .signature-box {
+    top: 12px;
+  }
+
+  .signature-box h2 {
+    margin-bottom: 6px;
+  }
+
+  .signature-box img {
+    width: 86px;
+    height: 56px;
+    margin-bottom: 6px;
+  }
+
+  .signature-line {
+    margin-bottom: 5px;
+  }
+
+  .invoice-meta-table > div {
+    min-height: 0;
+    padding: 6px 8px;
+  }
+
+  .party-meta-grid,
+  .party-card,
+  .shipped-card,
+  .totals-wrap,
+  .amount-words-row,
+  .lower-grid,
+  .hsn-panel,
+  .terms-panel,
+  .bank-panel,
+  .signature-section {
+    break-inside: avoid;
+  }
+
+  .items-table tr,
+  .bank-table {
+    break-inside: avoid;
+  }
+
+  .items-table tbody tr,
+  .items-total-row {
+    break-inside: avoid-page;
+  }
+
+  .totals-wrap {
+    break-after: avoid-page;
+  }
+
+  .amount-words-row {
+    break-before: avoid-page;
+  }
+
+  /* Keep headings attached to the block that follows them. */
+  .lower-grid h2,
+  .notes-section h2,
+  .signature-box h2 {
+    break-after: avoid;
+  }
+
+  /* Lengthy API notes (often used for terms and conditions) must be allowed
+     to continue across pages instead of being treated as one unbreakable box. */
+  .notes-section,
+  .notes-content,
+  .notes-content .markdown-viewer-widget,
+  .notes-content .toastui-editor-contents {
+    break-inside: auto;
+  }
+
+  .notes-content p,
+  .notes-content li {
+    orphans: 2;
+    widows: 2;
+  }
+
+  .signature-section,
+  .solvin-invoice > .ceres-table-section,
+  .refrens-branding-widget {
+    break-inside: avoid;
+  }
+}
