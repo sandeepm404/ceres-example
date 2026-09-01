@@ -108,6 +108,14 @@ body {
   border-bottom: 2px solid #e0e0e0;
 }
 
+.invoice-header-modern .logo-section .business-logo {
+  display: block;
+  max-width: 220px;
+  max-height: 90px;
+  margin-bottom: 12px;
+  object-fit: contain;
+}
+
 .invoice-header-modern .logo-section h1 {
   color: var(--primary-color);
   font-family: var(--title-font);
