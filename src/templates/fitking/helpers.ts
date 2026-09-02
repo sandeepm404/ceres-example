@@ -384,6 +384,23 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
   HB.registerHelper("formatCurrency", formatCurrencyValue);
 
+  // The line discount arrives as an object (`{ amount, discountType }`), never
+  // a ready-made string: a PERCENTAGE discount prints as its rate, any other
+  // type as money. A missing or zero discount prints nothing, so rows the
+  // business did not discount stay blank instead of reading "0%".
+  function itemDiscountText(item: any, invoice: any): string {
+    const discount = item?.discount;
+    const raw =
+      discount && typeof discount === "object" ? discount.amount : discount;
+    const amount = extractNumericValue(raw);
+    if (amount === null || amount === 0) return "";
+    const type = String(discount?.discountType || "").toUpperCase();
+    if (type === "PERCENTAGE") return `${amount}%`;
+    return formatCurrencyValue(amount, invoice);
+  }
+
+  HB.registerHelper("formatItemDiscount", itemDiscountText);
+
   // The item's tax-inclusive total for the declared `total` column — see
   // `lineItemTax` below for how the tax figure is derived.
   HB.registerHelper(
@@ -793,7 +810,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
           : String(unit);
       }
       case "discount":
-        return String(item?.discountLabel || "");
+        return itemDiscountText(item, invoice);
       case "igst":
         return formatCurrencyValue(item?.igst, invoice);
       case "cgst":
@@ -1005,6 +1022,25 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
   HB.registerHelper("docLabel", documentLabel);
   HB.registerHelper("getTotalsLabel", documentLabel);
+
+  // The signature image the document actually carries, or "" when it carries
+  // none — the signature box is gated on this, never on
+  // `customLabels.signature`, which ships as the default "Authorised
+  // Signatory" even on documents with no signature.
+  //
+  // `signature` is the contract's own field; the `billedBy`/`signatureImage`
+  // spellings are kept from the original chain as engine-specific fallbacks
+  // the platform reference does not document.
+  HB.registerHelper("signatureImage", function (invoice: any) {
+    const candidate = [
+      invoice?.signature,
+      invoice?.billedBy?.signature,
+      invoice?.signatureImage,
+      invoice?.billedBy?.signatureImage,
+    ].find((src: any) => typeof src === "string" && src.trim());
+
+    return candidate ? String(candidate).trim() : "";
+  });
 
   // Some totals-table rows mirror a declared line-item column rather than a
   // customLabels entry — Sub Total mirrors the item table's "amount" column,

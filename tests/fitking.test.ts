@@ -75,6 +75,54 @@ describe("item table", () => {
     });
   });
 
+  describe("discount cells", () => {
+    // The line discount is an object, so the cell has to read
+    // `discount.amount` and print it per `discountType` — an earlier version
+    // bound a `discountLabel` field the payload never sends, which left every
+    // cell of a visible Discount column blank.
+    const discounted = (discount: Record<string, unknown>) =>
+      basePayload({
+        items: [
+          {
+            _id: "1",
+            name: "Aerofit Elliptical Cross Trainer",
+            quantity: 1,
+            rate: 163700,
+            amount: 147330,
+            discount,
+          },
+        ],
+        finalTotal: { discount: 16370, total: 147330 },
+      });
+
+    const discountCell = (html: string) =>
+      /<td class="text-center fk-disc-cell">([\s\S]*?)<\/td>/
+        .exec(html)?.[1]
+        ?.trim() ?? "";
+
+    it("prints a percentage discount as a rate", () => {
+      const html = render(
+        discounted({ discountType: "PERCENTAGE", amount: 10 })
+      );
+
+      expect(discountCell(html)).toBe("10%");
+    });
+
+    it("prints a flat discount as money", () => {
+      const html = render(discounted({ discountType: "FLAT", amount: 16370 }));
+
+      expect(discountCell(html)).toContain("16,370");
+    });
+
+    it("leaves an undiscounted row blank rather than printing 0%", () => {
+      const html = render(
+        discounted({ discountType: "PERCENTAGE", amount: 0 })
+      );
+
+      expect(discountCell(html)).toBe("");
+    });
+  });
+
   describe("column labels", () => {
     // `amount` (pre-tax) and `total` (tax-inclusive) are distinct columns, each
     // keeping its own declared label — they are no longer merged into one.
@@ -1006,6 +1054,133 @@ describe("QR rendering", () => {
 
       expect(html).not.toContain("Document QR");
     });
+  });
+});
+
+describe("signature block", () => {
+  // `customLabels.signature` ships as the default "Authorised Signatory" on
+  // documents that carry no signature at all, so it cannot be what opens the
+  // block — only an actual image can. The label is subordinate to the image.
+  const base = {
+    invoiceTitle: "Quotation",
+    invoiceNumber: "A00017",
+    items: [
+      {
+        _id: "1",
+        name: "Treadmill",
+        quantity: 1,
+        rate: 196000,
+        amount: 196000,
+      },
+    ],
+  };
+
+  const renderWith = (payload: Record<string, unknown>) =>
+    template(normalizeInvoiceTemplateState({ ...base, ...payload } as any));
+
+  const hasBox = (html: string) => html.includes("fk-signature-container");
+  const hasLabel = (html: string) => html.includes("fk-sig-label");
+
+  it("prints nothing when the document carries no signature", () => {
+    const html = renderWith({});
+
+    expect(hasBox(html)).toBe(false);
+    expect(hasLabel(html)).toBe(false);
+  });
+
+  it("prints nothing when only the default label is present", () => {
+    const html = renderWith({
+      signature: null,
+      customLabels: { signature: "Authorised Signatory" },
+    });
+
+    expect(hasBox(html)).toBe(false);
+    expect(html).not.toContain("Authorised Signatory");
+  });
+
+  it("prints the box and label when a signature image exists", () => {
+    const html = renderWith({
+      signature: "https://example.com/sign.png",
+      customLabels: { signature: "Authorised Signatory" },
+    });
+
+    expect(hasBox(html)).toBe(true);
+    expect(html).toContain("https://example.com/sign.png");
+    expect(html).toContain("Authorised Signatory");
+  });
+
+  it("prints the image without a label when the account left the label empty", () => {
+    const html = renderWith({
+      signature: "https://example.com/sign.png",
+      customLabels: { signature: "" },
+    });
+
+    expect(hasBox(html)).toBe(true);
+    expect(hasLabel(html)).toBe(false);
+  });
+
+  it("still falls back to the billedBy signature spelling", () => {
+    const html = renderWith({
+      billedBy: { name: "Acme", signature: "https://example.com/bb.png" },
+    });
+
+    expect(hasBox(html)).toBe(true);
+    expect(html).toContain("https://example.com/bb.png");
+  });
+});
+
+describe("totals visibility", () => {
+  // "Show Totals" and "Show Total in Words" in the document settings arrive as
+  // the top-level opt-outs `hideTotals` / `hideTotalInWords`. They are
+  // independent: a document can print either, both, or neither.
+  const base = {
+    invoiceTitle: "Quotation",
+    invoiceNumber: "A00017",
+    items: [
+      {
+        _id: "1",
+        name: "Treadmill",
+        quantity: 1,
+        rate: 196000,
+        amount: 196000,
+      },
+    ],
+    finalTotal: { subTotal: 196000, cgst: 34803, sgst: 34803, total: 456306 },
+    customLabels: { totalInWordsValue: "Four Lakh Fifty Six Thousand Only" },
+  };
+
+  const renderWith = (payload: Record<string, unknown>) =>
+    template(normalizeInvoiceTemplateState({ ...base, ...payload } as any));
+
+  const hasTotalsTable = (html: string) => html.includes("fk-totals-table");
+  const hasWords = (html: string) => html.includes("fk-amount-words");
+
+  it("prints the totals breakdown when the flag is absent", () => {
+    expect(hasTotalsTable(renderWith({}))).toBe(true);
+  });
+
+  it("drops the totals breakdown when hideTotals is set", () => {
+    expect(hasTotalsTable(renderWith({ hideTotals: true }))).toBe(false);
+  });
+
+  it("keeps the totals breakdown when hideTotals is explicitly false", () => {
+    expect(hasTotalsTable(renderWith({ hideTotals: false }))).toBe(true);
+  });
+
+  it("prints the total in words when the flag is absent", () => {
+    expect(hasWords(renderWith({}))).toBe(true);
+  });
+
+  it("drops the total in words when hideTotalInWords is set", () => {
+    expect(hasWords(renderWith({ hideTotalInWords: true }))).toBe(false);
+  });
+
+  it("hides the words without hiding the totals, and vice versa", () => {
+    const wordsOff = renderWith({ hideTotalInWords: true });
+    const totalsOff = renderWith({ hideTotals: true });
+
+    expect(hasTotalsTable(wordsOff)).toBe(true);
+    expect(hasWords(totalsOff)).toBe(true);
   });
 });
 
