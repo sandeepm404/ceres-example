@@ -351,7 +351,8 @@
                 </td>{{/if}}
                 {{#if (eq kind "qty")}}<td class="text-center fk-qty-cell">{{formatQtyCell ../this ../../invoice
                   ../../advanceOptions}}</td>{{/if}}
-                {{#if (eq kind "discount")}}<td class="text-center fk-disc-cell">{{../discountLabel}}</td>{{/if}}
+                {{#if (eq kind "discount")}}<td class="text-center fk-disc-cell">{{formatItemDiscount ../this
+                  ../../invoice}}</td>{{/if}}
                 {{#if (eq kind "igst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../igst ../../invoice}}
                 </td>{{/if}}
                 {{#if (eq kind "cgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../cgst ../../invoice}}
@@ -460,6 +461,13 @@
 
         {{!-- Right Side: Totals + Words + Signature --}}
         <div class="fk-bottom-right">
+          {{!-- The whole totals breakdown is the account's own opt-out
+          ("Show Totals" in the document settings), carried as the top-level
+          `invoice.hideTotals` — NOT the `advanceOptions.hideTotals` the payload
+          contract also declares, which real payloads leave unset. The
+          settlement rows below (Amount Paid, Balance Due) belong to the same
+          block and go with it. --}}
+          {{#unless invoice.hideTotals}}
           <table class="fk-totals-table">
             {{#if (or invoice.finalTotal.discount invoice.finalTotal.igst invoice.finalTotal.cgst
             invoice.finalTotal.sgst invoice.finalTotal.totalTax invoice.finalTotal.roundOff)}}
@@ -625,33 +633,35 @@
             {{/if}}
 
           </table>
+          {{/unless}}
 
-          {{!-- Amount in Words --}}
+          {{!-- Amount in Words — its own opt-out ("Show Total in Words"),
+          independent of `hideTotals`: a document can print either, both or
+          neither. --}}
+          {{#unless invoice.hideTotalInWords}}
           {{#if invoice.customLabels.totalInWordsValue}}
           <div class="fk-amount-words">
             <p class="fk-amount-words-label">{{docLabel "totalInWords" "Total (in words)"}}</p>
             <p class="fk-amount-words-value">{{invoice.customLabels.totalInWordsValue}}</p>
           </div>
           {{/if}}
+          {{/unless}}
 
-          {{!-- Signature Box Area — shown when a signature image exists, or the
-          account has explicitly enabled/labelled the section via customLabels.signature --}}
-          {{#if (or invoice.customLabels.signature invoice.signature invoice.billedBy.signature invoice.signatureImage invoice.billedBy.signatureImage)}}
+          {{!-- Signature Box Area — an actual signature image is what opens
+          this block. `customLabels.signature` must NOT be part of the gate: it
+          ships as the default "Authorised Signatory" on documents that carry no
+          signature at all, so ORing it in framed an empty box and printed the
+          label under it on every such document. The label is subordinate to the
+          image — it prints only alongside one, and only when the account left
+          it non-empty. --}}
+          {{#with (signatureImage invoice) as |signatureSrc|}}
           <div class="fk-signature-container">
             <div class="fk-signature-box">
-              {{#if invoice.signature}}
-              <img class="fk-signature-img" src="{{invoice.signature}}" alt="Authorised Signature" />
-              {{else}}{{#if invoice.billedBy.signature}}
-              <img class="fk-signature-img" src="{{invoice.billedBy.signature}}" alt="Authorised Signature" />
-              {{else}}{{#if invoice.signatureImage}}
-              <img class="fk-signature-img" src="{{invoice.signatureImage}}" alt="Authorised Signature" />
-              {{else}}{{#if invoice.billedBy.signatureImage}}
-              <img class="fk-signature-img" src="{{invoice.billedBy.signatureImage}}" alt="Authorised Signature" />
-              {{/if}}{{/if}}{{/if}}{{/if}}
+              <img class="fk-signature-img" src="{{signatureSrc}}" alt="Authorised Signature" />
             </div>
-            <p class="fk-sig-label">{{docLabel "signature"}}</p>
+            {{#if (docLabel "signature")}}<p class="fk-sig-label">{{docLabel "signature"}}</p>{{/if}}
           </div>
-          {{/if}}
+          {{/with}}
         </div>
       </div>
 
