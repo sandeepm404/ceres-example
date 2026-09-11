@@ -1,0 +1,139 @@
+<div class="quotation-shell">
+  <div class="no-dibella quotation-letterhead{{#unless letterHead}} is-empty{{/unless}}">
+    {{#if letterHead}}
+      <img src="{{letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+    {{else}}
+      <img alt="Letterhead" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="quotation-container">
+
+    <div class="quotation-title-row">
+      <h1 class="quotation-title">{{invoiceTitle}}</h1>
+    </div>
+
+    <div class="quotation-rule"></div>
+
+    <div class="quotation-meta-row">
+      <div class="biller-block">
+        <p class="biller-name">{{billedBy.name}}</p>
+        {{#if billedBy.email}}
+          <p class="biller-email"><a href="mailto:{{billedBy.email}}">{{billedBy.email}}</a></p>
+        {{/if}}
+        {{#if billedBy.phone}}
+          <p class="biller-phone">Mob: {{formatLocalPhoneNumber billedBy.phone}}</p>
+        {{/if}}
+      </div>
+
+      {{!-- Two-column grid so every label shares one left edge and every value another --}}
+      <div class="meta-block">
+        <span class="meta-label">Date:</span>
+        <span class="meta-value">{{formatNumericDateWithOffset invoiceDate ownerOffset}}</span>
+
+        <span class="meta-label">REF #</span>
+        <span class="meta-value">{{invoiceNumber}}</span>
+
+        <span class="meta-label">DN #</span>
+        <span class="meta-value">{{#with (findCustomFieldValue customFields "delivery") as |deliveryNoteNumber|}}{{deliveryNoteNumber}}{{else}}-{{/with}}</span>
+      </div>
+    </div>
+
+    <div class="quotation-rule"></div>
+
+    <div class="billed-to-row">
+      <span class="billed-to-label">To:</span>
+      <span class="billed-to-name">{{billedTo.name}}</span>
+    </div>
+
+    <table class="quotation-item-table">
+      <colgroup>
+        <col class="col-num" />
+        <col class="col-qty" />
+        <col class="col-desc" />
+        <col class="col-price" />
+        <col class="col-total" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="text-center">#</th>
+          <th class="text-center">Qty</th>
+          <th>Item Description</th>
+          <th class="text-right">Unit Price</th>
+          <th class="text-right">Line Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each (prepareQuotationRows items)}}
+          {{#if isGroup}}
+            <tr class="group-row">
+              <td></td>
+              <td></td>
+              <td class="group-name">{{groupName}}</td>
+              <td></td>
+              <td></td>
+            </tr>
+          {{else if isEmpty}}
+            <tr class="filler-row">
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          {{else}}
+            <tr>
+              <td class="text-center">{{lineNumber}}</td>
+              <td class="text-center">{{quantity}}</td>
+              <td>
+                <span class="item-name">{{name}}</span>
+                {{#if description}}
+                  <div class="item-desc">
+                    {{> MarkdownViewer (prepareMarkdownViewerData description) }}
+                  </div>
+                {{/if}}
+              </td>
+              <td class="text-right">{{formatPlainAmount rate}}</td>
+              <td class="text-right">{{formatPlainAmount amount}}</td>
+            </tr>
+          {{/if}}
+        {{/each}}
+
+        <tr class="total-row">
+          <td colspan="3" class="total-rule-cell"></td>
+          <td class="total-label">Total</td>
+          {{!-- Positional args force 3 decimals: (amount, currency, locale, subUnitLength) --}}
+          <td class="total-value">{{formatCurrency totals.total currency locale 3}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    {{#if notes}}
+      <div class="quotation-notes">
+        <h3>{{#if customLabels.notes}}{{customLabels.notes}}{{else}}Notes{{/if}}</h3>
+        {{> MarkdownViewer (prepareMarkdownViewerData notes) }}
+      </div>
+    {{/if}}
+
+    {{#if terms.0.terms.length}}
+      <div class="quotation-terms">
+        <h3>{{#if customLabels.terms}}{{customLabels.terms}}{{else}}Terms and Conditions{{/if}}</h3>
+        <ul>
+          {{#each terms.0.terms}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </div>
+    {{/if}}
+
+    {{> RefrensBranding}}
+  </div>
+
+  <div class="no-dibella quotation-letterhead-footer{{#unless letterHeadFooter}} is-empty{{/unless}}">
+    {{#if letterHeadFooter}}
+      <img src="{{letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+      <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>

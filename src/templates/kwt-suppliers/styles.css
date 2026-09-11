@@ -1,0 +1,287 @@
+/* --- Minimal Quotation Template --- */
+
+/* Lato is the closest widely-available stand-in for Calibri, for Linux boxes and
+   the PDF renderer where neither Calibri nor its metric clone Carlito exist. */
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,700&display=swap");
+
+:root {
+  --quotation-font: Calibri, Carlito, Lato, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  color: #111;
+  font-family: var(--quotation-font);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  width: 100%;
+}
+
+/* Declared on the template root as well as on body: the renderer drops this markup
+   into a host page whose own body styles this CSS doesn't own. Tables and form
+   controls don't inherit font-family in every engine, so they're named too. */
+.quotation-shell,
+.quotation-shell table,
+.quotation-shell input,
+.quotation-shell button {
+  font-family: var(--quotation-font);
+}
+
+/* The host page centres #documentOutput in a flex container, so the page needs a
+   definite width — a percentage or max-width alone collapses to shrink-to-fit. */
+.quotation-shell {
+  width: 794px; /* A4 at 96dpi */
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.quotation-letterhead,
+.quotation-letterhead-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quotation-letterhead img,
+.quotation-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.quotation-letterhead.is-empty,
+.quotation-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.quotation-container {
+  padding: 36px 40px 48px;
+}
+
+.quotation-title-row {
+  text-align: right;
+}
+
+/* The reference title is large but light — regular weight, not bold. */
+.quotation-title {
+  margin: 0;
+  font-size: 52px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ceres-primary-color, #111);
+  text-transform: uppercase;
+}
+
+.quotation-rule {
+  border-top: 2px solid #000;
+  margin: 20px 0;
+}
+
+.quotation-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.biller-block {
+  flex: 1;
+}
+
+.biller-name {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.biller-email {
+  margin: 2px 0;
+  font-size: 13px;
+}
+
+/* Mailto link, but the design wants body black — not browser blue. */
+.biller-email a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.biller-phone {
+  margin: 2px 0;
+  font-size: 13px;
+  color: #333;
+}
+
+.meta-block {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: end;
+  column-gap: 10px;
+  row-gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.meta-label {
+  font-weight: 700;
+}
+
+.meta-value {
+  color: #333;
+}
+
+.billed-to-row {
+  margin: 24px 0;
+  font-size: 15px;
+}
+
+.billed-to-label,
+.billed-to-name {
+  font-weight: 700;
+}
+
+.billed-to-label {
+  margin-right: 6px;
+}
+
+.quotation-item-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border: 1.5px solid #000;
+  font-size: 13px;
+}
+
+.quotation-item-table .col-num {
+  width: 5%;
+}
+
+.quotation-item-table .col-qty {
+  width: 11%;
+}
+
+.quotation-item-table .col-desc {
+  width: 48%;
+}
+
+.quotation-item-table .col-price,
+.quotation-item-table .col-total {
+  width: 18%;
+}
+
+.quotation-item-table th,
+.quotation-item-table td {
+  border: 1px solid #000;
+  padding: 3px 8px;
+  text-align: left;
+  vertical-align: top;
+  height: 18px;
+  line-height: 18px;
+}
+
+.quotation-item-table thead th {
+  font-weight: 700;
+  padding: 4px 8px;
+  border-bottom: 2px solid #000;
+}
+
+.quotation-item-table .text-right {
+  text-align: right;
+}
+
+.quotation-item-table .text-center {
+  text-align: center;
+}
+
+.quotation-item-table .item-name {
+  font-weight: 400;
+}
+
+.quotation-item-table .item-desc {
+  font-size: 11px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.quotation-item-table .group-row .group-name {
+  font-style: italic;
+  font-weight: 700;
+}
+
+.quotation-item-table .filler-row td {
+  height: 18px;
+}
+
+.quotation-item-table .total-row td {
+  height: auto;
+  padding-top: 10px;
+  line-height: normal;
+  vertical-align: middle;
+}
+
+.quotation-item-table .total-rule-cell {
+  border: none;
+  border-top: 1.5px solid #000;
+}
+
+.quotation-item-table .total-label {
+  border: none;
+  text-align: right;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.quotation-item-table .total-value {
+  border: 1.5px solid #000;
+  text-align: right;
+  font-weight: 700;
+}
+
+.quotation-notes,
+.quotation-terms {
+  margin-top: 32px;
+}
+
+.quotation-notes h3,
+.quotation-terms h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.quotation-notes p,
+.quotation-terms li {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.quotation-terms ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+@media print {
+  .quotation-container {
+    padding: 0;
+  }
+
+  .quotation-shell {
+    width: 100%;
+    max-width: none;
+  }
+
+  /* The table is free to break across pages; individual rows are not. */
+  .quotation-item-table tr {
+    break-inside: avoid;
+  }
+}
