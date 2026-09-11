@@ -46,6 +46,13 @@ body {
   justify-content: center;
 }
 
+/* The container's own bottom padding is zeroed in print, so the gap above the
+   footer belongs to the footer — otherwise the image butts against the table's
+   bottom border on the printed page. .is-empty resets it when there's no footer. */
+.quotation-letterhead-footer {
+  margin-top: 24px;
+}
+
 .quotation-letterhead img,
 .quotation-letterhead-footer img {
   display: block;
@@ -110,10 +117,11 @@ body {
   font-size: 13px;
 }
 
-/* Mailto link, but the design wants body black — not browser blue. */
+/* Mailto link, but the design wants it to read as plain text — no browser blue,
+   no underline. */
 .biller-email a {
   color: inherit;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .biller-phone {
@@ -122,22 +130,38 @@ body {
   color: #333;
 }
 
+/* Sized to its content so short values keep the block tight against the right
+   edge, but capped — a long custom field value wraps inside the cap rather than
+   pushing the biller block off the page. */
 .meta-block {
   display: grid;
-  grid-template-columns: max-content max-content;
-  justify-content: end;
+  grid-template-columns: max-content minmax(0, 1fr);
+  width: max-content;
+  max-width: 45%;
   column-gap: 10px;
   row-gap: 6px;
   font-size: 13px;
+}
+
+/* Labels are the fixed column: they never wrap, whatever the field is called. */
+.meta-label {
+  font-weight: 700;
   white-space: nowrap;
 }
 
-.meta-label {
-  font-weight: 700;
-}
-
+/* Capped so a long field value — a DN # carrying a dozen numbers — sits in a block
+   under its own label instead of running the width of the header. The cap is on the
+   value, not the grid, so it holds whatever the label is called. */
 .meta-value {
   color: #333;
+  max-width: 160px;
+  overflow-wrap: break-word;
+}
+
+/* Each line of a list-valued field. The break points are set in the template (every
+   third value), so a line only re-wraps here if it outgrows the cap above. */
+.meta-value-line {
+  display: block;
 }
 
 .billed-to-row {

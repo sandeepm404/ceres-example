@@ -1,5 +1,5 @@
 <div class="quotation-shell">
-  <div class="no-dibella quotation-letterhead{{#unless letterHead}} is-empty{{/unless}}">
+  <div class="no-dibella invoice-letterhead quotation-letterhead{{#unless letterHead}} is-empty{{/unless}}">
     {{#if letterHead}}
       <img src="{{letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
     {{else}}
@@ -26,7 +26,8 @@
         {{/if}}
       </div>
 
-      {{!-- Two-column grid so every label shares one left edge and every value another --}}
+      {{!-- Two-column grid so every label shares one left edge and every value
+            another, however many custom fields the document carries --}}
       <div class="meta-block">
         <span class="meta-label">Date:</span>
         <span class="meta-value">{{formatNumericDateWithOffset invoiceDate ownerOffset}}</span>
@@ -34,8 +35,18 @@
         <span class="meta-label">REF #</span>
         <span class="meta-value">{{invoiceNumber}}</span>
 
-        <span class="meta-label">DN #</span>
-        <span class="meta-value">{{#with (findCustomFieldValue customFields "delivery") as |deliveryNoteNumber|}}{{deliveryNoteNumber}}{{else}}-{{/with}}</span>
+        {{!-- @root: the document's own detail fields, not billedBy's or billedTo's,
+              which are separate arrays on those objects --}}
+        {{#each (visibleCustomFields @root.customFields @root.customHeaders)}}
+          <span class="meta-label">{{label}}</span>
+          <span class="meta-value">
+            {{#if value}}
+              {{#each (splitFieldValue value)}}
+                <span class="meta-value-line">{{this}}</span>
+              {{/each}}
+            {{else}}-{{/if}}
+          </span>
+        {{/each}}
       </div>
     </div>
 
@@ -129,7 +140,7 @@
     {{> RefrensBranding}}
   </div>
 
-  <div class="no-dibella quotation-letterhead-footer{{#unless letterHeadFooter}} is-empty{{/unless}}">
+  <div class="no-dibella invoice-letterhead-footer quotation-letterhead-footer{{#unless letterHeadFooter}} is-empty{{/unless}}">
     {{#if letterHeadFooter}}
       <img src="{{letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}

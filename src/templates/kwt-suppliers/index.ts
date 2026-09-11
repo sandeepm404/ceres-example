@@ -11,14 +11,16 @@ import "../../widgets/currency-format";
 
 const hb = (window as any).Handlebars;
 if (hb) {
-  // Page 1 carries the title/meta header, so it fits fewer grid rows than the
-  // pages after it. Tune this if the ruled grid under- or overshoots page one.
-  const FIRST_PAGE_ROWS = 26;
+  // How far the ruled grid runs down page one. Blank rows pad a short quotation out
+  // to this, so it still reads as a full form. It has to be a count rather than a
+  // stretch-to-fit: a row that grows to absorb leftover height grows unevenly and
+  // doubles its rules against the row above. Tune it against the printed page —
+  // the letterhead footer sits below the grid, so a taller footer wants fewer rows.
+  const FIRST_PAGE_ROWS = 18;
   const AMOUNT_DECIMALS = 3;
 
-  // The grid always runs to the bottom of page one, so a short quotation still
-  // reads as a full ruled form. Once the items spill past page one they carry the
-  // table themselves: no padding, so page two ends right after the last item.
+  // Once the items spill past page one they carry the table themselves: no padding,
+  // so page two ends right after the last item.
   const rowsToFillFirstPage = (rowCount: number): number =>
     rowCount <= FIRST_PAGE_ROWS ? FIRST_PAGE_ROWS : rowCount;
 
@@ -45,23 +47,57 @@ if (hb) {
     return rows;
   });
 
-  // findCustomFieldValue: looks up a custom field by a case-insensitive label
-  // substring match (e.g. "delivery" -> "Delivery Note Number"), for fields the
-  // template doesn't get as a fixed key (like the DN# field in this design).
-  hb.registerHelper(
-    "findCustomFieldValue",
-    (customFields: any[], labelKeyword: string) => {
-      if (!Array.isArray(customFields) || !labelKeyword) return null;
-      const keyword = String(labelKeyword).toLowerCase();
-      const match = customFields.find(
-        (field) =>
-          field &&
-          typeof field.label === "string" &&
-          field.label.toLowerCase().includes(keyword)
-      );
-      return match ? match.value : null;
+  // CUSTOM_FIELD_VALUES_PER_LINE: a list-valued field (a DN # carrying a dozen
+  // numbers) breaks every this-many values rather than wherever the column runs
+  // out, so the block reads as an even grid of numbers.
+  const CUSTOM_FIELD_VALUES_PER_LINE = 3;
+
+  // splitFieldValue: cuts a comma-separated field value into fixed-length lines,
+  // keeping the comma at each line's end. A value that isn't a list comes back
+  // whole — one line, untouched.
+  hb.registerHelper("splitFieldValue", (value: any) => {
+    const text = value === null || value === undefined ? "" : String(value).trim();
+    if (!text) return [];
+
+    const values = text
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part !== "");
+
+    if (values.length <= 1) return [text];
+
+    const lines: string[] = [];
+    for (let i = 0; i < values.length; i += CUSTOM_FIELD_VALUES_PER_LINE) {
+      const line = values.slice(i, i + CUSTOM_FIELD_VALUES_PER_LINE).join(", ");
+      const isLastLine = i + CUSTOM_FIELD_VALUES_PER_LINE >= values.length;
+      lines.push(isLastLine ? line : `${line},`);
     }
-  );
+
+    return lines;
+  });
+
+  // visibleCustomFields: the meta block lists the document's own custom fields.
+  // Takes every source array it's handed because the payload splits them —
+  // document-detail fields arrive as customHeaders on some documents and
+  // customFields on others — and merges them by label, first source winning.
+  // Drops only fields with no label to sit under, and ones flagged off for print.
+  hb.registerHelper("visibleCustomFields", (...args: any[]) => {
+    args.pop(); // Handlebars' options object
+    const seen = new Set<string>();
+
+    return args
+      .flatMap((source) => (Array.isArray(source) ? source : []))
+      .filter((field) => {
+        if (!field || typeof field.label !== "string") return false;
+
+        const label = field.label.trim();
+        if (!label || seen.has(label.toLowerCase())) return false;
+        if (field.params?.showInInvoice === false) return false;
+
+        seen.add(label.toLowerCase());
+        return true;
+      });
+  });
 
   // formatLocalPhoneNumber: the shared formatPhoneNumber helper emits the full
   // international form (+965 548 78245); this design shows the national number
