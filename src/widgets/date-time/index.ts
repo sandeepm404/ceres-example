@@ -2,7 +2,8 @@
 // Small, dependency-free date helpers for Ceres templates
 // Registers Handlebars helpers: formatDate, formatDateWithOffset, formateShortDateWithOffset,
 // formatHalfDate, formatHalfDateWithOffset, formatDateTime, formatShortDateTime,
-// formatFullDate, formatFullDateWithOffset, formatTimeSince, relativeTime, formateDateWithOffset
+// formatFullDate, formatFullDateWithOffset, formatNumericDate,
+// formatNumericDateWithOffset, formatTimeSince, relativeTime, formateDateWithOffset
 
 /**
  *
@@ -15,8 +16,15 @@ const HALF_DATE_FORMAT = "MMM DD";
 const SHORT_DATE_FORMAT = "MMM DD, YYYY";
 const PRIMARY_DATE_FORMAT = "MMMM DD, YYYY";
 const SECONDARY_SHORT_DATE_FORMAT = "MMM dd, yyyy";
+const NUMERIC_DATE_FORMAT = "DD/MM/YYYY";
 
-type FormatStyle = "half" | "short" | "primary" | "secondary" | "month";
+type FormatStyle =
+  | "half"
+  | "short"
+  | "primary"
+  | "secondary"
+  | "month"
+  | "numeric";
 
 /**
  *
@@ -130,6 +138,15 @@ export function formatByStyle(
       );
     case "month":
       return fmtDate(d, { month: "long", year: "numeric" }, locale, timeZone);
+    case "numeric":
+      // Day-first numeric (02/09/2026). Pinned to en-GB rather than the caller's
+      // locale, because en-US would silently flip it to month-first.
+      return fmtDate(
+        d,
+        { day: "2-digit", month: "2-digit", year: "numeric" },
+        "en-GB",
+        timeZone
+      );
     default:
       return fmtDate(
         d,
@@ -159,6 +176,9 @@ function mapFormatKey(key?: string): FormatStyle {
       return "primary";
     case "MONTH":
       return "month";
+    case "NUMERIC":
+    case "NUMERIC_DATE_FORMAT":
+      return "numeric";
     case "SECONDARY":
     case "SECONDARY_SHORT_DATE_FORMAT":
     default:
@@ -217,6 +237,27 @@ function formatShortDateWithOffset(date: any, offset = "+5:30") {
   const d = safeDate(date);
   if (!d) return "";
   return formatByStyle(withOffset(d, offset), "short");
+}
+
+/**
+ * Formats a date as day-first numeric, e.g. 02/09/2026.
+ * @param date
+ */
+function formatNumericDate(date: any) {
+  const d = safeDate(date);
+  if (!d) return "";
+  return formatByStyle(d, "numeric");
+}
+
+/**
+ * Formats a date with a given offset as day-first numeric, e.g. 02/09/2026.
+ * @param date
+ * @param offset
+ */
+function formatNumericDateWithOffset(date: any, offset = "+5:30") {
+  const d = safeDate(date);
+  if (!d) return "";
+  return formatByStyle(withOffset(d, offset), "numeric");
 }
 
 /**
@@ -445,6 +486,11 @@ function register() {
     formatHalfDateWithOffset(date, offset)
   );
 
+  HB.registerHelper("formatNumericDate", (date: any) => formatNumericDate(date));
+  HB.registerHelper("formatNumericDateWithOffset", (date: any, offset: any) =>
+    formatNumericDateWithOffset(date, offset)
+  );
+
   HB.registerHelper("formatDateTime", (date: any) => formatDateTime(date));
   HB.registerHelper("formatShortDateTime", (date: any) =>
     formatShortDateTime(date)
@@ -484,6 +530,9 @@ function register() {
       SHORT_DATE_FORMAT,
       PRIMARY_DATE_FORMAT,
       SECONDARY_SHORT_DATE_FORMAT,
+      NUMERIC_DATE_FORMAT,
+      formatNumericDate,
+      formatNumericDateWithOffset,
       formatDateInTimeZone,
       formatDateAddDays,
       formatShortDateWithOffset,
