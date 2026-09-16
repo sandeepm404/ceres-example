@@ -7,6 +7,7 @@
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
     "build": "webpack --config webpack.config.js",
+    "watch": "webpack serve --config webpack.config.js",
     "build:clean": "npm run clean && webpack --config webpack.config.js",
     "build:templates": "cross-env BUILD_TEMPLATES_ONLY=1 webpack --config webpack.config.js",
     "build:template": "cross-env BUILD_TEMPLATES_ONLY=1 TEMPLATE=$npm_config_template webpack --config webpack.config.js",
@@ -91,7 +92,8 @@
     "ts-node": "10.9.2",
     "typescript": "^5.6.2",
     "webpack": "^5.94.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^6.0.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.25.0",

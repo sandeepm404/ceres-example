@@ -1,4 +1,4 @@
-import { getQueryParam, decodeBase64 } from "./commonUtils";
+import { getQueryParam } from "./commonUtils";
 
 const DEFAULT_TEMPLATE = "default-template";
 
@@ -225,8 +225,11 @@ async function injectModal(
   if (templateParam) {
     try {
       decodedManifestPath = atob(templateParam);
-      const match = decodedManifestPath.match(/\/templates\/([^\/]+)\//);
-      if (match && match[1]) currentTplName = match[1];
+      const match = decodedManifestPath.match(/\/templates\/([^/]+)\//);
+      if (match) {
+        const [, matchedTemplateName] = match;
+        if (matchedTemplateName) currentTplName = matchedTemplateName;
+      }
     } catch (e) {
       decodedManifestPath = templateParam;
     }
@@ -353,4 +356,106 @@ async function injectModal(
       }, 2000);
     });
   });
+}
+
+export default function initDevBridge(): boolean {
+  const templateParam = getQueryParam("template");
+  const apiUrlParam = getQueryParam("apiUrl");
+
+  // PRE-FLIGHT REDIRECT LOGIC
+  // 1. Missing Template -> Default Template
+  if (!templateParam) {
+    const newParams = new URLSearchParams(window.location.search);
+    newParams.set("template", DEFAULT_TEMPLATE);
+    window.location.replace(
+      `${window.location.pathname}?${newParams.toString()}`
+    );
+    return true;
+  }
+
+  // 2. Local template name -> Full Manifest Path
+  if (
+    templateParam &&
+    !templateParam.startsWith("http") &&
+    !templateParam.includes("=")
+  ) {
+    let isDecodingValid = false;
+    try {
+      const decoded = atob(templateParam);
+      if (decoded.includes("/") || decoded.includes(".json")) {
+        isDecodingValid = true;
+      }
+    } catch (e) {
+      // Not base64 — treat the value as a bare local template name.
+    }
+
+    if (!isDecodingValid) {
+      const tplName = templateParam;
+      console.log(
+        "Local Dev: Rewriting URL parameters to base64 for renderer compatibility..."
+      );
+
+      // Point at the template's ROOT manifest, never a version-scoped one. The
+      // root manifest tracks whatever version was built last, so a URL copied
+      // from this page keeps resolving after the template is republished. A
+      // version-scoped URL pins the document to a directory that the next
+      // GitHub Pages deploy no longer publishes, which is REF-24961.
+      // The fetch is a pre-flight existence check only; its body is not used.
+      fetch(`./templates/${tplName}/manifest.json`)
+        .then((r) => {
+          if (!r.ok)
+            throw new Error(`Could not load local manifest for ${tplName}`);
+
+          const fullPath = `${
+            window.location.origin +
+            window.location.pathname.replace("index.html", "")
+          }templates/${tplName}/manifest.json`;
+          const newParams = new URLSearchParams(window.location.search);
+          newParams.set("template", btoa(fullPath));
+          window.location.replace(
+            `${window.location.pathname}?${newParams.toString()}`
+          );
+        })
+        .catch((e) => {
+          console.error("Pre-flight error:", e);
+        });
+
+      return true; // Skip rendering
+    }
+  }
+
+  // 3. Missing API URL -> Auto-load first sample
+  if (templateParam && !apiUrlParam) {
+    let tplName = DEFAULT_TEMPLATE;
+    try {
+      const decoded = atob(templateParam);
+      const match = decoded.match(/\/templates\/([^/]+)\//);
+      if (match) {
+        const [, matchedTemplateName] = match;
+        if (matchedTemplateName) tplName = matchedTemplateName;
+      }
+    } catch (e) {
+      // Not base64 — fall back to the default template.
+    }
+
+    fetch(`./templates/${tplName}/samples.json`)
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((samples: Record<string, string>) => {
+        const keys = Object.keys(samples);
+        if (keys.length > 0) {
+          const firstSample = samples[keys[0]];
+          const newParams = new URLSearchParams(window.location.search);
+          newParams.set("apiUrl", firstSample);
+          window.location.replace(
+            `${window.location.pathname}?${newParams.toString()}`
+          );
+        }
+      });
+    return true;
+  }
+
+  // MODAL INJECTION LOGIC
+  injectModal(templateParam, apiUrlParam);
+
+  return false;
 }

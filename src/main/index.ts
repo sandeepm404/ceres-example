@@ -1,6 +1,6 @@
 import initDibellaBridge from "./dibellaBridge";
 import { initLydiaBridge } from "./lydiaBridge";
-import { initDevBridge } from "./ceresDevBridge";
+import initDevBridge from "./ceresDevBridge";
 import {
   applyPreviewStyles,
   decodeBase64,

@@ -855,7 +855,9 @@ class CspMetaPlugin {
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://*.github.io",
             "font-src 'self' https://fonts.gstatic.com",
             "connect-src *",
-            "img-src 'self' data: https:",
+            // https: covers production/CDN images. http://localhost:* and 127.0.0.1
+            // let local dev load images served by a local Serana over plain http.
+            "img-src 'self' data: https: http://localhost:* http://127.0.0.1:*",
             "default-src 'self'",
           ].join("; ");
 
@@ -983,4 +985,25 @@ module.exports = {
     minimizer: ["...", new CssMinimizerPlugin()],
   },
   devtool: false,
+  // Used only by `npm run watch` (webpack serve). Ignored by a normal build.
+  // Serves the compiled assets from memory on :1337, rebuilds on any source
+  // change, and full-page-reloads the browser. Nothing is cached, so you never
+  // have to hard-refresh or restart the server.
+  devServer: {
+    host: "localhost",
+    port: 1337,
+    open: false, // Ceres needs ?template=..&apiUrl=.. so bare "/" can't auto-open usefully
+    hot: false, // templates are plain IIFE bundles — full reload is correct, not HMR
+    liveReload: true,
+    static: false, // every asset (incl. *-manifest.json) is emitted by webpack, so nothing extra to serve
+    devMiddleware: {
+      writeToDisk: false, // serve from memory → no stale dist files, no caching
+    },
+    headers: {
+      "Cache-Control": "no-store",
+    },
+    client: {
+      overlay: { errors: true, warnings: false },
+    },
+  },
 };
