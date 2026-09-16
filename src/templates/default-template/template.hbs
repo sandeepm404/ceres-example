@@ -10,6 +10,9 @@
   <div class="invoice-modern-container">
     <div class="invoice-header-modern">
       <div class="logo-section">
+        {{#if invoice.logo}}
+          <img src="{{invoice.logo}}" alt="{{invoice.billedBy.name}}" class="business-logo" />
+        {{/if}}
         <h1>{{invoice.invoiceTitle}}</h1>
         {{#if invoice.invoiceSubTitle}}
           <p>{{invoice.invoiceSubTitle}}</p>

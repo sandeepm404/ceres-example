@@ -1,9 +1,33 @@
 ---
 name: snapshot-testing
-description: Manage visual regression tests for Ceres templates
+description: Manage visual regression tests for Ceres templates. Required as the last step of creating a new template, and whenever a change touches template.hbs or styles.css.
 ---
 
 # Snapshot Testing
+
+## When to run this — required, not optional
+
+**Every new template gets snapshot baselines before it is handed over.** A template with binding
+tests but no baselines is unverified visually: `data-binding-tests` proves a value reached the DOM,
+never that the page it landed on is laid out correctly. Nothing else in the workflow looks at the
+rendered document.
+
+Also run it on **any** change to `template.hbs` or `styles.css` — that is what a regression test is
+for. Review the diff image before updating a baseline; `npm run test:snapshots:update` on an
+unexamined diff silently blesses the regression it was meant to catch.
+
+At least two samples per template, per Tips below.
+
+> **Harness status: half wired up.** Rendering works — `npm run render` (see
+> `.agent/skills/render-check/SKILL.md`) boots headless Chrome, captures `screen.png`, per-page
+> PNGs and `print.pdf`, and lints the result. **Use that for every new template and every
+> hbs/CSS change.**
+>
+> What is still missing is the *baseline diffing* this file describes: there are no
+> `test:snapshots` / `test:snapshots:update` scripts and no `__snapshots__/` directory, so nothing
+> compares today's render against a committed one. The commands below describe the intended setup,
+> not a working one. Building it is mostly wiring `scripts/render.mjs`'s existing capture step to a
+> pixel comparison — delete this note once it runs.
 
 ## What snapshots do
 

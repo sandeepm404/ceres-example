@@ -6,3 +6,10 @@ public/
 .DS_Store
 webpack.temp.config.js
 coverage/
+
+# Headless render artifacts (scripts/render.mjs) and the cached API payloads it
+# replays. Both are regenerable; the payloads carry access tokens.
+# One payloads/ for the whole repo, keyed by document — any template can replay
+# any of them with --payload=payloads/<doc>.json.
+.ceres-render/
+/payloads/

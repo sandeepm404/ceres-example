@@ -9,10 +9,14 @@ export const decodeBase64 = (encoded: string | null): string | null => {
     return null;
   }
 
+  if (encoded.startsWith("http://") || encoded.startsWith("https://")) {
+    return encoded;
+  }
+
   try {
     return atob(encoded);
   } catch (error) {
-    return null;
+    return encoded;
   }
 };
 

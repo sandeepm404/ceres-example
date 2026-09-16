@@ -9,7 +9,13 @@
         font-family: Arial, sans-serif;
         margin: 0;
         display: flex;
-        justify-content: center;
+        /* `safe` matters: with plain `center`, a document wider than the
+           viewport is centred as overflow, so it starts at a negative x and
+           `overflow-x: hidden` below clips it on BOTH sides — taking the
+           template's page border with it. `safe` falls back to start-alignment
+           whenever the item overflows, so nothing is ever pushed off-screen
+           left. Inert in print, where body is forced back to `display: block`. */
+        justify-content: safe center;
         align-items: flex-start; /* Align to top */
         min-height: 100vh;
       }

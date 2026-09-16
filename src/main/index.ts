@@ -178,8 +178,6 @@ const renderDocument = async () => {
   }
 };
 
-// The dev bridge returns true when it is redirecting (it rewrites the query
-// string and calls location.replace), so there is nothing worth rendering.
 if (shouldRender) {
   renderDocument();
 }

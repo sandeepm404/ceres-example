@@ -1,0 +1,955 @@
+/* =====================================================
+   Fitking — Quotation Template Styles
+   Matches annotated specifications:
+   - Title = var(--fk-font-size-xl)
+   - Total (Grand Total) = var(--fk-font-size-lg)
+   - SKU ID = var(--fk-font-size-sm)
+   - Rest all = var(--fk-font-size-base)
+   ===================================================== */
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap";
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  --fk-font-size-sm: 11px;
+  --fk-font-size-base: 12.5px;
+  --fk-font-size-md: 14px;
+  --fk-font-size-lg: 16px;
+  --fk-font-size-xl: 20px;
+  --fk-font: var(--subtitle-font, var(--ceres-font-family, "Inter", "Helvetica Neue", Arial, sans-serif));
+  --fk-title-font: var(--title-font, var(--fk-font));
+  --fk-dark-header: var(--primary-color, #3e3e3e);
+  --fk-text: #222;
+  --fk-text-muted: #555;
+  --fk-border: #444;
+  --fk-border-light: #aaa;
+  --fk-bg: #fff;
+
+  /* A4 / Standard full width (matching default-template: 1000px) */
+  --fk-page-width: 1000px;
+  --fk-page-padding: 0px 24px 24px 24px;
+}
+
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+}
+
+/* ===== SHELL (Base: var(--fk-font-size-base)) ===== */
+.fk-shell {
+  font-family: var(--fk-font);
+  font-size: var(--fk-font-size-base);
+  color: var(--fk-text);
+
+  /* No backdrop: the shell is only as wide as the page, so a grey background
+     plus bottom padding rendered as a grey band under the letterhead footer. */
+  background: transparent;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  line-height: 1.4;
+  width: 100%;
+  padding: 0;
+  position: relative;
+}
+
+.fk-shell p {
+  margin: 0;
+}
+
+/* ===== PAGE ===== */
+.fk-page {
+  /* max-width, not width: the host page centres this with `display: flex;
+     justify-content: center` under `html { overflow-x: hidden }`. A fixed width
+     wider than the viewport gets centred as overflow and clipped on *both*
+     sides, taking the .fk-main-box border with it. */
+  width: 100%;
+  max-width: var(--fk-page-width);
+  min-height: var(--fk-page-min-height);
+  padding: 0 var(--fk-page-padding-horizontal, 24px) 24px var(--fk-page-padding-horizontal, 24px);
+  margin: 0 auto;
+  background: var(--fk-bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ===== HEADER LOGOS ===== */
+.fk-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--fk-font-size-lg) 0 12px;
+}
+
+.fk-header-left,
+.fk-header-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--fk-font-size-lg);
+}
+
+.fk-logo {
+  max-width: 220px;
+  max-height: 85px;
+  object-fit: contain;
+}
+
+.fk-doc-qr-label {
+  font-size: var(--fk-font-size-sm);
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #444;
+}
+
+.fk-qr-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+/* ===== MAIN BOX FRAME =====
+   No border here on purpose. `.fk-bottom-section`'s break-inside: avoid (see
+   @media print) can push the whole totals block to the next page, leaving a
+   gap on the current page that is still vertically inside this box — a
+   border-left/border-right on one continuous ancestor box draws hanging
+   vertical lines through that gap (box-decoration-break: clone was tried
+   here and didn't reliably close them in the real PDF pipeline either).
+   Instead, every direct child section below carries its own left/right/top/
+   bottom border, so the "boxed" look is built from independent, single-page
+   blocks: when a section jumps to the next page in full, it simply starts a
+   fresh bordered block there with nothing left dangling on the page before. */
+.fk-main-box {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Closes the box's bottom edge regardless of which section — .fk-bottom-section
+   or the last summary table — ends up being the final child. */
+.fk-main-box>*:last-child {
+  border-bottom: 1px solid var(--fk-border);
+}
+
+/* ===== TITLE BAR — var(--fk-font-size-xl) ===== */
+.fk-title-bar {
+  background-color: var(--fk-dark-header);
+  font-family: var(--fk-title-font);
+  padding: 8px var(--fk-font-size-lg);
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid var(--fk-border);
+  position: relative;
+}
+
+/* ===== PAID STAMP =====
+   Only rendered when mapped.visibility.showStatusTagInPrint is true
+   (billType === "INVOICE" && status === "PAID"). Positioned relative to
+   .fk-title-bar so it sits inline beside the title text without disturbing
+   its centering. */
+.fk-paid-stamp {
+  right: var(--fk-font-size-lg);
+  background: #15b944;
+  border-radius: 10px;
+  padding: 0 12px;
+  color: #fff;
+  font-size: var(--fk-font-size-sm);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  place-content: center center;
+  pointer-events: none;
+  line-height: 2;
+  z-index: 5;
+}
+
+.fk-title {
+  font-size: var(--fk-font-size-xl);
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ===== THREE-COLUMN INFO SECTION — var(--fk-font-size-base) ===== */
+.fk-info-section {
+  display: flex;
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
+  border-bottom: 1px solid var(--fk-border);
+}
+
+.fk-info-col {
+  flex: 0 0 33.333%;
+  max-width: 33.333%;
+  padding: 8px 12px;
+  font-size: var(--fk-font-size-base);
+}
+
+.fk-info-col+.fk-info-col {
+  border-left: 1px solid var(--fk-border);
+}
+
+.fk-info-heading {
+  font-weight: 600;
+  font-size: var(--fk-font-size-base);
+  margin-bottom: 6px;
+  color: var(--fk-text);
+}
+
+.fk-info-value-bold {
+  font-weight: 500;
+  font-size: var(--fk-font-size-base);
+  margin-bottom: 3px;
+}
+
+.fk-info-value {
+  color: #444;
+  margin-bottom: 3px;
+  font-size: var(--fk-font-size-base);
+}
+
+.fk-info-kv {
+  display: flex;
+  margin-bottom: 3px;
+  font-size: var(--fk-font-size-base);
+}
+
+.fk-kv-key {
+  width: 60px;
+  color: #555;
+}
+
+.fk-kv-val {
+  color: #222;
+}
+
+/* Custom field rows. Their labels are operator-defined and routinely longer
+   than the built-in keys the 60px column was sized for ("Phone", "GSTIN"), so
+   let the label size to its text and give the value the remaining width. */
+.fk-info-kv-custom .fk-kv-key {
+  width: auto;
+  flex: 0 0 auto;
+  margin-right: 6px;
+}
+
+.fk-info-kv-custom .fk-kv-val {
+  flex: 1 1 auto;
+  word-break: break-word;
+}
+
+/* Details Column — var(--fk-font-size-base) */
+.fk-info-details {
+  padding: 0;
+}
+
+.fk-info-details .fk-info-heading {
+  padding: 6px 10px;
+  margin-bottom: 0;
+}
+
+.fk-details-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--fk-font-size-base);
+}
+
+.fk-details-table td {
+  border-top: 1px solid var(--fk-border-light);
+  border-right: 1px solid var(--fk-border-light);
+  padding: 4px 8px;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.fk-details-table td:last-child {
+  border-right: none;
+}
+
+/* Close the grid under the last row; the column below it stays empty */
+.fk-details-table tr:last-child td {
+  border-bottom: 1px solid var(--fk-border-light);
+}
+
+.fk-dt-label {
+  color: #888;
+  width: 50%;
+}
+
+.fk-dt-value {
+  color: var(--fk-text);
+}
+
+.fk-details-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--fk-border-light);
+}
+
+/* ===== LOGISTICS SECTION ===== */
+.fk-logistics-section {
+  display: flex;
+  border-bottom: 1px solid var(--fk-border);
+}
+
+.fk-info-shipped-from,
+.fk-info-shipped,
+.fk-info-transport {
+  flex: 0 0 33.333%;
+  max-width: 33.333%;
+}
+
+.fk-transport-kv {
+  margin-top: 4px;
+}
+
+.fk-transport-kv p {
+  margin-bottom: 3px;
+  font-size: var(--fk-font-size-base);
+}
+
+/* ===== ITEMS TABLE — var(--fk-font-size-base) ===== */
+.fk-table-wrap {
+  width: 100%;
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
+}
+
+.fk-item-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fk-font-size-base);
+  table-layout: fixed;
+  overflow-wrap: break-word;
+}
+
+.fk-item-table thead th {
+  background-color: var(--fk-dark-header);
+  color: #fff;
+  border: 1px solid var(--fk-border);
+  padding: 8px 6px;
+  font-weight: 600;
+  font-size: var(--fk-font-size-base);
+  vertical-align: middle;
+}
+
+.fk-item-table tbody td {
+  border: 1px solid var(--fk-border-light);
+  padding: 8px;
+  vertical-align: middle !important;
+  font-size: var(--fk-font-size-base);
+}
+
+/* Remove outer borders of the table to prevent double borders with the main frame */
+.fk-item-table thead tr:first-child th {
+  border-top: none;
+}
+
+.fk-item-table thead th:first-child,
+.fk-item-table tbody td:first-child {
+  border-left: none;
+}
+
+.fk-item-table thead th:last-child,
+.fk-item-table tbody td:last-child {
+  border-right: none;
+}
+
+.fk-item-table tbody tr:last-child td {
+  border-bottom: 1px solid var(--fk-border);
+}
+
+/* Column Widths
+   Not declared here. The column set comes from the payload, so a width per
+   column name can only ever be a guess at what that column will hold — the
+   `itemColumns` helper measures each column against the values this document
+   actually prints and emits a percentage on the <col>. These classes carry the
+   alignment and wrapping that goes with each kind, nothing more.
+   Percentages also survive the smaller print font, which is why there are no
+   width overrides left in the print block. */
+.fk-col-sno {
+  text-align: center;
+}
+
+/* Spans the name and photo cells, so the label centres over both of them. */
+.fk-col-desc-photo {
+  text-align: center;
+}
+
+.fk-col-model {
+  text-align: center;
+}
+
+/* Currency columns never wrap: a figure broken across two lines reads as two
+   numbers. Their measured width is what keeps them from spilling. Quantity is
+   a number too — it wraps to a `fk-qty-unit` line underneath instead, but the
+   figure itself must stay on one line the same way. */
+.fk-col-price,
+.fk-col-total,
+.fk-col-disc,
+.fk-col-tax,
+.fk-col-qty {
+  white-space: nowrap;
+}
+
+.fk-col-hsn {
+  text-align: center;
+}
+
+/* Side padding on the numeric columns: narrower than the table default so
+   width goes to the item description, but never so narrow that a right-aligned
+   figure sits flush against the border — `itemColumns` sizes each column
+   assuming this exact padding (see CELL_CHROME_PX in helpers.ts), so the two
+   have to change together. */
+.fk-item-table thead th.fk-col-sno,
+.fk-item-table thead th.fk-col-price,
+.fk-item-table thead th.fk-col-qty,
+.fk-item-table thead th.fk-col-hsn,
+.fk-item-table thead th.fk-col-disc,
+.fk-item-table thead th.fk-col-tax,
+.fk-item-table thead th.fk-col-total,
+.fk-item-table tbody td.fk-sno-cell,
+.fk-item-table tbody td.fk-price-cell,
+.fk-item-table tbody td.fk-qty-cell,
+.fk-item-table tbody td.fk-hsn-cell,
+.fk-item-table tbody td.fk-disc-cell,
+.fk-item-table tbody td.fk-tax-cell,
+.fk-item-table tbody td.fk-total-cell {
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.fk-hsn-cell,
+.fk-disc-cell,
+.fk-tax-cell {
+  font-size: var(--fk-font-size-base);
+  white-space: nowrap !important;
+}
+
+.fk-sno-cell {
+  text-align: center;
+  font-size: var(--fk-font-size-base);
+}
+
+.fk-desc-cell {
+  /* Let browser auto-fill remaining space */
+}
+
+.fk-item-name {
+  font-weight: 600;
+  font-size: var(--fk-font-size-base);
+  color: #000;
+  margin-bottom: 4px;
+}
+
+.fk-item-desc {
+  font-size: var(--fk-font-size-base);
+  color: #333;
+  line-height: 1.5;
+}
+
+.fk-item-desc p {
+  font-size: inherit;
+  color: inherit;
+  margin: 0;
+  line-height: inherit;
+}
+
+.fk-item-desc ul {
+  margin: 4px 0 0 var(--fk-font-size-lg);
+  padding: 0;
+}
+
+.fk-item-desc li {
+  margin-bottom: 3px;
+}
+
+/* Product Image Cell. The column width is set on `.fk-col-photo`, not here —
+   the photo column is a flat 144px and the image scales to fit inside it. */
+.fk-img-cell {
+  text-align: center;
+  vertical-align: middle !important;
+  padding: 4px !important;
+}
+
+.fk-product-img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 144px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+.fk-product-img+.fk-product-img {
+  margin-top: 6px;
+}
+
+/* SKU ID — var(--fk-font-size-sm) */
+.fk-item-sku {
+  font-size: var(--fk-font-size-sm);
+  color: var(--fk-text-muted);
+  margin-top: 2px;
+}
+
+.fk-desc-fullwidth-cell {
+  background-color: #fafafa;
+  border-top: 1px dashed var(--fk-border-light) !important;
+  font-size: var(--fk-font-size-base);
+  color: #333;
+  padding: 6px 12px !important;
+}
+
+.fk-model-cell {
+  font-size: var(--fk-font-size-base);
+  color: #333;
+}
+
+.fk-custom-cell {
+  font-size: var(--fk-font-size-base);
+  color: #333;
+  word-break: break-word;
+}
+
+/* Numeric values: breaking "20,13,20,21,562" across two lines reads as two
+   separate numbers, so these keep to one line even if they overrun. */
+.fk-custom-cell.fk-nowrap {
+  white-space: nowrap;
+  word-break: normal;
+}
+
+.fk-price-cell {
+  font-size: var(--fk-font-size-base);
+  white-space: nowrap !important;
+}
+
+.fk-qty-cell {
+  font-size: var(--fk-font-size-base);
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.fk-qty-num {
+  font-size: var(--fk-font-size-base);
+  color: #222;
+}
+
+.fk-qty-unit {
+  font-size: var(--fk-font-size-sm);
+  color: var(--fk-text-muted);
+  margin-top: 2px;
+}
+
+.fk-total-cell {
+  font-size: var(--fk-font-size-base);
+  white-space: nowrap !important;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+/* ===== BOTTOM SECTION — var(--fk-font-size-base) ===== */
+.fk-bottom-section {
+  display: flex;
+  border-top: 1px solid var(--fk-border);
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
+}
+
+.fk-bottom-left {
+  flex: 1;
+  padding: 12px var(--fk-font-size-md);
+  border-right: 1px solid var(--fk-border);
+}
+
+.fk-bottom-right {
+  width: 310px;
+  padding: 12px var(--fk-font-size-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.fk-section-title {
+  font-weight: 600;
+  font-size: var(--fk-font-size-base);
+  margin-bottom: 6px;
+  color: var(--fk-text);
+}
+
+.fk-terms-list {
+  padding-left: var(--fk-font-size-lg);
+  margin: 0 0 12px;
+}
+
+.fk-terms-list li {
+  font-size: var(--fk-font-size-base);
+  color: #444;
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+
+.fk-remarks-section {
+  margin-top: 20px;
+}
+
+.fk-remarks-content {
+  font-size: var(--fk-font-size-base);
+  color: #444;
+}
+
+/* ===== TOTALS TABLE — var(--fk-font-size-base) (except Grand Total var(--fk-font-size-lg)) ===== */
+.fk-totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fk-font-size-base);
+  margin-bottom: 12px;
+}
+
+.fk-totals-table td {
+  padding: 4px 0;
+}
+
+.fk-totals-label {
+  color: #555;
+  text-align: left;
+}
+
+.fk-totals-value {
+  text-align: right;
+  color: #222;
+  white-space: nowrap;
+}
+
+/* Grand Total — var(--fk-font-size-lg) */
+.fk-grand-total-row .fk-totals-label {
+  font-weight: 600;
+  font-size: var(--fk-font-size-lg);
+  color: #000;
+  padding-top: 8px;
+}
+
+.fk-grand-total-row .fk-totals-value {
+  font-weight: 600;
+  font-size: var(--fk-font-size-lg);
+  color: #000;
+  padding-top: 8px;
+}
+
+.fk-balance-due {
+  font-weight: 600;
+  color: #222;
+}
+
+.fk-totals-sub-label {
+  padding-left: 16px;
+  font-size: var(--fk-font-size-sm);
+}
+
+/* ===== TAX, HSN & PAYMENTS SUMMARIES ===== */
+.fk-summary-section {
+  padding: var(--fk-font-size-lg);
+  border-top: 1px solid var(--fk-border);
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
+}
+
+.fk-summary-heading {
+  font-weight: 600;
+  font-size: var(--fk-font-size-md);
+  margin-bottom: 8px;
+  color: var(--fk-text);
+}
+
+.fk-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fk-font-size-base);
+}
+
+.fk-summary-table th {
+  background-color: var(--fk-dark-header);
+  color: #fff;
+  border: 1px solid var(--fk-border);
+  padding: 8px 6px;
+  font-weight: 600;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.fk-summary-table th.text-right,
+.fk-summary-table td.text-right {
+  text-align: right !important;
+}
+
+.fk-summary-table td {
+  border: 1px solid var(--fk-border-light);
+  padding: 8px;
+  vertical-align: top;
+  color: #333;
+}
+
+.fk-summary-total-row td {
+  font-weight: 600;
+  color: #000;
+}
+
+/* ===== AMOUNT IN WORDS — var(--fk-font-size-base) ===== */
+.fk-amount-words {
+  margin-bottom: var(--fk-font-size-lg);
+}
+
+.fk-amount-words-label {
+  font-weight: 700;
+  font-size: var(--fk-font-size-base);
+  margin-bottom: 4px;
+}
+
+.fk-amount-words-value {
+  font-size: var(--fk-font-size-base);
+  color: #444;
+  line-height: 1.4;
+  text-transform: capitalize;
+}
+
+/* ===== SIGNATURE BOX — var(--fk-font-size-base) ===== */
+.fk-signature-container {
+  text-align: center;
+}
+
+.fk-signature-box {
+  min-height: 50px;
+  width: 100%;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fk-signature-img {
+  max-width: 240px;
+  max-height: 120px;
+  object-fit: contain;
+}
+
+.fk-sig-label {
+  font-size: var(--fk-font-size-base);
+  font-weight: 600;
+  color: #222;
+  text-align: center;
+}
+
+/* Letterhead & Footer */
+.invoice-letterhead,
+.invoice-letterhead-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invoice-letterhead.is-empty,
+.invoice-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.invoice-letterhead img,
+.invoice-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Bank & UPI Section */
+.fk-bank-section {
+  margin-top: 24px;
+}
+
+/* Additional Notes — the document's footer fields, laid out like the bank
+   block above it so the two read as one column of labelled detail. */
+.fk-additional-notes-section {
+  margin-top: 24px;
+}
+
+/* customFooters/footers are declared as blank slots on every account, so an
+   entry existing doesn't mean it was filled in — the .hbs already skips
+   blank entries and uses whitespace-control ({{~}}) so this div is truly
+   empty (no stray text nodes) when none of them are, letting :empty catch
+   it here and drop the heading + margin instead of showing an empty gap. */
+.fk-additional-notes-section:has(.fk-additional-notes-content:empty) {
+  display: none;
+}
+
+.fk-additional-notes-content {
+  font-size: var(--fk-font-size-base);
+  color: #444;
+}
+
+.fk-additional-notes-content p {
+  margin: 0 0 4px;
+}
+
+.fk-bank-kv p {
+  margin: 0 0 4px;
+}
+
+.fk-bank-key {
+  color: var(--fk-text-muted);
+  display: inline-block;
+  min-width: 90px;
+}
+
+.fk-bank-val {
+  font-weight: 600;
+}
+
+.fk-bank-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+
+.fk-upi-qr-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fk-upi-title {
+  font-size: var(--fk-font-size-base);
+  color: var(--fk-text);
+  margin: 0 0 8px;
+}
+
+.fk-upi-qr {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
+.fk-upi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fk-text-muted);
+  margin: 0;
+}
+
+/* ===== MARKDOWN VIEWER STYLES ===== */
+.fk-shell .toastui-editor-contents,
+.fk-shell .markdown-viewer-widget {
+  font-size: var(--fk-font-size-sm) !important;
+  font-family: inherit !important;
+  color: inherit !important;
+}
+
+.fk-shell .toastui-editor-contents p,
+.fk-shell .toastui-editor-contents span {
+  font-size: var(--fk-font-size-sm) !important;
+  color: inherit !important;
+}
+
+.fk-shell .toastui-editor-contents h1 {
+  font-size: var(--fk-font-size-xl) !important;
+  margin-bottom: 8px !important;
+}
+
+.fk-shell .toastui-editor-contents h2 {
+  font-size: var(--fk-font-size-lg) !important;
+  margin-bottom: 8px !important;
+}
+
+.fk-shell .toastui-editor-contents h3 {
+  font-size: var(--fk-font-size-md) !important;
+  margin-bottom: 6px !important;
+}
+
+.fk-shell .toastui-editor-contents h4,
+.fk-shell .toastui-editor-contents h5,
+.fk-shell .toastui-editor-contents h6 {
+  font-size: var(--fk-font-size-base) !important;
+  margin-bottom: 4px !important;
+}
+
+.fk-shell .toastui-editor-contents ul,
+.fk-shell .toastui-editor-contents ol,
+.fk-shell .toastui-editor-contents li {
+  font-size: var(--fk-font-size-base) !important;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .fk-shell {
+    --fk-font-size-sm: 9px;
+    --fk-font-size-base: 10.5px;
+    --fk-font-size-md: 12px;
+    --fk-font-size-lg: 12px;
+    --fk-font-size-xl: 14px;
+  }
+
+  .fk-img-cell {
+    padding: 4px !important;
+  }
+
+  .fk-product-img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 90px;
+    margin: 0 auto;
+  }
+
+  .fk-shell {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .fk-page {
+    width: 100%;
+    height: auto;
+    padding: 0 var(--fk-page-padding-horizontal, 8mm) 20mm var(--fk-page-padding-horizontal, 8mm);
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .fk-item-table {
+    break-inside: auto;
+  }
+
+  .fk-item-table thead {
+    display: table-header-group;
+  }
+
+  .fk-item-table tbody tr {
+    break-inside: avoid;
+  }
+
+  .fk-bottom-section {
+    break-inside: avoid;
+  }
+
+  * {
+    box-shadow: none !important;
+  }
+}

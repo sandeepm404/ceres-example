@@ -130,11 +130,12 @@ function loadDependencies(): Promise<void> {
   if (dependenciesPromise) return dependenciesPromise;
 
   dependenciesPromise = loadVendorManifest().then((manifest) => {
-    const dp = manifest["dompurify"];
+    const dp = manifest.dompurify;
     const tu = manifest["toastui-editor"];
 
     if (!dp?.js) throw new Error("Vendor manifest missing dompurify entry");
-    if (!tu?.js) throw new Error("Vendor manifest missing toastui-editor entry");
+    if (!tu?.js)
+      throw new Error("Vendor manifest missing toastui-editor entry");
 
     if (tu.css) loadCSS(`./${tu.css}`);
 
@@ -152,8 +153,8 @@ function loadDependencies(): Promise<void> {
  */
 function loadFallbackDependency(): Promise<void> {
   return loadVendorManifest().then((manifest) => {
-    const dp = manifest["dompurify"];
-    const mk = manifest["marked"];
+    const dp = manifest.dompurify;
+    const mk = manifest.marked;
 
     if (!dp?.js) throw new Error("Vendor manifest missing dompurify entry");
     if (!mk?.js) throw new Error("Vendor manifest missing marked entry");
@@ -417,6 +418,6 @@ try {
   console.error("MarkdownViewer registration failed:", error);
 }
 
-export { };
+export {};
 
 /* eslint-enable @typescript-eslint/ban-ts-comment, no-new, consistent-return */

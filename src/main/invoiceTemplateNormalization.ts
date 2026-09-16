@@ -1,6 +1,4 @@
-import {
-  normalizeInvoicePayload,
-} from "./invoicePayloadContract";
+import { normalizeInvoicePayload } from "./invoicePayloadContract";
 import type {
   FlattenedInvoicePayload,
   InvoicePayloadInput,
@@ -33,6 +31,7 @@ export interface InvoiceTemplateVisibility {
   isUtgst: boolean;
   showTaxTable: boolean;
   showHsnSummary: boolean;
+  showPaymentsTable: boolean;
   showSummaryCess: boolean;
   showSku: boolean;
   showHsn: boolean;
@@ -46,6 +45,7 @@ export interface InvoiceTemplateVisibility {
   footerOnLastPage: boolean;
   itemNameFullWidth: boolean;
   isDescriptionFullWidth: boolean;
+  showDescriptionFullWidth: boolean;
   showStatusTagInPrint: boolean;
   visibleColumnCount: number;
 }
@@ -63,6 +63,13 @@ export interface InvoiceTemplateMappedState {
     isCancelled: boolean;
   };
   visibility: InvoiceTemplateVisibility;
+  payments: {
+    tds: number;
+    received: number;
+    transactionCharge: number;
+    paid: number;
+    due: number;
+  };
 }
 
 export interface InvoiceTemplateDerivedState {
@@ -116,21 +123,14 @@ const asArray = (value: unknown): unknown[] => {
   return value;
 };
 
-const pickFirstValue = (...values: unknown[]): unknown => {
-  for (const value of values) {
+const pickFirstValue = (...values: unknown[]): unknown =>
+  values.find((value) => {
     if (value === null || value === undefined) {
-      continue;
+      return false;
     }
 
-    if (typeof value === "string" && value.trim().length === 0) {
-      continue;
-    }
-
-    return value;
-  }
-
-  return undefined;
-};
+    return !(typeof value === "string" && value.trim().length === 0);
+  });
 
 const toStringValue = (value: unknown, fallback = ""): string => {
   if (typeof value === "string") {
@@ -159,9 +159,40 @@ const toNumberValue = (value: unknown, fallback = 0): number => {
   return fallback;
 };
 
+const toBooleanValue = (value: unknown, fallback = false): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value !== 0 : fallback;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+
+    if (["true", "1", "yes", "on"].indexOf(normalized) !== -1) {
+      return true;
+    }
+
+    // "false" is a truthy string, so never hand these to Boolean()
+    if (["false", "0", "no", "off", ""].indexOf(normalized) !== -1) {
+      return false;
+    }
+
+    return fallback;
+  }
+
+  return fallback;
+};
+
 const toNonEmptyString = (value: unknown): string | null => {
   const normalized = toStringValue(value);
-  return normalized.length > 0 ? normalized : null;
+  return normalized.length > 0 &&
+    normalized !== "null" &&
+    normalized !== "undefined"
+    ? normalized
+    : null;
 };
 
 const hasValue = (value: unknown): boolean => {
@@ -246,7 +277,7 @@ const getSummaryCessAmount = (
     return directAmount;
   }
 
-  return getNestedSummaryEntries(record[listKey], listKey).reduce<number>(
+  return getNestedSummaryEntries(record, listKey).reduce<number>(
     (sum, entry) => {
       const row = asRecord(entry);
       return (
@@ -273,19 +304,42 @@ const getInvoiceCessTotal = (invoice: FlattenedInvoicePayload): number => {
     pickFirstValue(totals.cessTotal, finalTotal.cessTotal)
   );
 
-  const recordSum = (Object.values(cessTotalRecord) as unknown[]).reduce<number>(
-    (sum, value) => sum + toNumberValue(value, 0),
-    0
-  );
+  const recordSum = (
+    Object.values(cessTotalRecord) as unknown[]
+  ).reduce<number>((sum, value) => sum + toNumberValue(value, 0), 0);
 
   if (recordSum > 0) {
     return recordSum;
   }
 
   return toNumberValue(
-    pickFirstValue(totals.totalCess, totals.cess, finalTotal.totalCess, finalTotal.cess),
+    pickFirstValue(
+      totals.totalCess,
+      totals.cess,
+      finalTotal.totalCess,
+      finalTotal.cess
+    ),
     0
   );
+};
+
+// TDS/paid/due only exist per-currency, under the invoice's own settlement
+// currency — `invoice.totalPaid`/`invoice.balanceAmount` are absent on
+// invoices settled this way, so this is the only place those figures live.
+const getPaymentConversion = (invoice: FlattenedInvoicePayload) => {
+  const totalConversions = asRecord(invoice.totalConversions);
+  const currency = toStringValue(invoice.currency);
+  const conversion = asRecord(totalConversions[currency]);
+  const received = toNumberValue(conversion.paid, 0);
+  const transactionCharge = toNumberValue(conversion.transactionCharge, 0);
+
+  return {
+    tds: toNumberValue(conversion.tds, 0),
+    received,
+    transactionCharge,
+    paid: received + transactionCharge,
+    due: toNumberValue(conversion.due, 0),
+  };
 };
 
 const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
@@ -300,7 +354,10 @@ const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
   const isTaxInvoice = invoiceType === "INVOICE";
   const igstTax = Boolean(invoice.igst);
   const discountEnabled = Boolean(
-    toNumberValue(pickFirstValue(finalTotal.discount, finalTotal.totalDiscount), 0)
+    toNumberValue(
+      pickFirstValue(finalTotal.discount, finalTotal.totalDiscount),
+      0
+    )
   );
   const hsnView = toStringValue(advanceOptions.hsnView, "DEFAULT");
   const ownerCountry =
@@ -397,9 +454,14 @@ const normalizeInvoiceColumns = (
 
       return {
         key,
+        // cgst/sgst labels are derived from igst/utgst flags, not column.label — accounts can mislabel it (e.g. cgst tagged "IGST")
         label:
-          key === "sgst" && Boolean(invoice.utgst)
-            ? "UTGST"
+          key === "sgst"
+            ? invoice.utgst
+              ? "UTGST"
+              : toStringValue(column.label)
+            : key === "cgst"
+            ? "CGST"
             : toStringValue(column.label),
         className: getColumnClass(key),
         isHidden: Boolean(column.isHidden) || !visible,
@@ -419,7 +481,9 @@ export const normalizeInvoiceTemplateState = (
   const irn = asRecord(invoice.irn);
   const upi = asRecord(invoice.upi);
   const irnCancelDate = toNonEmptyString(irn.CancelDate);
-  const irnQr = toNonEmptyString(irn.qrCode);
+  // Root qrCode is the same IRN QR delivered by the Lydia host overlay, so the
+  // CancelDate guard below applies to it equally.
+  const irnQr = toNonEmptyString(pickFirstValue(invoice.qrCode, irn.qrCode));
   const topQr =
     (irnQr && !irnCancelDate ? irnQr : null) ??
     toNonEmptyString(invoice.zatcaQrCode) ??
@@ -427,10 +491,11 @@ export const normalizeInvoiceTemplateState = (
     toNonEmptyString(invoice.documentQr) ??
     "";
 
+  const bankAccount = asRecord(invoice.bankAccount);
   const upiId =
     toNonEmptyString(pickFirstValue(upi.upi, upi.vpa, upi.upiId)) ?? "";
   const upiQr =
-    toNonEmptyString(pickFirstValue(upi.qr, upi.qrCode)) ??
+    toNonEmptyString(pickFirstValue(upi.qr, upi.qrCode, bankAccount.qrCode)) ??
     (upiId ? buildUpiPayload(upiId) : "");
 
   const billType = toStringValue(invoice.billType);
@@ -438,7 +503,6 @@ export const normalizeInvoiceTemplateState = (
   const isExpenditure = Boolean(invoice.isExpenditure);
   const invoiceAccepted = toStringValue(invoice.invoiceAccepted);
   const paymentOptions = asRecord(invoice.paymentOptions);
-  const bankAccount = asRecord(invoice.bankAccount);
   const bankAccountNo = toStringValue(
     pickFirstValue(bankAccount.accountNo, bankAccount.accountNumber)
   );
@@ -454,20 +518,39 @@ export const normalizeInvoiceTemplateState = (
     (!isExpenditure || invoiceAccepted === "ACCEPTED") &&
     Boolean(paymentOptions.upi) &&
     hasValue(upiId);
-  const showTaxTable = ["TABLE", "BOTH"].includes(
-    toStringValue(context.advanceOptions.taxSummaryView)
-  );
-  const showHsnSummary = getNestedSummaryEntries(invoice.hsnSummary, "hsnList").length > 0;
+  // Each summary table needs BOTH an opt-in from the document's configuration
+  // and rows to put in it. Configuration alone renders a bare header strip;
+  // rows alone renders a table the user asked to hide.
+  const showTaxTable =
+    ["TABLE", "BOTH"].includes(
+      toStringValue(context.advanceOptions.taxSummaryView)
+    ) && getNestedSummaryEntries(invoice.taxSummary, "taxList").length > 0;
+  const showHsnSummary =
+    toBooleanValue(context.advanceOptions.showHSNSummaryInInvoice) &&
+    getNestedSummaryEntries(invoice.hsnSummary, "hsnList").length > 0;
+  const showPaymentsTable =
+    toBooleanValue(invoice.showPaymentsTable) &&
+    asArray(invoice.allPayments).length > 0;
   const showSummaryCess =
-    asArray(invoice.cesses).some((entry) => Boolean(asRecord(entry).isApplied)) &&
-    (
-      getInvoiceCessTotal(invoice) > 0 ||
+    asArray(invoice.cesses).some((entry) =>
+      Boolean(asRecord(entry).isApplied)
+    ) &&
+    (getInvoiceCessTotal(invoice) > 0 ||
       getSummaryCessAmount(invoice.taxSummary, "taxList") > 0 ||
-      getSummaryCessAmount(invoice.hsnSummary, "hsnList") > 0
-    );
+      getSummaryCessAmount(invoice.hsnSummary, "hsnList") > 0);
   const showIgst =
     Boolean(invoice.igst) || toStringValue(invoice.taxName) !== "GST";
   const showCgstSgst = !showIgst && toStringValue(invoice.taxName) === "GST";
+  // Off unless the payload explicitly opts in; `showDescriptionFullWidth` is the
+  // current flag name, `isDescriptionFullWidth` the legacy one.
+  const descriptionFullWidth = toBooleanValue(
+    pickFirstValue(
+      context.advanceOptions.showDescriptionFullWidth,
+      invoice.showDescriptionFullWidth,
+      context.advanceOptions.isDescriptionFullWidth,
+      invoice.isDescriptionFullWidth
+    )
+  );
 
   return {
     invoice,
@@ -490,30 +573,35 @@ export const normalizeInvoiceTemplateState = (
         shippedFrom,
         transport,
         showLogistics: shippedFrom || transport,
-        singleLogistics: (shippedFrom && !transport) || (!shippedFrom && transport),
+        singleLogistics:
+          (shippedFrom && !transport) || (!shippedFrom && transport),
         showBankAccount,
         showUpi,
         showBankUpiSection:
           !["CREDITNOTE", "DEBITNOTE"].includes(billType) &&
           status !== "CANCELED" &&
           (showBankAccount || showUpi),
-        contactStrip:
-          hasValue(contact.email) || hasValue(contact.phone),
+        contactStrip: hasValue(contact.email) || hasValue(contact.phone),
         showIgst,
         showCgstSgst,
         isUtgst: Boolean(invoice.utgst),
         showTaxTable,
         showHsnSummary,
+        showPaymentsTable,
         showSummaryCess,
         showSku: context.showSkuInName,
         showHsn: context.showHsnColumn,
-        showThumbnailAsColumn: Boolean(context.advanceOptions.showThumbnailAsColumn),
+        showThumbnailAsColumn: Boolean(
+          context.advanceOptions.showThumbnailAsColumn
+        ),
         showInlineHsn: context.showInlineHsn,
         showInlineClassification: context.showInlineClassification,
         showSkuInName: context.showSkuInName,
         showUnitInName: context.showUnitInName,
         upiShrink: Boolean(asRecord(invoice.template).upiShrink),
-        letterHeadOnFirstPage: Boolean(context.pdfOptions.letterHeadOnFirstPage),
+        letterHeadOnFirstPage: Boolean(
+          context.pdfOptions.letterHeadOnFirstPage
+        ),
         footerOnLastPage: Boolean(context.pdfOptions.footerOnLastPage),
         itemNameFullWidth: Boolean(
           pickFirstValue(
@@ -521,15 +609,13 @@ export const normalizeInvoiceTemplateState = (
             invoice.showItemNameFullWidth
           )
         ),
-        isDescriptionFullWidth: Boolean(
-          pickFirstValue(
-            context.advanceOptions.isDescriptionFullWidth,
-            invoice.isDescriptionFullWidth
-          )
-        ),
+        isDescriptionFullWidth: descriptionFullWidth,
+        showDescriptionFullWidth: descriptionFullWidth,
         showStatusTagInPrint: billType === "INVOICE" && status === "PAID",
-        visibleColumnCount: columns.filter((column) => !column.isHidden).length + 1,
+        visibleColumnCount:
+          columns.filter((column) => !column.isHidden).length + 1,
       },
+      payments: getPaymentConversion(invoice),
     },
     derived: {
       showHsnColumn: context.showHsnColumn,

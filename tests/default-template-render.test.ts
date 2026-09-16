@@ -5,24 +5,24 @@ import template from "../src/templates/default-template/template.hbs";
 
 beforeAll(() => {
   HandlebarsRuntime.registerPartial("DemoBadge", () => "");
-  HandlebarsRuntime.registerPartial("InvoiceStatus", () => "<span>Partially Paid</span>");
+  HandlebarsRuntime.registerPartial(
+    "InvoiceStatus",
+    () => "<span>Partially Paid</span>"
+  );
   HandlebarsRuntime.registerPartial("MarkdownViewer", () => "");
   HandlebarsRuntime.registerHelper("prepareMarkdownViewerData", () => ({}));
   HandlebarsRuntime.registerHelper(
     "formateShortDateWithOffset",
     (value: unknown) => String(value ?? "")
   );
-  HandlebarsRuntime.registerHelper(
-    "formateDateWithOffset",
-    (value: unknown) => String(value ?? "")
+  HandlebarsRuntime.registerHelper("formateDateWithOffset", (value: unknown) =>
+    String(value ?? "")
   );
-  HandlebarsRuntime.registerHelper(
-    "formatDateInTimeZone",
-    (value: unknown) => String(value ?? "")
+  HandlebarsRuntime.registerHelper("formatDateInTimeZone", (value: unknown) =>
+    String(value ?? "")
   );
-  HandlebarsRuntime.registerHelper(
-    "formatDateAddDays",
-    (value: unknown) => String(value ?? "")
+  HandlebarsRuntime.registerHelper("formatDateAddDays", (value: unknown) =>
+    String(value ?? "")
   );
 });
 
