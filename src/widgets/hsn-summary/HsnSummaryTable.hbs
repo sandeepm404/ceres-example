@@ -6,10 +6,10 @@
         <th>HSN</th>
         <th>Taxable Value</th>
         {{#if isIgst}}
-        <th colspan="2">IGST</th>
+        <th colspan="2">{{taxLabel @root "igst"}}</th>
         {{else}}
-        <th colspan="2">CGST</th>
-        <th colspan="2">{{#if isUtgst}}UTGST{{else}}SGST{{/if}}</th>
+        <th colspan="2">{{taxLabel @root "cgst"}}</th>
+        <th colspan="2">{{taxLabel @root "sgst"}}</th>
         {{/if}}
         {{#if hasCess}}<th colspan="2">Cess</th>{{/if}}
         <th>Total</th>

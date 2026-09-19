@@ -1,0 +1,92 @@
+/*
+ * Subtotal widget — structure only.
+ *
+ * Deliberately unopinionated about colour, font and spacing scale: a template owns its own
+ * look and overrides these by targeting the same classes. What the widget does own is the
+ * two-column alignment (label left, figure right) and the sub-line treatment, because those
+ * are what make a totals column readable rather than decorative.
+ */
+
+.ceres-subtotal {
+  width: 100%;
+}
+
+.ceres-subtotal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ceres-subtotal-label {
+  padding: 2px 8px 2px 0;
+  font-weight: 400;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ceres-subtotal-value {
+  padding: 2px 0;
+  text-align: right;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+/* The tax rate and code under a taxed additional charge. */
+.ceres-subtotal-note {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+/* The converted amount on a foreign-currency document. */
+.ceres-subtotal-converted {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+/* The tax figure on a taxed additional charge row. */
+.ceres-subtotal-extra {
+  font-size: 0.9em;
+}
+
+.ceres-subtotal-row-grand > .ceres-subtotal-label,
+.ceres-subtotal-row-grand > .ceres-subtotal-value {
+  padding-top: 6px;
+  font-weight: 700;
+  border-top: 1px solid currentcolor;
+}
+
+.ceres-subtotal-row-due > .ceres-subtotal-label,
+.ceres-subtotal-row-due > .ceres-subtotal-value {
+  font-weight: 700;
+}
+
+.ceres-subtotal-table-extra,
+.ceres-subtotal-table-due {
+  margin-top: 4px;
+}
+
+.ceres-subtotal-words {
+  margin-top: 8px;
+}
+
+.ceres-subtotal-words-label {
+  font-weight: 700;
+}
+
+/*
+ * Visibility, one class per reason.
+ *
+ * `hideTotals`, `hideTaxes` and `hideTotalInWords` cover overlapping sets of rows, and the
+ * host toggles each of them independently and live. Letting CSS resolve the combination is
+ * what stops turning one setting off from resurrecting what another is still hiding — see
+ * src/main/commonUtils.ts, which only ever adds and removes these classes.
+ *
+ * `display: none !important` because a template owns its own look and may well set a
+ * `display` of its own on these rows; a hidden row must stay hidden regardless.
+ */
+.ceres-subtotal-row.is-hidden-by-totals,
+.ceres-subtotal-row.is-hidden-by-taxes,
+.ceres-subtotal-words.is-hidden-by-totals,
+.ceres-subtotal-words.is-hidden-by-words-setting,
+.ceres-subtotal-words.is-hidden-by-precision {
+  display: none !important;
+}

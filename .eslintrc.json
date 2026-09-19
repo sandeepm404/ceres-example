@@ -61,6 +61,19 @@
       "rules": {
         "@typescript-eslint/no-var-requires": "off"
       }
+    },
+    {
+      "files": ["*.ts"],
+      "rules": {
+        "no-use-before-define": "off",
+        "@typescript-eslint/no-use-before-define": "error"
+      }
+    },
+    {
+      "files": ["scripts/**"],
+      "rules": {
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+      }
     }
   ],
   "ignorePatterns": ["webpack.config.js", "coverage/"]

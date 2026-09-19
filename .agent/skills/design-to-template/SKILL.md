@@ -71,7 +71,7 @@ Always provide a fallback value that matches the design.
 
 Declare six font sizes as custom properties on the template's root shell and reference them with `var(...)` everywhere. Override the same six inside `@media print` on the same selector.
 
-**Naming is fixed: `--<prefix>-font-size-<step>`, with the steps `xs`, `s`, `base`, `m`, `lg`, `xl`.** Spell out `font-size`, not `fs`. Do not invent `sm`, `md` or `xxl` — six steps, those six names. `--sg-font-size-base`, `--fk-font-size-base`, `--mmd-font-size-base`.
+**Naming is fixed: `--<prefix>-font-size-<step>`, with the steps `xs`, `s`, `base`, `m`, `lg`, `xl`.** Spell out `font-size`, not `fs`. Do not invent `sm`, `md` or `xxl` — six steps, those six names. The prefix is a short template-specific tag: `--bie-font-size-base` for `basic-invoice-example`, `--dt-font-size-base` for `default-template`, `--tpl-font-size-base` in the examples below.
 
 Either `px` or `pt` is acceptable, but be consistent within a template and remember the floor below is a **px** figure — `1pt = 4/3 px`, so the smallest legal `pt` step is `7.5pt`.
 
@@ -106,9 +106,9 @@ Those two rules together determine where print density comes from: **take it out
 
 A 10px floor makes dense tables wider and wrap more. That is the intended trade: reduce the column count or widen the cell, do not shrink the type below the floor.
 
-**Enforce it with a test**, not just review — the values that break the floor are custom-property definitions inside `@media print`, which never appear in a rendered DOM as resolved `font-size` declarations and so are invisible to snapshot tests. See `tests/mmd.test.ts` for the pattern: parse `styles.css`, collect every px-valued `font-size` and `--*-fs-*` declaration, and assert none is below 10. Include a guard asserting the parser found declarations at all, so a refactor cannot make the check pass vacuously.
+**Enforce it with a test**, not just review — the values that break the floor are custom-property definitions inside `@media print`, which never appear in a rendered DOM as resolved `font-size` declarations and so are invisible to snapshot tests. The pattern: read the template's `styles.css` as text, collect every px-valued `font-size` and `--*-font-size-*` declaration, and assert none is below 10. Include a guard asserting the parser found declarations at all, so a refactor cannot make the check pass vacuously. (Match `--*-font-size-*` only — that is the mandated spelling, and no template here uses `--*-fs-*`.)
 
-These checks go in the template's **existing** `tests/<template>.test.ts`, in their own `describe`. Do not open a separate CSS test file — `data-binding-tests` allows a template exactly one.
+A template gets exactly one test file. Put these checks in their own `describe` inside the template's **existing** `tests/<template>.test.ts`; do not open a separate CSS test file.
 
 ### 4b. Spacing — multiples of 4px
 
@@ -118,7 +118,7 @@ Round to the nearest step. On a tie, pick the tighter one for dense areas like t
 
 This does not apply to values that are not spacing — `1px` borders, `letter-spacing`, `max-width` on a logo, `line-height` (set `1.5` once on the root shell rather than per selector).
 
-**Enforce it with a test alongside the font-size checks** — the same parse of `styles.css`, collecting `padding`/`margin`/`gap`/offset declarations and asserting every px value is divisible by 4. See `tests/mmd.test.ts`.
+**Enforce it with a test alongside the font-size checks** — the same read of `styles.css` as text, collecting `padding`/`margin`/`gap`/offset declarations, asserting every px value is divisible by 4, and asserting the parser found at least one such declaration so the check cannot pass vacuously.
 
 ### 4c. Item table column widths — data-driven, so size for that
 
@@ -184,7 +184,7 @@ Use this checklist:
 - [ ] Does it look good when printed (Ctrl+P)?
 - [ ] Are all widget imports present in `index.ts`?
 - [ ] Does `npm run build:template --template=my-template` succeed?
-- [ ] Are snapshot baselines generated and eyeballed? Required — see `snapshot-testing`.
+- [ ] Is the rendered document eyeballed against the design, on screen and in print preview? Required — see `snapshot-testing` for the intended baseline harness and its status.
 
 ## Layout patterns catalog
 

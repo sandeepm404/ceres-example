@@ -180,8 +180,8 @@
           <th class="text-right">QTY</th>
           <th class="text-right">Rate</th>
           <th class="text-right">Amount</th>
-          {{#if mapped.visibility.showIgst}}<th class="text-right">IGST</th>{{/if}}
-          {{#if mapped.visibility.showCgstSgst}}<th class="text-right">CGST</th><th class="text-right">SGST</th>{{/if}}
+          {{#if mapped.visibility.showIgst}}<th class="text-right">{{taxLabel @root "igst"}}</th>{{/if}}
+          {{#if mapped.visibility.showCgstSgst}}<th class="text-right">{{taxLabel @root "cgst"}}</th><th class="text-right">{{taxLabel @root "sgst"}}</th>{{/if}}
           <th class="text-right">Total</th>
         </tr>
       </thead>
@@ -201,75 +201,54 @@
             </td>
             {{#if ../derived.showHsnColumn}}<td>{{hsn}}</td>{{/if}}
             <td class="text-right">{{quantity}}</td>
-            <td class="text-right">{{../invoice.customCurrencySymbol}}{{rate}}</td>
-            <td class="text-right">{{../invoice.customCurrencySymbol}}{{amount}}</td>
-            {{#if ../mapped.visibility.showIgst}}<td class="text-right">{{../invoice.customCurrencySymbol}}{{igst}}</td>{{/if}}
-            {{#if ../mapped.visibility.showCgstSgst}}<td class="text-right">{{../invoice.customCurrencySymbol}}{{cgst}}</td><td class="text-right">{{../invoice.customCurrencySymbol}}{{sgst}}</td>{{/if}}
-            <td class="text-right"><strong>{{../invoice.customCurrencySymbol}}{{subTotal}}</strong></td>
+            <td class="text-right">{{formatCurrency rate}}</td>
+            <td class="text-right">{{formatCurrency amount}}</td>
+            {{#if ../mapped.visibility.showIgst}}<td class="text-right">{{formatCurrency igst}}</td>{{/if}}
+            {{#if ../mapped.visibility.showCgstSgst}}<td class="text-right">{{formatCurrency cgst}}</td><td class="text-right">{{formatCurrency sgst}}</td>{{/if}}
+            <td class="text-right"><strong>{{formatCurrency subTotal}}</strong></td>
           </tr>
         {{/each}}
       </tbody>
     </table>
 
-    <div class="totals-full-width-section">
-      <div class="total-line">
-        <span class="label">{{#if invoice.customLabels.subTotal}}{{invoice.customLabels.subTotal}}{{else}}Sub Total{{/if}}:</span>
-        <span class="value">{{invoice.customCurrencySymbol}}{{#if invoice.finalTotal.subTotal}}{{invoice.finalTotal.subTotal}}{{else}}{{invoice.subTotal}}{{/if}}</span>
-      </div>
-      {{#if invoice.finalTotal.discount}}
-        <div class="total-line">
-          <span class="label">Discount:</span>
-          <span class="value">- {{invoice.customCurrencySymbol}}{{invoice.finalTotal.discount}}</span>
-        </div>
-      {{/if}}
-      {{#if invoice.finalTotal.igst}}
-        <div class="total-line">
-          <span class="label">IGST:</span>
-          <span class="value">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.igst}}</span>
-        </div>
-      {{/if}}
-      {{#if invoice.finalTotal.cgst}}
-        <div class="total-line">
-          <span class="label">CGST:</span>
-          <span class="value">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.cgst}}</span>
-        </div>
-      {{/if}}
-      {{#if invoice.finalTotal.sgst}}
-        <div class="total-line">
-          <span class="label">{{#if mapped.visibility.isUtgst}}UTGST{{else}}SGST{{/if}}:</span>
-          <span class="value">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.sgst}}</span>
-        </div>
-      {{/if}}
-      <div class="total-line grand">
-        <span class="label">{{#if invoice.customLabels.total}}{{invoice.customLabels.total}}{{else}}Total{{/if}}:</span>
-        <span class="value">{{invoice.customCurrencySymbol}}{{invoice.finalTotal.total}}</span>
-      </div>
-      {{#if invoice.latePaymentFee}}
-        {{#if invoice.dueDate}}
-          {{#if invoice.latePaymentFee.showInInvoice}}
-            {{#if invoice.latePaymentFee.enabled}}
-              {{#unless invoice.latePaymentFee.isApplied}}
-                <div class="total-line late-fee">
-                  <span class="label">Late Payment Fee:</span>
-                  <span class="value">
-                    {{#if invoice.latePaymentFee.finalAmount}}Additional {{invoice.customCurrencySymbol}}{{invoice.latePaymentFee.finalAmount}} {{/if}}
-                    {{#if invoice.latePaymentFee.when}}
-                      after {{formatDateAddDays invoice.dueDate invoice.latePaymentFee.when invoice.ownerOffset}}
-                    {{/if}}
-                  </span>
-                </div>
-              {{/unless}}
-            {{/if}}
+    {{!--
+      Totals come from the shared widget. Do not hand-write rows here.
+
+      This block used to print 13 amounts as `{{invoice.customCurrencySymbol}}{{...}}` — a raw
+      number with a symbol glued on, so nothing had a thousands separator or fixed decimals and
+      a negative rendered as ₹-1234.5. The widget formats every amount through one helper.
+
+      This template assigns normalizeInvoiceTemplateState as its data mapper, so the invoice is
+      one level down and the columns come from mapped.columns.
+    --}}
+    {{> Subtotal (computeSubtotalRows invoice
+                    columns=mapped.columns
+                    businessCurrency=businessCurrency
+                    businessLocale=businessLocale) }}
+
+    {{!--
+      Not a totals row: a notice about a fee that has NOT been applied yet. The widget renders
+      the fee once applied, matching refrens.com, which has no equivalent of this warning.
+    --}}
+    {{#if invoice.latePaymentFee}}
+      {{#if invoice.dueDate}}
+        {{#if invoice.latePaymentFee.showInInvoice}}
+          {{#if invoice.latePaymentFee.enabled}}
+            {{#unless invoice.latePaymentFee.isApplied}}
+              <div class="late-fee-notice">
+                <span class="label">Late Payment Fee:</span>
+                <span class="value">
+                  {{#if invoice.latePaymentFee.finalAmount}}Additional {{formatCurrency invoice.latePaymentFee.finalAmount}} {{/if}}
+                  {{#if invoice.latePaymentFee.when}}
+                    after {{formatDateAddDays invoice.dueDate invoice.latePaymentFee.when invoice.ownerOffset}}
+                  {{/if}}
+                </span>
+              </div>
+            {{/unless}}
           {{/if}}
         {{/if}}
       {{/if}}
-      {{#if invoice.customLabels.totalInWordsValue}}
-        <div class="total-in-words">
-          <span>{{#if invoice.customLabels.totalInWords}}{{invoice.customLabels.totalInWords}}{{else}}Total (in words){{/if}}:</span>
-          <span>{{invoice.customLabels.totalInWordsValue}}</span>
-        </div>
-      {{/if}}
-    </div>
+    {{/if}}
 
     {{#if invoice.allPayments.length}}
       <div class="payments-section">
@@ -288,7 +267,7 @@
               <tr>
                 <td>{{formateShortDateWithOffset paymentDate ../invoice.ownerOffset}}</td>
                 <td>{{paymentMethod}}</td>
-                <td class="text-right">{{../invoice.customCurrencySymbol}}{{amount}}</td>
+                <td class="text-right">{{formatCurrency amount}}</td>
                 <td class="text-right">{{status}}</td>
               </tr>
             {{/each}}

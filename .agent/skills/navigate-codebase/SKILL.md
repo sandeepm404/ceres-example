@@ -59,20 +59,21 @@ ceres/
 
 ## Cross-repo: how Lydia uses Ceres
 
-Ceres runs inside an iframe in Lydia. These are the key files in the Lydia repo:
+Ceres runs inside an iframe in Lydia. These are the key files, and they live in the **`lydia`
+repo, not this one** — cited `repo:path`, so a path with no prefix is always local.
 
-### src/components/utils/iframeUtils.js
+### lydia:src/components/utils/iframeUtils.js
 - `buildIframeSrc()` builds the iframe URL with `?template=<name>&apiUrl=<base64>&isLydiaMode=1`
 - `hasCustomLayout()` checks if the user has a custom template applied
 - `triggerIframePrint()` sends a `lydia:print` postMessage to Ceres
 - `postTemplateUpdate()` sends `lydia:template-update` with style changes
 
-### src/components/hooks/useIframeHeight.js
+### lydia:src/components/hooks/useIframeHeight.js
 - Listens for `ceres:content-height` messages from Ceres
 - Sets the iframe height with a small buffer on first load
 - Intercepts Ctrl+P to trigger printing inside the iframe
 
-### src/components/widgets/IframeRenderer.jsx
+### lydia:src/components/widgets/IframeRenderer.jsx
 - React component that renders the iframe
 - Uses `getIframeProps()` to decide if an iframe is needed
 - Uses `useIframeHeight()` for sizing
@@ -95,7 +96,7 @@ Ceres runs inside an iframe in Lydia. These are the key files in the Lydia repo:
 
 ## System templates vs custom templates
 
-Lydia has its own React-based templates in `src/components/template/` (like `quotation/default.js`). These are "system templates" that handle most users.
+Lydia has its own React-based templates in `lydia:src/components/template/` (like `quotation/default.js`). These are "system templates" that handle most users.
 
 When a user wants a custom look, they get a "custom template" rendered by Ceres inside an iframe.
 

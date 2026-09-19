@@ -147,6 +147,38 @@
         "city": {
           "type": "string"
         },
+        "clientType": {
+          "type": "string"
+        },
+        "contactPerson": {
+          "properties": {
+            "contact": {
+              "type": "string"
+            },
+            "department": {
+              "type": "string"
+            },
+            "displayFields": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "email": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
         "country": {
           "type": "string"
         },
@@ -215,6 +247,9 @@
         "gstin": {
           "type": "string"
         },
+        "industry": {
+          "type": "string"
+        },
         "logo": {
           "type": "string"
         },
@@ -243,6 +278,12 @@
           "type": "string"
         },
         "street": {
+          "type": "string"
+        },
+        "taxId": {
+          "type": "string"
+        },
+        "taxPayerType": {
           "type": "string"
         },
         "tinNumber": {
@@ -286,12 +327,27 @@
           "properties": {
             "einvoice": {},
             "eway": {},
+            "experimental": {
+              "additionalProperties": {},
+              "properties": {
+                "hideCurrencyCode": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
             "indexedCustomFields": {},
             "units": {}
           },
           "type": "object"
         },
         "country": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "name": {
@@ -318,6 +374,9 @@
           "type": "string"
         },
         "cessName": {
+          "type": "string"
+        },
+        "cessType": {
           "type": "string"
         },
         "isApplied": {
@@ -480,45 +539,7 @@
           "type": "array"
         },
         "balance": {
-          "properties": {
-            "credit": {
-              "type": [
-                "number",
-                "string"
-              ]
-            },
-            "due": {
-              "type": [
-                "number",
-                "string"
-              ]
-            },
-            "paid": {
-              "type": [
-                "number",
-                "string"
-              ]
-            },
-            "settledAmount": {
-              "type": [
-                "number",
-                "string"
-              ]
-            },
-            "tds": {
-              "type": [
-                "number",
-                "string"
-              ]
-            },
-            "transactionCharge": {
-              "type": [
-                "number",
-                "string"
-              ]
-            }
-          },
-          "type": "object"
+          "$ref": "#/definitions/InvoiceBalance"
         },
         "bankAccount": {
           "$ref": "#/definitions/BankDetails"
@@ -591,6 +612,12 @@
             "phone": {
               "type": "string"
             }
+          },
+          "type": "object"
+        },
+        "conversionRates": {
+          "additionalProperties": {
+            "type": "number"
           },
           "type": "object"
         },
@@ -727,8 +754,29 @@
         "expenseNumber": {
           "type": "string"
         },
+        "extraTotalFields": {
+          "items": {
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "label",
+              "value"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
         "finalTotal": {
-          "type": "object"
+          "$ref": "#/definitions/InvoiceTotals"
         },
         "footers": {
           "items": {
@@ -761,6 +809,15 @@
         "hideHashInDocumentNumber": {
           "type": "boolean"
         },
+        "hideTaxes": {
+          "type": "boolean"
+        },
+        "hideTotalInWords": {
+          "type": "boolean"
+        },
+        "hideTotals": {
+          "type": "boolean"
+        },
         "hsnSummary": {
           "anyOf": [
             {
@@ -775,7 +832,7 @@
           ]
         },
         "igst": {
-          "type": "number"
+          "type": "boolean"
         },
         "invoiceAccepted": {
           "type": "string"
@@ -900,7 +957,9 @@
           "type": "string"
         },
         "linkedInvoices": {
-          "items": {},
+          "items": {
+            "$ref": "#/definitions/LinkedInvoice"
+          },
           "type": "array"
         },
         "notes": {
@@ -1068,6 +1127,9 @@
         "subUnitLength": {
           "type": "number"
         },
+        "supplyType": {
+          "type": "string"
+        },
         "taxName": {
           "type": "string"
         },
@@ -1136,7 +1198,7 @@
           "type": "object"
         },
         "totals": {
-          "type": "object"
+          "$ref": "#/definitions/InvoiceTotals"
         },
         "transportDetails": {
           "$ref": "#/definitions/TransportDetails"
@@ -1145,7 +1207,7 @@
           "$ref": "#/definitions/UpiDetails"
         },
         "utgst": {
-          "type": "number"
+          "type": "boolean"
         },
         "vendorFields": {
           "type": "object"
@@ -1230,7 +1292,16 @@
         "itemNameFullWidth": {
           "type": "boolean"
         },
+        "rcmSummaryView": {
+          "type": "boolean"
+        },
         "reverseCharge": {
+          "type": "boolean"
+        },
+        "showBatchColumnsInInvoice": {
+          "type": "boolean"
+        },
+        "showCreatorInInvoice": {
           "type": "boolean"
         },
         "showDescriptionFullWidth": {
@@ -1243,6 +1314,9 @@
           "type": "boolean"
         },
         "showPaymentsTable": {
+          "type": "boolean"
+        },
+        "showSerialNumbersInDescription": {
           "type": "boolean"
         },
         "showSkuInInvoice": {
@@ -1259,6 +1333,60 @@
         },
         "unitColumn": {
           "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "InvoiceBalance": {
+      "properties": {
+        "credit": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "due": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "paid": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "refund": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "settledAmount": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "tds": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "transactionCharge": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -1393,6 +1521,33 @@
           ],
           "type": "object"
         },
+        "payments": {
+          "properties": {
+            "due": {
+              "type": "number"
+            },
+            "paid": {
+              "type": "number"
+            },
+            "received": {
+              "type": "number"
+            },
+            "tds": {
+              "type": "number"
+            },
+            "transactionCharge": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "tds",
+            "received",
+            "transactionCharge",
+            "paid",
+            "due"
+          ],
+          "type": "object"
+        },
         "qr": {
           "properties": {
             "top": {
@@ -1428,7 +1583,8 @@
         "upi",
         "columns",
         "irn",
-        "visibility"
+        "visibility",
+        "payments"
       ],
       "type": "object"
     },
@@ -1563,6 +1719,126 @@
       ],
       "type": "object"
     },
+    "InvoiceTotals": {
+      "properties": {
+        "amount": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "amountRoundOff": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "cess": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "cessTotal": {
+          "type": "object"
+        },
+        "cgst": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "discount": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "discountPercentage": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "earlyDiscount": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "igst": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "rcmTax": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "sgst": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "subTotal": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "total": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "totalCess": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "totalDiscount": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "totalRoundOff": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "utgst": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "IrnDetails": {
       "properties": {
         "AckDt": {
@@ -1671,6 +1947,9 @@
             "string"
           ]
         },
+        "hidden": {
+          "type": "boolean"
+        },
         "hsn": {
           "type": "string"
         },
@@ -1725,6 +2004,28 @@
         "taxAmount": {
           "type": "number"
         },
+        "taxCategory": {
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "reason": {
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
         "taxRate": {
           "type": [
             "number",
@@ -1733,6 +2034,9 @@
         },
         "thumbnail": {
           "type": "string"
+        },
+        "total": {
+          "type": "number"
         },
         "unit": {
           "type": "string"
@@ -1748,6 +2052,34 @@
         "rate",
         "amount"
       ],
+      "type": "object"
+    },
+    "LinkedInvoice": {
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "billType": {
+          "type": "string"
+        },
+        "finalTotal": {
+          "$ref": "#/definitions/InvoiceTotals"
+        },
+        "invoiceDate": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "format": "date-time",
+              "type": "string"
+            }
+          ]
+        },
+        "invoiceNumber": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "NormalizedInvoiceTemplateState": {
@@ -1860,6 +2192,9 @@
           ]
         },
         "extraInformation": {
+          "type": "string"
+        },
+        "subSupplyDesc": {
           "type": "string"
         },
         "subSupplyType": {

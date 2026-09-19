@@ -23,10 +23,16 @@ export default function formatCurrency(
       currency?.data?.root ||
       (typeof window !== "undefined" && (window as any).ceresInvoiceData) ||
       {};
-    customCurrencySymbol = root.customCurrencySymbol ?? null;
-    subUnitLength = root.subUnitLength ?? null;
-    locale = root.locale;
-    currency = root.currency;
+    /*
+     * Same two root shapes as registerFormatCurrencyHelper: a template using
+     * normalizeInvoiceTemplateState nests the currency fields under `invoice`.
+     */
+    const source =
+      root.invoice && typeof root.invoice === "object" ? root.invoice : root;
+    customCurrencySymbol = source.customCurrencySymbol ?? null;
+    subUnitLength = source.subUnitLength ?? null;
+    locale = source.locale;
+    currency = source.currency;
   }
 
   let c = parseFloat(number);

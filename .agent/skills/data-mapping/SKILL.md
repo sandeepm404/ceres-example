@@ -12,12 +12,12 @@ Given a payload JSON and a template, produce a record per rendered element that 
 - **This skill**: payload → audit. A template already exists; you are explaining or verifying what it does with real data.
 - `ceres-template-data-contract`: design → template. Use that when the template does not exist yet and you are mapping a screenshot to contract fields.
 - `architect-template`: deciding what each block must be able to render *before* markup exists, so rows the reference document does not show still render when their data arrives. Run that first; run this skill afterwards to verify the built template against the spec it produced.
-- `data-binding-tests`: turning a confirmed mapping into Jest assertions. Use that after this skill when the user wants the mapping locked in.
+- **Locking the mapping in**: once a mapping is confirmed, pin it as Jest assertions in the template's own test file. Do that after this skill when the user wants the mapping held against regressions.
 
 ## Read these, in this order
 
 1. `src/templates/<name>/template.hbs` — the only authority on what renders. Never infer output from the payload alone.
-2. `src/templates/<name>/helpers.ts` — template-local helpers that gate or transform values (`partyFields`, `itemTableColumns`, `computePrintStatus`, …).
+2. `src/templates/<name>/helpers.ts` — **optional**: present only on templates that declare template-local helpers, and absent on templates that do not. When it exists it gates or transforms values (`partyFields`, `itemTableColumns`, `computePrintStatus`, …). A template without one is not a defect.
 3. `src/main/invoiceTemplateNormalization.ts` — resolves every `mapped.*` and `derived.*` value. A `mapped.visibility.x` in the markup is **never** a payload field; trace it to its expression here.
 4. `src/main/invoicePayloadContract.ts` — only when a payload key's meaning is unclear.
 
@@ -85,7 +85,7 @@ Two conventions that are easy to get backwards:
 
 The fallback printed when this record's own variable resolves empty — but only where the markup actually supplies one. An empty-string `customLabels` value is not automatically a fallback: a `{{#if}}`-guarded heading with an empty override renders *nothing*, an unguarded one renders *blank*. Say which.
 
-Two label sources are **forced by normalization** and cannot be overridden: `columns[cgst].label` always prints `CGST`, and `columns[sgst].label` prints `UTGST` when `invoice.utgst` is true. The account's own column label is deliberately ignored there, so flag it when the payload disagrees.
+Two label sources are **forced by normalization** and cannot be overridden: `columns[cgst].label` always prints `CGST`, and `columns[sgst].label` prints `UTGST` when `invoice.isUtgst` is true. The account's own column label is deliberately ignored there, so flag it when the payload disagrees.
 
 ### valueVariable
 
@@ -108,18 +108,18 @@ The tax keys are India-named but not India-only. Resolve which path the document
 
 | Path | Selected by | Tax columns / rows | HSN & classification |
 |---|---|---|---|
-| **India, intra-state** | `taxType: "INDIA"`, `taxName: "GST"`, `igst` false | `cgst` + `sgst`; `showCgstSgst` true | `hsn` available |
-| **India, inter-state** | `taxType: "INDIA"`, `taxName: "GST"`, `igst` **true** | `igst`; `showIgst` true, `cgst`/`sgst` hidden | `hsn` available |
+| **India, intra-state** | `taxType: "INDIA"`, `taxName: "GST"`, `isIgst` false | `cgst` + `sgst`; `showCgstSgst` true | `hsn` available |
+| **India, inter-state** | `taxType: "INDIA"`, `taxName: "GST"`, `isIgst` **true** | `igst`; `showIgst` true, `cgst`/`sgst` hidden | `hsn` available |
 | **Global** | `taxType: "GLOBAL"`, or **any** `taxName` other than `"GST"` | `igst` only — the generic single-tax slot | both unreachable |
 | **Malaysia** | owner country `MY` | follows one of the above | `classification` available, `hsn` still needs INDIA |
 
 The rules that decide it, from `invoiceTemplateNormalization.ts`:
 
-- **`showIgst = Boolean(invoice.igst) || taxName !== "GST"`.** The second clause is the whole non-India story: a VAT document with `igst: false` still routes through the `igst` slot, because its `taxName` is not `"GST"`.
+- **`showIgst = Boolean(invoice.isIgst) || taxName !== "GST"`.** The second clause is the whole non-India story: a VAT document with `isIgst: false` still routes through the `igst` slot, because its `taxName` is not `"GST"`.
 - **`showCgstSgst = !showIgst && taxName === "GST"`** — India-GST-only by construction. It can never be true on a global document.
 - **Known divergence from the platform renderer — report it when it bites.** The platform's own
-  renderer branches the totals tax rows on **`taxType`** (`igst || taxType !== "INDIA"` → the igst
-  slot; `!igst && taxType === "INDIA"` → CGST/SGST), while normalization keys off **`taxName`** as
+  renderer branches the totals tax rows on **`taxType`** (`isIgst || taxType !== "INDIA"` → the igst
+  slot; `!isIgst && taxType === "INDIA"` → CGST/SGST), while normalization keys off **`taxName`** as
   above. The two disagree on three payload shapes: `taxType: "GLOBAL"` with `taxName: "GST"`
   (normalization prints CGST/SGST, the platform prints the single-tax slot), `taxType: "INDIA"`
   with a non-GST `taxName`, and an **absent `taxName`** (resolves `""` ≠ `"GST"` → igst slot, where
@@ -132,8 +132,9 @@ The rules that decide it, from `invoiceTemplateNormalization.ts`:
   `mapped.*` flag exists for them.
 - **`gstRate` has no taxType gate**, only `isTaxInvoice`. An India-named key therefore renders on non-India documents, where the account relabels it (`"VAT Rate"`).
 - **`hsn` needs `isTaxInvoice` AND owner country `IN` AND `taxType === "INDIA"` AND the `hsnView` rule**; `showInlineHsn` needs `isTaxInvoice` AND `taxType === "INDIA"`. On a global document **both** are false, so a populated `item.hsn` prints nowhere at all — not as a column, not inline.
+- **The HSN summary block carries a second, business-level gate — `hsnSummaryEnabled`** (`advanceOptions.showHsnSummary`, alias `showHSNSummaryInInvoice`), separate from the per-column `hsn` gate above and applying even on a fully India-GST document. A template that renders the summary off a non-empty `hsnSummary.hsnList` alone leaks a whole section the business switched off.
 - **`classification` keys off owner country `MY` alone**, independent of `taxType`.
-- **Only `cgst`/`sgst` labels are forced** (`CGST`, and `UTGST` when `invoice.utgst`). `igst`, `gstRate` and `total` keep `column.label` — that is precisely the mechanism by which local tax naming works, so never report the `igst` header as "should be IGST".
+- **Only `cgst`/`sgst` labels are forced** (`CGST`, and `UTGST` when `invoice.isUtgst`). `igst`, `gstRate` and `total` keep `column.label` — that is precisely the mechanism by which local tax naming works, so never report the `igst` header as "should be IGST".
 - **`taxName` drives visibility; `customLabels.taxName` does not.** Totals rows take their labels from `mapped.columns`. A `customLabels.taxName` that disagrees with `invoice.taxName` is a stale-config defect with no render consequence — say so rather than reporting it as a broken label.
 - **`finalTotal` carries `igst`, `cgst` and `sgst` on every document regardless of path.** A global document routinely ships `cgst`/`sgst` splitting the single tax figure. Read the visibility flag, never the presence of a total.
 
@@ -348,7 +349,7 @@ The standard grouping and the resolved rules for a Ceres invoice/document payloa
     {
       "name": "Status badge",
       "path": "status + billType",
-      "visibility": "Template-local rule — see computePrintStatus in the template's helpers.ts; most web-app badge states never print",
+      "visibility": "Template-local rule — see computePrintStatus in the template's helpers module where the template declares one; most web-app badge states never print",
       "labelVariable": null,
       "defaultLabel": null,
       "valueVariable": "resolved badge text"
@@ -822,7 +823,7 @@ Columns render in the account's own `columns[]` order. A column is hidden when `
 
 **Headers are not audited per column.** Every visible column prints `columns[<key>].label` from the same loop that prints its cells — no template authors item-table header text, so a per-column `Label Text` record only restates the loop. Emit one record per column *cell*; record a header only where it deviates:
 
-- **`cgst` / `sgst`** — normalization forces `CGST`, and `UTGST` when `invoice.utgst`, discarding the account's label. Flag it when the payload disagrees.
+- **`cgst` / `sgst`** — normalization forces `CGST`, and `UTGST` when `invoice.isUtgst`, discarding the account's label. Flag it when the payload disagrees.
 - **A hardcoded header** in the markup instead of `{{label}}` off the loop — a finding, not a record.
 - **A header printing blank** because `columns[n].label` is `""` — a payload defect.
 
@@ -971,7 +972,7 @@ The per-column `Label Text` entries stay in the inventory below as a path refere
     {
       "name": "IGST Label Text",
       "path": "columns[igst].label",
-      "visibility": "isHidden false AND isTaxInvoice AND ({igst} true OR taxType GLOBAL)",
+      "visibility": "isHidden false AND isTaxInvoice AND ({isIgst} true OR taxType GLOBAL)",
       "labelVariable": null,
       "defaultLabel": "IGST",
       "valueVariable": "{columns[igst].label}"
@@ -987,7 +988,7 @@ The per-column `Label Text` entries stay in the inventory below as a path refere
     {
       "name": "CGST",
       "path": "items[n].cgst",
-      "visibility": "isHidden false AND isTaxInvoice AND {igst} false AND taxType INDIA",
+      "visibility": "isHidden false AND isTaxInvoice AND {isIgst} false AND taxType INDIA",
       "labelVariable": "CGST — forced by normalization, {columns[cgst].label} is deliberately ignored because accounts mislabel it",
       "defaultLabel": null,
       "valueVariable": "{items[n].cgst}"
@@ -998,7 +999,7 @@ The per-column `Label Text` entries stay in the inventory below as a path refere
       "visibility": "same as CGST",
       "labelVariable": null,
       "defaultLabel": "SGST",
-      "valueVariable": "UTGST when {utgst} true, otherwise {columns[sgst].label}"
+      "valueVariable": "UTGST when {isUtgst} true, otherwise {columns[sgst].label}"
     },
     {
       "name": "SGST / UTGST",
@@ -1217,7 +1218,7 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
     {
       "name": "IGST Label Text",
       "path": "columns[igst].label",
-      "visibility": "mapped.visibility.showIgst = {igst} true OR {taxName} != GST",
+      "visibility": "mapped.visibility.showIgst = {isIgst} true OR {taxName} != GST",
       "labelVariable": null,
       "defaultLabel": "IGST",
       "valueVariable": "{columns[igst].label}"
@@ -1252,7 +1253,7 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
       "visibility": "mapped.visibility.showCgstSgst",
       "labelVariable": null,
       "defaultLabel": "SGST",
-      "valueVariable": "UTGST when {utgst} true, otherwise {columns[sgst].label}"
+      "valueVariable": "UTGST when {isUtgst} true, otherwise {columns[sgst].label}"
     },
     {
       "name": "SGST / UTGST",
@@ -1329,7 +1330,7 @@ The totals area **below** the item table — subtotal, tax rows, round-off, gran
     {
       "name": "Total in words",
       "path": "customLabels.totalInWordsValue, computed fallback",
-      "visibility": "hideTotalInWords false — NOT gated on the stored value existing: the platform renderer COMPUTES the words from finalTotal.total (shared amountInWords widget, language from locale) and prints {customLabels.totalInWordsValue} only as an override. A template that prints only the stored key drops the words on every payload that omits it, and prints STALE words when the stored string disagrees with finalTotal.total — check both. Use src/widgets/shared/amountInWords",
+      "visibility": "hideTotalInWords false — NOT gated on the stored value existing: the platform renderer COMPUTES the words from finalTotal.total (shared amountInWords widget, language from locale) and prints {customLabels.totalInWordsValue} only as an override. A template that prints only the stored key drops the words on every payload that omits it, and prints STALE words when the stored string disagrees with finalTotal.total — check both. The implementation is src/widgets/shared/amountInWords.ts, but the {{amountInWords}} Handlebars helper is registered only by src/widgets/tax-summary and src/widgets/hsn-summary — a template that imports neither has no such helper, so verify the registration reaches it rather than assuming the shared module is enough",
       "labelVariable": null,
       "defaultLabel": null,
       "valueVariable": "{customLabels.totalInWordsValue} else amountInWords({finalTotal.total}, {currency}, locale-language)"
@@ -1539,7 +1540,7 @@ Each summary needs **both** a configuration opt-in and rows to put in it — con
     {
       "name": "HSN Summary",
       "path": "hsnSummary.hsnList",
-      "visibility": "mapped.visibility.showHsnSummary = advanceOptions.showHSNSummaryInInvoice (bridge alias showHsnSummary) AND list non-empty",
+      "visibility": "mapped.visibility.showHsnSummary = hsnSummaryEnabled AND list non-empty — hsnSummaryEnabled is the business toggle advanceOptions.showHsnSummary (bridge alias, checked first) falling back to showHSNSummaryInInvoice, and is separate from the per-column hsn gate",
       "labelVariable": "HSN Summary",
       "defaultLabel": null,
       "valueVariable": "{hsnSummary.hsnList[n].hsn} + the TaxSummary fields, grouped per {hsnView}"
@@ -1941,7 +1942,7 @@ chain. Two structural facts govern all of them:
 Keep defects in the audited *data* separate from render rules — a record describes what the template does, a defect describes what this document happens to contain. Put them in a closing section and say whether the renderer neutralises each one. Recurring kinds:
 
 - **A column label that contradicts its key** (`columns[cgst].label` = "IGST"). The renderer forces `CGST`/`UTGST`, so this does **not** reach the page — report it as bad stored config, not a render bug.
-- **A total populated against its own flag** (`finalTotal.igst` non-zero while `igst` is false and the HSN summary shows zero IGST; or `finalTotal.cgst`/`sgst` populated on a `GLOBAL` document). Read `mapped.visibility.showIgst` / `showCgstSgst`, never the presence of a total.
+- **A total populated against its own flag** (`finalTotal.igst` non-zero while `isIgst` is false and the HSN summary shows zero IGST; or `finalTotal.cgst`/`sgst` populated on a `GLOBAL` document). Read `mapped.visibility.showIgst` / `showCgstSgst`, never the presence of a total.
 - **A stale `customLabels.taxName`** disagreeing with `invoice.taxName` (`"GST"` stored against a `"VAT"` document). No render consequence — totals rows label from `mapped.columns` — so report it as config drift, not a broken label.
 - **Identifier inconsistencies** — a GSTIN state prefix disagreeing with `gstState`, a short `pincode`. These surface as IRN/e-invoice errors, not render errors.
 - **Markdown inside a value** (an item `description` holding a table). Renders as raw pipes unless the template pipes it through the markdown partial.

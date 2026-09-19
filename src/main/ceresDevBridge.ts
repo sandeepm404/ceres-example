@@ -9,29 +9,23 @@ async function injectModal(
   // Inject CSS
   const style = document.createElement("style");
   style.innerHTML = `
-    body { margin-right: 400px; }
-    #documentOutput { max-width: 1000px; }
     #ceresExampleModal {
-      position: fixed; top: 0; right: 0; bottom: 0;
-      width: 400px;
-      box-sizing: border-box;
-      background: rgba(255, 255, 255, 0.85);
+      position: fixed; bottom: 20px; right: 20px; 
+      background: rgba(255, 255, 255, 0.85); 
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       padding: 20px;
-      box-shadow: -4px 0 25px rgba(0, 0, 0, 0.08);
+      border-radius: 16px; 
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 0 1px rgba(0,0,0,0.2); 
       z-index: 9999;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      border-left: 1px solid rgba(0, 0, 0, 0.08);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+      border: 1px solid rgba(255, 255, 255, 0.5); 
+      width: 340px; 
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      overflow-y: auto;
+      gap: 12px;
     }
-    @media print {
-      #ceresExampleModal { display: none !important; }
-      body { margin-right: 0 !important; }
-    }
+    @media print { #ceresExampleModal { display: none !important; } }
     #ceresExampleModal h3 { 
       margin: 0; 
       font-size: 13px; 
@@ -81,6 +75,14 @@ async function injectModal(
     }
     .modal-action button.secondary:hover { background: #e2e8f0; color: #1e293b; }
     
+    #copyFeedback { 
+      position: absolute; top: -40px; right: 0;
+      font-size: 11px; font-weight: 600; color: #10b981; 
+      background: white; padding: 6px 12px; border-radius: 6px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      border: 1px solid #d1fae5;
+      display: none; 
+    }
     .badge-dev {
       align-self: flex-start;
       background: #3b82f6;
@@ -92,23 +94,32 @@ async function injectModal(
       margin-bottom: 4px;
     }
     #ceresManifestBadge {
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
+      position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 6px 12px;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0,0,0,0.1);
+      z-index: 10000;
+      font-family: 'Inter', system-ui, sans-serif;
+      border: 1px solid rgba(255, 255, 255, 0.5);
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      align-items: center;
+      gap: 10px;
+      max-width: 80%;
       cursor: pointer;
       transition: all 0.2s;
     }
-    #ceresManifestBadge:hover { border-color: #cbd5e1; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06); }
+    #ceresManifestBadge:hover { background: rgba(255, 255, 255, 0.95); transform: translateX(-50%) translateY(-1px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); }
+    #ceresManifestBadge:active { transform: translateX(-50%) translateY(0); }
     #ceresManifestBadge .path {
       font-size: 11px;
       color: #64748b;
-      word-break: break-all;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       font-family: monospace;
-      line-height: 1.5;
     }
     #ceresManifestBadge .copy-icon {
       font-size: 10px;
@@ -123,9 +134,6 @@ async function injectModal(
     }
     #ceresManifestBadge.copied .path { color: #166534; }
     #ceresManifestBadge.copied .copy-icon { color: #15803d; }
-    @media print {
-      #ceresManifestBadge { display: none !important; }
-    }
   `;
   document.head.appendChild(style);
 
@@ -161,31 +169,35 @@ async function injectModal(
     ? await samplesResponse.json()
     : {};
 
-  // Inject Dev Panel (right column)
+  // Inject Top Badge
+  const badge = document.createElement("div");
+  badge.id = "ceresManifestBadge";
+  badge.title = "Click to copy manifest path";
+  badge.innerHTML = `
+    <span class="path">${decodedManifestPath}</span>
+    <span class="copy-icon" id="badgeCopyStatus">Copy Path</span>
+  `;
+  document.body.appendChild(badge);
+
+  // Inject Modal HTML
   const modal = document.createElement("div");
   modal.id = "ceresExampleModal";
   modal.innerHTML = `
     <div class="badge-dev">CERES DEV MODE</div>
-
-    <div class="modal-section">
-      <h3>Manifest Path</h3>
-      <div id="ceresManifestBadge" title="Click to copy manifest path">
-        <span class="path">${decodedManifestPath}</span>
-        <span class="copy-icon" id="badgeCopyStatus">Copy Path</span>
-      </div>
-    </div>
-
+    <div id="copyFeedback">✓ Copied to clipboard!</div>
+    
     <div class="modal-section">
       <h3>Select Template</h3>
       <div class="modal-action">
         <select id="templateSelect">
           ${templatesList
-      .map(
-        (t) =>
-          `<option value="${t}" ${t === currentTplName ? "selected" : ""
-          }>${t}</option>`
-      )
-      .join("")}
+            .map(
+              (t) =>
+                `<option value="${t}" ${
+                  t === currentTplName ? "selected" : ""
+                }>${t}</option>`
+            )
+            .join("")}
         </select>
         <button id="loadTemplateBtn">Switch</button>
       </div>
@@ -196,12 +208,13 @@ async function injectModal(
       <div class="modal-action">
         <select id="apiUrlSelect">
           ${Object.entries(samples)
-      .map(([name, url]) => {
-        const isSelected = url === apiUrlParam;
-        return `<option value="${url}" ${isSelected ? "selected" : ""
-          }>${name}</option>`;
-      })
-      .join("")}
+            .map(([name, url]) => {
+              const isSelected = url === apiUrlParam;
+              return `<option value="${url}" ${
+                isSelected ? "selected" : ""
+              }>${name}</option>`;
+            })
+            .join("")}
           <option value="custom">-- Custom URL --</option>
         </select>
         <button id="loadApiBtn">Load</button>
@@ -252,8 +265,7 @@ async function injectModal(
     }
   });
 
-  const badge = document.getElementById("ceresManifestBadge");
-  badge?.addEventListener("click", () => {
+  badge.addEventListener("click", () => {
     if (!decodedManifestPath || decodedManifestPath.includes("No template"))
       return;
     navigator.clipboard.writeText(decodedManifestPath).then(() => {

@@ -11,6 +11,7 @@ import {
   loadTemplateManifest,
   waitForImages,
 } from "./commonUtils";
+import { normalizeInvoicePayload } from "./invoicePayloadContract";
 
 const OUTPUT_ELEMENT_ID = "documentOutput";
 const LYDIA_MODE_PARAM = "isLydiaMode";
@@ -121,8 +122,19 @@ const renderDocument = async () => {
       }
 
       const mapper = (window as any).CeresTemplateDataMapper;
+      /*
+       * A template without a data mapper gets the flat payload, not the host's wrapper.
+       * The wrapper nests the whole document under `invoice`, so a template reading
+       * `items`, `advanceOptions` or `billedBy` off the root — which is what every
+       * mapper-less template does — resolved undefined: an empty item table, and no tax
+       * summary or HSN summary table at all. `normalizeInvoicePayload` is the contract's
+       * own flattener and is a no-op on a payload that is already flat; the mapper path
+       * calls it internally, so it stays untouched here.
+       */
       const mappedPayload =
-        typeof mapper === "function" ? mapper(payload) : payload;
+        typeof mapper === "function"
+          ? mapper(payload)
+          : normalizeInvoicePayload(payload);
 
       if (shouldDebugMapping) {
         console.debug("[CeresMapping]", {
@@ -178,6 +190,8 @@ const renderDocument = async () => {
   }
 };
 
+// The dev bridge returns true when it is redirecting (it rewrites the query
+// string and calls location.replace), so there is nothing worth rendering.
 if (shouldRender) {
   renderDocument();
 }

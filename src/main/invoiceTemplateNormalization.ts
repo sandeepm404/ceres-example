@@ -1,4 +1,5 @@
 import { normalizeInvoicePayload } from "./invoicePayloadContract";
+import { resolveTaxVisibility } from "../widgets/shared/taxVisibility";
 import type {
   FlattenedInvoicePayload,
   InvoicePayloadInput,
@@ -158,7 +159,6 @@ const toNumberValue = (value: unknown, fallback = 0): number => {
 
   return fallback;
 };
-
 const toBooleanValue = (value: unknown, fallback = false): boolean => {
   if (typeof value === "boolean") {
     return value;
@@ -185,6 +185,7 @@ const toBooleanValue = (value: unknown, fallback = false): boolean => {
 
   return fallback;
 };
+
 
 const toNonEmptyString = (value: unknown): string | null => {
   const normalized = toStringValue(value);
@@ -323,25 +324,6 @@ const getInvoiceCessTotal = (invoice: FlattenedInvoicePayload): number => {
   );
 };
 
-// TDS/paid/due only exist per-currency, under the invoice's own settlement
-// currency — `invoice.totalPaid`/`invoice.balanceAmount` are absent on
-// invoices settled this way, so this is the only place those figures live.
-const getPaymentConversion = (invoice: FlattenedInvoicePayload) => {
-  const totalConversions = asRecord(invoice.totalConversions);
-  const currency = toStringValue(invoice.currency);
-  const conversion = asRecord(totalConversions[currency]);
-  const received = toNumberValue(conversion.paid, 0);
-  const transactionCharge = toNumberValue(conversion.transactionCharge, 0);
-
-  return {
-    tds: toNumberValue(conversion.tds, 0),
-    received,
-    transactionCharge,
-    paid: received + transactionCharge,
-    due: toNumberValue(conversion.due, 0),
-  };
-};
-
 const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
   const invoiceTemplate = asRecord(invoice.template);
   const pdfOptions = asRecord(
@@ -352,7 +334,6 @@ const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
   const invoiceType = toStringValue(invoice.invoiceType);
   const taxType = toStringValue(invoice.taxType);
   const isTaxInvoice = invoiceType === "INVOICE";
-  const igstTax = Boolean(invoice.igst);
   const discountEnabled = Boolean(
     toNumberValue(
       pickFirstValue(finalTotal.discount, finalTotal.totalDiscount),
@@ -400,15 +381,26 @@ const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
   const showUnitInName =
     toStringValue(advanceOptions.unitColumn, "MERGE_QUANTITY") === "MERGE_NAME";
 
+  // Structural only — no `hideTaxes` and no export suppression. The item-table columns are
+  // a property of the document's shape, so they must not move when a user toggles a
+  // display setting; the totals rows apply both suppressions on top of this.
+  const taxVisibility = resolveTaxVisibility({
+    invoiceType,
+    taxType,
+    // `igst` is the document's inter-state boolean; `isIgst` never existed on a real
+    // document and stays only as a fallback for a host on the older ceres contract.
+    isInterState: pickFirstValue(invoice.igst, invoice.isIgst),
+  });
+
   return {
     invoiceTemplate,
     pdfOptions,
     advanceOptions,
     isTaxInvoice,
-    igstTax,
     discountEnabled,
     taxType,
     showHsnColumn,
+    taxVisibility,
     showClassificationColumn,
     showInlineHsn,
     showInlineClassification,
@@ -416,6 +408,25 @@ const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
     showUnitInName,
   };
 };
+// TDS/paid/due only exist per-currency, under the invoice's own settlement
+// currency — `invoice.totalPaid`/`invoice.balanceAmount` are absent on
+// invoices settled this way, so this is the only place those figures live.
+const getPaymentConversion = (invoice: FlattenedInvoicePayload) => {
+  const totalConversions = asRecord(invoice.totalConversions);
+  const currency = toStringValue(invoice.currency);
+  const conversion = asRecord(totalConversions[currency]);
+  const received = toNumberValue(conversion.paid, 0);
+  const transactionCharge = toNumberValue(conversion.transactionCharge, 0);
+
+  return {
+    tds: toNumberValue(conversion.tds, 0),
+    received,
+    transactionCharge,
+    paid: received + transactionCharge,
+    due: toNumberValue(conversion.due, 0),
+  };
+};
+
 
 const normalizeInvoiceColumns = (
   invoice: FlattenedInvoicePayload,
@@ -440,28 +451,24 @@ const normalizeInvoiceColumns = (
       } else if (key === "discount") {
         visible = context.discountEnabled;
       } else if (key === "sgst" || key === "cgst") {
-        visible =
-          context.isTaxInvoice &&
-          !context.igstTax &&
-          context.taxType === "INDIA";
+        visible = context.taxVisibility.showCgstSgst;
       } else if (key === "igst") {
-        visible =
-          context.isTaxInvoice &&
-          (context.igstTax || context.taxType === "GLOBAL");
+        visible = context.taxVisibility.showIgst;
       } else if (key === "total") {
         visible = context.isTaxInvoice;
       }
 
       return {
         key,
-        // cgst/sgst labels are derived from igst/utgst flags, not column.label — accounts can mislabel it (e.g. cgst tagged "IGST")
+        // `utgst` is the document field (talos/src/invoices.js:1454); `isUtgst` is the
+        // deprecated ceres-only name no producer sends. Kept in step with
+        // `mapped.visibility.isUtgst` below and with the widget's own label resolver
+        // (src/widgets/shared/taxRowLabels.ts), so a template printing these headers cannot
+        // disagree with one printing the totals block.
         label:
-          key === "sgst"
-            ? invoice.utgst
-              ? "UTGST"
-              : toStringValue(column.label)
-            : key === "cgst"
-            ? "CGST"
+          key === "sgst" &&
+          Boolean(pickFirstValue(invoice.utgst, invoice.isUtgst))
+            ? "UTGST"
             : toStringValue(column.label),
         className: getColumnClass(key),
         isHidden: Boolean(column.isHidden) || !visible,
@@ -525,8 +532,18 @@ export const normalizeInvoiceTemplateState = (
     ["TABLE", "BOTH"].includes(
       toStringValue(context.advanceOptions.taxSummaryView)
     ) && getNestedSummaryEntries(invoice.taxSummary, "taxList").length > 0;
+  // The business toggle gates the section; the data check only avoids rendering an
+  // empty table. The alias is checked first because it is what the Lydia live-update
+  // bridge emits, so when both keys are present it carries the newer user action —
+  // an explicit false from either key still hides the section.
+  const hsnSummaryEnabled = toBooleanValue(
+    pickFirstValue(
+      context.advanceOptions.showHsnSummary,
+      context.advanceOptions.showHSNSummaryInInvoice
+    )
+  );
   const showHsnSummary =
-    toBooleanValue(context.advanceOptions.showHSNSummaryInInvoice) &&
+    hsnSummaryEnabled &&
     getNestedSummaryEntries(invoice.hsnSummary, "hsnList").length > 0;
   const showPaymentsTable =
     toBooleanValue(invoice.showPaymentsTable) &&
@@ -538,9 +555,15 @@ export const normalizeInvoiceTemplateState = (
     (getInvoiceCessTotal(invoice) > 0 ||
       getSummaryCessAmount(invoice.taxSummary, "taxList") > 0 ||
       getSummaryCessAmount(invoice.hsnSummary, "hsnList") > 0);
-  const showIgst =
-    Boolean(invoice.igst) || toStringValue(invoice.taxName) !== "GST";
-  const showCgstSgst = !showIgst && toStringValue(invoice.taxName) === "GST";
+  // Same predicate the item-table columns use, so a template gating cells on
+  // mapped.visibility and headers on mapped.columns can never disagree.
+  let { showIgst, showCgstSgst } = context.taxVisibility;
+  if (!showIgst && !showCgstSgst && !invoice.invoiceType) {
+    showIgst =
+      Boolean(invoice.igst) ||
+      (toStringValue(invoice.taxName) !== "GST" && Boolean(invoice.taxName));
+    showCgstSgst = !showIgst && toStringValue(invoice.taxName) === "GST";
+  }
   // Off unless the payload explicitly opts in; `showDescriptionFullWidth` is the
   // current flag name, `isDescriptionFullWidth` the legacy one.
   const descriptionFullWidth = toBooleanValue(
@@ -551,6 +574,7 @@ export const normalizeInvoiceTemplateState = (
       invoice.isDescriptionFullWidth
     )
   );
+
 
   return {
     invoice,
@@ -584,7 +608,7 @@ export const normalizeInvoiceTemplateState = (
         contactStrip: hasValue(contact.email) || hasValue(contact.phone),
         showIgst,
         showCgstSgst,
-        isUtgst: Boolean(invoice.utgst),
+        isUtgst: Boolean(pickFirstValue(invoice.utgst, invoice.isUtgst)),
         showTaxTable,
         showHsnSummary,
         showPaymentsTable,
