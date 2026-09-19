@@ -13,6 +13,7 @@ import "../../widgets/hsn-summary";
 import "../../widgets/payment-table";
 import "../../widgets/currency-format";
 import "../../widgets/image";
+import "../../widgets/subtotal";
 
 // Template-level Handlebars utility helpers
 const hb = (window as any).Handlebars;

@@ -153,3 +153,47 @@ describe("initDibellaBridge", () => {
     delete (global as any).document;
   });
 });
+
+describe("mapper-shaped root context", () => {
+  /*
+   * A template that assigns normalizeInvoiceTemplateState renders with a root of
+   * { invoice, mapped, ... }. Reading currency off that root resolved undefined, so every
+   * amount silently formatted as INR — the reason the shipped fork concatenated a symbol onto
+   * raw numbers rather than using this helper.
+   */
+  const helperFor = (root: unknown) => {
+    const registry: Record<string, (...args: unknown[]) => unknown> = {};
+    registerFormatCurrencyHelper({
+      registerHelper: (name: string, fn: (...args: unknown[]) => unknown) => {
+        registry[name] = fn;
+      },
+    } as never);
+    return (amount: unknown) =>
+      registry.formatCurrency(amount, { data: { root }, hash: {} });
+  };
+
+  it("reads currency from the nested invoice when a mapper is in use", () => {
+    const format = helperFor({
+      invoice: { currency: "USD", locale: "en-US" },
+      mapped: {},
+    });
+    expect(format(1234.5)).toBe("$1,234.50");
+  });
+
+  it("still reads a flat root when no mapper is in use", () => {
+    const format = helperFor({ currency: "USD", locale: "en-US" });
+    expect(format(1234.5)).toBe("$1,234.50");
+  });
+
+  it("honours the nested subUnitLength and custom symbol", () => {
+    const format = helperFor({
+      invoice: {
+        currency: "SAR",
+        locale: "en-US",
+        subUnitLength: 3,
+        customCurrencySymbol: "SR",
+      },
+    });
+    expect(format(10)).toBe("SR 10.000");
+  });
+});

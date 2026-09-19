@@ -200,8 +200,8 @@
     "discount": 5000,
     "cgst": 11250,
     "sgst": 11250,
-    "igst": 0,
-    "utgst": 0,
+    "igst": false,
+    "utgst": false,
     "finalTotal": {
       "total": 147500,
       "amount": 125000,
@@ -209,7 +209,10 @@
       "discount": 5000,
       "cgst": 11250,
       "sgst": 11250,
-      "igst": 0
+      "igst": 0,
+      "rcmTax": 0,
+      "earlyDiscount": 0,
+      "discountPercentage": 0
     },
     "toPay": {
       "full": 47500,
@@ -221,7 +224,8 @@
       "transactionCharge": 0,
       "settledAmount": 0,
       "tds": 0,
-      "credit": 0
+      "credit": 0,
+      "refund": 0
     },
     "columns": [
       { "key": "name", "label": "Item", "dataType": "text" },
@@ -238,6 +242,8 @@
     ],
     "customLabels": {
       "invoiceNumber": "Invoice No",
+      "totalInWords": "Total (in words)",
+      "totalInWordsValue": "One lakh forty seven thousand five hundred rupees only",
       "invoiceDate": "Invoice Date",
       "dueDate": "Due Date",
       "purchaseOrderNumber": "PO No",
@@ -350,6 +356,14 @@
       }
     ],
     "vendorFields": {},
+    "conversionRates": { "USD": 0.012 },
+    "supplyType": "DOMESTIC",
+    "hideTotals": false,
+    "hideTaxes": false,
+    "hideTotalInWords": false,
+    "extraTotalFields": [
+      { "key": "packing", "label": "Packing Charges", "value": "500" }
+    ],
     "transportDetails": {
       "transportMode": "Road",
       "vehicleNumber": "KA-01-AB-1234",
@@ -399,6 +413,7 @@
       "hideTotals": false,
       "hideCurrencyCode": false,
       "reverseCharge": false,
+      "rcmSummaryView": false,
       "taxSummaryView": "TABLE",
       "showSkuInInvoice": false,
       "showThumbnailAsColumn": false,
@@ -415,7 +430,9 @@
     "invoiceType": "INVOICE",
     "owner": {
       "_id": "own_123",
-      "country": "IN"
+      "country": "IN",
+      "currency": "USD",
+      "locale": "en-US"
     },
     "letterHead": "https://example.com/s3/letterhead.png",
     "letterHeadFooter": "https://example.com/s3/letterhead_footer.png",

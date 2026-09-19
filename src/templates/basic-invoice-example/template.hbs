@@ -198,82 +198,50 @@
     </tbody>
   </table>
 
-  <div class="totals-full-width-section">
-    <div class="total-line">
-      <span class="label">{{customLabels.subTotal}}:</span>
-      <span class="value">{{formatCurrency totals.subTotal}}</span>
-    </div>
-    {{#if totals.discount}}
-    <div class="total-line">
-      <span class="label">Discount:</span>
-      <span class="value">- {{formatCurrency totals.discount}}</span>
-    </div>
-    {{/if}}
-    {{#if totals.igst}}
-    <div class="total-line">
-      <span class="label">IGST:</span>
-      <span class="value">{{formatCurrency totals.igst}}</span>
-    </div>
-    {{/if}}
-    {{#if totals.cgst}}
-    <div class="total-line">
-      <span class="label">CGST:</span>
-      <span class="value">{{formatCurrency totals.cgst}}</span>
-    </div>
-    {{/if}}
-    {{#if totals.sgst}}
-    <div class="total-line">
-      <span class="label">SGST:</span>
-      <span class="value">{{formatCurrency totals.sgst}}</span>
-    </div>
-    {{/if}}
-    {{#if totals.amountRoundOff}}
-    <div class="total-line">
-      <span class="label">Amount Round Off:</span>
-      <span class="value">{{formatCurrency totals.amountRoundOff}}</span>
-    </div>
-    {{/if}}
-    {{#if totals.totalRoundOff}}
-    <div class="total-line">
-      <span class="label">Total Round Off:</span>
-      <span class="value">{{formatCurrency totals.totalRoundOff}}</span>
-    </div>
-    {{/if}}
-    <div class="total-line grand">
-      <span class="label">{{customLabels.total}}:</span>
-      <span class="value">{{formatCurrency totals.total}}</span>
-    </div>
-    {{#if latePaymentFee}}
-    {{#if dueDate}}
-    {{#if latePaymentFee.showInInvoice}}
-    {{#if latePaymentFee.enabled}}
-    {{#unless latePaymentFee.isApplied}}
-    <div class="total-line late-fee">
-      <span class="label">Late Payment Fee:</span>
-      <span class="value">
-        {{#if latePaymentFee.finalAmount}}Additional {{latePaymentFee.finalAmount}} {{/if}}
-        {{#if latePaymentFee.when}}
-          after {{formatDateAddDays dueDate latePaymentFee.when ownerOffset}}
-        {{/if}}
-      </span>
-    </div>
-    {{/unless}}
-    {{/if}}
-    {{/if}}
-    {{/if}}
-    {{/if}}
-    <div class="total-in-words">
-      <span>{{customLabels.totalInWords}}:</span>
-      <span>{{customLabels.totalInWordsValue}}</span>
-    </div>
+  {{!--
+    Totals come from the shared widget. Do not hand-write rows here: it decides the row set
+    and order, resolves labels from the document's own column settings, formats every amount
+    through one currency helper, and emits the data-ceres-* hooks the host patches.
+
+    This template sets no data mapper, so its root is the flat payload and the invoice is
+    `this`. A template that assigns window.CeresTemplateDataMapper passes `invoice` instead.
+  --}}
+  {{> Subtotal (computeSubtotalRows this
+                  columns=columns
+                  businessCurrency=businessCurrency
+                  businessLocale=businessLocale) }}
+
+  {{!--
+    Not a totals row: a forward-looking notice about a fee that has NOT been applied yet.
+    The widget renders the fee once it is applied, matching refrens.com, which has no
+    equivalent of this warning — so it stays template-owned.
+  --}}
+  {{#if latePaymentFee}}
+  {{#if dueDate}}
+  {{#if latePaymentFee.showInInvoice}}
+  {{#if latePaymentFee.enabled}}
+  {{#unless latePaymentFee.isApplied}}
+  <div class="late-fee-notice">
+    <span class="label">Late Payment Fee:</span>
+    <span class="value">
+      {{#if latePaymentFee.finalAmount}}Additional {{formatCurrency latePaymentFee.finalAmount}} {{/if}}
+      {{#if latePaymentFee.when}}
+        after {{formatDateAddDays dueDate latePaymentFee.when ownerOffset}}
+      {{/if}}
+    </span>
   </div>
+  {{/unless}}
+  {{/if}}
+  {{/if}}
+  {{/if}}
+  {{/if}}
 
   <div data-ceres-tax-summary{{#unless (taxTableVisible advanceOptions.taxSummaryView)}} style="display:none"{{/unless}}>
-  {{> TaxSummaryTable (computeTaxSummary items isIgst=isIgst isUtgst=isUtgst) }}
+  {{> TaxSummaryTable (computeTaxSummary items isIgst=(showIgst this) isUtgst=(showUtgst this)) }}
   </div>
 
   <div data-ceres-hsn-summary{{#unless advanceOptions.showHSNSummaryInInvoice}} style="display:none"{{/unless}}>
-  {{> HsnSummaryTable (computeHsnSummary items isIgst=isIgst isUtgst=isUtgst) }}
+  {{> HsnSummaryTable (computeHsnSummary items isIgst=(showIgst this) isUtgst=(showUtgst this)) }}
   </div>
 
   <div data-ceres-payment-table{{#if (eq advanceOptions.showPaymentsTable false)}} style="display:none"{{/if}}>

@@ -5,6 +5,7 @@ import "./styles.css";
 import { computeTaxSummary } from "./utils";
 import amountInWords from "../shared/amountInWords";
 import registerFormatCurrencyHelper from "../shared/registerFormatCurrencyHelper";
+import registerTaxFlagHelpers from "../shared/registerTaxFlagHelpers";
 
 function getHB(): any {
   return (window as any).Handlebars;
@@ -26,6 +27,7 @@ function register(): void {
   });
 
   registerFormatCurrencyHelper(HB);
+  registerTaxFlagHelpers(HB);
 
   HB.registerPartial("TaxSummaryTable", template);
 

@@ -269,8 +269,16 @@ body {
   margin-top: 3px;
 }
 
-/* Creative Totals Section - Full Width */
-.totals-full-width-section {
+/*
+ * Totals — the markup now comes from the shared subtotal widget, so this styles the widget's
+ * classes instead of template-local ones. The widget ships structure only (two-column
+ * alignment, sub-line treatment); the gradient panel, the gold grand total and the italic
+ * words line are this template's look and stay here.
+ *
+ * Note the widget renders a table, not flex rows, so alignment comes from th/td rather than
+ * justify-content.
+ */
+.ceres-subtotal {
   background: linear-gradient(to right,
       var(--primary-color),
       var(--secondary-color));
@@ -284,81 +292,78 @@ body {
 
   /* Space from line items */
   box-shadow: 0 8px 25px rgb(0 0 0 / 20%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   text-align: center;
 }
 
-.totals-full-width-section .total-line {
-  display: flex;
-  justify-content: space-between;
+.ceres-subtotal .ceres-subtotal-table {
   width: 60%;
 
   /* Control internal width of total lines */
-  margin-bottom: 15px;
+  margin: 0 auto;
   font-size: 18px;
+}
+
+.ceres-subtotal .ceres-subtotal-label {
+  padding-bottom: 15px;
   font-weight: 400;
-}
-
-.totals-full-width-section .total-line.grand {
-  font-size: 32px;
-  font-weight: 700;
-  margin-top: 25px;
-  padding-top: 20px;
-  border-top: 2px solid rgb(255 255 255 / 30%);
-  width: 80%;
-
-  /* Grand total spans wider */
-  display: flex;
-
-  /* Ensure it's centered if content is shorter */
-  justify-content: center;
-  gap: 20px;
-  align-items: baseline;
-}
-
-.totals-full-width-section .total-line .label {
-  flex-grow: 1;
-  text-align: left;
   color: rgb(255 255 255 / 80%);
 }
 
-.totals-full-width-section .total-line .value {
-  text-align: right;
-  flex-grow: 1;
+.ceres-subtotal .ceres-subtotal-value {
+  padding-bottom: 15px;
   font-weight: 600;
 }
 
-.totals-full-width-section .total-line.grand .label {
-  text-align: right;
-
-  /* Adjust for centering grand total */
-  flex-grow: 0;
-  margin-right: 15px;
+.ceres-subtotal .ceres-subtotal-row-grand .ceres-subtotal-label,
+.ceres-subtotal .ceres-subtotal-row-grand .ceres-subtotal-value {
+  font-size: 32px;
+  font-weight: 700;
+  padding-top: 20px;
+  border-top: 2px solid rgb(255 255 255 / 30%);
 }
 
-.totals-full-width-section .total-line.grand .value {
-  text-align: left;
-  flex-grow: 0;
+.ceres-subtotal .ceres-subtotal-row-grand .ceres-subtotal-value {
   color: #ffd700;
 
   /* Gold for grand total */
 }
 
-.totals-full-width-section .total-in-words {
+/* The converted amount and the charge tax figure read as supporting detail. */
+.ceres-subtotal .ceres-subtotal-converted,
+.ceres-subtotal .ceres-subtotal-note {
+  color: rgb(255 255 255 / 65%);
+}
+
+/*
+ * The grand total is 32px, and a relative sub-line size would inherit from it — a converted
+ * amount rendered at 27px reads as a second grand total. Pin it to the body size instead.
+ */
+.ceres-subtotal .ceres-subtotal-row-grand .ceres-subtotal-converted {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.ceres-subtotal .ceres-subtotal-words {
   margin-top: 25px;
   font-size: 16px;
   font-style: italic;
   color: rgb(255 255 255 / 90%);
   line-height: 1.5;
-  width: 80%;
 }
 
-.totals-full-width-section .total-in-words span:first-child {
+.ceres-subtotal .ceres-subtotal-words-label {
   font-weight: 600;
   margin-right: 10px;
+}
+
+/* A fee that has not been applied yet — a notice, not a totals row. */
+.late-fee-notice {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+  font-size: 14px;
+  font-style: italic;
+  color: #666;
 }
 
 /* Notes & Terms */

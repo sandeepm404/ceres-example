@@ -16,7 +16,6 @@ A design shows one document; a template serves every document that account will 
 | `design-to-template` | *How do I lay it out?* — CSS, print typography, pagination |
 | `scaffold-template` | File boilerplate |
 | `data-mapping` | *What does the built template actually do with this payload?* — the audit that verifies the spec |
-| `data-binding-tests` | Freezes the verified mapping as tests |
 
 Run before `design-to-template`. Run `data-mapping` after and diff its output against this spec.
 
@@ -171,7 +170,7 @@ Check `src/widgets/` before writing block markup or a template-local helper — 
 | Tax summary | `tax-summary` (`TaxSummaryTable`) |
 | HSN summary | `hsn-summary` (`HsnSummaryTable`) |
 | Payments table | `payment-table` |
-| Amount in words | `amountInWords`, `src/widgets/shared/amountInWords.ts` |
+| Amount in words | `amountInWords` helper — implemented in `src/widgets/shared/amountInWords.ts`, but registered only by `tax-summary` and `hsn-summary` (each `index.ts` has its own copy of the registration). Import one of those widgets; importing the shared module alone gives you a plain function and no Handlebars helper |
 | Money formatting | `formatCurrency`/`registerFormatCurrencyHelper`, `currency-format` |
 | Phone formatting | `phone-number` |
 | Dates | `date-time` |
@@ -179,10 +178,10 @@ Check `src/widgets/` before writing block markup or a template-local helper — 
 | Markdown (notes, item descriptions) | `markdown-viewer` |
 | Status tag, watermark, images, branding | `invoice-status`, `watermark` (CSS pattern, not `<img>`), `image` (own resize box + `srcSet` per asset, see data-mapping §14), `refrens-branding` |
 
-- Importing a widget registers its partial/helpers on `window.CeresWidgets` — skip the import and the block renders empty. Import only what `template.hbs` uses.
+- Importing a widget registers its partial/helpers on `window.CeresWidgets` — skip the import and the block renders empty. Import only what `template.hbs` uses. A helper reaches a template only through a widget that registers it, which is why the static validator resolves helpers through the import graph rather than a global list.
 - Logic shared across widgets/templates goes in `src/widgets/shared/`, not a template's `helpers.ts`.
 - Need a new derived value → add a shared helper, not a payload field. Ask for a field only when the data is missing, never when only its rendering is.
-- Template-local `helpers.ts` is for genuinely local decisions (this layout's column grouping) only.
+- A template-local `helpers.ts` is optional — only templates that declare template-local helpers have one, and neither template on `origin/master` does (`basic-invoice-example` registers its two local helpers inline in `index.ts`). When you do add one, it is for genuinely local decisions (this layout's column grouping) only.
 
 ### Columns are data, not layout
 
@@ -205,7 +204,7 @@ This section is about **authored** labels — headings, totals rows, bank block,
 
 - **Variable** — sourced from `customLabels.*`/`columns[n].label`/`terms[g].label`. Guarded headings vanish on empty override; unguarded print blank — pick deliberately.
 - **Hardcoded** — can't be renamed per account. Fine for structural words, but confirm: `Bank Name`, `Round Off`, `Authorised Signatory`, `Sl No.` are label decisions, not typography.
-- Forced by normalization, never from payload: `cgst` always prints `CGST`; `sgst` prints `UTGST` when `invoice.utgst` is true.
+- Forced by normalization, never from payload: `cgst` always prints `CGST`; `sgst` prints `UTGST` when `invoice.isUtgst` is true.
 
 "Prefer the payload" ≠ "the payload always has one." No key → hardcode; a blank element is worse than a readable hardcoded one.
 
@@ -234,7 +233,7 @@ No name, address, GSTIN, bank, term, or footer string from the reference belongs
 
 ## Files this task creates
 
-Only, inside the template's folder: `index.ts`, `template.hbs`, `styles.css`, `helpers.ts`, `version.json`, `samples.json`. Nothing else without the user asking.
+Only, inside the template's folder: `index.ts`, `template.hbs`, `styles.css`, `version.json`, `samples.json`, plus a `helpers.ts` if — and only if — the template declares template-local helpers (neither template on `origin/master` does). Nothing else without the user asking.
 
 `samples.json` holds real payload links only. No real link yet → reuse an existing real link from elsewhere in the repo and say plainly it's a stand-in, not this account's document. Never fabricate a payload.
 
@@ -255,8 +254,8 @@ Not layout, spacing, or styling — design is refined later, data correctness is
 - Run `data-mapping` against the built template and **diff it against this spec** — divergence is a bug in one of the two.
 - **Read the rendered table**, not just markup — matching adjacent money columns on every row is a defect signal, invisible in markup review and hidden entirely when quantities are all 1.
 - Exercise a second payload that turns latent rows on — inter-state, partially paid, multi-rate, with charges. One-document verification verifies nothing.
-- `npm run build:template --template=<name>`, then freeze with `data-binding-tests` **and** baseline
-  the render with `snapshot-testing` — both are required before handover, and neither covers the
-  other's failures.
+- `npm run build:template --template=<name>`, then freeze the verified mapping as Jest assertions in
+  the template's own test file **and** baseline the render with `snapshot-testing` — both are required
+  before handover, and neither covers the other's failures.
 
 State plainly which of these ran and which didn't.

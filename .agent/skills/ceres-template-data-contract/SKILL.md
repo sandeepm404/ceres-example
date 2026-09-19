@@ -9,6 +9,17 @@ description: Map Ceres invoice/document template designs to the renderer data co
 
 Use this skill to keep new Ceres templates aligned with the invoice payload contract and the normalized template view model. Treat visual references as layout guidance, not as a complete data source.
 
+## Vs. other skills
+
+| Skill | Question it answers |
+|---|---|
+| **This skill** | *Which contract field feeds this visible row?* — path resolution, missing-data gate |
+| `architect-template` | *What must this block be able to render?* — the completeness spec, before markup |
+| `data-mapping` | *What does the built template actually do with this payload?* — the audit that verifies the spec |
+| `design-to-template` | *How do I lay it out?* — CSS, print typography, pagination |
+
+`architect-template` decides the row set; this skill resolves each row to a path and stops the build when one has no source; `data-mapping` audits the built template against the payload afterwards.
+
 ## Contract Sources
 
 Read only the files needed for the task:
