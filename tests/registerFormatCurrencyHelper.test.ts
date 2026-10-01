@@ -194,6 +194,11 @@ describe("mapper-shaped root context", () => {
         customCurrencySymbol: "SR",
       },
     });
-    expect(format(10)).toBe("SR 10.000");
+    // A no-break space, not a plain one. formatCurrency rebuilds the string
+    // from Intl's own parts and joins the custom symbol to the number with
+    // \u00a0 so the two cannot wrap apart, matching toLocaleString's own
+    // output for currencies like AED. The rest of the suite writes it as an
+    // escape for the same reason (see line-items-contract-parity.test.ts).
+    expect(format(10)).toBe("SR\u00a010.000");
   });
 });

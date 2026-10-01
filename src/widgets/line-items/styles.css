@@ -1,0 +1,191 @@
+.line-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.line-items-table th,
+.line-items-table td {
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  text-align: left;
+}
+
+.line-items-table .col-index {
+  width: 28px;
+  text-align: center;
+}
+
+.line-items-table tbody tr.row-even {
+  background: #fafafa;
+}
+
+.line-items-table tbody tr.row-group-subtotal,
+.line-items-table tbody tr.row-summary {
+  font-weight: bold;
+  background: #f0f0f0;
+}
+
+.line-items-table .second-currency-amount {
+  color: #666;
+}
+
+/* --- S12: stretch a short table to fill the page's blank space ---
+ * The wrapper carries its own minimum height rather than depending on an
+ * ancestor flex chain the consuming template may not provide, so the widget
+ * stays self-contained (D2). A single filler row (`tr.row-filler`, built by
+ * normalization) then absorbs that height via `height: 100%` — the standard
+ * table-row percentage-height trick — while every real row keeps its normal
+ * height (SC48). Where the surrounding content already exceeds this height,
+ * the browser has nothing left to distribute to the filler row, so nothing
+ * visibly changes (SC50).
+ */
+.line-items-table-wrapper.is-stretch {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.line-items-table-wrapper.is-stretch .line-items-table {
+  flex: 1 1 auto;
+  height: 100%;
+}
+
+.line-items-table tr.row-filler {
+  height: 100%;
+}
+
+/* Every visible column still renders its own cell in the filler row (no
+ * colspan), so the vertical dividers between columns run unbroken through
+ * the added blank space (SC49). Only the horizontal edges are removed so the
+ * blank space reads as one continuous gap rather than an empty striped row.
+ */
+.line-items-table tr.row-filler td {
+  border-top: none;
+  border-bottom: none;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 0;
+}
+
+/* --- S13: wrap long values inside their own column instead of forcing the
+ * table wider. `table-layout: fixed` is what makes that possible — it stops
+ * a single long, unbroken value from driving the column (and the table)
+ * past the page edge; with many columns configured the fixed layout shares
+ * the same total width across all of them, so the columns get tighter
+ * instead of the table running off the page.
+ */
+.line-items-table.is-wrap-enabled {
+  table-layout: fixed;
+}
+
+.line-items-table.is-wrap-enabled th,
+.line-items-table.is-wrap-enabled td {
+  overflow-wrap: break-word;
+}
+
+/* --- S13: stack each line at narrow widths on the web only ---
+ * Scoped to `screen` so it can never reach the print/PDF path (that always
+ * renders the full desktop table regardless of the screen that triggered
+ * it, handled outside this widget) — printing uses the `print` media type,
+ * which this query does not match.
+ *
+ * One shared cell markup drives both views: a hidden column is simply never
+ * emitted as a cell at all (normalization already filtered it out before
+ * building rows), so there is no second visibility path here that could let
+ * it reappear on a phone. `data-label` on every cell already carries the
+ * same resolved, business-renamed header text the desktop table shows.
+ */
+@media screen and (width <= 640px) {
+  .line-items-table,
+  .line-items-table thead,
+  .line-items-table tbody,
+  .line-items-table tr,
+  .line-items-table th,
+  .line-items-table td {
+    display: block;
+    width: auto;
+  }
+
+  .line-items-table thead {
+    display: none;
+  }
+
+  .line-items-table .col-index {
+    display: none;
+  }
+
+  /* S13: until a business customises its columns, the stacked view shows the
+     standard short set for the document type. Normalization decides which
+     columns those are and marks them; this only stops drawing the rest at
+     narrow widths, so the desktop table and the print path are untouched.
+     A document whose columns have been customised marks none of them, and
+     every column stacks. */
+  .line-items-table.uses-short-set tbody td:not(.col-short-set) {
+    display: none;
+  }
+
+  .line-items-table tbody tr {
+    margin-bottom: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 4px 8px;
+  }
+
+  .line-items-table tbody tr.row-even {
+    background: #fafafa;
+  }
+
+  .line-items-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    border: none;
+    padding: 6px 2px;
+    text-align: right;
+  }
+
+  /* A blank value (e.g. a totals row's un-totalled columns) collapses away
+   * rather than showing a label beside nothing. This depends on
+   * LineItemsTable.hbs emitting the cell with whitespace-control tildes: a
+   * Handlebars block leaves a newline text node behind, and `:empty` requires
+   * zero child nodes, so without them this rule silently matches nothing. It
+   * also matches the row-number cell, which is harmless — that one is already
+   * `display: none` above.
+   */
+  .line-items-table td:empty {
+    display: none;
+  }
+
+  .line-items-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* The item cell's own name/SKU/merged-note/thumbnail markup stays inline
+   * rather than justified, since it carries more than a single value.
+   */
+  .line-items-table td .item-name {
+    text-align: left;
+  }
+
+  /* A blank filler row has no reading on a phone the way it fills a printed
+   * page, so it is dropped from the stacked view entirely — the print path
+   * this behaviour otherwise lives on never reaches this media query anyway.
+   */
+  .line-items-table tr.row-filler {
+    display: none;
+  }
+
+  .line-items-table tr.item-extras-row td.item-extras-cell {
+    display: block;
+    text-align: left;
+  }
+
+  .line-items-table tr.item-extras-row td.col-index {
+    display: none;
+  }
+}

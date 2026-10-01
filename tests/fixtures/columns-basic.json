@@ -24,16 +24,38 @@
     "asideCollapsed": false
   },
   "invoiceValueProps": {
-    "hsn": { "visible": true },
-    "discount": { "visible": true },
-    "quantity": { "visible": true },
-    "rate": { "visible": true },
-    "amount": { "visible": true }
+    "hsn": {
+      "visible": true
+    },
+    "discount": {
+      "visible": true
+    },
+    "quantity": {
+      "visible": true
+    },
+    "rate": {
+      "visible": true
+    },
+    "amount": {
+      "visible": true
+    }
   },
   "defaultBatchColumns": [
-    { "key": "batchName", "label": "Batch", "system": true },
-    { "key": "manufacturingDate", "label": "Mfg. Date", "system": true },
-    { "key": "expiryDate", "label": "Exp. Date", "system": true }
+    {
+      "key": "batchName",
+      "label": "Batch",
+      "system": true
+    },
+    {
+      "key": "manufacturingDate",
+      "label": "Mfg. Date",
+      "system": true
+    },
+    {
+      "key": "expiryDate",
+      "label": "Exp. Date",
+      "system": true
+    }
   ],
   "ewayConfig": {
     "billNumber": true,
@@ -82,7 +104,7 @@
     "taxName": "GST",
     "igst": false,
     "utgst": false,
-    "customCurrencySymbol": "₹",
+    "customCurrencySymbol": "\u20b9",
     "billedBy": {
       "name": "Saga Engineering Consultants",
       "email": "finance@saga.example.com",
@@ -98,6 +120,22 @@
       "pincode": "560100",
       "gstin": "29AABCS1429B1Z",
       "panNumber": "AABCS1429B",
+      "taxId": "29AABCS1429B1Z",
+      "taxPayerType": "REGULAR",
+      "clientType": "BUSINESS",
+      "industry": "Professional Services",
+      "contactPerson": {
+        "contact": "cnt_5521",
+        "name": "Rhea Menon",
+        "email": "rhea@saga.example.com",
+        "phone": "+91 9999911111",
+        "role": "Finance Lead",
+        "department": "Accounts",
+        "displayFields": [
+          "name",
+          "email"
+        ]
+      },
       "emailShowInInvoice": true,
       "phoneShowInInvoice": true,
       "fieldVisibility": {
@@ -152,56 +190,53 @@
     },
     "items": [
       {
-        "_id": "item_1",
-        "name": "Enterprise Plan Subscription",
-        "description": "Annual subscription for cloud productivity suite. Includes 50 user licenses.",
-        "quantity": 1,
-        "rate": 100000,
-        "amount": 100000,
-        "discount": 5000,
-        "subTotal": 112100,
-        "hsn": "998311",
-        "igst": 0,
-        "cgst": 8550,
-        "sgst": 8550,
-        "tax": 18,
-        "images": [
-          "https://example.com/item1_thumb.jpg"
-        ],
-        "customFields": [
-          {
-            "label": "License Key",
-            "value": "XXXX-YYYY-ZZZZ",
-            "dataType": "string",
-            "params": {
-               "showInInvoice": true
-            }
-          }
-        ]
+        "_id": "grp_a",
+        "name": "Group A",
+        "group": true
       },
       {
-        "_id": "item_2",
-        "name": "Onboarding Service",
-        "description": "One-time setup and data migration service.",
+        "_id": "item_a1",
+        "name": "Design Retainer",
+        "rate": 10000,
         "quantity": 2,
-        "rate": 15000,
-        "amount": 30000,
-        "discount": 0,
-        "subTotal": 35400,
-        "hsn": "998312",
-        "igst": 0,
-        "cgst": 2700,
-        "sgst": 2700,
-        "tax": 18,
-        "images": []
+        "sku": "SKU-A1",
+        "amount": 20000,
+        "custom": { "warranty": "12 months" }
+      },
+      {
+        "_id": "item_a2",
+        "name": "Onboarding Service",
+        "rate": 5000,
+        "quantity": 1,
+        "sku": "SKU-A2",
+        "amount": 5000,
+        "custom": { "warranty": "6 months" }
+      },
+      {
+        "_id": "grp_b",
+        "name": "Group B",
+        "group": true
+      },
+      {
+        "_id": "item_b1",
+        "name": "Support Plan",
+        "rate": 3000,
+        "quantity": 4,
+        "sku": "SKU-B1",
+        "amount": 12000,
+        "custom": { "warranty": "" }
+      },
+      {
+        "_id": "ac_1",
+        "name": "Packing Charges",
+        "isAdditionalCharge": true,
+        "amount": 500
       }
     ],
     "subTotal": 130000,
     "discount": 5000,
     "cgst": 11250,
     "sgst": 11250,
-    "igst": false,
-    "utgst": false,
     "finalTotal": {
       "total": 147500,
       "amount": 125000,
@@ -209,10 +244,7 @@
       "discount": 5000,
       "cgst": 11250,
       "sgst": 11250,
-      "igst": 0,
-      "rcmTax": 0,
-      "earlyDiscount": 0,
-      "discountPercentage": 0
+      "igst": 0
     },
     "toPay": {
       "full": 47500,
@@ -224,26 +256,43 @@
       "transactionCharge": 0,
       "settledAmount": 0,
       "tds": 0,
-      "credit": 0,
-      "refund": 0
+      "credit": 0
     },
     "columns": [
-      { "key": "name", "label": "Item", "dataType": "text" },
-      { "key": "quantity", "label": "Qty", "dataType": "number" },
-      { "key": "rate", "label": "Rate", "dataType": "number" },
-      { "key": "discount", "label": "Discount", "dataType": "number" },
-      { "key": "amount", "label": "Amount", "dataType": "number" },
-      { "key": "hsn", "label": "HSN/SAC", "dataType": "text" },
-      { "key": "gstRate", "label": "GST Rate", "dataType": "number" },
-      { "key": "cgst", "label": "CGST", "dataType": "number" },
-      { "key": "sgst", "label": "SGST", "dataType": "number" },
-      { "key": "igst", "label": "IGST", "dataType": "number" },
-      { "key": "total", "label": "Total", "dataType": "number" }
+      {
+        "key": "rate",
+        "label": "Rate",
+        "dataType": "number"
+      },
+      {
+        "key": "name",
+        "label": "Item",
+        "dataType": "text"
+      },
+      {
+        "key": "quantity",
+        "label": "Qty",
+        "dataType": "number"
+      },
+      {
+        "key": "sku",
+        "label": "SKU",
+        "dataType": "text",
+        "isHidden": true
+      },
+      {
+        "key": "amount",
+        "label": "Line Total",
+        "dataType": "number"
+      },
+      {
+        "key": "warranty",
+        "label": "Warranty",
+        "dataType": "text"
+      }
     ],
     "customLabels": {
       "invoiceNumber": "Invoice No",
-      "totalInWords": "Total (in words)",
-      "totalInWordsValue": "One lakh forty seven thousand five hundred rupees only",
       "invoiceDate": "Invoice Date",
       "dueDate": "Due Date",
       "purchaseOrderNumber": "PO No",
@@ -259,10 +308,16 @@
       "signature": "Authorised Signatory"
     },
     "customHeaders": [
-      { "label": "Project Code", "value": "PRJ-SEC-26-09" }
+      {
+        "label": "Project Code",
+        "value": "PRJ-SEC-26-09"
+      }
     ],
     "customFooters": [
-      { "label": "Support Portal", "value": "support.saga.example.com" }
+      {
+        "label": "Support Portal",
+        "value": "support.saga.example.com"
+      }
     ],
     "contact": {
       "email": "finance@saga.example.com",
@@ -318,7 +373,18 @@
         "igst": 0
       }
     ],
-    "cesses": [],
+    "cesses": [
+      {
+        "_id": "cess_1",
+        "name": "Compensation Cess",
+        "cessKey": "compensationCess",
+        "cessAmountKey": "compensationCessAmount",
+        "cessName": "Comp. Cess",
+        "cessType": "CENTRAL",
+        "isApplied": false,
+        "amount": 0
+      }
+    ],
     "latePaymentFee": {
       "enabled": true,
       "showInInvoice": true,
@@ -351,19 +417,13 @@
         "value": "PRJ-SEC-26-09",
         "dataType": "string",
         "params": {
-           "showInInvoice": true
+          "showInInvoice": true
         }
       }
     ],
-    "vendorFields": {},
-    "conversionRates": { "USD": 0.012 },
-    "supplyType": "DOMESTIC",
-    "hideTotals": false,
-    "hideTaxes": false,
-    "hideTotalInWords": false,
-    "extraTotalFields": [
-      { "key": "packing", "label": "Packing Charges", "value": "500" }
-    ],
+    "vendorFields": {
+      "vendorCode": "VND-114"
+    },
     "transportDetails": {
       "transportMode": "Road",
       "vehicleNumber": "KA-01-AB-1234",
@@ -373,6 +433,7 @@
       "distance": "35",
       "transactionType": "Regular",
       "subSupplyType": "Supply",
+      "subSupplyDesc": "Outward supply against a tax invoice",
       "extraInformation": "Handle with care",
       "transporter": {
         "name": "BlueDart Logistics",
@@ -413,14 +474,20 @@
       "hideTotals": false,
       "hideCurrencyCode": false,
       "reverseCharge": false,
-      "rcmSummaryView": false,
       "taxSummaryView": "TABLE",
       "showSkuInInvoice": false,
       "showThumbnailAsColumn": false,
       "hideGroupSubTotal": false,
       "unitColumn": "MERGE_QUANTITY",
       "hsnView": "DEFAULT",
-      "hideCountryOfSupply": false
+      "hideCountryOfSupply": false,
+      "showHSNSummaryInInvoice": true,
+      "showHsnSummary": true,
+      "showStockSummary": true,
+      "showPaymentsTable": true,
+      "showCreatorInInvoice": true,
+      "showSerialNumbersInDescription": false,
+      "showBatchColumnsInInvoice": true
     },
     "reminders": {
       "sent": true
@@ -430,9 +497,7 @@
     "invoiceType": "INVOICE",
     "owner": {
       "_id": "own_123",
-      "country": "IN",
-      "currency": "USD",
-      "locale": "en-US"
+      "country": "IN"
     },
     "letterHead": "https://example.com/s3/letterhead.png",
     "letterHeadFooter": "https://example.com/s3/letterhead_footer.png",
@@ -445,6 +510,84 @@
         "letterHeadOnFirstPage": true,
         "footerOnLastPage": true
       }
-    }
+    },
+    "qrCode": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+    "totals": {
+      "subTotal": 130000,
+      "discount": 5000,
+      "cgst": 11250,
+      "sgst": 11250,
+      "igst": 0,
+      "amountRoundOff": 0,
+      "totalRoundOff": null,
+      "totalCess": 0,
+      "cessTotal": {
+        "compensationCess": 0
+      },
+      "total": 147500
+    },
+    "linkedInvoices": [
+      {
+        "_id": "inv_linked_1",
+        "billType": "CREDIT_NOTE",
+        "invoiceNumber": "CN-2026-0002",
+        "invoiceDate": "2026-03-18T05:30:00.000Z",
+        "finalTotal": {
+          "total": 2500
+        }
+      }
+    ],
+    "sharedDocumentId": "shr_9f2c1a",
+    "share": {
+      "link": "https://example.com/share/shr_9f2c1a",
+      "name": "Invoice INV-2026-0007",
+      "fileName": "INV-2026-0007.pdf",
+      "pdf": "https://example.com/s3/invoices/INV-2026-0007.pdf",
+      "printLabels": [
+        {
+          "label": "Original for Recipient",
+          "pdf": "https://example.com/s3/invoices/INV-2026-0007-original.pdf"
+        }
+      ]
+    },
+    "batchSummary": [
+      {
+        "inventory": "inv_item_1",
+        "itemName": "Design Retainer",
+        "sku": "SKU-001",
+        "batch": {
+          "batchNumber": "B-2026-01",
+          "expiryDate": "2027-01-31"
+        },
+        "warehouse": "wh_blr_1",
+        "warehouseName": "Bengaluru Main",
+        "quantity": 1
+      }
+    ],
+    "creditDiscount": 0,
+    "beforeDiscountPay": {
+      "full": 152500
+    },
+    "earlyPayDiscount": {
+      "enabled": true,
+      "applied": false,
+      "totals": {
+        "discount": 2500,
+        "total": 145000
+      }
+    },
+    "hasPgPayments": true,
+    "totalConversions": {
+      "USD": 1750.25
+    },
+    "lastPaymentDate": "2026-03-20T05:30:00.000Z",
+    "extraTotalFields": [
+      {
+        "key": "packing",
+        "label": "Packing Charges",
+        "value": "500"
+      }
+    ],
+    "hideTotalInWords": false
   }
 }

@@ -1,7 +1,7 @@
 <div class="invoice-modern-shell">
-  <div class="no-dibella invoice-letterhead{{#unless letterHead}} is-empty{{/unless}}">
-    {{#if letterHead}}
-      <img src="{{letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+  <div class="no-dibella invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+    {{#if invoice.letterHead}}
+      <img src="{{invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
     {{else}}
       <img alt="Letterhead" data-ceres-height="letterhead" />
     {{/if}}
@@ -10,7 +10,7 @@
   <div class="invoice-modern-container">
   <div class="invoice-header-modern">
     <div class="logo-section">
-      <h1>{{ invoiceTitle }}</h1>
+      <h1>{{ invoice.invoiceTitle }}</h1>
       <p>For Professional Services</p>
       <div style="margin-top:8px">{{> DemoBadge }}</div>
     </div>
@@ -20,52 +20,52 @@
     <div class="info-section invoice-details">
       <h3>Invoice Details</h3>
       <p>
-        <span class="meta-label">{{customLabels.invoiceNumber}}</span>
-        <strong>{{invoiceNumber}}</strong>
+        <span class="meta-label">{{invoice.customLabels.invoiceNumber}}</span>
+        <strong>{{invoice.invoiceNumber}}</strong>
       </p>
       <p>
-        <span class="meta-label">{{customLabels.invoiceDate}}:</span>
-        {{formateShortDateWithOffset invoiceDate ownerOffset}}
+        <span class="meta-label">{{invoice.customLabels.invoiceDate}}:</span>
+        {{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}
       </p>
       <p>
-        <span class="meta-label">{{customLabels.dueDate}}:</span>
-        <strong>{{formateShortDateWithOffset dueDate ownerOffset}}</strong>
+        <span class="meta-label">{{invoice.customLabels.dueDate}}:</span>
+        <strong>{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</strong>
       </p>
-      {{#if irn}}
-      {{#if irn.Irn}}
+      {{#if invoice.irn}}
+      {{#if invoice.irn.Irn}}
       <p>
         <span class="meta-label">IRN:</span>
-        <span data-ceres-field="irn" class="irn-value">{{irn.Irn}}</span>
+        <span data-ceres-field="irn" class="irn-value">{{invoice.irn.Irn}}</span>
       </p>
       {{/if}}
-      {{#if irn.AckDt}}
+      {{#if invoice.irn.AckDt}}
       <p>
         <span class="meta-label">IRN Ack Date:</span>
-        {{formatDateInTimeZone irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+        {{formatDateInTimeZone invoice.irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
       </p>
       {{/if}}
-      {{#if irn.CancelDate}}
+      {{#if invoice.irn.CancelDate}}
       <p>
         <span class="meta-label">IRN Cancelled On:</span>
-        {{formateShortDateWithOffset irn.CancelDate ownerOffset}}
+        {{formateShortDateWithOffset invoice.irn.CancelDate invoice.ownerOffset}}
       </p>
       {{/if}}
-      {{#if irn.EwbDt}}
+      {{#if invoice.irn.EwbDt}}
       <p>
         <span class="meta-label">E-Way Bill Date:</span>
-        {{formatDateInTimeZone irn.EwbDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+        {{formatDateInTimeZone invoice.irn.EwbDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
       </p>
       {{/if}}
-      {{#if irn.EwbValidTill}}
+      {{#if invoice.irn.EwbValidTill}}
       <p>
         <span class="meta-label">E-Way Valid Till:</span>
-        {{formatDateInTimeZone irn.EwbValidTill "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+        {{formatDateInTimeZone invoice.irn.EwbValidTill "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
       </p>
       {{/if}}
-      {{#if irn.ewayCancelDate}}
+      {{#if invoice.irn.ewayCancelDate}}
       <p>
         <span class="meta-label">E-Way Cancelled On:</span>
-        {{formatDateInTimeZone irn.ewayCancelDate "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
+        {{formatDateInTimeZone invoice.irn.ewayCancelDate "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
       </p>
       {{/if}}
       {{/if}}
@@ -76,157 +76,121 @@
       {{!-- Status tag using the minimal InvoiceStatus widget --}}
       <p>
         <span class="meta-label">Status:</span>
-        {{> InvoiceStatus }}
+        {{> InvoiceStatus invoice }}
       </p>
-      {{#if purchaseOrderNumber}}
+      {{#if invoice.purchaseOrderNumber}}
       <p>
-        <span class="meta-label">{{customLabels.purchaseOrderNumber}}:</span>
-        {{purchaseOrderNumber}}
+        <span class="meta-label">{{invoice.customLabels.purchaseOrderNumber}}:</span>
+        {{invoice.purchaseOrderNumber}}
       </p>
       {{/if}}
     </div>
 
     <div class="info-section billed-by">
-      <h3>{{customLabels.billedBy}}</h3>
-      <p><strong>{{billedBy.name}}</strong></p>
+      <h3>{{invoice.customLabels.billedBy}}</h3>
+      <p><strong>{{invoice.billedBy.name}}</strong></p>
       <p>
-        {{billedBy.street}}<br />{{billedBy.city}}, {{billedBy.state}}
-        {{billedBy.pincode}}<br />{{billedBy.country}}
+        {{invoice.billedBy.street}}<br />{{invoice.billedBy.city}}, {{invoice.billedBy.state}}
+        {{invoice.billedBy.pincode}}<br />{{invoice.billedBy.country}}
       </p>
-      {{#if billedBy.vatNumber}}
+      {{#if invoice.billedBy.vatNumber}}
       <p>
-        <span class="vat-number-label">{{billedBy.vatLabel}}:</span>
-        {{billedBy.vatNumber}}
+        <span class="vat-number-label">{{invoice.billedBy.vatLabel}}:</span>
+        {{invoice.billedBy.vatNumber}}
       </p>
       {{/if}}
-      {{#if billedBy.phone}}
-        <p>Phone: {{formatPhoneNumber billedBy.phone}}</p>
+      {{#if invoice.billedBy.phone}}
+        <p>Phone: {{formatPhoneNumber invoice.billedBy.phone}}</p>
       {{/if}}
     </div>
 
     <div class="info-section billed-to">
-      <h3>{{customLabels.billedTo}}</h3>
-      <p><strong>{{billedTo.name}}</strong></p>
+      <h3>{{invoice.customLabels.billedTo}}</h3>
+      <p><strong>{{invoice.billedTo.name}}</strong></p>
       <p>
-        {{billedTo.street}}<br />{{billedTo.city}}, {{billedTo.state}}
-        {{billedTo.pincode}}<br />{{billedTo.country}}
+        {{invoice.billedTo.street}}<br />{{invoice.billedTo.city}}, {{invoice.billedTo.state}}
+        {{invoice.billedTo.pincode}}<br />{{invoice.billedTo.country}}
       </p>
-      {{#if billedTo.gstin}}
-      <p>GSTIN: {{billedTo.gstin}}</p>
+      {{#if invoice.billedTo.gstin}}
+      <p>GSTIN: {{invoice.billedTo.gstin}}</p>
       {{/if}}
-      {{#if billedTo.phone}}
-        <p>Phone: {{formatPhoneNumber billedTo.phone}}</p>
+      {{#if invoice.billedTo.phone}}
+        <p>Phone: {{formatPhoneNumber invoice.billedTo.phone}}</p>
       {{/if}}
     </div>
 
-    {{#if transportDetails}}
+    {{#if invoice.transportDetails}}
     <div class="info-section transport-details">
       <h3>Transport</h3>
-      {{#if transportDetails.transport}}
+      {{#if invoice.transportDetails.transport}}
       <p>
         <span class="meta-label">Mode:</span>
-        {{transportDetails.transport}}
+        {{invoice.transportDetails.transport}}
       </p>
       {{/if}}
-      {{#if transportDetails.transportMode}}
+      {{#if invoice.transportDetails.transportMode}}
       <p>
         <span class="meta-label">Transport Mode:</span>
-        {{transportDetails.transportMode}}
+        {{invoice.transportDetails.transportMode}}
       </p>
       {{/if}}
-      {{#if transportDetails.challanNumber}}
+      {{#if invoice.transportDetails.challanNumber}}
       <p>
         <span class="meta-label">Challan No.:</span>
-        {{transportDetails.challanNumber}}
+        {{invoice.transportDetails.challanNumber}}
       </p>
       {{/if}}
-      {{#if transportDetails.challanDate}}
+      {{#if invoice.transportDetails.challanDate}}
       <p>
         <span class="meta-label">Challan Date:</span>
-        {{formateDateWithOffset transportDetails.challanDate ownerOffset}}
+        {{formateDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}
       </p>
       {{/if}}
-      {{#if transportDetails.extraInformation}}
+      {{#if invoice.transportDetails.extraInformation}}
       <p>
         <span class="meta-label">Notes:</span>
-        {{transportDetails.extraInformation}}
+        {{invoice.transportDetails.extraInformation}}
       </p>
       {{/if}}
     </div>
     {{/if}}
   </div>
 
-  <table class="item-table-modern">
-    <thead>
-      <tr>
-        <th class="description-col">Service Description</th>
-        <th class="text-right">QTY</th>
-        <th class="text-right">Rate</th>
-        <th class="text-right">VAT Rate</th>
-        <th class="text-right">Amount</th>
-        <th class="text-right">VAT</th>
-        <th class="text-right">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each items}}
-      <tr>
-        <td>
-          <span class="item-name">{{name}}</span>
-          {{#if sku}}<span class="item-sku"> (SKU: {{sku}})</span>{{/if}}
-          {{#if description}}
-            <br />
-            <div class="item-desc">
-              {{> MarkdownViewer (prepareMarkdownViewerData description) }}
-            </div>
-          {{/if}}
-          {{#if images}}
-            {{> CeresImageGallery (prepareImageGallery images variant="thumbnail" alt=name) }}
-          {{/if}}
-          {{#if originalImages}}
-            {{> CeresImageGallery (prepareImageGallery originalImages variant="original" alt=name) }}
-          {{/if}}
-        </td>
-        <td class="text-right">{{quantity}}</td>
-        <td class="text-right">{{formatCurrency rate}}</td>
-        <td class="text-right">{{gstRate}}%</td>
-        <td class="text-right">{{formatCurrency amount}}</td>
-        <td class="text-right">{{formatCurrency igst}}</td>
-        <td class="text-right"><strong>{{formatCurrency total}}</strong></td>
-      </tr>
-      {{/each}}
-    </tbody>
-  </table>
+  {{> LineItemsTable mapped}}
 
   {{!--
     Totals come from the shared widget. Do not hand-write rows here: it decides the row set
     and order, resolves labels from the document's own column settings, formats every amount
     through one currency helper, and emits the data-ceres-* hooks the host patches.
 
-    This template sets no data mapper, so its root is the flat payload and the invoice is
-    `this`. A template that assigns window.CeresTemplateDataMapper passes `invoice` instead.
+    This template DOES set a data mapper (window.CeresTemplateDataMapper =
+    normalizeInvoiceTemplateState), so its root is
+    { invoice, advanceOptions, mapped, derived } and the flat payload the widget
+    expects is `invoice`, not `this`. normalizeInvoicePayload merges the host
+    wrapper fields onto it, so businessCurrency/businessLocale are reachable there
+    too. docs/learnings/ceres/template-root-context-depends-on-mapper.md
   --}}
-  {{> Subtotal (computeSubtotalRows this
-                  columns=columns
-                  businessCurrency=businessCurrency
-                  businessLocale=businessLocale) }}
+  {{> Subtotal (computeSubtotalRows invoice
+                  columns=invoice.columns
+                  businessCurrency=invoice.businessCurrency
+                  businessLocale=invoice.businessLocale) }}
 
   {{!--
     Not a totals row: a forward-looking notice about a fee that has NOT been applied yet.
     The widget renders the fee once it is applied, matching refrens.com, which has no
     equivalent of this warning — so it stays template-owned.
   --}}
-  {{#if latePaymentFee}}
-  {{#if dueDate}}
-  {{#if latePaymentFee.showInInvoice}}
-  {{#if latePaymentFee.enabled}}
-  {{#unless latePaymentFee.isApplied}}
+  {{#if invoice.latePaymentFee}}
+  {{#if invoice.dueDate}}
+  {{#if invoice.latePaymentFee.showInInvoice}}
+  {{#if invoice.latePaymentFee.enabled}}
+  {{#unless invoice.latePaymentFee.isApplied}}
   <div class="late-fee-notice">
     <span class="label">Late Payment Fee:</span>
     <span class="value">
-      {{#if latePaymentFee.finalAmount}}Additional {{formatCurrency latePaymentFee.finalAmount}} {{/if}}
-      {{#if latePaymentFee.when}}
-        after {{formatDateAddDays dueDate latePaymentFee.when ownerOffset}}
+      {{#if invoice.latePaymentFee.finalAmount}}Additional {{formatCurrency invoice.latePaymentFee.finalAmount}} {{/if}}
+      {{#if invoice.latePaymentFee.when}}
+        after {{formatDateAddDays invoice.dueDate invoice.latePaymentFee.when invoice.ownerOffset}}
       {{/if}}
     </span>
   </div>
@@ -237,32 +201,37 @@
   {{/if}}
 
   <div data-ceres-tax-summary{{#unless (taxTableVisible advanceOptions.taxSummaryView)}} style="display:none"{{/unless}}>
-  {{> TaxSummaryTable (computeTaxSummary items isIgst=(showIgst this) isUtgst=(showUtgst this)) }}
+  {{!-- This template installs a CeresTemplateDataMapper, so the root is
+        { invoice, advanceOptions, mapped, derived } and the flat payload the
+        tax-flag helpers expect is `invoice`. Passing `this` would hand them the
+        wrapper and silently resolve every flag to false.
+        docs/learnings/ceres/template-root-context-depends-on-mapper.md --}}
+  {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
   </div>
 
   <div data-ceres-hsn-summary{{#unless advanceOptions.showHSNSummaryInInvoice}} style="display:none"{{/unless}}>
-  {{> HsnSummaryTable (computeHsnSummary items isIgst=(showIgst this) isUtgst=(showUtgst this)) }}
+  {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
   </div>
 
   <div data-ceres-payment-table{{#if (eq advanceOptions.showPaymentsTable false)}} style="display:none"{{/if}}>
-  {{> PaymentTable (computePaymentColumns allPayments businessCurrency=businessCurrency currency=currency)
-      ownerOffset=ownerOffset
+  {{> PaymentTable (computePaymentColumns invoice.allPayments businessCurrency=invoice.businessCurrency currency=invoice.currency)
+      ownerOffset=invoice.ownerOffset
       heading="Payments"
   }}
   </div>
 
   <div class="notes-terms-modern-section">
-    {{#if notes}}
+    {{#if invoice.notes}}
     <div class="notes-modern-block">
-      <h3>{{customLabels.notes}}</h3>
-      {{> MarkdownViewer (prepareMarkdownViewerData notes) }}
+      <h3>{{invoice.customLabels.notes}}</h3>
+      {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
     </div>
     {{/if}}
-    {{#if terms.0.terms.length}}
+    {{#if invoice.terms.0.terms.length}}
     <div class="terms-modern-block">
-      <h3>{{customLabels.terms}}</h3>
+      <h3>{{invoice.customLabels.terms}}</h3>
       <ul>
-        {{#each terms.0.terms}}
+        {{#each invoice.terms.0.terms}}
         <li>{{this}}</li>
         {{/each}}
       </ul>
@@ -284,16 +253,16 @@
   </div>
 
   <div class="invoice-footer-modern">
-    <p>&copy; 2025 {{billedBy.name}}. All rights reserved.</p>
+    <p>&copy; 2025 {{invoice.billedBy.name}}. All rights reserved.</p>
   </div>
 
-    {{> RefrensBranding}}
+    {{> RefrensBranding invoice}}
 
   </div>
 
-  <div class="no-dibella invoice-letterhead-footer{{#unless letterHeadFooter}} is-empty{{/unless}}">
-    {{#if letterHeadFooter}}
-      <img src="{{letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+  <div class="no-dibella invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if invoice.letterHeadFooter}}
+      <img src="{{invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}
       <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{/if}}

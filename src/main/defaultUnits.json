@@ -1,0 +1,378 @@
+[
+  {
+    "key": "BAG",
+    "code": "BAG",
+    "desc": "BAGS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "BAL",
+    "code": "BAL",
+    "desc": "BALE",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "BDL",
+    "code": "BDL",
+    "desc": "BUNDLES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "BKL",
+    "code": "BKL",
+    "desc": "BUCKLES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "BOU",
+    "code": "BOU",
+    "desc": "BILLION OF UNITS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "BOX",
+    "code": "BOX",
+    "desc": "BOX",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "BTL",
+    "code": "BTL",
+    "desc": "BOTTLES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "BUN",
+    "code": "BUN",
+    "desc": "BUNCHES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "CAN",
+    "code": "CAN",
+    "desc": "CANS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "CCM",
+    "code": "CCM",
+    "desc": "CUBIC CENTIMETERS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "CMS",
+    "code": "CMS",
+    "desc": "CENTIMETERS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "CBM",
+    "code": "CBM",
+    "desc": "CUBIC METERS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "CTN",
+    "code": "CTN",
+    "desc": "CARTONS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "DOZ",
+    "code": "DOZ",
+    "desc": "DOZENS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "DRM",
+    "code": "DRM",
+    "desc": "DRUMS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "GGK",
+    "code": "GGK",
+    "desc": "GREAT GROSS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "GMS",
+    "code": "GMS",
+    "desc": "GRAMMES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "GRS",
+    "code": "GRS",
+    "desc": "GROSS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "GYD",
+    "code": "GYD",
+    "desc": "GROSS YARDS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "KGS",
+    "code": "KGS",
+    "desc": "KILOGRAMS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "KLR",
+    "code": "KLR",
+    "desc": "KILOLITRE",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "KME",
+    "code": "KME",
+    "desc": "KILOMETRE",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "LTR",
+    "code": "LTR",
+    "desc": "LITRES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "MLS",
+    "code": "MLS",
+    "desc": "MILLI LITRES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "MLT",
+    "code": "MLT",
+    "desc": "MILILITRE",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "MTR",
+    "code": "MTR",
+    "desc": "METERS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "MTS",
+    "code": "MTS",
+    "desc": "METRIC TON",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "NOS",
+    "code": "NOS",
+    "desc": "NUMBERS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "PAC",
+    "code": "PAC",
+    "desc": "PACKS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "PCS",
+    "code": "PCS",
+    "desc": "PIECES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "PRS",
+    "code": "PRS",
+    "desc": "PAIRS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "QTL",
+    "code": "QTL",
+    "desc": "QUINTAL",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "ROL",
+    "code": "ROL",
+    "desc": "ROLLS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "SET",
+    "code": "SET",
+    "desc": "SETS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "SQF",
+    "code": "SQF",
+    "desc": "SQUARE FEET",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "SQM",
+    "code": "SQM",
+    "desc": "SQUARE METERS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "SQY",
+    "code": "SQY",
+    "desc": "SQUARE YARDS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "TBS",
+    "code": "TBS",
+    "desc": "TABLETS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "TGM",
+    "code": "TGM",
+    "desc": "TEN GROSS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "THD",
+    "code": "THD",
+    "desc": "THOUSANDS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "TON",
+    "code": "TON",
+    "desc": "TONNES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "TUB",
+    "code": "TUB",
+    "desc": "TUBES",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "UGS",
+    "code": "UGS",
+    "desc": "US GALLONS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "UNT",
+    "code": "UNT",
+    "desc": "UNITS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "YDS",
+    "code": "YDS",
+    "desc": "YARDS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "LBS",
+    "code": "LBS",
+    "desc": "Pounds",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  },
+  {
+    "key": "OTH",
+    "code": "OTH",
+    "desc": "OTHERS",
+    "isArchived": false,
+    "isRemoved": false,
+    "system": true
+  }
+]

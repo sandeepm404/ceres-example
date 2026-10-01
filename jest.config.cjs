@@ -9,25 +9,33 @@ module.exports = {
   testEnvironment: "node",
   transform: {
     "^.+\\.(ts)$": ["babel-jest", { rootMode: "upward" }],
-    "^.+\\.(hbs)$": "<rootDir>/tests/hbsTransform.js"
+    "^.+\\.(hbs)$": "<rootDir>/tests/hbsTransform.js",
   },
   moduleFileExtensions: ["ts", "js", "json", "hbs"],
-  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/tests/render-invoice.test.ts"],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'json', 'json-summary'],
-  ...(isStagedRun ? {} : {
-    coverageThreshold: {
-      global: {
-        branches: 100,
-        functions: 100,
-        lines: 100,
-        statements: 100,
-      },
-    },
-    collectCoverageFrom: [
-      'src/**/*.{ts,js}',
-      '!src/**/*.d.ts',
-      '!src/**/index.ts',
-    ],
-  }),
+  // Templates and widgets import their stylesheet as a side effect; jest has no
+  // bundler to resolve raw CSS, so stub it the way webpack's css-loader would
+  // for test purposes — its contents are not under test here.
+  moduleNameMapper: {
+    "\\.css$": "<rootDir>/tests/styleMock.js",
+  },
+  testPathIgnorePatterns: ["/node_modules/"],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "lcov", "json", "json-summary"],
+  ...(isStagedRun
+    ? {}
+    : {
+        coverageThreshold: {
+          global: {
+            branches: 100,
+            functions: 100,
+            lines: 100,
+            statements: 100,
+          },
+        },
+        collectCoverageFrom: [
+          "src/**/*.{ts,js}",
+          "!src/**/*.d.ts",
+          "!src/**/index.ts",
+        ],
+      }),
 };

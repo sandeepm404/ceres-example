@@ -167,10 +167,11 @@ export interface InvoiceData {
   // Inter-state sale and union-territory flags. These are the real document fields —
   // lydia writes `igst: !!totalIgst` (src/helpers/getInvoiceDataFromEntry.js), serana
   // projects `igst` (src/lib/app-invoice-response.js), and both balance.js and serana's
-  // report class rename them locally (`igst: igstTax`, `utgst: enableUtgst`). They are
-  // booleans, not amounts: the tax figures live on `finalTotal`.
-  igst?: boolean;
-  utgst?: boolean;
+  // report class rename them locally (`igst: igstTax`, `utgst: enableUtgst`). Read them
+  // as flags: older documents carry the tax amount under the same key, so the number is
+  // accepted too, but the figures that get rendered live on `finalTotal`.
+  igst?: boolean | number;
+  utgst?: boolean | number;
   // DEPRECATED. No producer has ever sent these; they were ceres's own invention and
   // reading them meant the inter-state flag was always undefined. Kept as a fallback for
   // a host built against the older contract. Remove once none send them.
@@ -204,6 +205,15 @@ export interface InvoiceData {
   invoiceAccepted?: string;
   roundOffQuantity?: boolean;
   roundOffRate?: boolean;
+  // Gates whether a percentage discount is padded to subUnitLength decimals
+  // (`12.00%`) or printed exactly as entered (`12%`). Named after the field
+  // lydia's own line-items table reads (src/components/widgets/invoice/lineItems.js).
+  applyNumberFormatToDiscounts?: boolean;
+  // True once a business has customised its line-item columns. Persisted by
+  // the server (talos invoices schema) and read by refrens.com to decide the
+  // narrow-width short column set (S13); never typed here before, so it is
+  // read defensively and the short set simply does not apply when absent.
+  isColumnsModified?: boolean;
   showTotalsRow?: boolean;
   hideTotalInWords?: boolean;
   showPaymentsTable?: boolean;
@@ -317,6 +327,7 @@ export interface LinkedInvoice {
   finalTotal?: InvoiceTotals;
   [key: string]: any;
 }
+
 export interface DocumentBatchSummaryEntry {
   inventory?: string;
   itemName?: string;
@@ -423,7 +434,15 @@ export interface LineItem {
   rate: number;
   amount: number;
   subTotal?: number;
-  discount?: number;
+  // The shape production sends is the object form, matching serana's
+  // item.discount.{discountType,amount} (PERCENTAGE | FIXED_AMOUNT). A plain
+  // number is a legacy shorthand for "a percentage with no declared type" and
+  // is read that way (formatDiscount, lineItemCells.ts) — refrens.com would
+  // print "0%" for it instead, because lydia reads only `.amount` off the
+  // object and falls back to its own `n = 0` default (invoiceValue.js:352-358).
+  // Being lenient here costs nothing: the bare shape does not occur in
+  // production, and printing a real discount beats printing a wrong zero.
+  discount?: number | { discountType?: string; amount?: number };
   hsn?: string;
   images?: string[];
   originalImages?: string[];
@@ -625,6 +644,7 @@ export type HostPayloadFields = Partial<
 export interface FlattenedInvoicePayload
   extends InvoiceData,
     HostPayloadFields {}
+
 export type InvoicePayloadInput =
   | CeresTemplatePayload
   | FlattenedInvoicePayload;

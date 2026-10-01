@@ -1,0 +1,79 @@
+<div class="line-items-table-wrapper{{#if visibility.tableStretchEnabled}} is-stretch{{/if}}">
+<table class="line-items-table{{#if visibility.textWrapEnabled}} is-wrap-enabled{{/if}}{{#if visibility.usesShortSet}} uses-short-set{{/if}}">
+  <thead>
+    <tr>
+      <th class="col-index" aria-label="Line number"></th>
+      {{#each columns}}{{#unless isHidden}}<th class="{{className}}">{{label}}</th>{{/unless}}{{/each}}
+    </tr>
+  </thead>
+  <tbody>
+    {{#each rows}}
+      <tr class="{{rowClass}}"{{#if isFillerRow}} aria-hidden="true"{{/if}}>
+        <td class="col-index">{{lineNumber}}</td>
+        {{!-- The `~` tildes below are load-bearing, not tidiness. Standalone-block
+              stripping does not remove the newline that ends the `<td>` line, so
+              without them a blank cell holds a whitespace text node and the
+              `td:empty` rule in styles.css can never match it. Keep every tilde,
+              and keep this comment outside the cell — a comment between `<td>` and
+              the first tilde re-introduces the newline it was there to remove.
+              docs/learnings/shared/handlebars-block-whitespace-defeats-css-empty.md --}}
+        {{#each cells}}
+          <td class="{{className}}" data-label="{{label}}">
+            {{~#if ../isTotalsRow~}}
+              {{~text~}}
+            {{~else~}}
+              {{#if isItemCell}}
+                <span class="item-name">{{../item.name}}</span>
+                {{#if ../item.showSku}}<small class="item-sku">SKU: {{../item.sku}}</small>{{/if}}
+                {{#if ../item.mergedAsNote}}
+                  {{#each ../item.mergedNotes}}<small class="item-merged-note">{{this}}</small>{{/each}}
+                {{else}}
+                  {{#each ../item.mergedNotes}}<span class="item-merged-inline">{{this}}</span>{{/each}}
+                {{/if}}
+                {{#if ../item.showThumbnail}}
+                  {{> CeresImageGallery (prepareImageGallery ../item.thumbnailImages variant="thumbnail" alt=../item.name) }}
+                {{/if}}
+              {{else}}
+                {{~text~}}
+                {{#if secondaryText}}<br><small class="second-currency-amount">{{secondaryText}}</small>{{/if}}
+              {{~/if~}}
+            {{~/if~}}
+          </td>
+        {{/each}}
+      </tr>
+      {{#if extras.hasAny}}
+        <tr class="item-extras-row {{rowClass}}">
+          <td class="col-index"></td>
+          <td class="item-extras-cell" colspan="{{cells.length}}">
+            {{#if extras.hasDescription}}
+              <div class="item-description{{#if extras.descriptionFullWidth}} item-description-full{{/if}}">
+                {{> MarkdownViewer (prepareMarkdownViewerData extras.description) }}
+              </div>
+            {{/if}}
+            {{#if extras.imagesInline}}
+              <div class="item-images-inline">
+                {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
+              </div>
+            {{/if}}
+            {{#if extras.imagesRow}}
+              <div class="item-images-row">
+                {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
+              </div>
+            {{/if}}
+            {{#if extras.hasOriginalImages}}
+              <div class="item-original-images-row">
+                {{> CeresImageGallery (prepareImageGallery extras.originalImages variant="original" alt=item.name) }}
+              </div>
+            {{/if}}
+            {{#if extras.hasSerials}}
+              <div class="item-serials">
+                <small><b>Serial No:</b> {{extras.serialsLabel}}</small>
+              </div>
+            {{/if}}
+          </td>
+        </tr>
+      {{/if}}
+    {{/each}}
+  </tbody>
+</table>
+</div>

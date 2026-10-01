@@ -72,11 +72,36 @@ export default function formatCurrency(
   }
 
   if (currencySymbol) {
-    const numberMatch = /[\d,. ]+/;
-    const matchedElements = result.match(numberMatch);
-    /* istanbul ignore else */
-    if (matchedElements) {
-      result = `${currencySymbol} ${matchedElements.join("").trim()}`;
+    // Rebuild the string from Intl's own formatted parts rather than scraping
+    // the formatted output with a number regex, which is what @refrens/mudra's
+    // formateCurrency used to do and deliberately stopped doing: /[\d,. ]+/
+    // drops anything that is not a digit, comma, dot or space, so a compact
+    // suffix is lost ("SAR 460K" -> "460") and a locale that groups with a
+    // narrow/no-break space truncates the number ("1 234 567" -> "1").
+    // Keeping everything except the native currency label preserves the
+    // grouping, the digits and any suffix.
+    // The separator is a no-break space (\u00a0), matching both mudra and
+    // toLocaleString's own behaviour for currencies like AED, so the symbol
+    // never wraps away from its number.
+    try {
+      const parts = new Intl.NumberFormat(
+        localString,
+        formatOptions
+      ).formatToParts(Math.abs(c));
+      const numberString = parts
+        .filter(
+          (part) =>
+            part.type !== "currency" &&
+            part.type !== "plusSign" &&
+            part.type !== "minusSign"
+        )
+        .map((part) => part.value)
+        .join("")
+        // trim edge whitespace and the bidi/format marks left where the label was
+        .replace(/^[\s\u200e\u200f\u061c]+|[\s\u200e\u200f\u061c]+$/g, "");
+      result = `${currencySymbol}\u00a0${numberString}`;
+    } catch {
+      result = `${currencySymbol}\u00a0${Math.abs(c).toFixed(2)}`;
     }
   }
 
