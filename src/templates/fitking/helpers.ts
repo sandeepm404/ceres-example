@@ -347,11 +347,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return rows;
   });
 
-  HB.registerHelper("isPositive", function (val: any) {
-    const num = extractNumericValue(val);
-    return num !== null && num > 0;
-  });
-
   function formatCurrencyValue(value: any, invoiceOrSymbol?: any): string {
     const num = extractNumericValue(value);
     if (num === null) {
@@ -1021,7 +1016,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   }
 
   HB.registerHelper("docLabel", documentLabel);
-  HB.registerHelper("getTotalsLabel", documentLabel);
 
   // The signature image the document actually carries, or "" when it carries
   // none — the signature box is gated on this, never on
@@ -1031,6 +1025,22 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // `signature` is the contract's own field; the `billedBy`/`signatureImage`
   // spellings are kept from the original chain as engine-specific fallbacks
   // the platform reference does not document.
+  // Fitking prints the rate beside every tax row ("CGST (9%)", "IGST (18%)").
+  // The shared Subtotal widget only does that under the per-rate tax view, so
+  // hand it a copy of the invoice with that view forced on. The copy feeds the
+  // totals block alone; the document itself is untouched.
+  HB.registerHelper("withTaxRates", function (invoice: any) {
+    if (!invoice || typeof invoice !== "object") return invoice;
+    const advanceOptions = invoice.advanceOptions || {};
+    const view = advanceOptions.taxSummaryView;
+    if (view === "BOTH" || view === "INVOICE_SUMMARY") return invoice;
+
+    return {
+      ...invoice,
+      advanceOptions: { ...advanceOptions, taxSummaryView: "INVOICE_SUMMARY" },
+    };
+  });
+
   HB.registerHelper("signatureImage", function (invoice: any) {
     const candidate = [
       invoice?.signature,
@@ -1040,93 +1050,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     ].find((src: any) => typeof src === "string" && src.trim());
 
     return candidate ? String(candidate).trim() : "";
-  });
-
-  // Some totals-table rows mirror a declared line-item column rather than a
-  // customLabels entry — Sub Total mirrors the item table's "amount" column,
-  // which the account names for itself in `invoice.columns`, same as it does
-  // every other column heading.
-  HB.registerHelper("columnLabel", function (key: string, ...rest: any[]) {
-    const options = rest[rest.length - 1];
-    const fallback = rest.length > 1 ? rest[0] : "";
-    const columns = options?.data?.root?.invoice?.columns;
-    const normalizedKey = normalizeColumnKey(key);
-    const match = Array.isArray(columns)
-      ? columns.find(
-          (col: any) => normalizeColumnKey(col?.key) === normalizedKey
-        )
-      : undefined;
-    const label = typeof match?.label === "string" ? match.label.trim() : "";
-
-    return label || (typeof fallback === "string" ? fallback : "");
-  });
-
-  HB.registerHelper("getChargeName", function (item: any, fallback?: string) {
-    if (!item) return typeof fallback === "string" ? fallback : "Extra Charges";
-    if (typeof item === "string") return item;
-
-    const name =
-      item.name ||
-      item.label ||
-      item.chargeName ||
-      item.title ||
-      item.description ||
-      item.customLabel ||
-      item.type;
-
-    if (name && typeof name === "string" && name.trim()) {
-      return name.trim();
-    }
-
-    return typeof fallback === "string" ? fallback : "Extra Charges";
-  });
-
-  // additionalCharges store amount as the raw magnitude the account typed in —
-  // a PERCENTAGE charge's `amount` is the percentage number itself (e.g. 2,
-  // meaning 2%), not a currency value, and `multiplier` (-1/1) carries the
-  // sign the front end applies before adding it into the grand total.
-  // formatCurrency already renders negative numbers parenthesised, so a
-  // negative result here needs no extra sign handling.
-  HB.registerHelper("chargeAmount", function (charge: any, invoice: any) {
-    if (!charge) return 0;
-
-    const rawAmount = extractNumericValue(charge.amount) ?? 0;
-    const multiplier = extractNumericValue(charge.multiplier) ?? 1;
-    const amountType = String(charge.amountType || "").toUpperCase();
-
-    if (amountType === "PERCENTAGE") {
-      const finalTotal = (invoice && invoice.finalTotal) || {};
-      // finalTotal carries both an igst figure and a cgst/sgst split even on
-      // invoices that only use one of them — only the one this invoice's own
-      // igst/taxName flags select is real tax, same rule normalizeInvoiceTemplateState
-      // uses for showIgst/showCgstSgst.
-      const isIgstInvoice =
-        Boolean(invoice && invoice.igst) ||
-        String((invoice && invoice.taxName) || "") !== "GST";
-      const taxTotal = isIgstInvoice
-        ? extractNumericValue(finalTotal.igst) ?? 0
-        : (extractNumericValue(finalTotal.cgst) ?? 0) +
-          (extractNumericValue(finalTotal.sgst) ?? 0);
-      const base = (extractNumericValue(finalTotal.subTotal) ?? 0) + taxTotal;
-      return (rawAmount / 100) * base * multiplier;
-    }
-
-    return rawAmount * multiplier;
-  });
-
-  // No invoice-level igst/cgst/sgst rate field exists on the payload — only a
-  // per-item gstRate — so the totals-table rate suffix is derived from the
-  // aggregate figures themselves: tax amount as a percentage of the taxable
-  // subtotal. Exact for a single uniform rate, a weighted average otherwise.
-  HB.registerHelper("taxRatePercent", function (taxAmount: any, invoice: any) {
-    const amount = extractNumericValue(taxAmount);
-    const finalTotal = (invoice && invoice.finalTotal) || {};
-    const subTotal = extractNumericValue(finalTotal.subTotal);
-
-    if (amount === null || !subTotal) return "";
-
-    const rate = Math.round((amount / subTotal) * 100 * 100) / 100;
-    return String(rate);
   });
 
   function isDatabaseId(str: string): boolean {

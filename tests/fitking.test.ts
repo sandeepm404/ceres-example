@@ -273,8 +273,8 @@ describe("item table", () => {
     });
 
     // Any non-GST taxName (VAT included) routes through the same bucket as
-    // IGST — see `chargeAmount`'s `isIgstInvoice` for the established rule
-    // this mirrors. The VAT amount is expected on `item.igst` (the field is
+    // IGST — the same rule normalizeInvoiceTemplateState uses for
+    // showIgst/showCgstSgst. The VAT amount is expected on `item.igst` (the field is
     // reused); stale cgst/sgst must still be ignored.
     it("treats a VAT invoice the same as IGST, ignoring stale cgst/sgst", () => {
       const html = render(
@@ -1131,8 +1131,9 @@ describe("signature block", () => {
 
 describe("totals visibility", () => {
   // "Show Totals" and "Show Total in Words" in the document settings arrive as
-  // the top-level opt-outs `hideTotals` / `hideTotalInWords`. They are
-  // independent: a document can print either, both, or neither.
+  // the top-level opt-outs `hideTotals` / `hideTotalInWords`. The Subtotal
+  // widget keeps every row in the DOM and hides it with a class per reason, so
+  // Lydia can flip either setting live without a re-render.
   const base = {
     invoiceTitle: "Quotation",
     invoiceNumber: "A00017",
@@ -1152,35 +1153,94 @@ describe("totals visibility", () => {
   const renderWith = (payload: Record<string, unknown>) =>
     template(normalizeInvoiceTemplateState({ ...base, ...payload } as any));
 
-  const hasTotalsTable = (html: string) => html.includes("fk-totals-table");
-  const hasWords = (html: string) => html.includes("fk-amount-words");
+  const rowClass = (html: string, key: string) => {
+    const match = html.match(
+      new RegExp(`class="([^"]*)"\\s*data-ceres-subtotal-row="${key}"`)
+    );
+    return match ? match[1] : null;
+  };
+  const wordsClass = (html: string) => {
+    const match = html.match(/class="([^"]*)"\s*data-ceres-total-in-words/);
+    return match ? match[1] : null;
+  };
 
-  it("prints the totals breakdown when the flag is absent", () => {
-    expect(hasTotalsTable(renderWith({}))).toBe(true);
+  it("renders totals through the shared Subtotal widget", () => {
+    const html = renderWith({});
+
+    expect(html).toContain("data-ceres-subtotal");
+    expect(html).not.toContain("fk-totals-table");
+    expect(rowClass(html, "total")).toContain("ceres-subtotal-row-grand");
   });
 
-  it("drops the totals breakdown when hideTotals is set", () => {
-    expect(hasTotalsTable(renderWith({ hideTotals: true }))).toBe(false);
+  const taxed = (tax: Record<string, number>) => ({
+    invoiceType: "INVOICE",
+    taxType: "INDIA",
+    taxName: "GST",
+    isIgst: Boolean(tax.igst),
+    items: [
+      {
+        _id: "1",
+        name: "Treadmill",
+        quantity: 1,
+        rate: 196000,
+        amount: 196000,
+        total: 196000,
+        gstRate: 18,
+        ...tax,
+      },
+    ],
+    finalTotal: { subTotal: 196000, amount: 196000, ...tax, total: 231280 },
+  });
+
+  it("prints the rate beside the CGST and SGST rows", () => {
+    const html = renderWith(taxed({ cgst: 17640, sgst: 17640 }));
+
+    expect(html).toMatch(/CGST \(9%\)/);
+    expect(html).toMatch(/SGST \(9%\)/);
+  });
+
+  it("prints the rate beside the IGST row", () => {
+    const html = renderWith(taxed({ igst: 35280 }));
+
+    expect(html).toMatch(/IGST \(18%\)/);
+  });
+
+  it("prints the totals breakdown when the flag is absent", () => {
+    expect(rowClass(renderWith({}), "total")).not.toContain(
+      "is-hidden-by-totals"
+    );
+  });
+
+  it("hides the totals breakdown when hideTotals is set", () => {
+    expect(rowClass(renderWith({ hideTotals: true }), "total")).toContain(
+      "is-hidden-by-totals"
+    );
   });
 
   it("keeps the totals breakdown when hideTotals is explicitly false", () => {
-    expect(hasTotalsTable(renderWith({ hideTotals: false }))).toBe(true);
+    expect(rowClass(renderWith({ hideTotals: false }), "total")).not.toContain(
+      "is-hidden-by-totals"
+    );
   });
 
   it("prints the total in words when the flag is absent", () => {
-    expect(hasWords(renderWith({}))).toBe(true);
+    const html = renderWith({});
+
+    expect(html).toContain("Four Lakh Fifty Six Thousand Only");
+    expect(wordsClass(html)).not.toContain("is-hidden-by-words-setting");
   });
 
-  it("drops the total in words when hideTotalInWords is set", () => {
-    expect(hasWords(renderWith({ hideTotalInWords: true }))).toBe(false);
+  it("hides the total in words when hideTotalInWords is set", () => {
+    expect(wordsClass(renderWith({ hideTotalInWords: true }))).toContain(
+      "is-hidden-by-words-setting"
+    );
   });
 
-  it("hides the words without hiding the totals, and vice versa", () => {
-    const wordsOff = renderWith({ hideTotalInWords: true });
-    const totalsOff = renderWith({ hideTotals: true });
+  it("hides the words without hiding the totals", () => {
+    const html = renderWith({ hideTotalInWords: true });
 
-    expect(hasTotalsTable(wordsOff)).toBe(true);
-    expect(hasWords(totalsOff)).toBe(true);
+    expect(rowClass(html, "total")).not.toContain("is-hidden-by-totals");
+    expect(wordsClass(html)).toContain("is-hidden-by-words-setting");
   });
 });
 

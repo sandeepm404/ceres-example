@@ -461,191 +461,23 @@
 
         {{!-- Right Side: Totals + Words + Signature --}}
         <div class="fk-bottom-right">
-          {{!-- The whole totals breakdown is the account's own opt-out
-          ("Show Totals" in the document settings), carried as the top-level
-          `invoice.hideTotals` — NOT the `advanceOptions.hideTotals` the payload
-          contract also declares, which real payloads leave unset. The
-          settlement rows below (Amount Paid, Balance Due) belong to the same
-          block and go with it. --}}
-          {{#unless invoice.hideTotals}}
-          <table class="fk-totals-table">
-            {{#if (or invoice.finalTotal.discount invoice.finalTotal.igst invoice.finalTotal.cgst
-            invoice.finalTotal.sgst invoice.finalTotal.totalTax invoice.finalTotal.roundOff)}}
-            <tr>
-              <td class="fk-totals-label">{{columnLabel "amount" "Amount"}}</td>
-              <td class="fk-totals-value">{{#if invoice.finalTotal.subTotal}}{{formatCurrency
-                invoice.finalTotal.subTotal invoice}}{{else}}{{formatCurrency invoice.subTotal invoice}}{{/if}}</td>
-            </tr>
-            {{/if}}
+          {{!--
+            Totals come from the shared widget. Do not hand-write rows here.
 
-            {{#if invoice.finalTotal.discount}}
-            {{#with (getTotalsLabel "discount" "") as |discountLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{discountLabel}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.discount ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
+            The widget decides every row (sub total, discount, taxes, charges,
+            round-off, extra total fields, TDS, paid, due) and the words line, and
+            formats every amount. `hideTotals`, `hideTaxes` and `hideTotalInWords`
+            keep the rows in the DOM behind classes so Lydia can toggle them live.
 
-            {{#if mapped.visibility.showIgst}}
-            {{#if invoice.finalTotal.igst}}
-            {{#with (getTotalsLabel "igst" "IGST") as |igstLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{igstLabel}}{{#with (taxRatePercent ../invoice.finalTotal.igst
-                ../invoice) as |igstRate|}} ({{igstRate}}%){{/with}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.igst ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-            {{/if}}
-
-            {{#if mapped.visibility.showCgstSgst}}
-            {{#if invoice.finalTotal.cgst}}
-            {{#with (columnLabel "cgst" "CGST") as |cgstLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{cgstLabel}}{{#with (taxRatePercent ../invoice.finalTotal.cgst
-                ../invoice) as |cgstRate|}} ({{cgstRate}}%){{/with}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.cgst ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-
-            {{#if invoice.finalTotal.sgst}}
-            {{#if mapped.visibility.isUtgst}}
-            {{#with (getTotalsLabel "utgst" "UTGST") as |sgstLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{sgstLabel}}{{#with (taxRatePercent ../invoice.finalTotal.sgst
-                ../invoice) as |sgstRate|}} ({{sgstRate}}%){{/with}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.sgst ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{else}}
-            {{#with (getTotalsLabel "sgst" "SGST") as |sgstLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{sgstLabel}}{{#with (taxRatePercent ../invoice.finalTotal.sgst
-                ../invoice) as |sgstRate|}} ({{sgstRate}}%){{/with}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.sgst ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-            {{/if}}
-            {{/if}}
-
-            {{#unless (or invoice.finalTotal.igst invoice.finalTotal.cgst invoice.finalTotal.sgst)}}
-            {{#if invoice.finalTotal.totalTax}}
-            {{#if invoice.taxName}}
-            <tr>
-              <td class="fk-totals-label">{{invoice.taxName}}{{#if invoice.taxRate}} ({{invoice.taxRate}}%){{/if}}
-              </td>
-              <td class="fk-totals-value">{{formatCurrency invoice.finalTotal.totalTax invoice}}</td>
-            </tr>
-            {{else}}
-            {{#with (getTotalsLabel "tax" "") as |taxLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{taxLabel}}{{#if ../invoice.taxRate}} ({{../invoice.taxRate}}%){{/if}}
-              </td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.totalTax ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-            {{/if}}
-            {{/unless}}
-
-            {{#each invoice.additionalCharges}}
-            {{#if (isPositive amount)}}
-            <tr>
-              <td class="fk-totals-label">{{getChargeName this "Extra Charges"}}</td>
-              <td class="fk-totals-value">{{formatCurrency (chargeAmount this ../invoice) ../invoice}}</td>
-            </tr>
-            {{/if}}
-            {{/each}}
-
-            {{#if invoice.extraCharges}}
-            {{#with (getTotalsLabel "extraCharges" "") as |extraChargesLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{extraChargesLabel}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.extraCharges ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-
-            {{#if invoice.finalTotal.roundOff}}
-            {{#with (getTotalsLabel "roundOff" "") as |roundOffLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{roundOffLabel}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../invoice.finalTotal.roundOff ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-
-            <tr class="fk-grand-total-row">
-              <td class="fk-totals-label">{{#with (getTotalsLabel "total" "") as |totalLabel|}}{{totalLabel}}
-                {{else}}{{columnLabel "total" "Total"}}{{/with}}</td>
-              <td class="fk-totals-value">{{#if invoice.finalTotal.total}}{{formatCurrency invoice.finalTotal.total
-                invoice}}{{else}}{{formatCurrency invoice.total invoice}}{{/if}}</td>
-            </tr>
-
-            {{!-- Extra amount rows configured on the document, below the grand
-            total. `amount` is the numeric form; some entries only carry a
-            plain `value`, which is printed as-is. --}}
-            {{#each invoice.extraTotalFields}}
-            {{#if label}}
-            <tr>
-              <td class="fk-totals-label">{{label}}</td>
-              <td class="fk-totals-value">{{#if amount}}{{formatCurrency amount ../invoice}}{{else}}{{value}}{{/if}}
-              </td>
-            </tr>
-            {{/if}}
-            {{/each}}
-
-            {{#if mapped.payments.tds}}
-            {{#with (docLabel "tds" "tdsAmountWithheld" "TDS Amount Withheld") as |tdsLabel|}}
-            <tr>
-              <td class="fk-totals-label">{{tdsLabel}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../mapped.payments.tds ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-            {{#if (or invoice.totalPaid mapped.payments.paid)}}
-            <tr>
-              <td class="fk-totals-label">Amount Paid</td>
-              <td class="fk-totals-value">{{#if invoice.totalPaid}}{{formatCurrency invoice.totalPaid
-                invoice}}{{else}}{{formatCurrency mapped.payments.paid invoice}}{{/if}}</td>
-            </tr>
-            {{#if mapped.payments.transactionCharge}}
-            {{#with (docLabel "transactionCharge" "Transaction Charge") as |transactionChargeLabel|}}
-            <tr>
-              <td class="fk-totals-label fk-totals-sub-label">{{transactionChargeLabel}}</td>
-              <td class="fk-totals-value">{{formatCurrency ../mapped.payments.transactionCharge ../invoice}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-            {{#if (or invoice.balanceAmount mapped.payments.due)}}
-            {{#with (docLabel "dueAmount" "balanceDue" "") as |dueAmountLabel|}}
-            <tr>
-              <td class="fk-totals-label fk-balance-due">{{dueAmountLabel}}</td>
-              <td class="fk-totals-value fk-balance-due">{{#if ../invoice.balanceAmount}}{{formatCurrency
-                ../invoice.balanceAmount ../invoice}}{{else}}{{formatCurrency ../mapped.payments.due
-                ../invoice}}{{/if}}</td>
-            </tr>
-            {{/with}}
-            {{/if}}
-            {{/if}}
-
-          </table>
-          {{/unless}}
-
-          {{!-- Amount in Words — its own opt-out ("Show Total in Words"),
-          independent of `hideTotals`: a document can print either, both or
-          neither. --}}
-          {{#unless invoice.hideTotalInWords}}
-          {{#if invoice.customLabels.totalInWordsValue}}
-          <div class="fk-amount-words">
-            <p class="fk-amount-words-label">{{docLabel "totalInWords" "Total (in words)"}}</p>
-            <p class="fk-amount-words-value">{{invoice.customLabels.totalInWordsValue}}</p>
-          </div>
-          {{/if}}
-          {{/unless}}
+            This template assigns normalizeInvoiceTemplateState as its data mapper,
+            so the invoice is one level down and the columns come from mapped.columns.
+            `withTaxRates` makes the widget print the rate beside each tax row,
+            e.g. "CGST (9%)" / "IGST (18%)" — see the helper in helpers.ts.
+          --}}
+          {{> Subtotal (computeSubtotalRows (withTaxRates invoice)
+                          columns=mapped.columns
+                          businessCurrency=businessCurrency
+                          businessLocale=businessLocale) }}
 
           {{!-- Signature Box Area — an actual signature image is what opens
           this block. `customLabels.signature` must NOT be part of the gate: it

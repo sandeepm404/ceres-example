@@ -609,52 +609,56 @@
   color: #444;
 }
 
-/* ===== TOTALS TABLE — var(--fk-font-size-base) (except Grand Total var(--fk-font-size-lg)) ===== */
-.fk-totals-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fk-font-size-base);
+/* ===== TOTALS (Subtotal widget) — var(--fk-font-size-base) (except Grand Total var(--fk-font-size-lg)) =====
+ * The widget owns the row set and the two-column alignment; this is fitking's look on top. */
+.ceres-subtotal {
   margin-bottom: 12px;
 }
 
-.fk-totals-table td {
+.ceres-subtotal .ceres-subtotal-table {
+  font-size: var(--fk-font-size-base);
+}
+
+.ceres-subtotal .ceres-subtotal-label,
+.ceres-subtotal .ceres-subtotal-value {
   padding: 4px 0;
 }
 
-.fk-totals-label {
+.ceres-subtotal .ceres-subtotal-label {
   color: #555;
-  text-align: left;
 }
 
-.fk-totals-value {
-  text-align: right;
+.ceres-subtotal .ceres-subtotal-value {
   color: #222;
-  white-space: nowrap;
 }
 
 /* Grand Total — var(--fk-font-size-lg) */
-.fk-grand-total-row .fk-totals-label {
+.ceres-subtotal .ceres-subtotal-row-grand > .ceres-subtotal-label,
+.ceres-subtotal .ceres-subtotal-row-grand > .ceres-subtotal-value {
   font-weight: 600;
   font-size: var(--fk-font-size-lg);
   color: #000;
   padding-top: 8px;
+  border-top: none;
 }
 
-.fk-grand-total-row .fk-totals-value {
-  font-weight: 600;
-  font-size: var(--fk-font-size-lg);
-  color: #000;
-  padding-top: 8px;
+/* A relative sub-line size would inherit the grand total's; pin it to the body size. */
+.ceres-subtotal .ceres-subtotal-row-grand .ceres-subtotal-converted {
+  font-size: var(--fk-font-size-sm);
+  font-weight: 400;
 }
 
-.fk-balance-due {
+.ceres-subtotal .ceres-subtotal-row-due > .ceres-subtotal-label,
+.ceres-subtotal .ceres-subtotal-row-due > .ceres-subtotal-value {
   font-weight: 600;
   color: #222;
 }
 
-.fk-totals-sub-label {
-  padding-left: 16px;
+.ceres-subtotal .ceres-subtotal-note,
+.ceres-subtotal .ceres-subtotal-converted {
   font-size: var(--fk-font-size-sm);
+  color: #777;
+  opacity: 1;
 }
 
 /* ===== TAX, HSN & PAYMENTS SUMMARIES ===== */
@@ -705,19 +709,22 @@
   color: #000;
 }
 
-/* ===== AMOUNT IN WORDS — var(--fk-font-size-base) ===== */
-.fk-amount-words {
+/* ===== AMOUNT IN WORDS — var(--fk-font-size-base) =====
+ * Rendered by the Subtotal widget; label stacked above the value. */
+.ceres-subtotal .ceres-subtotal-words {
+  margin-top: 12px;
   margin-bottom: var(--fk-font-size-lg);
+  font-size: var(--fk-font-size-base);
 }
 
-.fk-amount-words-label {
+.ceres-subtotal .ceres-subtotal-words-label {
+  display: block;
   font-weight: 700;
-  font-size: var(--fk-font-size-base);
   margin-bottom: 4px;
 }
 
-.fk-amount-words-value {
-  font-size: var(--fk-font-size-base);
+.ceres-subtotal .ceres-subtotal-words-value {
+  display: block;
   color: #444;
   line-height: 1.4;
   text-transform: capitalize;
