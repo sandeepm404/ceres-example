@@ -31,11 +31,16 @@ Key Lydia files: `iframeUtils.js` (URL builder), `useIframeHeight.js` (height sy
 
 For detailed instructions on specific tasks, read these files:
 
+- **Plan layout and data contract (before markup)**: `.agent/skills/architect-template/SKILL.md`
 - **Scaffold a template**: `.agent/skills/scaffold-template/SKILL.md`
+- **Convert design to template**: `.agent/skills/design-to-template/SKILL.md`
+- **Map data contract**: `.agent/skills/ceres-template-data-contract/SKILL.md`
+- **Audit a payload against a template**: `.agent/skills/data-mapping/SKILL.md`
+- **Look at the rendered document (after any hbs/CSS change)**: `.agent/skills/render-check/SKILL.md`
+- **Data binding tests**: `.agent/skills/data-binding-tests/SKILL.md`
+- **Snapshot testing (required for every new template)**: `.agent/skills/snapshot-testing/SKILL.md`
 - **Debug build failures**: `.agent/skills/debug-build/SKILL.md`
 - **Navigate the codebase**: `.agent/skills/navigate-codebase/SKILL.md`
-- **Snapshot testing**: `.agent/skills/snapshot-testing/SKILL.md`
-- **Convert design to template**: `.agent/skills/design-to-template/SKILL.md`
 
 ## Build Commands
 
@@ -45,7 +50,13 @@ npm run build:template --template=my-template    # Build one template
 npm run build:widget --widget=date-time          # Build one widget
 npm run typecheck                                # TypeScript check
 npm test                                         # Run Jest tests
+
+npm run render -- --template=my-template         # Headless render + lint (see render-check skill)
+npm run render -- --template=my-template --record  # …and cache the payload for offline replay
 ```
+
+`npm run render` writes `screen.png`, per-page PNGs, `print.pdf` and `report.json` to
+`.ceres-render/<template>/<sample>/`. Read the PNG — it is the only step that sees the document.
 
 ## Static Hosting
 

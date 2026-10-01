@@ -1089,6 +1089,9 @@
         "showBranding": {
           "type": "boolean"
         },
+        "showDescriptionFullWidth": {
+          "type": "boolean"
+        },
         "showExpenseNumber": {
           "type": "boolean"
         },
@@ -1311,6 +1314,9 @@
           "type": "boolean"
         },
         "showCreatorInInvoice": {
+          "type": "boolean"
+        },
+        "showDescriptionFullWidth": {
           "type": "boolean"
         },
         "showHSNSummaryInInvoice": {
@@ -1670,6 +1676,33 @@
           ],
           "type": "object"
         },
+        "payments": {
+          "properties": {
+            "due": {
+              "type": "number"
+            },
+            "paid": {
+              "type": "number"
+            },
+            "received": {
+              "type": "number"
+            },
+            "tds": {
+              "type": "number"
+            },
+            "transactionCharge": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "tds",
+            "received",
+            "transactionCharge",
+            "paid",
+            "due"
+          ],
+          "type": "object"
+        },
         "qr": {
           "properties": {
             "top": {
@@ -1712,7 +1745,8 @@
         "columns",
         "rows",
         "irn",
-        "visibility"
+        "visibility",
+        "payments"
       ],
       "type": "object"
     },
@@ -1800,6 +1834,9 @@
         "showCgstSgst": {
           "type": "boolean"
         },
+        "showDescriptionFullWidth": {
+          "type": "boolean"
+        },
         "showHsn": {
           "type": "boolean"
         },
@@ -1816,6 +1853,9 @@
           "type": "boolean"
         },
         "showLogistics": {
+          "type": "boolean"
+        },
+        "showPaymentsTable": {
           "type": "boolean"
         },
         "showSku": {
@@ -1879,6 +1919,7 @@
         "isUtgst",
         "showTaxTable",
         "showHsnSummary",
+        "showPaymentsTable",
         "showSummaryCess",
         "showSku",
         "showHsn",
@@ -1892,6 +1933,7 @@
         "footerOnLastPage",
         "itemNameFullWidth",
         "isDescriptionFullWidth",
+        "showDescriptionFullWidth",
         "usesShortSet",
         "showStatusTagInPrint",
         "visibleColumnCount",

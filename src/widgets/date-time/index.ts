@@ -464,7 +464,9 @@ function register() {
   HB.registerHelper("formatDateAddDays", (date: any, days: any, offset: any) =>
     formatDateAddDays(date, days, offset)
   );
-  HB.registerHelper("addDays", (date: any, days: any) => addDaysISO(date, days));
+  HB.registerHelper("addDays", (date: any, days: any) =>
+    addDaysISO(date, days)
+  );
 
   // Legacy/Typo aliases for backward compatibility
   HB.registerHelper("formateShortDateWithOffset", (date: any, offset: any) =>
@@ -497,6 +499,6 @@ try {
   /* noop */
 }
 
-export { };
+export {};
 
 /* eslint-enable @typescript-eslint/no-unused-vars, default-param-last */

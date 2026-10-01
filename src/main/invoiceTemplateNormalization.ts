@@ -124,6 +124,7 @@ export interface InvoiceTemplateVisibility {
   isUtgst: boolean;
   showTaxTable: boolean;
   showHsnSummary: boolean;
+  showPaymentsTable: boolean;
   showSummaryCess: boolean;
   showSku: boolean;
   showHsn: boolean;
@@ -137,6 +138,7 @@ export interface InvoiceTemplateVisibility {
   footerOnLastPage: boolean;
   itemNameFullWidth: boolean;
   isDescriptionFullWidth: boolean;
+  showDescriptionFullWidth: boolean;
   // S13: true while the business has not customised its columns, so the
   // stacked view shows the standard short set for the document type.
   usesShortSet: boolean;
@@ -165,6 +167,13 @@ export interface InvoiceTemplateMappedState {
     isCancelled: boolean;
   };
   visibility: InvoiceTemplateVisibility;
+  payments: {
+    tds: number;
+    received: number;
+    transactionCharge: number;
+    paid: number;
+    due: number;
+  };
 }
 
 export interface InvoiceTemplateDerivedState {
@@ -259,10 +268,41 @@ const toNumberValue = (value: unknown, fallback = 0): number => {
 
   return fallback;
 };
+const toBooleanValue = (value: unknown, fallback = false): boolean => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value !== 0 : fallback;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+
+    if (["true", "1", "yes", "on"].indexOf(normalized) !== -1) {
+      return true;
+    }
+
+    // "false" is a truthy string, so never hand these to Boolean()
+    if (["false", "0", "no", "off", ""].indexOf(normalized) !== -1) {
+      return false;
+    }
+
+    return fallback;
+  }
+
+  return fallback;
+};
+
 
 const toNonEmptyString = (value: unknown): string | null => {
   const normalized = toStringValue(value);
-  return normalized.length > 0 ? normalized : null;
+  return normalized.length > 0 &&
+    normalized !== "null" &&
+    normalized !== "undefined"
+    ? normalized
+    : null;
 };
 
 const hasValue = (value: unknown): boolean => {
@@ -588,6 +628,25 @@ const getTemplateLayoutContext = (invoice: FlattenedInvoicePayload) => {
     textWrapEnabled,
   };
 };
+// TDS/paid/due only exist per-currency, under the invoice's own settlement
+// currency — `invoice.totalPaid`/`invoice.balanceAmount` are absent on
+// invoices settled this way, so this is the only place those figures live.
+const getPaymentConversion = (invoice: FlattenedInvoicePayload) => {
+  const totalConversions = asRecord(invoice.totalConversions);
+  const currency = toStringValue(invoice.currency);
+  const conversion = asRecord(totalConversions[currency]);
+  const received = toNumberValue(conversion.paid, 0);
+  const transactionCharge = toNumberValue(conversion.transactionCharge, 0);
+
+  return {
+    tds: toNumberValue(conversion.tds, 0),
+    received,
+    transactionCharge,
+    paid: received + transactionCharge,
+    due: toNumberValue(conversion.due, 0),
+  };
+};
+
 
 // Reconciles the business's saved column list with the unit column before
 // printing, the way lydia's withUnitColumn.js does for the same reason: a
@@ -1151,8 +1210,12 @@ export const normalizeInvoiceTemplateState = (
   const invoice = normalizeInvoicePayload(payload);
   const context = getTemplateLayoutContext(invoice);
   const columns = normalizeInvoiceColumns(invoice, context);
-  const isDescriptionFullWidth = Boolean(
+  // Off unless the payload explicitly opts in; `showDescriptionFullWidth` is the
+  // current flag name, `isDescriptionFullWidth` the legacy one.
+  const descriptionFullWidth = toBooleanValue(
     pickFirstValue(
+      context.advanceOptions.showDescriptionFullWidth,
+      invoice.showDescriptionFullWidth,
       context.advanceOptions.isDescriptionFullWidth,
       invoice.isDescriptionFullWidth
     )
@@ -1161,7 +1224,7 @@ export const normalizeInvoiceTemplateState = (
     invoice,
     columns.filter((column) => !column.isHidden),
     context,
-    isDescriptionFullWidth
+    descriptionFullWidth
   );
   const irn = asRecord(invoice.irn);
   const upi = asRecord(invoice.upi);
@@ -1176,10 +1239,11 @@ export const normalizeInvoiceTemplateState = (
     toNonEmptyString(invoice.documentQr) ??
     "";
 
+  const bankAccount = asRecord(invoice.bankAccount);
   const upiId =
     toNonEmptyString(pickFirstValue(upi.upi, upi.vpa, upi.upiId)) ?? "";
   const upiQr =
-    toNonEmptyString(pickFirstValue(upi.qr, upi.qrCode)) ??
+    toNonEmptyString(pickFirstValue(upi.qr, upi.qrCode, bankAccount.qrCode)) ??
     (upiId ? buildUpiPayload(upiId) : "");
 
   const billType = toStringValue(invoice.billType);
@@ -1187,7 +1251,6 @@ export const normalizeInvoiceTemplateState = (
   const isExpenditure = Boolean(invoice.isExpenditure);
   const invoiceAccepted = toStringValue(invoice.invoiceAccepted);
   const paymentOptions = asRecord(invoice.paymentOptions);
-  const bankAccount = asRecord(invoice.bankAccount);
   const bankAccountNo = toStringValue(
     pickFirstValue(bankAccount.accountNo, bankAccount.accountNumber)
   );
@@ -1203,14 +1266,18 @@ export const normalizeInvoiceTemplateState = (
     (!isExpenditure || invoiceAccepted === "ACCEPTED") &&
     Boolean(paymentOptions.upi) &&
     hasValue(upiId);
-  const showTaxTable = ["TABLE", "BOTH"].includes(
-    toStringValue(context.advanceOptions.taxSummaryView)
-  );
+  // Each summary table needs BOTH an opt-in from the document's configuration
+  // and rows to put in it. Configuration alone renders a bare header strip;
+  // rows alone renders a table the user asked to hide.
+  const showTaxTable =
+    ["TABLE", "BOTH"].includes(
+      toStringValue(context.advanceOptions.taxSummaryView)
+    ) && getNestedSummaryEntries(invoice.taxSummary, "taxList").length > 0;
   // The business toggle gates the section; the data check only avoids rendering an
   // empty table. The alias is checked first because it is what the Lydia live-update
   // bridge emits, so when both keys are present it carries the newer user action —
   // an explicit false from either key still hides the section.
-  const hsnSummaryEnabled = Boolean(
+  const hsnSummaryEnabled = toBooleanValue(
     pickFirstValue(
       context.advanceOptions.showHsnSummary,
       context.advanceOptions.showHSNSummaryInInvoice
@@ -1219,6 +1286,9 @@ export const normalizeInvoiceTemplateState = (
   const showHsnSummary =
     hsnSummaryEnabled &&
     getNestedSummaryEntries(invoice.hsnSummary, "hsnList").length > 0;
+  const showPaymentsTable =
+    toBooleanValue(invoice.showPaymentsTable) &&
+    asArray(invoice.allPayments).length > 0;
   const showSummaryCess =
     asArray(invoice.cesses).some((entry) =>
       Boolean(asRecord(entry).isApplied)
@@ -1228,7 +1298,13 @@ export const normalizeInvoiceTemplateState = (
       getSummaryCessAmount(invoice.hsnSummary, "hsnList") > 0);
   // Same predicate the item-table columns use, so a template gating cells on
   // mapped.visibility and headers on mapped.columns can never disagree.
-  const { showIgst, showCgstSgst } = context.taxVisibility;
+  let { showIgst, showCgstSgst } = context.taxVisibility;
+  if (!showIgst && !showCgstSgst && !invoice.invoiceType) {
+    showIgst =
+      Boolean(invoice.igst) ||
+      (toStringValue(invoice.taxName) !== "GST" && Boolean(invoice.taxName));
+    showCgstSgst = !showIgst && toStringValue(invoice.taxName) === "GST";
+  }
 
   return {
     invoice,
@@ -1266,6 +1342,7 @@ export const normalizeInvoiceTemplateState = (
         isUtgst: Boolean(pickFirstValue(invoice.utgst, invoice.isUtgst)),
         showTaxTable,
         showHsnSummary,
+        showPaymentsTable,
         showSummaryCess,
         showSku: context.showSkuInName,
         showHsn: context.showHsnColumn,
@@ -1287,7 +1364,8 @@ export const normalizeInvoiceTemplateState = (
             invoice.showItemNameFullWidth
           )
         ),
-        isDescriptionFullWidth,
+        isDescriptionFullWidth: descriptionFullWidth,
+        showDescriptionFullWidth: descriptionFullWidth,
         showStatusTagInPrint: billType === "INVOICE" && status === "PAID",
         visibleColumnCount:
           columns.filter((column) => !column.isHidden).length + 1,
@@ -1295,6 +1373,7 @@ export const normalizeInvoiceTemplateState = (
         textWrapEnabled: context.textWrapEnabled,
         usesShortSet: !context.columnsCustomised,
       },
+      payments: getPaymentConversion(invoice),
     },
     derived: {
       showHsnColumn: context.showHsnColumn,

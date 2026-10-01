@@ -462,6 +462,9 @@
         "showBankAccount": {
           "type": "boolean"
         },
+        "showDescriptionFullWidth": {
+          "type": "boolean"
+        },
         "showExpenseNumber": {
           "type": "boolean"
         },
@@ -1231,6 +1234,9 @@
         "showBranding": {
           "type": "boolean"
         },
+        "showDescriptionFullWidth": {
+          "type": "boolean"
+        },
         "showExpenseNumber": {
           "type": "boolean"
         },
@@ -1453,6 +1459,9 @@
           "type": "boolean"
         },
         "showCreatorInInvoice": {
+          "type": "boolean"
+        },
+        "showDescriptionFullWidth": {
           "type": "boolean"
         },
         "showHSNSummaryInInvoice": {
@@ -2016,6 +2025,12 @@
           "$ref": "#/definitions/BillerDetails"
         },
         "showBranding": {
+          "type": "boolean"
+        },
+        "showDescriptionFullWidth": {
+          "type": "boolean"
+        },
+        "showPaymentsTable": {
           "type": "boolean"
         },
         "showTotalsRow": {

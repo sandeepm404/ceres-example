@@ -23,6 +23,7 @@ export interface CeresTemplatePayload {
   showPaymentsTable?: boolean;
   isPublicView?: boolean;
   isDescriptionFullWidth?: boolean;
+  showDescriptionFullWidth?: boolean;
   irnPosition?: "ABOVE_LINEITEMS" | "BELOW_LINEITEMS" | string;
   showStockSummary?: boolean;
   showVendorBankAccount?: boolean;
@@ -84,6 +85,7 @@ export interface InvoiceAdvanceOptions {
   hsnView?: string;
   itemNameFullWidth?: boolean;
   isDescriptionFullWidth?: boolean;
+  showDescriptionFullWidth?: boolean;
   hideCountryOfSupply?: boolean;
   showHSNSummaryInInvoice?: boolean;
   // The Lydia live-update bridge emits this alias instead of showHSNSummaryInInvoice;
@@ -214,6 +216,8 @@ export interface InvoiceData {
   isColumnsModified?: boolean;
   showTotalsRow?: boolean;
   hideTotalInWords?: boolean;
+  showPaymentsTable?: boolean;
+  showDescriptionFullWidth?: boolean;
   templateName?: string;
   transportDetails?: TransportDetails;
   bankAccount?: BankDetails;
