@@ -1172,6 +1172,39 @@ describe("totals visibility", () => {
     expect(rowClass(html, "total")).toContain("ceres-subtotal-row-grand");
   });
 
+  const taxed = (tax: Record<string, number>) => ({
+    invoiceType: "INVOICE",
+    taxType: "INDIA",
+    taxName: "GST",
+    isIgst: Boolean(tax.igst),
+    items: [
+      {
+        _id: "1",
+        name: "Treadmill",
+        quantity: 1,
+        rate: 196000,
+        amount: 196000,
+        total: 196000,
+        gstRate: 18,
+        ...tax,
+      },
+    ],
+    finalTotal: { subTotal: 196000, amount: 196000, ...tax, total: 231280 },
+  });
+
+  it("prints the rate beside the CGST and SGST rows", () => {
+    const html = renderWith(taxed({ cgst: 17640, sgst: 17640 }));
+
+    expect(html).toMatch(/CGST \(9%\)/);
+    expect(html).toMatch(/SGST \(9%\)/);
+  });
+
+  it("prints the rate beside the IGST row", () => {
+    const html = renderWith(taxed({ igst: 35280 }));
+
+    expect(html).toMatch(/IGST \(18%\)/);
+  });
+
   it("prints the totals breakdown when the flag is absent", () => {
     expect(rowClass(renderWith({}), "total")).not.toContain(
       "is-hidden-by-totals"

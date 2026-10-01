@@ -471,8 +471,10 @@
 
             This template assigns normalizeInvoiceTemplateState as its data mapper,
             so the invoice is one level down and the columns come from mapped.columns.
+            `withTaxRates` makes the widget print the rate beside each tax row,
+            e.g. "CGST (9%)" / "IGST (18%)" — see the helper in helpers.ts.
           --}}
-          {{> Subtotal (computeSubtotalRows invoice
+          {{> Subtotal (computeSubtotalRows (withTaxRates invoice)
                           columns=mapped.columns
                           businessCurrency=businessCurrency
                           businessLocale=businessLocale) }}

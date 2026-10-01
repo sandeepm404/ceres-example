@@ -1025,6 +1025,22 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // `signature` is the contract's own field; the `billedBy`/`signatureImage`
   // spellings are kept from the original chain as engine-specific fallbacks
   // the platform reference does not document.
+  // Fitking prints the rate beside every tax row ("CGST (9%)", "IGST (18%)").
+  // The shared Subtotal widget only does that under the per-rate tax view, so
+  // hand it a copy of the invoice with that view forced on. The copy feeds the
+  // totals block alone; the document itself is untouched.
+  HB.registerHelper("withTaxRates", function (invoice: any) {
+    if (!invoice || typeof invoice !== "object") return invoice;
+    const advanceOptions = invoice.advanceOptions || {};
+    const view = advanceOptions.taxSummaryView;
+    if (view === "BOTH" || view === "INVOICE_SUMMARY") return invoice;
+
+    return {
+      ...invoice,
+      advanceOptions: { ...advanceOptions, taxSummaryView: "INVOICE_SUMMARY" },
+    };
+  });
+
   HB.registerHelper("signatureImage", function (invoice: any) {
     const candidate = [
       invoice?.signature,
