@@ -7,6 +7,7 @@ import "./styles.css";
 import "../../widgets/date-time";
 import "../../widgets/markdown-viewer";
 import "../../widgets/qr-code";
+import "../../widgets/subtotal";
 
 import { registerFitkingTemplateHelpers } from "./helpers";
 
