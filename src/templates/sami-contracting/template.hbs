@@ -22,7 +22,6 @@
 <div class="smc-shell"
   dir="{{documentDir invoice}}"
   data-script="{{documentScript invoice pdfOptions}}"
-  {{#with (paperName pdfOptions) as |paper|}}data-paper="{{paper}}"{{/with}}
   {{#with (documentLang (documentScript invoice pdfOptions)) as |lang|}}lang="{{lang}}"{{/with}}
   {{#if (or (documentTextScale invoice pdfOptions advanceOptions) (googleFontHref (documentFont invoice pdfOptions)) (rendererPrintZoom pdfOptions))}}style="
     {{~#with (documentFont invoice pdfOptions) as |scriptFont|}}{{#if (googleFontHref scriptFont)}}--smc-script-font: '{{scriptFont}}';{{/if}}{{/with~}}
@@ -34,7 +33,9 @@
   {{#if (googleFontHref scriptFont)}}<link rel="stylesheet" href="{{googleFontHref scriptFont}}" />{{/if}}
   {{/with}}
 
-  <div class="no-dibella invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+  {{!-- "Show only on first/last page": the PDF service stops drawing these in the page
+       margins, so they stay in the document flow (no-dibella would hide them). --}}
+  <div class="{{#unless pdfOptions.letterHeadOnFirstPage}}no-dibella {{/unless}}invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
     {{#if invoice.letterHead}}
     <img src="{{invoice.letterHead}}" alt="" data-ceres-height="letterhead" />
     {{else}}
@@ -437,7 +438,7 @@
     {{> RefrensBranding invoice}}
   </div>
 
-  <div class="no-dibella invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+  <div class="{{#unless pdfOptions.footerOnLastPage}}no-dibella {{/unless}}invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
     {{#if invoice.letterHeadFooter}}
     <img src="{{invoice.letterHeadFooter}}" alt="" data-ceres-height="letterhead-footer" />
     {{else}}
