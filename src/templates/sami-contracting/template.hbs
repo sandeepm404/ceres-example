@@ -1,0 +1,419 @@
+{{!--
+  sami-contracting — a bilingual (Arabic/English) tax invoice.
+
+  Direction and script come from the document, never from this file:
+    dir   ← invoice.template.rtl (Lydia's RTL toggle; the preview reloads on change)
+    lang  ← the business's PDF script (owner.configuration.pdfOptions.script)
+    font  ← the business's PDF font for that script (…pdfOptions.fontFamily)
+  Every layout rule in styles.css uses logical properties (start/end, inline/block),
+  so the same markup mirrors itself under dir="rtl".
+
+  No business header or footer of its own: the account's letterhead and letterhead
+  footer images carry the business identity, address and contact details.
+
+  Label text comes from the payload only (customLabels, vatLabel, columns[].label,
+  field labels). A label with no payload source is not printed — its value still is.
+
+  The root is { invoice, advanceOptions, pdfOptions, mapped, derived } because this
+  template installs normalizeInvoiceTemplateState as its data mapper.
+--}}
+<div class="smc-shell"
+  dir="{{documentDir invoice}}"
+  data-script="{{documentScript invoice pdfOptions}}"
+  {{#with (documentLang (documentScript invoice pdfOptions)) as |lang|}}lang="{{lang}}"{{/with}}
+  {{#with (documentFont invoice pdfOptions) as |scriptFont|}}{{#if (googleFontHref scriptFont)}}style="--smc-script-font: '{{scriptFont}}';"{{/if}}{{/with}}>
+  {{!-- Inside the shell, not before it: the shell must stay the template's first element. --}}
+  {{#with (documentFont invoice pdfOptions) as |scriptFont|}}
+  {{#if (googleFontHref scriptFont)}}<link rel="stylesheet" href="{{googleFontHref scriptFont}}" />{{/if}}
+  {{/with}}
+
+  <div class="no-dibella invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+    {{#if invoice.letterHead}}
+    <img src="{{invoice.letterHead}}" alt="" data-ceres-height="letterhead" />
+    {{else}}
+    <img alt="" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="smc-page">
+    {{!-- ═══ Title ═══ --}}
+    {{#if (or invoice.invoiceTitle invoice.invoiceSubTitle)}}
+    <div class="smc-title">
+      {{#if invoice.invoiceTitle}}<h1 class="smc-title-main">{{invoice.invoiceTitle}}</h1>{{/if}}
+      {{#if invoice.invoiceSubTitle}}<p class="smc-title-sub">{{invoice.invoiceSubTitle}}</p>{{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Seller ids: VAT number (start) · phone (end) ═══
+          The rest of the seller's identity (name, address, CR, email) is the
+          letterhead's. VAT label from the payload (vatLabel). --}}
+    <div class="smc-seller">
+      {{#if invoice.billedBy.vatNumber}}
+      <div class="smc-kv smc-kv-strong">
+        {{#if invoice.billedBy.vatLabel}}<span class="smc-key">{{invoice.billedBy.vatLabel}}</span>{{/if}}
+        <span class="smc-val smc-ltr">{{invoice.billedBy.vatNumber}}</span>
+      </div>
+      {{/if}}
+      {{!-- Seller phone: billedBy.phone, else contact.phone (sellerPhone). The label is
+            fixed text by request; the API has no label for the seller's phone. --}}
+      {{#with (sellerPhone invoice) as |phone|}}
+      <div class="smc-kv smc-kv-strong smc-seller-end">
+        <span class="smc-key">رقم الهاتف / الجوال</span>
+        <span class="smc-val">{{formatPhoneNumber phone}}</span>
+      </div>
+      {{/with}}
+    </div>
+
+    {{!-- ═══ Document number band ═══ --}}
+    <div class="smc-band">
+      <div class="smc-kv smc-kv-strong">
+        {{#if invoice.customLabels.invoiceNumber}}<span class="smc-key">{{invoice.customLabels.invoiceNumber}}</span>{{/if}}
+        <span class="smc-val smc-number">{{invoice.invoiceNumber}}</span>
+      </div>
+      {{!-- "Issued from": the document custom field or custom header labelled
+            المصدر من, matched by label (helpers.ts, issuedFromField). Printed with its own label and
+            value, and left out of the details list below. --}}
+      {{#with (issuedFromField invoice.customFields invoice.customHeaders) as |issuedFrom|}}
+      <div class="smc-kv smc-kv-strong smc-band-end">
+        <span class="smc-key">{{#if issuedFrom.label}}{{issuedFrom.label}}{{else}}{{issuedFrom.name}}{{/if}}</span>
+        <span class="smc-val">{{issuedFrom.value}}</span>
+      </div>
+      {{/with}}
+    </div>
+
+    {{!-- ═══ Details: dates, client, document fields (start) · client address & ids (end) ═══ --}}
+    <div class="smc-details">
+      <dl class="smc-meta">
+        <div class="smc-kv">
+          {{#if invoice.customLabels.invoiceDate}}<dt>{{invoice.customLabels.invoiceDate}}</dt>{{/if}}
+          <dd>{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</dd>
+        </div>
+        {{#if invoice.dueDate}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.dueDate}}<dt>{{invoice.customLabels.dueDate}}</dt>{{/if}}
+          <dd>{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</dd>
+        </div>
+        {{/if}}
+        {{#if invoice.purchaseOrderNumber}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.purchaseOrderNumber}}<dt>{{invoice.customLabels.purchaseOrderNumber}}</dt>{{/if}}
+          <dd>{{invoice.purchaseOrderNumber}}</dd>
+        </div>
+        {{/if}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.billedTo}}<dt>{{invoice.customLabels.billedTo}}</dt>{{/if}}
+          <dd class="smc-party-name">{{invoice.billedTo.name}}</dd>
+        </div>
+        {{#if invoice.billedTo.phone}}{{#unless (eq invoice.billedTo.phoneShowInInvoice false)}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.phone}}<dt>{{invoice.customLabels.phone}}</dt>{{/if}}
+          <dd>{{formatPhoneNumber invoice.billedTo.phone}}</dd>
+        </div>
+        {{/unless}}{{/if}}
+        {{#if invoice.billedTo.email}}{{#unless (eq invoice.billedTo.emailShowInInvoice false)}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.email}}<dt>{{invoice.customLabels.email}}</dt>{{/if}}
+          <dd class="smc-ltr">{{invoice.billedTo.email}}</dd>
+        </div>
+        {{/unless}}{{/if}}
+        {{#if invoice.billedTo.contactPerson.name}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.contactPersonLabel}}<dt>{{invoice.customLabels.contactPersonLabel}}</dt>{{/if}}
+          <dd>{{invoice.billedTo.contactPerson.name}}</dd>
+        </div>
+        {{/if}}
+        {{#each invoice.customFields}}
+        {{#if value}}{{#unless (eq params.showInInvoice false)}}{{#unless (isIssuedFrom this)}}
+        <div class="smc-kv">
+          <dt>{{#if label}}{{label}}{{else}}{{name}}{{/if}}</dt>
+          <dd>{{value}}</dd>
+        </div>
+        {{/unless}}{{/unless}}{{/if}}
+        {{/each}}
+        {{#each invoice.customHeaders}}
+        {{#if value}}{{#unless (isIssuedFrom this)}}
+        <div class="smc-kv">
+          <dt>{{label}}</dt>
+          <dd>{{value}}</dd>
+        </div>
+        {{/unless}}{{/if}}
+        {{/each}}
+      </dl>
+
+      <dl class="smc-party">
+        {{#if (or invoice.billedTo.street invoice.billedTo.city)}}
+        <div class="smc-kv">
+          <dd>
+            {{#if invoice.billedTo.building}}{{invoice.billedTo.building}}, {{/if}}{{invoice.billedTo.street}}
+            {{#if invoice.billedTo.city}}{{invoice.billedTo.city}}{{/if}}{{#if invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}
+            {{#if invoice.billedTo.pincode}}{{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}}, {{invoice.billedTo.country}}{{/if}}
+          </dd>
+        </div>
+        {{/if}}
+        {{#if invoice.billedTo.vatNumber}}
+        <div class="smc-kv">
+          {{#if invoice.billedTo.vatLabel}}<dt>{{invoice.billedTo.vatLabel}}</dt>{{/if}}
+          <dd class="smc-ltr">{{invoice.billedTo.vatNumber}}</dd>
+        </div>
+        {{/if}}
+        {{#each (partyFields invoice.billedTo)}}
+        <div class="smc-kv">
+          <dt>{{label}}</dt>
+          <dd>{{value}}</dd>
+        </div>
+        {{/each}}
+      </dl>
+    </div>
+
+    {{!-- ═══ Shipping & transport (only when the document carries them) ═══ --}}
+    {{#if (or mapped.visibility.shippedFrom mapped.visibility.shippedTo mapped.visibility.transport)}}
+    <div class="smc-logistics">
+      {{#if mapped.visibility.shippedFrom}}
+      <dl class="smc-party">
+        <div class="smc-kv">
+          {{#if invoice.customLabels.shippedFrom}}<dt>{{invoice.customLabels.shippedFrom}}</dt>{{/if}}
+          <dd class="smc-party-name">{{invoice.shippedFrom.name}}</dd>
+        </div>
+        <div class="smc-kv">
+          <dd>{{invoice.shippedFrom.street}} {{invoice.shippedFrom.city}} {{invoice.shippedFrom.state}} {{invoice.shippedFrom.pincode}} {{invoice.shippedFrom.country}}</dd>
+        </div>
+        {{#each (partyFields invoice.shippedFrom)}}
+        <div class="smc-kv"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+        {{/each}}
+      </dl>
+      {{/if}}
+      {{#if mapped.visibility.shippedTo}}
+      <dl class="smc-party">
+        <div class="smc-kv">
+          {{#if invoice.customLabels.shippedTo}}<dt>{{invoice.customLabels.shippedTo}}</dt>{{/if}}
+          <dd class="smc-party-name">{{invoice.shippedTo.name}}</dd>
+        </div>
+        <div class="smc-kv">
+          <dd>{{invoice.shippedTo.street}} {{invoice.shippedTo.city}} {{invoice.shippedTo.state}} {{invoice.shippedTo.pincode}} {{invoice.shippedTo.country}}</dd>
+        </div>
+        {{#each (partyFields invoice.shippedTo)}}
+        <div class="smc-kv"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+        {{/each}}
+      </dl>
+      {{/if}}
+      {{#if mapped.visibility.transport}}
+      <dl class="smc-party">
+        {{#if invoice.customLabels.transport}}<div class="smc-kv"><dt class="smc-heading">{{invoice.customLabels.transport}}</dt></div>{{/if}}
+        {{#if invoice.transportDetails.transporter.name}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.transportName}}<dt>{{invoice.customLabels.transportName}}</dt>{{/if}}
+          <dd>{{invoice.transportDetails.transporter.name}}</dd>
+        </div>
+        {{else}}{{#if invoice.transportDetails.transporterName}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.transportName}}<dt>{{invoice.customLabels.transportName}}</dt>{{/if}}
+          <dd>{{invoice.transportDetails.transporterName}}</dd>
+        </div>
+        {{/if}}{{/if}}
+        {{#if invoice.transportDetails.challanNumber}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.challanNumber}}<dt>{{invoice.customLabels.challanNumber}}</dt>{{/if}}
+          <dd>{{invoice.transportDetails.challanNumber}}</dd>
+        </div>
+        {{/if}}
+        {{#if invoice.transportDetails.challanDate}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.challanDate}}<dt>{{invoice.customLabels.challanDate}}</dt>{{/if}}
+          <dd>{{formateShortDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</dd>
+        </div>
+        {{/if}}
+        {{#if invoice.transportDetails.transportMode}}<div class="smc-kv"><dd>{{invoice.transportDetails.transportMode}}</dd></div>{{/if}}
+        {{#if invoice.transportDetails.vehicleNumber}}<div class="smc-kv"><dd class="smc-ltr">{{invoice.transportDetails.vehicleNumber}}</dd></div>{{/if}}
+        {{#if invoice.transportDetails.extraInformation}}
+        <div class="smc-kv">
+          {{#if invoice.customLabels.transportExtraInfo}}<dt>{{invoice.customLabels.transportExtraInfo}}</dt>{{/if}}
+          <dd>{{invoice.transportDetails.extraInformation}}</dd>
+        </div>
+        {{/if}}
+      </dl>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Line items — the shared widget owns columns, labels, order and cells ═══ --}}
+    <div class="smc-items">
+      {{> LineItemsTable mapped}}
+    </div>
+
+    {{!-- ═══ Summary: QR + payment info (start) · totals (end) ═══ --}}
+    <div class="smc-summary">
+      <div class="smc-summary-start">
+        {{!-- The design's start column, top to bottom: number of items, total in words,
+              created by, QR. The two line labels are fixed Arabic text by request — the
+              API carries no label for either (Lydia supplies "created by" from its own
+              i18n). Their values are the API's: Σ items[].quantity, and creator.name
+              behind the account's showCreatorInInvoice setting. --}}
+        <p class="smc-count">
+          <span class="smc-count-label">عدد العناصر</span>
+          <span class="smc-count-value">{{totalQuantity invoice.items}}</span>
+        </p>
+
+        {{!-- Total in words, boxed on its own above the QR (as in the design), not inside
+              the totals. The model is the totals widget's own, so the value
+              (customLabels.totalInWordsValue) and every reason to hide it — hideTotals,
+              hideTotalInWords, a sub-unit longer than words can express — stay the
+              widget's decisions. The widget's in-block copy is hidden in styles.css. --}}
+        {{#with (computeSubtotalRows invoice columns=mapped.columns businessCurrency=invoice.currency businessLocale=invoice.businessLocale) as |totals|}}
+        {{#if totals.totalInWords}}
+        <p class="ceres-subtotal-words smc-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+          data-ceres-total-in-words>{{totals.totalInWords.value}}</p>
+        {{/if}}
+        {{/with}}
+
+        {{#if advanceOptions.showCreatorInInvoice}}{{#if invoice.creator.name}}
+        <p class="smc-creator">
+          <span class="smc-creator-label">تم الإنشاء من قبل</span>
+          <span class="smc-creator-value">{{invoice.creator.name}}</span>
+        </p>
+        {{/if}}{{/if}}
+
+        {{!-- QRs go through qrSrc, never the image widget: it passes a host-resolved data
+              URL through untouched and encodes raw content (documentQr has been seen
+              carrying the plain JSON it should encode). The containers stay in the DOM
+              so Lydia can patch qrCode / zatcaQrCode live. --}}
+        <div class="smc-qrs">
+          <div data-ceres-field-container="zatcaQrCode" class="smc-qr{{#unless invoice.zatcaQrCode}} is-empty{{/unless}}">
+            <img data-ceres-field="zatcaQrCode" src="{{qrSrc invoice.zatcaQrCode}}" alt="ZATCA QR" />
+          </div>
+          <div data-ceres-field-container="qrCode" class="smc-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
+            <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
+          </div>
+          {{#if invoice.lhdnQrCode}}
+          <div class="smc-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
+          {{/if}}
+          {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
+          <div class="smc-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
+          {{/unless}}{{/if}}
+        </div>
+
+        {{#if mapped.visibility.showBankUpiSection}}
+        <div class="smc-pay">
+          {{#if mapped.visibility.showBankAccount}}
+          <dl class="smc-bank">
+            {{#each (bankFields invoice)}}
+            <div class="smc-kv">
+              {{#if label}}<dt>{{label}}</dt>{{/if}}
+              <dd class="smc-ltr">{{value}}</dd>
+            </div>
+            {{/each}}
+          </dl>
+          {{/if}}
+          {{#if mapped.visibility.showUpi}}
+          <div class="smc-upi">
+            {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="smc-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
+            <p class="smc-ltr">{{mapped.upi.id}}</p>
+          </div>
+          {{/if}}
+        </div>
+        {{/if}}
+      </div>
+
+      <div class="smc-summary-end">
+        {{!-- Totals come from the shared widget: row set, order, labels (from the
+              document's columns), formatting, rate breakup (per the account's
+              taxSummaryView), the settlement band and the words line, plus the
+              data-ceres-* hooks the host toggles. Do not hand-write rows here.
+
+              businessCurrency is the document's own currency on purpose: this
+              template prints no currency conversion. The widget converts only
+              when the business currency differs from the document's, so this
+              drops the Conversion Rate row and every converted sub-line. --}}
+        {{> Subtotal (computeSubtotalRows invoice
+                        columns=mapped.columns
+                        businessCurrency=invoice.currency
+                        businessLocale=invoice.businessLocale) }}
+
+        {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+        {{#if invoice.signature}}
+        <div class="smc-signature">
+          {{> CeresImage src=invoice.signature alt="" class="smc-signature-img"}}
+          {{#if invoice.customLabels.signature}}<p class="smc-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
+        </div>
+        {{/if}}
+        {{else}}
+        {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+        <div class="smc-signature smc-signature-digital">
+          {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+          {{#if invoice.share.pdf}}<a class="smc-ltr" href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+        </div>
+        {{else}}
+        {{!-- Awaiting a digital signature: an invisible box the PDF pipeline measures. --}}
+        <div class="smc-signature-placeholder" data-ceres-signature-placeholder></div>
+        {{/if}}
+        {{/unless}}
+      </div>
+    </div>
+
+    {{!-- ═══ Summary tables — each behind the account's own setting ═══ --}}
+    {{#if (or (eq advanceOptions.taxSummaryView "TABLE") (eq advanceOptions.taxSummaryView "BOTH"))}}
+    <div class="smc-table-block" data-ceres-tax-summary>
+      {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showHsnSummary}}
+    <div class="smc-table-block" data-ceres-hsn-summary>
+      {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showPaymentsTable}}
+    <div class="smc-table-block" data-ceres-payment-table>
+      {{> PaymentTable (computePaymentColumns invoice.allPayments businessCurrency=invoice.businessCurrency currency=invoice.currency)
+          ownerOffset=invoice.ownerOffset
+          heading=invoice.customLabels.paymentRecord
+      }}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Notes, terms, attachments, footer fields ═══ --}}
+    {{#if invoice.notes}}
+    <section class="smc-note">
+      {{#if invoice.customLabels.notes}}<h2 class="smc-heading">{{invoice.customLabels.notes}}</h2>{{/if}}
+      {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+    </section>
+    {{/if}}
+
+    {{#each invoice.terms}}
+    {{#if terms.length}}
+    <section class="smc-note">
+      {{#if label}}<h2 class="smc-heading">{{label}}</h2>{{else}}{{#if @root.invoice.customLabels.terms}}<h2 class="smc-heading">{{@root.invoice.customLabels.terms}}</h2>{{/if}}{{/if}}
+      <ol class="smc-terms">
+        {{#each terms}}<li>{{this}}</li>{{/each}}
+      </ol>
+    </section>
+    {{/if}}
+    {{/each}}
+
+    {{#if invoice.attachments.length}}
+    <section class="smc-note">
+      {{#if invoice.customLabels.attachment}}<h2 class="smc-heading">{{invoice.customLabels.attachment}}</h2>{{/if}}
+      <ul class="smc-attachments">
+        {{#each invoice.attachments}}<li><a class="smc-ltr" href="{{this}}" target="_blank" rel="noopener noreferrer">{{attachmentName this}}</a></li>{{/each}}
+      </ul>
+    </section>
+    {{/if}}
+
+    {{#if (or invoice.customFooters.length invoice.footers.length)}}
+    <dl class="smc-footer-fields">
+      {{#each invoice.customFooters}}{{#if value}}<div class="smc-kv"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+      {{#each invoice.footers}}{{#if value}}<div class="smc-kv"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+    </dl>
+    {{/if}}
+
+    {{> RefrensBranding invoice}}
+  </div>
+
+  <div class="no-dibella invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if invoice.letterHeadFooter}}
+    <img src="{{invoice.letterHeadFooter}}" alt="" data-ceres-height="letterhead-footer" />
+    {{else}}
+    <img alt="" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>
