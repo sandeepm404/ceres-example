@@ -1,0 +1,522 @@
+/*
+ * sami-contracting — bilingual (Arabic/English) tax invoice.
+ *
+ * Direction-agnostic by construction: every rule here uses logical properties
+ * (inline-start/end, text-align start/end), so `dir="rtl"` on .smc-shell mirrors
+ * the whole page without a second stylesheet. The shared widgets this template
+ * renders ship physical left/right alignment; the overrides at the end of the
+ * file restate those in logical terms so they mirror too.
+ */
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap";
+
+.smc-shell {
+  /* Six-step type scale; base pinned at 13px, 10px floor. */
+  --smc-font-size-xs: 10px;
+  --smc-font-size-s: 11px;
+  --smc-font-size-base: 13px;
+  --smc-font-size-m: 15px;
+  --smc-font-size-lg: 18px;
+  --smc-font-size-xl: 24px;
+
+  /* Body and heading fonts, each overridable on its own. The account's fonts
+     (set by the host as --subtitle-font / --title-font) win; Noto Sans Arabic
+     backs every Arabic glyph the account font does not carry. */
+  --smc-font-body: var(--subtitle-font, "Inter"), "Noto Sans Arabic", sans-serif;
+  --smc-font-heading: var(--title-font, "Inter"), "Noto Sans Arabic", sans-serif;
+
+  /* Design colours, behind the host's theme variables. */
+  --smc-brand: var(--primary-color, #1d5bbf);
+  --smc-pill-bg: #d4d4d4;
+  --smc-rule: #4a4a4a;
+  --smc-ink: #1a1a1a;
+  --smc-radius: 8px;
+
+  position: relative;
+  max-width: 1000px;
+  margin: 0 auto;
+  color: var(--smc-ink);
+  font-family: var(--smc-font-body);
+  font-size: var(--smc-font-size-base);
+  line-height: 1.5;
+  background: #fff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Arabic script: the business's chosen PDF font for the script (when it set
+   one) leads, then Noto Sans Arabic, then the account fonts for Latin text. */
+.smc-shell[data-script="arabic"] {
+  --smc-font-body: var(--smc-script-font, "Noto Sans Arabic"), "Noto Sans Arabic", var(--subtitle-font, "Inter"), sans-serif;
+  --smc-font-heading: var(--smc-script-font, "Noto Sans Arabic"), "Noto Sans Arabic", var(--title-font, "Inter"), sans-serif;
+}
+
+.smc-shell *,
+.smc-shell *::before,
+.smc-shell *::after {
+  box-sizing: border-box;
+}
+
+.smc-shell p,
+.smc-shell dl,
+.smc-shell dd,
+.smc-shell h1,
+.smc-shell h2,
+.smc-shell ol,
+.smc-shell ul {
+  margin: 0;
+}
+
+/* Identifiers, emails and URLs stay left-to-right inside RTL text. */
+.smc-ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* --- Letterhead slots (host-measured via data-ceres-height) --- */
+.smc-shell .invoice-letterhead,
+.smc-shell .invoice-letterhead-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.smc-shell .invoice-letterhead img,
+.smc-shell .invoice-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.smc-shell .invoice-letterhead.is-empty,
+.smc-shell .invoice-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* --- Page --- */
+.smc-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+/* --- Key/value rows --- */
+.smc-kv {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.smc-kv dt,
+.smc-key {
+  color: var(--smc-ink);
+  font-weight: 500;
+}
+
+.smc-kv dt::after,
+.smc-key::after {
+  content: ":";
+}
+
+.smc-kv dd,
+.smc-val {
+  font-weight: 600;
+}
+
+/* --- Title --- */
+.smc-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: 24px;
+  padding-top: 8px;
+}
+
+.smc-title-main {
+  font-family: var(--smc-font-heading);
+  font-size: var(--smc-font-size-xl);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.smc-title-sub {
+  font-family: var(--smc-font-heading);
+  font-size: var(--smc-font-size-lg);
+  font-weight: 600;
+}
+
+/* --- Seller ids: VAT number (start) · contact number (end) ---
+   The same two columns as the band and the details, so the phone starts where
+   "issued from" and the client address do. */
+.smc-seller {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 32px;
+}
+
+.smc-seller-end {
+  grid-column: 2;
+}
+
+/* --- Number band ---
+   Two equal columns with the details' 32px gap: with 16px padding on both
+   sides the second column starts exactly where the details' end column does,
+   so "issued from" lines up with the client address below it. */
+.smc-band {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 32px;
+  padding: 4px 16px;
+  background: var(--smc-pill-bg);
+  border: 1px solid var(--smc-rule);
+}
+
+.smc-band-end {
+  grid-column: 2;
+}
+
+.smc-kv-strong {
+  font-size: var(--smc-font-size-m);
+}
+
+.smc-number {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* --- Details --- */
+.smc-details,
+.smc-logistics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 4px 32px;
+}
+
+.smc-meta,
+.smc-party {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.smc-party-name {
+  font-weight: 700;
+}
+
+.smc-heading {
+  color: var(--smc-brand);
+  font-family: var(--smc-font-heading);
+  font-size: var(--smc-font-size-m);
+  font-weight: 700;
+}
+
+.smc-logistics .smc-heading::after {
+  content: none;
+}
+
+/* --- Line items: the shared widget, restyled as rounded pills ---
+   Child combinators only: an item description can carry its own markdown
+   table, which must keep the markdown viewer's styling. */
+.smc-items .line-items-table {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: var(--smc-font-size-base);
+}
+
+.smc-items .line-items-table > thead > tr > th,
+.smc-items .line-items-table > tbody > tr > td {
+  padding: 4px 8px;
+  border: 1px solid var(--smc-rule);
+  border-radius: var(--smc-radius);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.smc-items .line-items-table > thead > tr > th {
+  background: var(--smc-pill-bg);
+  font-family: var(--smc-font-heading);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.smc-items .line-items-table > tbody > tr > td.col-item,
+.smc-items .line-items-table > thead > tr > th.col-item {
+  text-align: start;
+}
+
+.smc-items .line-items-table > tbody > tr > td.col-item {
+  width: auto;
+}
+
+/* Item rows print bold, like the headings; the description row below an
+   item keeps the body weight. */
+.smc-items .line-items-table > tbody > tr:not(.item-extras-row) > td {
+  font-weight: 700;
+}
+
+/* With text wrap on, the widget fixes the table layout, which sizes columns
+   from the header row and splits the width evenly. Equal shares, with the
+   item column taking two, keeps it at twice any other column whatever the
+   column count. */
+.smc-items .line-items-table.is-wrap-enabled > thead > tr > th {
+  box-sizing: border-box;
+  width: 10%;
+}
+
+.smc-items .line-items-table.is-wrap-enabled > thead > tr > th.col-item {
+  width: 20%;
+}
+
+/* Figures size to their content; the item column takes the slack. */
+.smc-items .line-items-table > tbody > tr:not(.item-extras-row) > td:not(.col-item) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* The fixed layout gives figures a set share, so they wrap inside it rather
+   than spill into the next pill. */
+.smc-items .line-items-table.is-wrap-enabled > tbody > tr:not(.item-extras-row) > td:not(.col-item) {
+  white-space: normal;
+}
+
+/* The design has no serial-number column. */
+.smc-items .line-items-table .col-index {
+  display: none;
+}
+
+.smc-items .line-items-table tbody tr.row-even {
+  background: transparent;
+}
+
+.smc-items .line-items-table tbody tr.row-summary td,
+.smc-items .line-items-table tbody tr.row-group-subtotal td {
+  background: var(--smc-pill-bg);
+}
+
+.smc-items .line-items-table tr.item-extras-row td.item-extras-cell {
+  text-align: start;
+  white-space: normal;
+}
+
+.smc-items .line-items-table tr.row-filler td {
+  border-radius: 0;
+}
+
+/* --- Summary: QR and payment info (start), totals (end) --- */
+.smc-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+  break-inside: avoid;
+}
+
+.smc-summary-start {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.smc-qrs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.smc-qr img {
+  display: block;
+  width: 112px;
+  height: 112px;
+}
+
+.smc-qr.is-empty {
+  display: none;
+}
+
+.smc-pay {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.smc-bank {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--smc-font-size-s);
+}
+
+.smc-upi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--smc-font-size-s);
+}
+
+.smc-upi-qr {
+  width: 96px;
+  height: 96px;
+}
+
+/* Totals: the shared Subtotal widget, each row a label pill beside a value pill. */
+.smc-summary-end .ceres-subtotal-table {
+  border-collapse: separate;
+  border-spacing: 4px;
+}
+
+.smc-summary-end .ceres-subtotal-label,
+.smc-summary-end .ceres-subtotal-value {
+  padding: 4px 12px;
+  background: var(--smc-pill-bg);
+  border: 1px solid var(--smc-rule);
+  border-radius: var(--smc-radius);
+  vertical-align: middle;
+}
+
+.smc-summary-end .ceres-subtotal-label {
+  text-align: center;
+  font-weight: 700;
+}
+
+.smc-summary-end .ceres-subtotal-value {
+  width: 1%;
+  text-align: start;
+  font-weight: 700;
+}
+
+.smc-summary-end .ceres-subtotal-row-grand > .ceres-subtotal-label,
+.smc-summary-end .ceres-subtotal-row-grand > .ceres-subtotal-value {
+  padding-top: 4px;
+  border-top: 1px solid var(--smc-rule);
+}
+
+/* The words line moves to the start column (.smc-words); drop the widget's copy. */
+.smc-summary-end .ceres-subtotal-words {
+  display: none;
+}
+
+/* Number of items and created-by: bold lines above and below the words box. */
+.smc-count,
+.smc-creator {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  margin: 0;
+  font-size: var(--smc-font-size-m);
+  font-weight: 700;
+}
+
+.smc-creator-label::after {
+  content: " :";
+}
+
+/* Total in words: a boxed line of its own, no label, as in the design. */
+.smc-words {
+  margin: 0;
+  padding: 4px 12px;
+  border: 1px solid var(--smc-rule);
+  border-radius: var(--smc-radius);
+  background: var(--smc-pill-bg);
+  font-weight: 600;
+}
+
+/* --- Signature --- */
+.smc-signature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+  margin-inline-start: auto;
+  width: fit-content;
+}
+
+.smc-signature-img {
+  max-width: 180px;
+  max-height: 96px;
+  object-fit: contain;
+}
+
+.smc-signature-label {
+  font-size: var(--smc-font-size-s);
+  font-weight: 600;
+}
+
+.smc-signature-placeholder {
+  width: 160pt;
+  height: 90pt;
+  margin-top: 16px;
+  margin-inline-start: auto;
+  visibility: hidden;
+}
+
+/* --- Summary tables (widget-owned markup) --- */
+.smc-table-block {
+  font-size: var(--smc-font-size-s);
+  break-inside: avoid;
+}
+
+/* The table widgets draw a 2px dark rule above every footer row (the Total and
+   the words line); give those rows the same border as the rest of the table. */
+.smc-table-block .ceres-table tfoot td {
+  border-top: 1px solid #e0e0e0;
+}
+
+/* --- Notes, terms, attachments, footer fields --- */
+.smc-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  break-inside: avoid;
+}
+
+.smc-terms,
+.smc-attachments {
+  padding-inline-start: 20px;
+}
+
+.smc-footer-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  font-size: var(--smc-font-size-s);
+}
+
+/* --- Narrow screens: stack the two-column areas --- */
+@media screen and (width <= 640px) {
+  .smc-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .smc-shell {
+    --smc-font-size-xs: 10px;
+    --smc-font-size-s: 11px;
+    --smc-font-size-base: 13px;
+    --smc-font-size-m: 14px;
+    --smc-font-size-lg: 16px;
+    --smc-font-size-xl: 22px;
+
+    max-width: none;
+  }
+
+  .smc-page {
+    padding: 16px;
+    zoom: var(--smc-print-zoom, 1);
+  }
+}
