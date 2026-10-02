@@ -164,6 +164,27 @@ export const productCodeFirst = <T>(state: T): T => {
 export const printZoom = (pdfOptions: any): string =>
   Number(pdfOptions?.zoomSize) === 0.8 ? "0.8" : "";
 
+// The zoom the shared renderer puts on the whole printed page (<html>): every
+// valid zoomSize but 0.8. The one-sheet page height divides by it, so a zoomed
+// page still reaches the foot of the sheet.
+export const rendererPrintZoom = (pdfOptions: any): string => {
+  const zoom = Number(pdfOptions?.zoomSize);
+  return Number.isFinite(zoom) && zoom > 0 && zoom !== 0.8 ? String(zoom) : "";
+};
+
+// The paper the document prints on, from its own pdfOptions (format +
+// landscape), as the name of an @page rule in styles.css — e.g. "a4" or
+// "a4-landscape". Printing on a declared paper with no page margins is what
+// lets the summary sit at the foot of the page, just above the letterhead
+// footer: the page height is then known. An unknown format declares nothing.
+const PAPERS = ["a3", "a4", "a5", "letter", "legal"];
+
+export const paperName = (pdfOptions: any): string => {
+  const format = asText(pdfOptions?.format).toLowerCase();
+  if (!PAPERS.includes(format)) return "";
+  return pdfOptions?.landscape === true ? `${format}-landscape` : format;
+};
+
 // Google Fonts stylesheet for a family name. Lydia's picker lists Google
 // families only, so any other character means the value is not one of them and
 // nothing is loaded rather than building a URL from it.
@@ -339,6 +360,8 @@ export function registerSamiContractingTemplateHelpers(HB: any): void {
   HB.registerHelper("documentTextScale", documentTextScale);
   HB.registerHelper("fixedTotals", fixedTotals);
   HB.registerHelper("printZoom", printZoom);
+  HB.registerHelper("paperName", paperName);
+  HB.registerHelper("rendererPrintZoom", rendererPrintZoom);
   HB.registerHelper("documentLang", documentLang);
   HB.registerHelper("documentDir", documentDir);
   HB.registerHelper("partyFields", partyFields);

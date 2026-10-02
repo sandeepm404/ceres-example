@@ -19,6 +19,8 @@ import {
   fixedTotals,
   isProductCodeColumn,
   printZoom,
+  paperName,
+  rendererPrintZoom,
   productCodeFirst,
   partyFields,
   registerSamiContractingTemplateHelpers,
@@ -383,6 +385,37 @@ describe("sami-contracting print zoom", () => {
       'class="smc-page" style="--smc-print-zoom: 0.8;"'
     );
     expect(at(0.9)).toMatch(/class="smc-page">/);
+  });
+});
+
+describe("sami-contracting printed paper", () => {
+  it("names the paper from pdfOptions format and orientation", () => {
+    expect(paperName({ format: "a4" })).toBe("a4");
+    expect(paperName({ format: "A4", landscape: false })).toBe("a4");
+    expect(paperName({ format: "a3", landscape: true })).toBe("a3-landscape");
+    expect(paperName({ format: "letter" })).toBe("letter");
+    expect(paperName({ format: "tabloid" })).toBe("");
+    expect(paperName(undefined)).toBe("");
+  });
+
+  it("knows the page zoom the shared renderer applies in print", () => {
+    expect(rendererPrintZoom({ zoomSize: 0.9 })).toBe("0.9");
+    expect(rendererPrintZoom({ zoomSize: "1.1" })).toBe("1.1");
+    [0.8, 0, -1, "x", undefined].forEach((zoomSize) =>
+      expect(rendererPrintZoom({ zoomSize })).toBe("")
+    );
+  });
+
+  it("marks the shell with the paper and the renderer's page zoom", () => {
+    const at = (pdfOptions: Record<string, unknown>) =>
+      render({ template: { ...baseInvoice().template, pdfOptions } });
+    expect(at({ format: "a4", zoomSize: 0.8 })).toContain('data-paper="a4"');
+    expect(at({ format: "a4", zoomSize: 0.8 })).not.toContain(
+      "--smc-page-zoom"
+    );
+    expect(at({ format: "a4", zoomSize: 0.9 })).toContain(
+      "--smc-page-zoom: 0.9;"
+    );
   });
 });
 
