@@ -16,6 +16,10 @@ import {
   documentLang,
   documentScript,
   googleFontHref,
+  fixedTotals,
+  isProductCodeColumn,
+  printZoom,
+  productCodeFirst,
   partyFields,
   registerSamiContractingTemplateHelpers,
 } from "../src/templates/sami-contracting/helpers";
@@ -318,6 +322,40 @@ describe("sami-contracting direction and script", () => {
     expect(html).not.toContain("fonts.googleapis.com/css2?family=x");
   });
 
+  it("zooms the shell by the text scale, pdfOptions first", () => {
+    expect(render({ textScale: 1.2 })).toContain('style=" zoom: 1.2;"');
+    expect(
+      render({
+        textScale: 1.2,
+        advanceOptions: { ...baseInvoice().advanceOptions, textScale: "0.9" },
+      })
+    ).toContain('style=" zoom: 0.9;"');
+    expect(
+      render({
+        textScale: 1.2,
+        template: {
+          ...baseInvoice().template,
+          pdfOptions: { ...baseInvoice().template?.pdfOptions, textScale: 1.5 },
+        },
+      })
+    ).toContain('style=" zoom: 1.5;"');
+  });
+
+  it("writes the zoom beside the script font in one style attribute", () => {
+    const html = render({
+      textScale: 1.1,
+      owner: arabicOwner({ script: "arabic", fontFamily: "Cairo" }),
+    });
+    expect(html).toContain("style=\"--smc-script-font: 'Cairo'; zoom: 1.1;\"");
+  });
+
+  it("drops a text scale that is not a positive number", () => {
+    [0, -1, "1; background: red", "abc", ""].forEach((textScale) =>
+      expect(render({ textScale })).not.toContain("zoom:")
+    );
+    expect(render()).not.toMatch(/class="smc-shell"[^>]*style=/);
+  });
+
   it("keeps the shell as the first element, with the font link inside it", () => {
     const html = render({
       owner: arabicOwner({ script: "arabic", fontFamily: "Cairo" }),
@@ -326,11 +364,218 @@ describe("sami-contracting direction and script", () => {
   });
 });
 
+describe("sami-contracting print zoom", () => {
+  it("applies the 'smaller' text scale (0.8) itself and leaves every other value to the renderer", () => {
+    expect(printZoom({ zoomSize: 0.8 })).toBe("0.8");
+    expect(printZoom({ zoomSize: "0.8" })).toBe("0.8");
+    [0.9, 1, 1.1, undefined, "x"].forEach((zoomSize) =>
+      expect(printZoom({ zoomSize })).toBe("")
+    );
+    expect(printZoom(undefined)).toBe("");
+  });
+
+  it("sets the print zoom on the page for a 0.8 document only", () => {
+    const at = (zoomSize: unknown) =>
+      render({
+        template: { ...baseInvoice().template, pdfOptions: { zoomSize } },
+      });
+    expect(at(0.8)).toContain(
+      'class="smc-page" style="--smc-print-zoom: 0.8;"'
+    );
+    expect(at(0.9)).toMatch(/class="smc-page">/);
+  });
+});
+
+describe("sami-contracting ZATCA QR", () => {
+  const TLV =
+    "AQ5TYXVkaSBCdXNpbmVzcwIPMzExMzE1MDI3NDAwMDAzAxQyMDI2LTA3LTMxVDEzOjA3OjM3WgQHNTUyMDAwMAUGNzIwMDAw";
+
+  it("prints the API's zatcaQr and drops the document QR", () => {
+    const html = render({
+      zatcaQr: TLV,
+      zatcaQrCode: undefined,
+      documentQr: '{"a":"b"}',
+    });
+    expect(html).toMatch(
+      /data-ceres-field-container="zatcaQrCode" class="smc-qr"/
+    );
+    expect(html).not.toContain('alt="Document QR"');
+  });
+
+  it("keeps the ZATCA container empty without a ZATCA QR", () => {
+    const html = render({ zatcaQr: undefined, zatcaQrCode: undefined });
+    expect(html).toMatch(
+      /data-ceres-field-container="zatcaQrCode" class="smc-qr is-empty"/
+    );
+  });
+});
+
+describe("sami-contracting product code column", () => {
+  const col = (key: string, label: string) => ({ key, label });
+  const row = (keys: string[]) => ({
+    cells: keys.map((key) => ({ key, text: key })),
+  });
+
+  it("recognises the column by its English, Arabic or bilingual name", () => {
+    expect(isProductCodeColumn(col("c1", "Product Code"))).toBe(true);
+    expect(isProductCodeColumn(col("c1", "كود الصنف"))).toBe(true);
+    expect(isProductCodeColumn(col("c1", "كود الصنف\nProduct  code"))).toBe(
+      true
+    );
+    expect(isProductCodeColumn(col("name", "Item"))).toBe(false);
+    expect(isProductCodeColumn(col("hsn", "HSN/SAC"))).toBe(false);
+  });
+
+  it("moves the column and its cell in every row first, keeping the rest in order", () => {
+    const state = {
+      invoice: {},
+      mapped: {
+        columns: [
+          col("name", "Item"),
+          col("qty", "Qty"),
+          col("c1", "كود الصنف"),
+          col("total", "Total"),
+        ],
+        rows: [
+          row(["name", "qty", "c1", "total"]),
+          row(["name", "qty", "c1", "total"]),
+        ],
+      },
+    };
+    const out = productCodeFirst(state);
+    expect(out.mapped.columns.map((c: any) => c.key)).toEqual([
+      "c1",
+      "name",
+      "qty",
+      "total",
+    ]);
+    out.mapped.rows.forEach((r: any) =>
+      expect(r.cells.map((c: any) => c.key)).toEqual([
+        "c1",
+        "name",
+        "qty",
+        "total",
+      ])
+    );
+  });
+
+  it("leaves the table alone when there is no product code column", () => {
+    const state = {
+      mapped: { columns: [col("name", "Item")], rows: [row(["name"])] },
+    };
+    expect(productCodeFirst(state)).toBe(state);
+  });
+
+  it("prints the product code heading before the item heading", () => {
+    const invoice = baseInvoice();
+    invoice.columns = [
+      ...invoice.columns,
+      { key: "productCode", label: "كود الصنف", type: "TEXT" },
+    ];
+    const html = template(
+      productCodeFirst(
+        normalizeInvoiceTemplateState({ ...(sample as any), invoice })
+      )
+    );
+    const thead = html.slice(html.indexOf("<thead>"), html.indexOf("</thead>"));
+    expect(thead.indexOf("كود الصنف")).toBeGreaterThan(-1);
+    expect(thead.indexOf("كود الصنف")).toBeLessThan(
+      thead.indexOf('class="col-item')
+    );
+  });
+});
+
+describe("sami-contracting fixed totals", () => {
+  const LABELS = [
+    "الإجمالي غير شامل ضريبة القيمة المضافة",
+    "ضريبة القيمة المضافة",
+    "الإجمالي (شامل ضريبة القيمة المضافة)",
+    "إجمالي المدفوع",
+    "إجمالي المستحق",
+  ];
+
+  it("works out excl. VAT, VAT, incl. VAT, paid and due", () => {
+    expect(
+      fixedTotals({
+        finalTotal: { total: 5520, igst: 720 },
+        balance: { paid: 0, due: 5520 },
+        items: [{ gstRate: 15 }, { gstRate: 15 }],
+      })
+    ).toMatchObject({
+      exclVat: 4800,
+      vat: 720,
+      vatRate: "15",
+      total: 5520,
+      paid: 0,
+      due: 5520,
+    });
+  });
+
+  it("formats every figure in the document's currency with its decimals, never INR", () => {
+    const { text } = fixedTotals({
+      currency: "SAR",
+      finalTotal: { total: 5520, igst: 720 },
+      balance: { paid: 0, due: 5520 },
+    });
+    expect(text).toEqual({
+      exclVat: "⃁\u00a04,800.00",
+      vat: "⃁\u00a0720.00",
+      total: "⃁\u00a05,520.00",
+      paid: "⃁\u00a00.00",
+      due: "⃁\u00a05,520.00",
+    });
+    const sar = render({ currency: "SAR", customCurrencySymbol: "" });
+    const block = sar.slice(
+      sar.indexOf("smc-totals"),
+      sar.indexOf("</table>", sar.indexOf("smc-totals"))
+    );
+    expect(block).toContain("⃁");
+    expect(block).not.toContain("₹");
+  });
+
+  it("adds split CGST and SGST, drops a mixed rate, and derives due when absent", () => {
+    expect(
+      fixedTotals({
+        finalTotal: { total: 1180, cgst: 90, sgst: 90 },
+        balance: { paid: 180 },
+        items: [{ gstRate: 18 }, { gstRate: 5 }],
+      })
+    ).toMatchObject({
+      exclVat: 1000,
+      vat: 180,
+      vatRate: "",
+      total: 1180,
+      paid: 180,
+      due: 1000,
+    });
+  });
+
+  it("prints all five rows in order, even with nothing paid", () => {
+    const html = render({ balance: { paid: 0, due: 147500 } });
+    const at = LABELS.map((label) => html.indexOf(label));
+    at.forEach((i) => expect(i).toBeGreaterThan(-1));
+    expect([...at].sort((a, b) => a - b)).toEqual(at);
+  });
+
+  it("keeps every row when the totals, taxes and table columns are hidden", () => {
+    const html = render({
+      hideTotals: true,
+      hideTaxes: true,
+      columns: baseInvoice().columns.map((c: any) => ({
+        ...c,
+        isHidden: true,
+      })),
+    });
+    LABELS.forEach((label) => expect(html).toContain(label));
+    expect(html).not.toMatch(/smc-totals[\s\S]*is-hidden-by-/);
+  });
+});
+
 describe("sami-contracting blocks", () => {
-  it("renders the line items and totals through the shared widgets", () => {
+  it("renders the line items through the shared widget and the fixed totals block", () => {
     const html = render();
     expect(html).toContain('class="line-items-table');
-    expect(html).toContain("data-ceres-subtotal");
+    expect(html).toContain("smc-totals");
     expect(html).toContain("Enterprise Plan Subscription");
   });
 
@@ -459,7 +704,7 @@ describe("sami-contracting blocks", () => {
       conversionRates: { INR: 25.48 },
       owner: { ...baseInvoice().owner, currency: "INR" },
     });
-    expect(html).toContain("data-ceres-subtotal");
+    expect(html).toContain("smc-totals");
     expect(html).not.toContain('data-ceres-subtotal-row="conversionRate"');
     expect(html).not.toContain("ceres-subtotal-converted");
   });

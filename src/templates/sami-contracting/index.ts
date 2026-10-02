@@ -18,12 +18,16 @@ import "../../widgets/payment-table";
 import "../../widgets/watermark";
 import "../../widgets/refrens-branding";
 
-import { registerSamiContractingTemplateHelpers } from "./helpers";
+import {
+  productCodeFirst,
+  registerSamiContractingTemplateHelpers,
+} from "./helpers";
 
 // Register custom helpers
 declare const Handlebars: any;
 registerSamiContractingTemplateHelpers(Handlebars);
 
 // Export template to global for main renderer to consume
-window.CeresTemplateDataMapper = normalizeInvoiceTemplateState as any;
+window.CeresTemplateDataMapper = ((payload: any) =>
+  productCodeFirst(normalizeInvoiceTemplateState(payload))) as any;
 window.CeresTemplate = template;

@@ -6,6 +6,8 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import formatCurrency from "../../widgets/shared/formatCurrency";
+
 type Field = { label: string; value: string };
 
 const asArray = (value: any): any[] => (Array.isArray(value) ? value : []);
@@ -37,6 +39,130 @@ export const documentFont = (invoice: any, pdfOptions: any): string =>
   ]
     .map(asText)
     .find(Boolean) ?? "";
+
+// Text scale, applied as a zoom on the shell — read from the same places, in
+// the same order, as the fitking and saga-engineering templates. Only a
+// positive number comes back, so nothing else reaches the style attribute.
+export const documentTextScale = (
+  invoice: any,
+  pdfOptions: any,
+  advanceOptions: any
+): string => {
+  const scale = [
+    pdfOptions?.textScale,
+    advanceOptions?.textScale,
+    invoice?.textScale,
+  ]
+    .map(asText)
+    .find(Boolean);
+  if (!scale || !/^\d*\.?\d+$/.test(scale)) return "";
+  return Number(scale) > 0 ? scale : "";
+};
+
+const toAmount = (value: any): number => {
+  const n = typeof value === "number" ? value : parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
+// The fixed totals block: excl. VAT, VAT, incl. VAT, paid and due, always all
+// five whatever the account's totals settings say. VAT is the document's IGST
+// (CGST + SGST when it is split); "excl. VAT" is the total less that VAT, so
+// discounts, charges and round-off are already inside it. The rate is printed
+// only when every item carries the same one. Figures always carry the
+// document's decimal places (2 when it sets none), so 4,800 prints 4,800.00,
+// and are formatted here in the document's own currency, locale and symbol —
+// never left to a template-side helper that can fall back to INR.
+export const fixedTotals = (invoice: any) => {
+  const finalTotal = invoice?.finalTotal ?? {};
+  const balance = invoice?.balance ?? {};
+  const total = toAmount(finalTotal.total);
+  const vat =
+    toAmount(finalTotal.igst) ||
+    toAmount(finalTotal.cgst) + toAmount(finalTotal.sgst);
+  const paid = toAmount(balance.paid);
+  const hasDue = balance.due !== undefined && balance.due !== null;
+  const rates = Array.from(
+    new Set(
+      asArray(invoice?.items)
+        .map((item) => item?.gstRate)
+        .filter((rate) => rate !== undefined && rate !== null && rate !== "")
+        .map((rate) => String(rate))
+    )
+  );
+  const decimals = Number.isInteger(invoice?.subUnitLength)
+    ? invoice.subUnitLength
+    : 2;
+  const amounts = {
+    exclVat: total - vat,
+    vat,
+    total,
+    paid,
+    due: hasDue ? toAmount(balance.due) : total - paid,
+  };
+  const format = (amount: number): string =>
+    formatCurrency(
+      amount,
+      asText(invoice?.currency),
+      asText(invoice?.locale),
+      decimals,
+      asText(invoice?.customCurrencySymbol) || null
+    );
+  return {
+    ...amounts,
+    vatRate: rates.length === 1 ? rates[0] : "",
+    text: {
+      exclVat: format(amounts.exclVat),
+      vat: format(amounts.vat),
+      total: format(amounts.total),
+      paid: format(amounts.paid),
+      due: format(amounts.due),
+    },
+  };
+};
+
+// The account's own "Product Code" column prints first, before the item —
+// Refrens cannot order a column ahead of the item name, so the template does.
+// It is found by the name the account gave it (English or Arabic, either on its
+// own or as part of a bilingual heading), and the column moves together with
+// its cell in every row, which the rows key by column.
+const PRODUCT_CODE_LABELS = ["product code", "كود الصنف"];
+
+export const isProductCodeColumn = (column: any): boolean => {
+  const label = asText(column?.label).replace(/\s+/g, " ").toLowerCase();
+  return PRODUCT_CODE_LABELS.some((name) => label.includes(name));
+};
+
+export const productCodeFirst = <T>(state: T): T => {
+  const mapped = (state as any)?.mapped;
+  const columns = asArray(mapped?.columns);
+  const code = columns.find(isProductCodeColumn);
+  if (!code) return state;
+  const toFront = (list: any[]): any[] => {
+    const at = list.findIndex((entry) => entry?.key === code.key);
+    if (at <= 0) return list;
+    return [list[at], ...list.slice(0, at), ...list.slice(at + 1)];
+  };
+  return {
+    ...(state as any),
+    mapped: {
+      ...mapped,
+      columns: toFront(columns),
+      rows: asArray(mapped.rows).map((row) => ({
+        ...row,
+        cells: toFront(asArray(row?.cells)),
+      })),
+    },
+  };
+};
+
+// Lydia's text scale is the document's pdfOptions.zoomSize (smaller 0.8,
+// small 0.9, normal 1.0, …). The shared renderer zooms the printed page for
+// every value except 0.8, which it treats as "no zoom" — so "smaller" printed
+// at full size, larger than "small". This hands back 0.8 for the template to
+// apply in print itself; every other value is left to the renderer, so no
+// value is ever zoomed twice.
+export const printZoom = (pdfOptions: any): string =>
+  Number(pdfOptions?.zoomSize) === 0.8 ? "0.8" : "";
 
 // Google Fonts stylesheet for a family name. Lydia's picker lists Google
 // families only, so any other character means the value is not one of them and
@@ -210,6 +336,9 @@ export function registerSamiContractingTemplateHelpers(HB: any): void {
   HB.registerHelper("documentScript", documentScript);
   HB.registerHelper("documentFont", documentFont);
   HB.registerHelper("googleFontHref", googleFontHref);
+  HB.registerHelper("documentTextScale", documentTextScale);
+  HB.registerHelper("fixedTotals", fixedTotals);
+  HB.registerHelper("printZoom", printZoom);
   HB.registerHelper("documentLang", documentLang);
   HB.registerHelper("documentDir", documentDir);
   HB.registerHelper("partyFields", partyFields);

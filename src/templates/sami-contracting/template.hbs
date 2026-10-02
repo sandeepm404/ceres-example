@@ -5,6 +5,8 @@
     dir   ← invoice.template.rtl (Lydia's RTL toggle; the preview reloads on change)
     lang  ← the business's PDF script (owner.configuration.pdfOptions.script)
     font  ← the business's PDF font for that script (…pdfOptions.fontFamily)
+    zoom  ← text scale (pdfOptions, advanceOptions, then invoice .textScale);
+            in print, Lydia's text scale (pdfOptions.zoomSize) — see printZoom
   Every layout rule in styles.css uses logical properties (start/end, inline/block),
   so the same markup mirrors itself under dir="rtl".
 
@@ -21,7 +23,10 @@
   dir="{{documentDir invoice}}"
   data-script="{{documentScript invoice pdfOptions}}"
   {{#with (documentLang (documentScript invoice pdfOptions)) as |lang|}}lang="{{lang}}"{{/with}}
-  {{#with (documentFont invoice pdfOptions) as |scriptFont|}}{{#if (googleFontHref scriptFont)}}style="--smc-script-font: '{{scriptFont}}';"{{/if}}{{/with}}>
+  {{#if (or (documentTextScale invoice pdfOptions advanceOptions) (googleFontHref (documentFont invoice pdfOptions)))}}style="
+    {{~#with (documentFont invoice pdfOptions) as |scriptFont|}}{{#if (googleFontHref scriptFont)}}--smc-script-font: '{{scriptFont}}';{{/if}}{{/with~}}
+    {{~#with (documentTextScale invoice pdfOptions advanceOptions) as |scale|}} zoom: {{scale}};{{/with~}}
+  "{{/if}}>
   {{!-- Inside the shell, not before it: the shell must stay the template's first element. --}}
   {{#with (documentFont invoice pdfOptions) as |scriptFont|}}
   {{#if (googleFontHref scriptFont)}}<link rel="stylesheet" href="{{googleFontHref scriptFont}}" />{{/if}}
@@ -35,7 +40,7 @@
     {{/if}}
   </div>
 
-  <div class="smc-page">
+  <div class="smc-page"{{#with (printZoom pdfOptions) as |zoom|}} style="--smc-print-zoom: {{zoom}};"{{/with}}>
     {{!-- ═══ Title ═══ --}}
     {{#if (or invoice.invoiceTitle invoice.invoiceSubTitle)}}
     <div class="smc-title">
@@ -275,10 +280,11 @@
         {{!-- QRs go through qrSrc, never the image widget: it passes a host-resolved data
               URL through untouched and encodes raw content (documentQr has been seen
               carrying the plain JSON it should encode). The containers stay in the DOM
-              so Lydia can patch qrCode / zatcaQrCode live. --}}
+              so Lydia can patch qrCode / zatcaQrCode live. The API sends the ZATCA
+              Phase 1 TLV as `zatcaQr`; `zatcaQrCode` (Lydia's live patch) wins when set. --}}
         <div class="smc-qrs">
-          <div data-ceres-field-container="zatcaQrCode" class="smc-qr{{#unless invoice.zatcaQrCode}} is-empty{{/unless}}">
-            <img data-ceres-field="zatcaQrCode" src="{{qrSrc invoice.zatcaQrCode}}" alt="ZATCA QR" />
+          <div data-ceres-field-container="zatcaQrCode" class="smc-qr{{#unless (or invoice.zatcaQrCode invoice.zatcaQr)}} is-empty{{/unless}}">
+            <img data-ceres-field="zatcaQrCode" src="{{#if invoice.zatcaQrCode}}{{qrSrc invoice.zatcaQrCode}}{{else}}{{qrSrc invoice.zatcaQr}}{{/if}}" alt="ZATCA QR" />
           </div>
           <div data-ceres-field-container="qrCode" class="smc-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
             <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
@@ -286,7 +292,7 @@
           {{#if invoice.lhdnQrCode}}
           <div class="smc-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
           {{/if}}
-          {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
+          {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.zatcaQr invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
           <div class="smc-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
           {{/unless}}{{/if}}
         </div>
@@ -314,19 +320,39 @@
       </div>
 
       <div class="smc-summary-end">
-        {{!-- Totals come from the shared widget: row set, order, labels (from the
-              document's columns), formatting, rate breakup (per the account's
-              taxSummaryView), the settlement band and the words line, plus the
-              data-ceres-* hooks the host toggles. Do not hand-write rows here.
-
-              businessCurrency is the document's own currency on purpose: this
-              template prints no currency conversion. The widget converts only
-              when the business currency differs from the document's, so this
-              drops the Conversion Rate row and every converted sub-line. --}}
-        {{> Subtotal (computeSubtotalRows invoice
-                        columns=mapped.columns
-                        businessCurrency=invoice.currency
-                        businessLocale=invoice.businessLocale) }}
+        {{!-- Totals: five fixed rows by request — excl. VAT, VAT, incl. VAT, paid,
+              due — always printed, whatever the account's totals visibility
+              settings say, with the design's own Arabic labels. Figures come from
+              fixedTotals (helpers.ts), already formatted in the document's
+              currency. --}}
+        {{#with (fixedTotals invoice) as |t|}}
+        <div class="ceres-subtotal smc-totals">
+          <table class="ceres-subtotal-table">
+            <tbody>
+              <tr class="ceres-subtotal-row">
+                <th class="ceres-subtotal-label">الإجمالي غير شامل ضريبة القيمة المضافة</th>
+                <td class="ceres-subtotal-value">{{t.text.exclVat}}</td>
+              </tr>
+              <tr class="ceres-subtotal-row">
+                <th class="ceres-subtotal-label"><bdi>ضريبة القيمة المضافة{{#if t.vatRate}} <bdi dir="ltr">{{t.vatRate}}%</bdi>{{/if}}</bdi></th>
+                <td class="ceres-subtotal-value">{{t.text.vat}}</td>
+              </tr>
+              <tr class="ceres-subtotal-row">
+                <th class="ceres-subtotal-label">الإجمالي (شامل ضريبة القيمة المضافة)</th>
+                <td class="ceres-subtotal-value">{{t.text.total}}</td>
+              </tr>
+              <tr class="ceres-subtotal-row">
+                <th class="ceres-subtotal-label">إجمالي المدفوع</th>
+                <td class="ceres-subtotal-value">{{t.text.paid}}</td>
+              </tr>
+              <tr class="ceres-subtotal-row">
+                <th class="ceres-subtotal-label">إجمالي المستحق</th>
+                <td class="ceres-subtotal-value">{{t.text.due}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        {{/with}}
 
         {{#unless (eq invoice.signatureMethod "DIGITAL")}}
         {{#if invoice.signature}}
