@@ -19,7 +19,6 @@ import {
   fixedTotals,
   isProductCodeColumn,
   printZoom,
-  paperName,
   rendererPrintZoom,
   productCodeFirst,
   partyFields,
@@ -388,16 +387,7 @@ describe("sami-contracting print zoom", () => {
   });
 });
 
-describe("sami-contracting printed paper", () => {
-  it("names the paper from pdfOptions format and orientation", () => {
-    expect(paperName({ format: "a4" })).toBe("a4");
-    expect(paperName({ format: "A4", landscape: false })).toBe("a4");
-    expect(paperName({ format: "a3", landscape: true })).toBe("a3-landscape");
-    expect(paperName({ format: "letter" })).toBe("letter");
-    expect(paperName({ format: "tabloid" })).toBe("");
-    expect(paperName(undefined)).toBe("");
-  });
-
+describe("sami-contracting printed page", () => {
   it("knows the page zoom the shared renderer applies in print", () => {
     expect(rendererPrintZoom({ zoomSize: 0.9 })).toBe("0.9");
     expect(rendererPrintZoom({ zoomSize: "1.1" })).toBe("1.1");
@@ -406,16 +396,46 @@ describe("sami-contracting printed paper", () => {
     );
   });
 
-  it("marks the shell with the paper and the renderer's page zoom", () => {
+  it("marks the shell with the renderer's page zoom", () => {
     const at = (pdfOptions: Record<string, unknown>) =>
       render({ template: { ...baseInvoice().template, pdfOptions } });
-    expect(at({ format: "a4", zoomSize: 0.8 })).toContain('data-paper="a4"');
     expect(at({ format: "a4", zoomSize: 0.8 })).not.toContain(
       "--smc-page-zoom"
     );
     expect(at({ format: "a4", zoomSize: 0.9 })).toContain(
       "--smc-page-zoom: 0.9;"
     );
+  });
+});
+
+describe("sami-contracting letterhead page scope", () => {
+  const withScope = (
+    letterHeadOnFirstPage: boolean,
+    footerOnLastPage: boolean
+  ) =>
+    render({
+      letterHead: "https://example.com/lh.png",
+      letterHeadFooter: "https://example.com/lhf.png",
+      template: {
+        ...baseInvoice().template,
+        pdfOptions: {
+          ...baseInvoice().template?.pdfOptions,
+          letterHeadOnFirstPage,
+          footerOnLastPage,
+        },
+      },
+    });
+
+  it("keeps the letterhead and footer in the page when scoped to the first/last page", () => {
+    const html = withScope(true, true);
+    expect(html).toMatch(/<div class="invoice-letterhead"/);
+    expect(html).toMatch(/<div class="invoice-letterhead-footer"/);
+  });
+
+  it("leaves them to the PDF service's page margins otherwise", () => {
+    const html = withScope(false, false);
+    expect(html).toMatch(/<div class="no-dibella invoice-letterhead"/);
+    expect(html).toMatch(/<div class="no-dibella invoice-letterhead-footer"/);
   });
 });
 

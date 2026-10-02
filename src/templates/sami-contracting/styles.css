@@ -522,13 +522,17 @@
 
     max-width: none;
 
-    /* The printed page is at least one page tall, so the summary (totals,
-       words, QR) can sit at its foot, just above the letterhead footer. A
-       longer document simply flows; the summary follows its items. The
-       height is the declared paper's (see the @page rules below) — not
-       100vh, which in print is the browser window, not the paper. */
+    /* The printed page is at least one page tall and the item table takes
+       the slack (below), so the summary lands at the foot of the page, just
+       above the footer. 100vh is the page area in the PDF service — the same
+       measure the line-items widget's own stretch uses — and is divided by
+       the renderer's page zoom, which would otherwise shrink it. Page margins
+       are left to the PDF service. A longer document simply flows. In a
+       browser print 100vh is the window, so it is capped at one A4 sheet
+       (less 1mm): a tall window can never spill a blank second page. */
     display: flex;
     flex-direction: column;
+    min-height: calc(min(100vh, 296mm) / var(--smc-page-zoom, 1));
   }
 
   .smc-page {
@@ -537,132 +541,24 @@
     zoom: var(--smc-print-zoom, 1);
   }
 
-  .smc-summary {
-    margin-block-start: auto;
+  /* Stretch the line items: the table grows into the page's blank space and
+     its last row takes the extra height, content at the top of its cells. */
+  .smc-items,
+  .smc-items .line-items-table-wrapper {
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
   }
-}
 
-/* Declared papers, one per pdfOptions format and orientation (paperName in
-   helpers.ts). No page margins: the template's own padding spaces the page,
-   and the shell is exactly one sheet tall, less 1mm so rounding never spills
-   a blank second page — divided by the renderer's page zoom
-   (rendererPrintZoom), which would otherwise shrink it with the page. */
-@page smc-a3 {
-  size: a3 portrait;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="a3"] {
-    page: smc-a3;
-    min-height: calc((420mm - 1mm) / var(--smc-page-zoom, 1));
+  .smc-items .line-items-table {
+    flex: 1 0 auto;
   }
-}
 
-@page smc-a3-landscape {
-  size: a3 landscape;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="a3-landscape"] {
-    page: smc-a3-landscape;
-    min-height: calc((297mm - 1mm) / var(--smc-page-zoom, 1));
+  .smc-items .line-items-table > tbody > tr:last-child {
+    height: 100%;
   }
-}
 
-@page smc-a4 {
-  size: a4 portrait;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="a4"] {
-    page: smc-a4;
-    min-height: calc((297mm - 1mm) / var(--smc-page-zoom, 1));
-  }
-}
-
-@page smc-a4-landscape {
-  size: a4 landscape;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="a4-landscape"] {
-    page: smc-a4-landscape;
-    min-height: calc((210mm - 1mm) / var(--smc-page-zoom, 1));
-  }
-}
-
-@page smc-a5 {
-  size: a5 portrait;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="a5"] {
-    page: smc-a5;
-    min-height: calc((210mm - 1mm) / var(--smc-page-zoom, 1));
-  }
-}
-
-@page smc-a5-landscape {
-  size: a5 landscape;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="a5-landscape"] {
-    page: smc-a5-landscape;
-    min-height: calc((148mm - 1mm) / var(--smc-page-zoom, 1));
-  }
-}
-
-@page smc-letter {
-  size: letter portrait;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="letter"] {
-    page: smc-letter;
-    min-height: calc((279.4mm - 1mm) / var(--smc-page-zoom, 1));
-  }
-}
-
-@page smc-letter-landscape {
-  size: letter landscape;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="letter-landscape"] {
-    page: smc-letter-landscape;
-    min-height: calc((215.9mm - 1mm) / var(--smc-page-zoom, 1));
-  }
-}
-
-@page smc-legal {
-  size: legal portrait;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="legal"] {
-    page: smc-legal;
-    min-height: calc((355.6mm - 1mm) / var(--smc-page-zoom, 1));
-  }
-}
-
-@page smc-legal-landscape {
-  size: legal landscape;
-  margin: 0;
-}
-
-@media print {
-  .smc-shell[data-paper="legal-landscape"] {
-    page: smc-legal-landscape;
-    min-height: calc((215.9mm - 1mm) / var(--smc-page-zoom, 1));
+  .smc-items .line-items-table > tbody > tr:last-child > td {
+    vertical-align: top;
   }
 }
