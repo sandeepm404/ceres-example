@@ -201,6 +201,42 @@ export const withFillerRow = <T>(state: T): T => {
   return { ...(state as any), mapped: { ...mapped, rows: next } };
 };
 
+// With "show description in full width" off, an item's description prints in
+// its item cell, under the name (template.hbs), rather than in the row the
+// shared widget spans across every column. The extras row then carries only
+// what is left — images and serials — and drops away when nothing is.
+export const descriptionInItemCell = <T>(state: T): T => {
+  const mapped = (state as any)?.mapped;
+  const rows = asArray(mapped?.rows);
+  const moves = (row: any): boolean =>
+    Boolean(row?.extras?.hasDescription) && !row.extras.descriptionFullWidth;
+  if (!rows.some(moves)) return state;
+  return {
+    ...(state as any),
+    mapped: {
+      ...mapped,
+      rows: rows.map((row) => {
+        if (!moves(row)) return row;
+        const { extras } = row;
+        return {
+          ...row,
+          extras: {
+            ...extras,
+            hasDescription: false,
+            descriptionInItem: true,
+            hasAny: Boolean(
+              extras.imagesInline ||
+                extras.imagesRow ||
+                extras.hasOriginalImages ||
+                extras.hasSerials
+            ),
+          },
+        };
+      }),
+    },
+  };
+};
+
 // Lydia's text scale is the document's pdfOptions.zoomSize (smaller 0.8,
 // small 0.9, normal 1.0, …). The shared renderer zooms the printed page for
 // every value except 0.8, which it treats as "no zoom" — so "smaller" printed

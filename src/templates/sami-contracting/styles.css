@@ -249,6 +249,12 @@
   vertical-align: middle;
 }
 
+/* Figures line up with the item name, at the top of a row that a long
+   description makes tall. */
+.smc-items .line-items-table > tbody > tr > td {
+  vertical-align: top;
+}
+
 .smc-items .line-items-table > thead > tr > th {
   background: var(--smc-pill-bg);
   font-family: var(--smc-font-heading);
@@ -313,6 +319,13 @@
 .smc-items .line-items-table tr.item-extras-row td.item-extras-cell {
   text-align: start;
   white-space: normal;
+}
+
+/* A description that is not full width sits in the item pill, under the
+   name, at the body weight the extras row would have given it. */
+.smc-items .line-items-table > tbody > tr > td.col-item > .smc-item-description {
+  padding-block-start: 4px;
+  font-weight: 400;
 }
 
 /* The filler row (helpers.ts withFillerRow) only exists to fill a printed
