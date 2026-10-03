@@ -361,7 +361,21 @@
   gap: 16px;
 }
 
+.smc-bank-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-block-start: 12px;
+}
+
+.smc-bank-title {
+  margin: 0;
+  font-size: var(--smc-font-size-m);
+  font-weight: 700;
+}
+
 .smc-bank {
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -419,6 +433,28 @@
 }
 
 /* Number of items and created-by: bold lines above and below the words box. */
+.smc-extra-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  font-size: var(--smc-font-size-m);
+  font-weight: 400;
+}
+
+.smc-extra-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+}
+
+.smc-extra-field dt,
+.smc-extra-field dd {
+  margin: 0;
+  font-weight: 400;
+}
+
 .smc-count,
 .smc-creator {
   display: flex;
@@ -428,6 +464,11 @@
   margin: 0;
   font-size: var(--smc-font-size-m);
   font-weight: 700;
+}
+
+/* "Created by" reads like the custom fields above it: same size, body weight. */
+.smc-creator {
+  font-weight: 400;
 }
 
 .smc-creator-label::after {
@@ -441,7 +482,7 @@
   border: 1px solid var(--smc-rule);
   border-radius: var(--smc-radius);
   background: var(--smc-pill-bg);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 /* --- Signature --- */

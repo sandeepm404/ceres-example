@@ -509,6 +509,64 @@ describe("sami-contracting multi-page print fit", () => {
   });
 });
 
+describe("sami-contracting totals custom fields", () => {
+  it("lists extraTotalFields under the item count, label and value as entered", () => {
+    const html = render({
+      extraTotalFields: [
+        { key: "a", label: "الموقع:", value: "المدينة المنورة" },
+        { key: "b", label: "مذكرة :", value: "-" },
+      ],
+    });
+    expect(html).toContain('<dl class="smc-extra-fields">');
+    expect(html).toContain("<dt>الموقع:</dt><dd>المدينة المنورة</dd>");
+    expect(html).toContain("<dt>مذكرة :</dt><dd>-</dd>");
+    expect(html.indexOf("smc-extra-fields")).toBeGreaterThan(
+      html.indexOf("smc-count")
+    );
+  });
+
+  it("drops a field with no value, and the list when there are none", () => {
+    expect(
+      render({ extraTotalFields: [{ key: "a", label: "Empty", value: "" }] })
+    ).not.toContain("<dt>Empty</dt>");
+    expect(render({ extraTotalFields: [] })).not.toContain("smc-extra-fields");
+  });
+});
+
+describe("sami-contracting bank details", () => {
+  const bankAccount = {
+    name: "test",
+    bank: "sbi",
+    accountNo: "222223220000",
+    ifsc: "SBIN0003471",
+    accountType: "CURRENT",
+  };
+  const withBank = (showBankAccount: boolean) => {
+    const state = normalizeInvoiceTemplateState({
+      ...(sample as any),
+      invoice: { ...baseInvoice(), bankAccount },
+    }) as any;
+    state.mapped.visibility.showBankUpiSection = true;
+    state.mapped.visibility.showBankAccount = showBankAccount;
+    return template(state);
+  };
+
+  it("prints the bank details under the totals, headed تفاصيل البنك", () => {
+    const html = withBank(true);
+    const end = html.indexOf('class="smc-summary-end"');
+    const block = html.indexOf('class="smc-bank-details"');
+    expect(block).toBeGreaterThan(html.indexOf("smc-totals"));
+    expect(block).toBeGreaterThan(end);
+    expect(html).toContain('<p class="smc-bank-title">تفاصيل البنك</p>');
+    expect(html).toContain("222223220000");
+    expect(html).toContain("SBIN0003471");
+  });
+
+  it("follows the account's bank-account setting", () => {
+    expect(withBank(false)).not.toContain("smc-bank-details");
+  });
+});
+
 describe("sami-contracting ZATCA QR", () => {
   const TLV =
     "AQ5TYXVkaSBCdXNpbmVzcwIPMzExMzE1MDI3NDAwMDAzAxQyMDI2LTA3LTMxVDEzOjA3OjM3WgQHNTUyMDAwMAUGNzIwMDAw";
