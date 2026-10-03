@@ -19,6 +19,15 @@ Ceres renders custom document templates (invoices, quotations) inside an iframe 
 5. Renderer fetches API data and calls `window.CeresTemplate(data)`
 6. Result HTML goes into `<div id="documentOutput">`
 
+## Template File Rule (hard rule)
+
+A template folder (`src/templates/<name>/`) contains only these files:
+
+- `index.ts`, `samples.json`, `styles.css`, `template.hbs`, `version.json`
+- `helpers.ts` — optional, and only when the logic can't be done with an existing shared widget in `src/widgets/`
+
+No other files: no partial `.hbs`, no extra `.ts` modules, no local sample JSON (test payloads go in `tests/fixtures/<name>.json`), and never more than one helpers file.
+
 ## Lydia Integration
 
 Ceres runs inside an iframe in Lydia. Communication via postMessage:

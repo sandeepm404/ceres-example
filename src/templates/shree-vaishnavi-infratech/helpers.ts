@@ -346,20 +346,17 @@ const compactDecimal = (value: number): string =>
 const mapPrintAppearance = (pdfOptionsValue: any) => {
   const pdfOptions = asRecord(pdfOptionsValue);
   // zoomSize is the print size picked in Lydia: 0.8 smaller, 0.9 small,
-  // 1 normal, 1.1 large, 1.2 larger. It zooms the whole container. The
-  // renderer also zooms the page by zoomSize, except at 0.8 (its default),
-  // so the template divides that renderer zoom back out.
+  // 1 normal, 1.1 large, 1.2 larger. The renderer zooms the printed page by
+  // it, except at 0.8, which the template applies itself (as in
+  // sami-contracting). The text scale is a zoom on top of that.
   const zoomSize = optionalPrintNumber(pdfOptions.zoomSize);
-  const pageZoom = zoomSize !== undefined && zoomSize > 0 ? zoomSize : 1;
-  const rendererZoom = pageZoom !== 0.8 ? pageZoom : 1;
+  const templateZoom = zoomSize === 0.8 ? 0.8 : 1;
   const scale = normalizePrintScale(
     firstConfiguredValue(pdfOptions.textScale, pdfOptions.scale)
   );
 
   return {
-    scale: compactDecimal(scale),
-    pageZoom: compactDecimal(pageZoom),
-    rendererZoom: compactDecimal(rendererZoom),
+    zoom: compactDecimal(templateZoom * scale),
     pageless:
       firstBoolean(
         pdfOptions.pageless,
@@ -951,6 +948,34 @@ const DOCUMENT_TITLES: Record<string, string> = {
 const isQuotationLike = (billType: string): boolean =>
   ["QUOTATION", "ESTIMATE"].includes(billType);
 
+// Whether the shared InvoiceStatus tag prints. The API sends a payment status
+// on every document, quotations included, and the widget prints "Unpaid" for
+// anything it does not recognise. Only the statuses the printed PDF shows get
+// through (the same rule as saga-engineering): Paid and Partially Paid on a
+// document that is paid against, Cancelled on any document.
+const PAYABLE_BILL_TYPES = [
+  "INVOICE",
+  "PROFORMAINV",
+  "DEBITNOTE",
+  "PAYMENTRECEIPT",
+];
+
+export const showsStatusTag = (invoice: any): boolean => {
+  const billType = plainText(
+    invoice?.billType || invoice?.invoiceType
+  ).toUpperCase();
+  const status = plainText(invoice?.status).toUpperCase();
+  if (status === "CANCELED" || status === "CANCELLED") return true;
+  if (!PAYABLE_BILL_TYPES.includes(billType)) return false;
+  if (status === "PAID") return true;
+  // A part-paid overdue document would come out of the widget as "Overdue",
+  // which the PDF never shows.
+  return (
+    ["PARTIAL", "PARTIALLY_PAID"].includes(status) &&
+    optionalBoolean(invoice?.isOverdue) !== true
+  );
+};
+
 // Party detail rows. The key is the payload field, so mapVaishnaviTemplateData can apply
 // the party's own `<key>ShowInInvoice` switch to each row.
 const PARTY_ROWS: Array<{ key: string; label: string; isPhone?: boolean }> = [
@@ -1463,6 +1488,7 @@ export const mapBaseTemplateData = (payload: any) => {
       phoneLabel: firstPlainText(customLabels.contactPhone, "call on"),
     },
     showDemoBadge: optionalBoolean(invoice.isDemo) === true,
+    showStatusTag: showsStatusTag(invoice),
     showTaxSummary,
     showHsnSummary,
     showPayments,

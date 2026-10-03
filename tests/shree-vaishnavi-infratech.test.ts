@@ -299,6 +299,37 @@ describe("shree-vaishnavi-infratech: data mapping", () => {
     expect(off.sri.showHsnSummary).toBe(false);
   });
 
+  it("prints the status tag only for a status the PDF shows", () => {
+    const tag = (billType: string, status: string, isOverdue = false) =>
+      mapVaishnaviTemplateData({
+        invoice: { ...fixture.invoice, billType, status, isOverdue },
+      }).sri.showStatusTag;
+
+    expect(tag("QUOTATION", "UNPAID")).toBe(false);
+    expect(tag("QUOTATION", "PAID")).toBe(false);
+    expect(tag("QUOTATION", "CANCELED")).toBe(true);
+    expect(tag("INVOICE", "UNPAID")).toBe(false);
+    expect(tag("INVOICE", "UNPAID", true)).toBe(false);
+    expect(tag("INVOICE", "PAID")).toBe(true);
+    expect(tag("INVOICE", "PARTIAL")).toBe(true);
+    expect(tag("INVOICE", "PARTIAL", true)).toBe(false);
+    expect(tag("INVOICE", "CANCELLED")).toBe(true);
+  });
+
+  it("zooms the print only for zoomSize 0.8 and the text scale", () => {
+    const zoom = (pdfOptions: any) =>
+      mapVaishnaviTemplateData({ ...fixture, pdfOptions }).vaishnavi.print.zoom;
+
+    // Every other zoomSize is the renderer's own page zoom.
+    expect(zoom({})).toBe("1");
+    expect(zoom({ zoomSize: 0.9 })).toBe("1");
+    expect(zoom({ zoomSize: 1.2 })).toBe("1");
+    expect(zoom({ zoomSize: 0.8 })).toBe("0.8");
+    expect(zoom({ zoomSize: "0.8" })).toBe("0.8");
+    expect(zoom({ textScale: 1.1 })).toBe("1.1");
+    expect(zoom({ zoomSize: 0.8, textScale: 1.1 })).toBe("0.88");
+  });
+
   it("reduces an object cell value to something printable", () => {
     expect(
       getItemColumnValue(
