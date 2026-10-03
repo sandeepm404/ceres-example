@@ -261,6 +261,19 @@
           <span class="smc-count-value">{{totalQuantity invoice.items}}</span>
         </p>
 
+        {{!-- The totals area's custom fields (extraTotalFields). The shared totals
+              widget prints them as rows under the totals; the fixed totals here
+              don't, so they sit under the item count instead, at body weight.
+              Label and value as entered (labels carry their own colon); an empty
+              value drops the row, as in the widget. --}}
+        {{#if invoice.extraTotalFields.length}}
+        <dl class="smc-extra-fields">
+          {{#each invoice.extraTotalFields}}{{#if value}}
+          <div class="smc-extra-field"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+          {{/if}}{{/each}}
+        </dl>
+        {{/if}}
+
         {{!-- Total in words, boxed on its own above the QR (as in the design), not inside
               the totals. The model is the totals widget's own, so the value
               (customLabels.totalInWordsValue) and every reason to hide it — hideTotals,
@@ -320,26 +333,15 @@
           {{/unless}}{{/if}}
         </div>
 
-        {{#if mapped.visibility.showBankUpiSection}}
+        {{!-- UPI stays here; the bank details sit under the totals. --}}
+        {{#if mapped.visibility.showBankUpiSection}}{{#if mapped.visibility.showUpi}}
         <div class="smc-pay">
-          {{#if mapped.visibility.showBankAccount}}
-          <dl class="smc-bank">
-            {{#each (bankFields invoice)}}
-            <div class="smc-kv">
-              {{#if label}}<dt>{{label}}</dt>{{/if}}
-              <dd class="smc-ltr">{{value}}</dd>
-            </div>
-            {{/each}}
-          </dl>
-          {{/if}}
-          {{#if mapped.visibility.showUpi}}
           <div class="smc-upi">
             {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="smc-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
             <p class="smc-ltr">{{mapped.upi.id}}</p>
           </div>
-          {{/if}}
         </div>
-        {{/if}}
+        {{/if}}{{/if}}
       </div>
 
       <div class="smc-summary-end">
@@ -376,6 +378,25 @@
           </table>
         </div>
         {{/with}}
+
+        {{!-- Bank details under the totals, headed "تفاصيل البنك" (Bank Details; fixed text by
+              request). Same gates as before: the account's bank/UPI section and
+              its bank-account setting. --}}
+        {{#if mapped.visibility.showBankUpiSection}}{{#if mapped.visibility.showBankAccount}}
+        {{#with (bankFields invoice) as |rows|}}{{#if rows.length}}
+        <div class="smc-bank-details">
+          <p class="smc-bank-title">تفاصيل البنك</p>
+          <dl class="smc-bank">
+            {{#each rows}}
+            <div class="smc-kv">
+              {{#if label}}<dt>{{label}}</dt>{{/if}}
+              <dd class="smc-ltr">{{value}}</dd>
+            </div>
+            {{/each}}
+          </dl>
+        </div>
+        {{/if}}{{/with}}
+        {{/if}}{{/if}}
       </div>
     </div>
 
