@@ -1,0 +1,214 @@
+<div class="vaishnavi-invoice{{#if vaishnavi.hideFooter}} is-footer-hidden{{/if}}{{#if vaishnavi.print.pageless}} is-pageless-print{{/if}}" dir="{{vaishnavi.direction}}" style="--vaishnavi-text-scale: {{vaishnavi.print.scale}}; --vaishnavi-page-zoom: {{vaishnavi.print.pageZoom}}; --vaishnavi-renderer-zoom: {{vaishnavi.print.rendererZoom}};"{{#if vaishnavi.language}} lang="{{vaishnavi.language}}"{{/if}}{{#if vaishnavi.script}} data-ceres-script="{{vaishnavi.script}}"{{/if}}>
+  {{!-- "Show only on first/last page" (pdfOptions.letterHeadOnFirstPage / footerOnLastPage):
+       the PDF service stops drawing these in its page margins, so they stay in the document
+       flow. Otherwise they carry no-dibella: the PDF service draws them on every page and
+       hides these copies. --}}
+  <div class="{{#unless mapped.visibility.letterHeadOnFirstPage}}no-dibella {{/unless}}invoice-letterhead{{#unless display.assets.letterHead}} is-empty{{/unless}}">
+    {{#if display.assets.letterHead}}<img src="{{display.assets.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" referrerpolicy="no-referrer" />{{else}}<img alt="Letterhead" data-ceres-height="letterhead" />{{/if}}
+  </div>
+
+  <main class="document-body">
+    <header class="document-header">
+      <div class="document-heading">
+        <div class="document-heading-text">
+        <div class="title-line">
+          <h1>{{display.document.title}}</h1>
+          {{#if invoice.status}}{{> InvoiceStatus invoice}}{{/if}}
+          {{#if sri.showDemoBadge}}{{> DemoBadge}}{{/if}}
+        </div>
+        {{#if display.document.subtitle}}<p class="document-subtitle">{{display.document.subtitle}}</p>{{/if}}
+        <dl class="invoice-meta">
+          <div><dt>{{display.document.labels.number}}</dt><dd>{{display.document.number}}</dd></div>
+          <div><dt>{{display.document.labels.date}}</dt><dd>{{formateShortDateWithOffset display.document.date invoice.ownerOffset}}</dd></div>
+          {{#if display.document.validTill}}<div><dt>{{display.document.labels.validTill}}</dt><dd>{{formateShortDateWithOffset display.document.validTill invoice.ownerOffset}}</dd></div>{{/if}}
+          {{#if invoice.purchaseOrderNumber}}<div><dt>{{display.document.labels.purchaseOrderNumber}}</dt><dd>{{invoice.purchaseOrderNumber}}</dd></div>{{/if}}
+          {{#each vaishnavi.documentRows}}<div><dt>{{label}}</dt><dd>{{#if isDate}}{{formateShortDateWithOffset value ../invoice.ownerOffset}}{{else if isCountry}}{{formatCountryName value}}{{else if isPlace}}{{formatCountryName value}}{{else}}{{value}}{{/if}}</dd></div>{{/each}}
+          {{#each vaishnavi.supplyRows}}<div data-ceres-{{supplyField}}{{#unless isVisible}} style="display: none;"{{/unless}}><dt>{{label}}</dt><dd>{{#if isCountry}}{{formatCountryName value}}{{else}}{{value}}{{/if}}</dd></div>{{/each}}
+        </dl>
+        </div>
+        <div class="document-qr{{#unless vaishnavi.compliance.documentQr}} is-empty{{/unless}}" data-ceres-field-container="documentQr" data-qr-placement="{{vaishnavi.compliance.qrPlacement}}">
+          <img referrerpolicy="no-referrer" class="document-qr-image" data-ceres-field="documentQr"{{#if vaishnavi.compliance.documentQr}} src="{{qrSrc vaishnavi.compliance.documentQr}}"{{/if}} alt="Document QR code" />
+        </div>
+      </div>
+      {{#if display.document.catalogueLogo}}<div class="brand-logo" data-ceres-field-container="logo">{{> CeresImage src=display.document.catalogueLogo alt=invoice.billedBy.name class="brand-logo-image"}}</div>{{/if}}
+    </header>
+
+    <section class="card-grid parties-grid">
+      <article class="detail-card">
+        <h2>{{#if invoice.customLabels.billedBy}}{{invoice.customLabels.billedBy}}{{else}}Billed by{{/if}}</h2>
+        <h3>{{invoice.billedBy.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.billedBy)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        {{#if vaishnavi.partyDetails.billedBy}}<div class="key-value-list">{{#each vaishnavi.partyDetails.billedBy}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
+      </article>
+      <article class="detail-card">
+        <h2>{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}Billed to{{/if}}</h2>
+        <h3>{{invoice.billedTo.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.billedTo)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        {{#if vaishnavi.partyDetails.billedTo}}<div class="key-value-list">{{#each vaishnavi.partyDetails.billedTo}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
+      </article>
+      {{#if mapped.visibility.shippedFrom}}<article class="detail-card">
+        <h2>{{#if invoice.customLabels.shippedFrom}}{{invoice.customLabels.shippedFrom}}{{else}}Shipped From{{/if}}</h2>
+        <h3>{{invoice.shippedFrom.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.shippedFrom)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        {{#if vaishnavi.partyDetails.shippedFrom}}<div class="key-value-list">{{#each vaishnavi.partyDetails.shippedFrom}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
+      </article>{{/if}}
+      {{#if mapped.visibility.shippedTo}}<article class="detail-card">
+        <h2>{{#if invoice.customLabels.shippedTo}}{{invoice.customLabels.shippedTo}}{{else}}Shipped To{{/if}}</h2>
+        <h3>{{invoice.shippedTo.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.shippedTo)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        {{#if vaishnavi.partyDetails.shippedTo}}<div class="key-value-list">{{#each vaishnavi.partyDetails.shippedTo}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
+      </article>{{/if}}
+    </section>
+
+    {{!-- E-Invoice (IRN) card, styled like the Transport and Eway Bill cards. It sits in the
+         card grid above the line items or in one below them, per irnPosition. The IRN text and
+         e-invoice QR keep their data-ceres-field hooks for Lydia's live "irn-generated" update. --}}
+    {{#if vaishnavi.showLogisticsGrid}}<section class="card-grid logistics-grid">
+      {{#if mapped.visibility.transport}}<article class="detail-card compact-card">
+        <h2>{{vaishnavi.labels.transportDetails}}</h2>
+        {{#each sri.transportRows}}<p class="key-value"><span>{{label}}</span><strong>{{#if isDate}}{{formateShortDateWithOffset value ../invoice.ownerOffset}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}
+      </article>{{/if}}
+      {{#if vaishnavi.compliance.ewayRows.length}}<article class="detail-card compact-card eway-card">
+        <h2>{{vaishnavi.labels.ewayBillDetails}}</h2>
+        <div class="key-value-list">{{#each vaishnavi.compliance.ewayRows}}<p class="key-value"><span>{{label}}</span><strong>{{#if isUtcDate}}{{formatDateInTimeZone value "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>
+      </article>{{/if}}
+      {{#if vaishnavi.compliance.showIrnSection}}{{#if vaishnavi.compliance.isIrnAbove}}<article class="detail-card compact-card compliance-section" data-ceres-compliance>
+        <h2>{{vaishnavi.compliance.title}}</h2>
+        <div class="compliance-body">
+          <div class="key-value-list compliance-details">{{#each vaishnavi.compliance.irnRows}}<p class="key-value compliance-row"><span>{{label}}</span><strong class="compliance-value"{{#if isIrn}} data-ceres-field="irn"{{/if}}>{{#if isUtcDate}}{{formatDateInTimeZone value "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}{{else if isOffsetDate}}{{formateShortDateWithOffset value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>
+          <div class="compliance-qr{{#unless vaishnavi.compliance.eInvoiceQr}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img referrerpolicy="no-referrer" class="compliance-qr-image" data-ceres-field="qrCode"{{#if vaishnavi.compliance.eInvoiceQr}} src="{{qrSrc vaishnavi.compliance.eInvoiceQr}}"{{/if}} alt="E-Invoice QR code" /></div>
+        </div>
+      </article>{{/if}}{{/if}}
+    </section>{{/if}}
+    {{#if display.compliance.zatcaQrCode}}<section class="compliance-qr-grid"><img class="compliance-qr" src="{{qrSrc display.compliance.zatcaQrCode}}" alt="ZATCA QR code" /></section>{{/if}}
+    {{#if display.compliance.lhdnQrCode}}<section class="compliance-qr-grid"><img class="compliance-qr" src="{{qrSrc display.compliance.lhdnQrCode}}" alt="LHDN QR code" /></section>{{/if}}
+
+    <div class="items-table-wrap">
+      <table class="items-table">
+        <colgroup>{{#each mapped.columns}}{{#unless isHidden}}<col class="{{className}}" />{{/unless}}{{/each}}</colgroup>
+        <thead><tr>{{#each mapped.columns}}{{#unless isHidden}}<th class="{{className}}">{{label}}</th>{{/unless}}{{/each}}</tr></thead>
+        {{#each lineItemGroups as |group|}}
+        {{#if group.isGroupHeader}}<tbody class="item-group widget-group-heading"><tr class="item-group-heading-row"><td colspan="{{@root.mapped.visibility.visibleColumnCount}}"><strong>{{group.label}}</strong></td></tr></tbody>
+        {{else if group.isGroupSubtotal}}<tbody class="item-group widget-group-subtotal"><tr class="item-group-subtotal-row">
+          {{#each group.cells as |cell|}}<td class="{{cell.column.className}}{{#if (isCurrencyColumn cell.column)}} number-cell{{/if}}" data-group-subtotal-column="{{cell.column.key}}">
+            {{#if cell.isRowNumber}}
+            {{else if (isDescriptionColumn cell.column)}}<strong>{{../label}}</strong>
+            {{else if (isQuantityColumn cell.column)}}{{quantityOnly cell.item @root.invoice}}{{#if @root.mapped.visibility.showUnitInQuantity}}{{#if (itemUnit cell.item @root.invoice)}} {{itemUnit cell.item @root.invoice}}{{/if}}{{/if}}
+            {{else if (isUnitColumn cell.column)}}{{itemUnit cell.item @root.invoice}}
+            {{else if (isDateColumn cell.column)}}{{#if (hasValue (itemDisplayValue cell.item cell.column))}}{{formateShortDateWithOffset (itemDisplayValue cell.item cell.column) @root.invoice.ownerOffset}}{{/if}}
+            {{else if (isCurrencyColumn cell.column)}}{{#if (hasValue (itemDisplayValue cell.item cell.column))}}{{formatVaishnaviCurrency (itemDisplayValue cell.item cell.column) @root.invoice}}{{/if}}
+            {{else if (isPercentageColumn cell.column)}}{{formatVaishnaviPercentage (itemDisplayValue cell.item cell.column)}}
+            {{else}}{{itemDisplayValue cell.item cell.column}}{{/if}}
+          </td>{{/each}}
+        </tr></tbody>
+        {{else}}<tbody class="item-group">
+          {{#each group.rows as |line|}}<tr class="item-row{{#if line.pageBreakBefore}} page-break-before{{/if}}{{#if line.isAlternateRow}} is-alt-row{{/if}}">
+            {{#each line.cells as |cell|}}{{#unless cell.skip}}<td class="{{cell.column.className}}{{#if (isCurrencyColumn cell.column)}} number-cell{{/if}}{{#if cell.isItemsEndCell}} is-items-end-cell{{/if}}" rowspan="{{cell.rowspan}}" data-merge-column="{{cell.column.key}}">
+              {{#if cell.isRowNumber}}{{cell.groupNumber}}
+              {{else if (isDescriptionColumn cell.column)}}<strong class="item-name">{{cell.item.name}}</strong>
+                {{#if (showItemSku cell.item @root.mapped.visibility.showSkuInName)}}<span class="item-code">{{@root.display.labels.sku}}: {{itemSku cell.item}}</span>{{/if}}
+                {{#if @root.mapped.visibility.showSerialNumbersInDescription}}{{#if (itemSerialNumbers cell.item)}}<span class="item-code">{{@root.display.labels.serialNumber}}: {{itemSerialNumbers cell.item}}</span>{{/if}}{{/if}}
+                {{#if @root.mapped.visibility.showInlineHsn}}{{#if cell.item.hsn}}<span class="item-code">{{@root.display.labels.hsn}}: {{cell.item.hsn}}</span>{{/if}}{{/if}}
+                {{#if @root.mapped.visibility.showInlineClassification}}{{#if cell.item.classification}}<span class="item-code">{{@root.display.labels.classification}}: {{cell.item.classification}}</span>{{/if}}{{/if}}
+                {{#if @root.mapped.visibility.showUnitInName}}{{#if (itemUnit cell.item @root.invoice)}}<span class="item-code">{{@root.display.document.labels.unit}}: {{itemUnit cell.item @root.invoice}}</span>{{/if}}{{/if}}
+                {{#if @root.mapped.visibility.showDescriptionsInline}}{{#each cell.descriptions}}<div class="item-description">{{> MarkdownViewer (prepareMarkdownViewerData this)}}</div>{{/each}}{{/if}}
+                {{#if cell.images}}{{> CeresImageGallery (prepareImageGallery cell.images variant="thumbnail" alt=cell.item.name link=false)}}{{/if}}
+                {{#if cell.originalImages}}{{> CeresImageGallery (prepareImageGallery cell.originalImages variant="original" alt=cell.item.name link=false)}}{{/if}}
+              {{else if cell.suppressValue}}
+              {{else if (isQuantityColumn cell.column)}}{{quantityOnly cell.item @root.invoice}}{{#if @root.mapped.visibility.showUnitInQuantity}}{{#if (itemUnit cell.item @root.invoice)}} {{itemUnit cell.item @root.invoice}}{{/if}}{{/if}}
+              {{else if (isUnitColumn cell.column)}}{{itemUnit cell.item @root.invoice}}
+              {{else if (isDateColumn cell.column)}}{{#if (hasValue (itemDisplayValue cell.item cell.column))}}{{formateShortDateWithOffset (itemDisplayValue cell.item cell.column) @root.invoice.ownerOffset}}{{/if}}
+              {{else if (isCurrencyColumn cell.column)}}{{#if (hasValue (itemDisplayValue cell.item cell.column))}}{{formatVaishnaviCurrency (itemDisplayValue cell.item cell.column) @root.invoice}}{{/if}}
+              {{else if (isPercentageColumn cell.column)}}{{formatVaishnaviPercentage (itemDisplayValue cell.item cell.column)}}
+              {{else}}{{itemDisplayValue cell.item cell.column}}{{/if}}
+            </td>{{/unless}}{{/each}}
+          </tr>
+          {{#if line.description}}{{#if @root.mapped.visibility.showDescriptionsFullWidth}}<tr class="item-description-row"><td colspan="{{@root.mapped.visibility.visibleColumnCount}}"><div class="item-description">{{> MarkdownViewer (prepareMarkdownViewerData line.description)}}</div></td></tr>{{/if}}{{/if}}
+          {{/each}}
+        </tbody>{{/if}}{{/each}}
+        {{#if mapped.visibility.showTotalsRow}}<tfoot><tr class="items-total-row">
+          {{#each mapped.columns as |column|}}{{#unless column.isHidden}}
+          <td class="{{column.className}}{{#if (isCurrencyColumn column)}} number-cell{{/if}} {{columnAlignmentClass column}}">
+            {{#if (isDescriptionColumn column)}}{{../vaishnavi.labels.tableTotal}}
+            {{else if (isQuantityColumn column)}}{{formatTotalQuantity ../invoice.items ../invoice}}
+            {{else if (isAmountColumn column)}}{{formatVaishnaviCurrency ../totals.subTotal ../invoice}}
+            {{else if (isTotalColumn column)}}{{formatVaishnaviCurrency ../invoice.finalTotal.total ../invoice}}
+            {{else if (isPercentageColumn column)}}{{columnRateSummaryValue ../invoice.items column ../invoice}}
+            {{else if column.summarise}}{{#if (isCurrencyColumn column)}}{{formatVaishnaviCurrency (columnSummaryValue ../invoice.items column) ../invoice}}{{else}}{{columnSummaryValue ../invoice.items column}}{{/if}}{{/if}}
+          </td>
+          {{/unless}}{{/each}}
+        </tr></tfoot>{{/if}}
+      </table>
+    </div>
+
+    {{#if vaishnavi.compliance.showIrnSection}}{{#unless vaishnavi.compliance.isIrnAbove}}<section class="card-grid logistics-grid"><article class="detail-card compact-card compliance-section" data-ceres-compliance>
+        <h2>{{vaishnavi.compliance.title}}</h2>
+        <div class="compliance-body">
+          <div class="key-value-list compliance-details">{{#each vaishnavi.compliance.irnRows}}<p class="key-value compliance-row"><span>{{label}}</span><strong class="compliance-value"{{#if isIrn}} data-ceres-field="irn"{{/if}}>{{#if isUtcDate}}{{formatDateInTimeZone value "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}{{else if isOffsetDate}}{{formateShortDateWithOffset value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>
+          <div class="compliance-qr{{#unless vaishnavi.compliance.eInvoiceQr}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img referrerpolicy="no-referrer" class="compliance-qr-image" data-ceres-field="qrCode"{{#if vaishnavi.compliance.eInvoiceQr}} src="{{qrSrc vaishnavi.compliance.eInvoiceQr}}"{{/if}} alt="E-Invoice QR code" /></div>
+        </div>
+      </article></section>{{/unless}}{{/if}}
+
+    {{#if vaishnavi.showClosingGrid}}<section class="closing-grid{{#if vaishnavi.closingGridSingleColumn}} is-single-column{{/if}}">
+      {{#if vaishnavi.showClosingLeft}}<div class="closing-left">
+        {{#if mapped.visibility.showTotalInWords}}<p class="total-in-words"><span>{{display.document.labels.totalInWords}} :</span> <strong>{{#if display.totalInWordsValue}}{{display.totalInWordsValue}}{{else}}{{amountInWords invoice.finalTotal.total}}{{/if}}</strong></p>{{/if}}
+        {{#if mapped.visibility.showBankUpiSection}}<div class="payment-row">
+          {{#if mapped.visibility.showBankAccount}}<article class="detail-card payment-card bank-details"><h2>{{display.document.labels.bankDetails}}</h2>
+            {{#each display.bankRows}}<p class="key-value"><span>{{label}}</span><strong class="{{#if nowrap}}code-value{{/if}}">{{#each values}}{{this}}{{#unless @last}} / {{/unless}}{{/each}}</strong></p>{{/each}}
+          </article>{{/if}}
+          {{#if mapped.visibility.showUpi}}<div class="upi-details"><h2>{{vaishnavi.labels.scanToPay}}</h2><p>{{vaishnavi.labels.upiLimitMessage}}</p>{{#if mapped.qr.upi}}<img class="upi-qr" src="{{qrSrc mapped.qr.upi}}" alt="UPI payment QR code" />{{/if}}<strong>{{mapped.upi.id}}</strong></div>{{/if}}
+        </div>{{/if}}
+      </div>{{/if}}
+
+      {{#if vaishnavi.showClosingRight}}<aside class="summary-panel">
+        {{#if mapped.visibility.showTotals}}<div class="totals-summary">
+          {{#if vaishnavi.showSummarySubTotal}}<p class="summary-total-row"><span>{{vaishnavi.labels.summarySubTotal}}</span><strong>{{formatVaishnaviCurrency vaishnavi.summarySubTotal invoice}}</strong></p>{{/if}}
+          {{#if display.discountAmount}}<p class="summary-total-row"><span>{{display.labels.discount}}</span><strong>{{formatVaishnaviCurrency display.discountAmount invoice}}</strong></p><p class="summary-total-row"><span>{{display.labels.taxableValue}}</span><strong>{{formatVaishnaviCurrency vaishnavi.taxableAmount invoice}}</strong></p>{{/if}}
+          {{#if vaishnavi.showIgstSummary}}<p class="summary-total-row"><span>{{vaishnavi.summaryTaxLabels.igst}}</span><strong>{{formatVaishnaviCurrency vaishnavi.igstAmount invoice}}</strong></p>{{/if}}
+          {{#if vaishnavi.showCgstSgstSummary}}<p class="summary-total-row"><span>{{vaishnavi.summaryTaxLabels.cgst}}</span><strong>{{formatVaishnaviCurrency vaishnavi.cgstAmount invoice}}</strong></p><p class="summary-total-row"><span>{{#if mapped.visibility.isUtgst}}{{vaishnavi.summaryTaxLabels.utgst}}{{else}}{{vaishnavi.summaryTaxLabels.sgst}}{{/if}}</span><strong>{{formatVaishnaviCurrency vaishnavi.sgstAmount invoice}}</strong></p>{{/if}}
+          {{#each vaishnavi.summaryCessRows}}<p class="summary-total-row"><span>{{label}}</span><strong>{{formatVaishnaviCurrency amount ../invoice}}</strong></p>{{/each}}
+          {{#each display.additionalChargeRows}}<p class="summary-total-row"><span>{{label}}</span><strong>{{formatVaishnaviCurrency amount ../invoice}}</strong></p>{{/each}}
+          {{#each display.extraTotalRows}}<p class="summary-total-row"><span>{{label}}</span><strong>{{#if isMonetary}}{{formatVaishnaviCurrency value ../invoice}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}
+          <p class="summary-grand-total"><span>{{vaishnavi.labels.grandTotal}}</span><strong>{{formatVaishnaviCurrency vaishnavi.summaryTotal invoice}}</strong></p>
+          {{#each vaishnavi.summaryPaymentBalanceRows}}<p class="summary-total-row"><span>{{label}}</span><strong>{{#if deduction}}({{formatVaishnaviCurrency amount ../invoice}}){{else}}{{formatVaishnaviCurrency amount ../invoice}}{{/if}}</strong></p>{{/each}}
+          {{#if mapped.visibility.showDueAmount}}<p class="summary-total-row"><span>{{display.labels.dueAmount}}</span><strong>{{formatVaishnaviCurrency totals.dueAmount invoice}}</strong></p>{{/if}}
+        </div>{{/if}}
+        {{#if mapped.visibility.showSignature}}<div class="signature-box"><div class="signature-space">{{#if display.signature}}{{> CeresImage src=display.signature alt="Authorised signature" class="signature-image"}}{{/if}}</div><span>{{display.labels.signature}}</span></div>{{/if}}
+      </aside>{{/if}}
+    </section>{{/if}}
+
+    <div class="summary-group">
+      <section class="summary-section" data-ceres-tax-summary{{#unless sri.showTaxSummary}} style="display: none;"{{/unless}}>
+        <h2>{{sri.summaryLabels.tax}}</h2>
+        {{> TaxSummaryTable sri.widgets.taxSummary}}
+      </section>
+      <section class="summary-section" data-ceres-hsn-summary{{#unless sri.showHsnSummary}} style="display: none;"{{/unless}}>
+        <h2>{{sri.summaryLabels.hsn}}</h2>
+        {{> HsnSummaryTable sri.widgets.hsnSummary}}
+      </section>
+      {{#if sri.showBatchSummary}}<section class="summary-section" data-ceres-batch-summary>
+        <h2>{{sri.summaryLabels.batch}}</h2>
+        <div class="ceres-table-section"><table class="ceres-table"><thead><tr>{{#each sri.widgets.batchSummary.columns}}<th>{{label}}</th>{{/each}}</tr></thead><tbody>{{#each sri.widgets.batchSummary.rows}}<tr>{{#each cells}}<td class="{{#if isNumeric}}number-cell{{/if}}">{{#if isDate}}{{formatDate value}}{{else}}{{value}}{{/if}}</td>{{/each}}</tr>{{/each}}</tbody></table></div>
+      </section>{{/if}}
+      <section class="summary-section" data-ceres-payment-table{{#unless sri.showPayments}} style="display: none;"{{/unless}}>
+        {{> PaymentTable sri.widgets.paymentTable ownerOffset=invoice.ownerOffset heading=sri.summaryLabels.payments}}
+      </section>
+    </div>
+
+    <div class="closing-notes">
+      {{#if mapped.visibility.showTerms}}{{#each invoice.terms as |termGroup|}}<article class="detail-card text-card terms-card closing-full-width-card"><h2>{{#if termGroup.label}}{{termGroup.label}}{{else}}{{../display.labels.terms}}{{/if}}</h2><ol>{{#each termGroup.terms}}<li>{{this}}</li>{{/each}}</ol></article>{{/each}}{{/if}}
+      {{#if mapped.visibility.showNotes}}<article class="detail-card text-card notes-card closing-full-width-card"><h2>{{display.labels.notes}}</h2>{{> MarkdownViewer (prepareMarkdownViewerData display.notes)}}</article>{{/if}}
+      {{#if vaishnavi.showClosingInformation}}<section class="closing-information">
+        {{#if vaishnavi.showAdditionalInformation}}<article class="detail-card text-card additional-information-card"><h2>{{sri.additionalInformationLabel}}</h2>{{#if sri.additionalInformation}}<p>{{sri.additionalInformation}}</p>{{/if}}{{#each vaishnavi.informationRows}}<p class="key-value"><span>{{label}}</span><strong>{{value}}</strong></p>{{/each}}</article>{{/if}}
+        {{#if sri.attachments.show}}<article class="detail-card text-card attachments-panel" data-ceres-attachments><h2>{{sri.attachments.label}}</h2><ol>{{#each sri.attachments.items}}<li><a href="{{url}}" target="_blank" rel="noopener noreferrer">{{label}}</a></li>{{/each}}</ol></article>{{/if}}
+      </section>{{/if}}
+    </div>
+  </main>
+
+  {{> RefrensBranding invoice}}
+  {{#if sri.contact.show}}<section class="contact-details-bar" data-ceres-contact-details><p>{{sri.contact.intro}} {{#if sri.contact.email}}{{sri.contact.emailLabel}} <strong>{{sri.contact.email}}</strong>{{/if}}{{#if sri.contact.phone}}{{#if sri.contact.email}}, {{/if}}{{sri.contact.phoneLabel}} <strong>{{formatPhoneNumber sri.contact.phone}}</strong>{{/if}}</p></section>{{/if}}
+
+  <div class="{{#unless mapped.visibility.footerOnLastPage}}no-dibella {{/unless}}invoice-letterhead-footer template-footer{{#unless display.assets.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if display.assets.letterHeadFooter}}<img src="{{display.assets.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" referrerpolicy="no-referrer" />{{else}}<img alt="Letterhead footer" data-ceres-height="letterhead-footer" />{{/if}}
+  </div>
+</div>
