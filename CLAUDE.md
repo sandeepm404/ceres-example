@@ -37,6 +37,7 @@ For detailed instructions on specific tasks, read these files:
 - **Map data contract**: `.agent/skills/ceres-template-data-contract/SKILL.md`
 - **Audit a payload against a template**: `.agent/skills/data-mapping/SKILL.md`
 - **Look at the rendered document (after any hbs/CSS change)**: `.agent/skills/render-check/SKILL.md`
+- **Summary at the foot of the printed page (single and multi-page, dibella letterhead bands)**: `.agent/skills/print-page-fit/SKILL.md`
 - **Data binding tests**: `.agent/skills/data-binding-tests/SKILL.md`
 - **Snapshot testing (required for every new template)**: `.agent/skills/snapshot-testing/SKILL.md`
 - **Debug build failures**: `.agent/skills/debug-build/SKILL.md`

@@ -155,6 +155,52 @@ export const productCodeFirst = <T>(state: T): T => {
   };
 };
 
+// A blank row of empty cells after the items, ahead of any summary row. In
+// print it takes the page's spare height (styles.css), so the item rows keep
+// their own height while the table's box reaches down to the summary. The
+// shape mirrors the widget's own stretch filler; when the account already
+// has that stretch on, its filler is used as is.
+const fillerRow = (columns: any[]) => ({
+  cells: columns
+    .filter((column) => !column?.isHidden)
+    .map((column) => ({
+      key: column.key,
+      text: "",
+      className: column.className,
+      label: column.label,
+      isItemCell: false,
+    })),
+  lineNumber: null,
+  isGroupHeading: false,
+  isAdditionalCharge: false,
+  rowClass: "row-filler",
+  item: {
+    name: "",
+    showSku: false,
+    sku: "",
+    mergedAsNote: false,
+    mergedNotes: [],
+    showThumbnail: false,
+    thumbnailImages: [],
+  },
+  extras: { hasAny: false },
+  isTotalsRow: false,
+  isFillerRow: true,
+});
+
+export const withFillerRow = <T>(state: T): T => {
+  const mapped = (state as any)?.mapped;
+  const rows = asArray(mapped?.rows);
+  if (!rows.length || rows.some((row) => row?.isFillerRow)) return state;
+  const at = rows.findIndex((row) => row?.rowClass === "row-summary");
+  const filler = fillerRow(asArray(mapped.columns));
+  const next =
+    at < 0
+      ? [...rows, filler]
+      : [...rows.slice(0, at), filler, ...rows.slice(at)];
+  return { ...(state as any), mapped: { ...mapped, rows: next } };
+};
+
 // Lydia's text scale is the document's pdfOptions.zoomSize (smaller 0.8,
 // small 0.9, normal 1.0, …). The shared renderer zooms the printed page for
 // every value except 0.8, which it treats as "no zoom" — so "smaller" printed
@@ -337,6 +383,146 @@ export const attachmentName = (url: any): string => {
   }
 };
 
+// ─── Multi-page print fit ─────────────────────────────────────────────────
+// Multi-page print: push the summary block to the foot of the last page.
+//
+// A single page needs no script: styles.css stretches the item table to one
+// page height. Past one page CSS cannot tell how much of the last page is
+// left, so this measures the layout as printing starts and pads the summary's
+// top by exactly that amount. Chrome reports `matchMedia("print")` as changed
+// with the page already split into pages (a plain PDF), or fires
+// `beforeprint` with print media already emulated but the page still in one
+// unbroken column. Either way changes made there reach the PDF. The page
+// breaks are worked out from the rows (pagedEnd), which also holds for the
+// already-paginated case, where nothing crosses a page end. Back on screen
+// the padding is removed.
+
+const SHELL = ".smc-shell";
+const SUMMARY = ".smc-summary";
+const ROWS = ".smc-items .line-items-table > tbody > tr:not(.row-filler)";
+const HEAD = ".smc-items .line-items-table > thead";
+const PADDING = "padding-block-start";
+// Kept short of the page end so rounding can never spill a blank page.
+const SAFETY_PX = 2;
+
+export interface PrintUnit {
+  // Offset from the content top, and height, in one unbroken column.
+  top: number;
+  height: number;
+  // Height repeated above it when it starts a new page (the table header).
+  repeat: number;
+}
+
+// Extra height page breaks add: each unit that would cross a page end moves to
+// the next page (Chrome never splits a table row, or a block marked
+// break-inside: avoid, that fits on one page), plus the header it carries
+// there. Units are in document order.
+export const pagedShift = (units: PrintUnit[], pageHeight: number): number =>
+  units.reduce((shift, unit) => {
+    if (!(pageHeight > 0) || unit.height >= pageHeight) return shift;
+    const top = unit.top + shift;
+    const page = Math.floor(top / pageHeight);
+    const crosses = Math.floor((top + unit.height - 0.5) / pageHeight) > page;
+    return crosses
+      ? shift + (page + 1) * pageHeight - top + unit.repeat
+      : shift;
+  }, 0);
+
+// Space left on the last page, given the content's height and one page's
+// height in the same units. Zero when the content fits on one page (the CSS
+// stretch covers that) or already ends at a page foot.
+export const lastPageSlack = (used: number, pageHeight: number): number => {
+  if (!(pageHeight > 0) || used <= pageHeight + SAFETY_PX) return 0;
+  const pages = Math.ceil((used - SAFETY_PX) / pageHeight);
+  return Math.max(0, pages * pageHeight - used - SAFETY_PX);
+};
+
+// One page's height in the shell's own layout: the same measure the print
+// CSS stretches to (styles.css, `.smc-shell` min-height).
+const measurePageHeight = (shell: HTMLElement): number => {
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:absolute;inset-block-start:0;inline-size:0;visibility:hidden;" +
+    "block-size:calc(min(100vh, 296mm) / var(--smc-page-zoom, 1));";
+  shell.appendChild(probe);
+  const { height } = probe.getBoundingClientRect();
+  probe.remove();
+  return height;
+};
+
+// The item rows, then every block after the items that must not split.
+const printUnits = (shell: HTMLElement, origin: number): PrintUnit[] => {
+  const rows = Array.from(shell.querySelectorAll<HTMLElement>(ROWS));
+  const head = shell.querySelector<HTMLElement>(HEAD);
+  const repeat =
+    head && rows.length
+      ? rows[0].getBoundingClientRect().top - head.getBoundingClientRect().top
+      : 0;
+  const items = shell.querySelector<HTMLElement>(".smc-items");
+  const tail: HTMLElement[] = [];
+  let next = items?.nextElementSibling as HTMLElement | null;
+  while (next) {
+    if (getComputedStyle(next).breakInside === "avoid") tail.push(next);
+    next = next.nextElementSibling as HTMLElement | null;
+  }
+  const unit = (el: HTMLElement, carried: number): PrintUnit => {
+    const rect = el.getBoundingClientRect();
+    return { top: rect.top - origin, height: rect.height, repeat: carried };
+  };
+  return [
+    ...rows.map((row) => unit(row, repeat)),
+    ...tail.map((block) => unit(block, 0)),
+  ];
+};
+
+const contentHeight = (shell: HTMLElement, pageHeight: number): number => {
+  const { top, bottom } = shell.getBoundingClientRect();
+  return bottom - top + pagedShift(printUnits(shell, top), pageHeight);
+};
+
+const fit = (): void => {
+  const shell = document.querySelector<HTMLElement>(SHELL);
+  const summary = shell?.querySelector<HTMLElement>(SUMMARY);
+  if (!shell || !summary) return;
+
+  summary.style.removeProperty(PADDING);
+  const pageHeight = measurePageHeight(shell);
+  const used = contentHeight(shell, pageHeight);
+  const slack = lastPageSlack(used, pageHeight);
+  if (slack <= 0) return;
+
+  // The padding is in the summary's own CSS pixels, which a print zoom on the
+  // page can scale; measure how far a trial moves the content's end and
+  // correct by that ratio.
+  summary.style.setProperty(PADDING, `${slack}px`);
+  const moved = contentHeight(shell, pageHeight) - used;
+  if (moved > 0 && Math.abs(moved - slack) > 0.5) {
+    summary.style.setProperty(PADDING, `${(slack * slack) / moved}px`);
+  }
+};
+
+const reset = (): void => {
+  document
+    .querySelector<HTMLElement>(`${SHELL} ${SUMMARY}`)
+    ?.style.removeProperty(PADDING);
+};
+
+export const installPrintFit = (): void => {
+  if (typeof window === "undefined" || !window.matchMedia) return;
+  const print = window.matchMedia("print");
+  const onChange = (): void => (print.matches ? fit() : reset());
+  if (print.addEventListener) print.addEventListener("change", onChange);
+  else print.addListener(onChange);
+  window.addEventListener("beforeprint", () => {
+    if (print.matches) fit();
+  });
+  window.addEventListener("afterprint", reset);
+};
+
+/**
+ *
+ * @param HB
+ */
 export function registerSamiContractingTemplateHelpers(HB: any): void {
   HB.registerHelper("eq", (a: any, b: any) => a === b);
   // Handlebars passes its options hash as the last argument; drop it.

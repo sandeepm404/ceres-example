@@ -315,8 +315,10 @@
   white-space: normal;
 }
 
-.smc-items .line-items-table tr.row-filler td {
-  border-radius: 0;
+/* The filler row (helpers.ts withFillerRow) only exists to fill a printed
+   page; on screen there is no page to fill. */
+.smc-items .line-items-table > tbody > tr.row-filler {
+  display: none;
 }
 
 /* --- Summary: QR and payment info (start), totals (end) --- */
@@ -443,13 +445,16 @@
 }
 
 /* --- Signature --- */
+
+/* Sits in the QR row, pushed to the start side (the QRs keep the end, by the
+   totals) and bottom-aligned with them. */
 .smc-signature {
   display: flex;
   flex-direction: column;
   align-items: center;
+  align-self: flex-end;
   gap: 4px;
-  margin-top: 16px;
-  margin-inline-start: auto;
+  margin-inline-end: auto;
   width: fit-content;
 }
 
@@ -467,8 +472,7 @@
 .smc-signature-placeholder {
   width: 160pt;
   height: 90pt;
-  margin-top: 16px;
-  margin-inline-start: auto;
+  margin-inline-end: auto;
   visibility: hidden;
 }
 
@@ -541,8 +545,8 @@
     zoom: var(--smc-print-zoom, 1);
   }
 
-  /* Stretch the line items: the table grows into the page's blank space and
-     its last row takes the extra height, content at the top of its cells. */
+  /* Stretch the table, not the items: the table grows into the page's blank
+     space and the blank filler row below the items takes the extra height. */
   .smc-items,
   .smc-items .line-items-table-wrapper {
     display: flex;
@@ -554,11 +558,14 @@
     flex: 1 0 auto;
   }
 
-  .smc-items .line-items-table > tbody > tr:last-child {
+  .smc-items .line-items-table > tbody > tr.row-filler {
+    display: table-row;
     height: 100%;
   }
 
-  .smc-items .line-items-table > tbody > tr:last-child > td {
-    vertical-align: top;
+  /* Blank space only: no boxes drawn in the filler. */
+  .smc-items .line-items-table > tbody > tr.row-filler > td {
+    border-color: transparent;
+    background: transparent;
   }
 }

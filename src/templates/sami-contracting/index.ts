@@ -19,15 +19,22 @@ import "../../widgets/watermark";
 import "../../widgets/refrens-branding";
 
 import {
+  installPrintFit,
   productCodeFirst,
   registerSamiContractingTemplateHelpers,
+  withFillerRow,
 } from "./helpers";
 
 // Register custom helpers
 declare const Handlebars: any;
 registerSamiContractingTemplateHelpers(Handlebars);
 
+// Multi-page print: summary at the foot of the last page (helpers.ts).
+installPrintFit();
+
 // Export template to global for main renderer to consume
 window.CeresTemplateDataMapper = ((payload: any) =>
-  productCodeFirst(normalizeInvoiceTemplateState(payload))) as any;
+  withFillerRow(
+    productCodeFirst(normalizeInvoiceTemplateState(payload))
+  )) as any;
 window.CeresTemplate = template;

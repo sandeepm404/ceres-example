@@ -5,6 +5,8 @@ import sample from "../src/types/sample.json";
 import { normalizeInvoiceTemplateState } from "../src/main/invoiceTemplateNormalization";
 import template from "../src/templates/sami-contracting/template.hbs";
 import {
+  lastPageSlack,
+  pagedShift,
   attachmentName,
   totalQuantity,
   isIssuedFrom,
@@ -21,6 +23,7 @@ import {
   printZoom,
   rendererPrintZoom,
   productCodeFirst,
+  withFillerRow,
   partyFields,
   registerSamiContractingTemplateHelpers,
 } from "../src/templates/sami-contracting/helpers";
@@ -436,6 +439,73 @@ describe("sami-contracting letterhead page scope", () => {
     const html = withScope(false, false);
     expect(html).toMatch(/<div class="no-dibella invoice-letterhead"/);
     expect(html).toMatch(/<div class="no-dibella invoice-letterhead-footer"/);
+  });
+});
+
+describe("sami-contracting table filler row", () => {
+  const state = () =>
+    normalizeInvoiceTemplateState({
+      ...(sample as any),
+      invoice: baseInvoice(),
+    }) as any;
+
+  it("adds one blank cell per visible column after the items, ahead of the summary row", () => {
+    const before = state();
+    const after = withFillerRow(before);
+    const { rows } = after.mapped;
+    expect(rows).toHaveLength(before.mapped.rows.length + 1);
+    const at = rows.findIndex((row: any) => row.isFillerRow);
+    const summaryAt = rows.findIndex(
+      (row: any) => row.rowClass === "row-summary"
+    );
+    if (summaryAt >= 0) expect(at).toBe(summaryAt - 1);
+    expect(rows[at].rowClass).toBe("row-filler");
+    expect(rows[at].cells.every((cell: any) => cell.text === "")).toBe(true);
+    expect(rows[at].cells.map((cell: any) => cell.key)).toEqual(
+      before.mapped.columns
+        .filter((column: any) => !column.isHidden)
+        .map((column: any) => column.key)
+    );
+  });
+
+  it("never adds a second filler", () => {
+    const once = withFillerRow(state());
+    expect(withFillerRow(once).mapped.rows).toHaveLength(
+      once.mapped.rows.length
+    );
+  });
+
+  it("renders the filler as an empty row the item rows keep their height above", () => {
+    const html = template(withFillerRow(state()));
+    expect(html).toMatch(/<tr class="row-filler" aria-hidden="true">/);
+  });
+});
+
+describe("sami-contracting multi-page print fit", () => {
+  const row = (top: number, height = 100) => ({ top, height, repeat: 40 });
+
+  it("moves a row that would cross a page end to the next page, with its header", () => {
+    // Page 1000 high: the row at 950 crosses, so it starts at 1000 + 40.
+    expect(pagedShift([row(800), row(950)], 1000)).toBe(50 + 40);
+  });
+
+  it("adds nothing when the layout is already split into pages", () => {
+    expect(pagedShift([row(800), row(1040), row(1140)], 1000)).toBe(0);
+  });
+
+  it("carries earlier breaks into later rows", () => {
+    // 950 → 1040 (+90); the next row, at 1050 + 90 = 1140, fits.
+    expect(pagedShift([row(950), row(1050)], 1000)).toBe(90);
+  });
+
+  it("leaves no slack on a single page: the CSS stretch covers it", () => {
+    expect(lastPageSlack(600, 1000)).toBe(0);
+    expect(lastPageSlack(1001, 1000)).toBe(0);
+  });
+
+  it("gives the rest of the last page, kept short of the page end", () => {
+    expect(lastPageSlack(1300, 1000)).toBe(698);
+    expect(lastPageSlack(2950, 1000)).toBe(48);
   });
 });
 
