@@ -15,6 +15,12 @@ When a user has a custom template, Lydia creates an iframe pointing to Ceres. Ce
 
 Every template needs exactly 5 files. Create them all in `src/templates/<template-name>/`.
 
+**Hard rule — allowed files.** A template folder may contain only `index.ts`, `samples.json`,
+`styles.css`, `template.hbs`, `version.json`, and optionally one `helpers.ts`. Nothing else: no
+partial `.hbs` files, extra `.ts` modules, local JSON payloads, or second helper file. Add
+`helpers.ts` only when the logic cannot be done with an existing shared widget in `src/widgets/`
+— check the widgets first.
+
 ### 1. index.ts
 
 This file wires everything together. Here is the boilerplate:
