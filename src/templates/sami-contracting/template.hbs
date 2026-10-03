@@ -149,10 +149,10 @@
       </dl>
 
       <dl class="smc-party">
-        {{#if (or invoice.billedTo.street invoice.billedTo.city)}}
+        {{#if (or invoice.billedTo.street invoice.billedTo.district invoice.billedTo.city)}}
         <div class="smc-kv">
           <dd>
-            {{#if invoice.billedTo.building}}{{invoice.billedTo.building}}, {{/if}}{{invoice.billedTo.street}}
+            {{#if invoice.billedTo.building}}{{invoice.billedTo.building}}, {{/if}}{{invoice.billedTo.street}}{{#if invoice.billedTo.district}}، {{invoice.billedTo.district}}{{/if}}
             {{#if invoice.billedTo.city}}{{invoice.billedTo.city}}{{/if}}{{#if invoice.billedTo.state}}, {{invoice.billedTo.state}}{{/if}}
             {{#if invoice.billedTo.pincode}}{{invoice.billedTo.pincode}}{{/if}}{{#if invoice.billedTo.country}}, {{invoice.billedTo.country}}{{/if}}
           </dd>
@@ -183,7 +183,7 @@
           <dd class="smc-party-name">{{invoice.shippedFrom.name}}</dd>
         </div>
         <div class="smc-kv">
-          <dd>{{invoice.shippedFrom.street}} {{invoice.shippedFrom.city}} {{invoice.shippedFrom.state}} {{invoice.shippedFrom.pincode}} {{invoice.shippedFrom.country}}</dd>
+          <dd>{{invoice.shippedFrom.street}} {{invoice.shippedFrom.district}} {{invoice.shippedFrom.city}} {{invoice.shippedFrom.state}} {{invoice.shippedFrom.pincode}} {{invoice.shippedFrom.country}}</dd>
         </div>
         {{#each (partyFields invoice.shippedFrom)}}
         <div class="smc-kv"><dt>{{label}}</dt><dd>{{value}}</dd></div>
@@ -197,7 +197,7 @@
           <dd class="smc-party-name">{{invoice.shippedTo.name}}</dd>
         </div>
         <div class="smc-kv">
-          <dd>{{invoice.shippedTo.street}} {{invoice.shippedTo.city}} {{invoice.shippedTo.state}} {{invoice.shippedTo.pincode}} {{invoice.shippedTo.country}}</dd>
+          <dd>{{invoice.shippedTo.street}} {{invoice.shippedTo.district}} {{invoice.shippedTo.city}} {{invoice.shippedTo.state}} {{invoice.shippedTo.pincode}} {{invoice.shippedTo.country}}</dd>
         </div>
         {{#each (partyFields invoice.shippedTo)}}
         <div class="smc-kv"><dt>{{label}}</dt><dd>{{value}}</dd></div>

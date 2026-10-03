@@ -567,6 +567,19 @@ describe("sami-contracting bank details", () => {
   });
 });
 
+describe("sami-contracting addresses", () => {
+  it("prints the client's district with the street", () => {
+    const html = render({
+      billedTo: {
+        ...baseInvoice().billedTo,
+        street: "شارع الأمير ماجد",
+        district: "حي الصفا",
+      },
+    });
+    expect(html).toContain("شارع الأمير ماجد، حي الصفا");
+  });
+});
+
 describe("sami-contracting ZATCA QR", () => {
   const TLV =
     "AQ5TYXVkaSBCdXNpbmVzcwIPMzExMzE1MDI3NDAwMDAzAxQyMDI2LTA3LTMxVDEzOjA3OjM3WgQHNTUyMDAwMAUGNzIwMDAw";
