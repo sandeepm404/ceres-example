@@ -27,7 +27,7 @@
         </dl>
         </div>
         <div class="document-qr{{#unless vaishnavi.compliance.documentQr}} is-empty{{/unless}}" data-ceres-field-container="documentQr" data-qr-placement="{{vaishnavi.compliance.qrPlacement}}">
-          <img referrerpolicy="no-referrer" class="document-qr-image" data-ceres-field="documentQr"{{#if vaishnavi.compliance.documentQr}} src="{{vaishnavi.compliance.documentQr}}"{{/if}} alt="Document QR code" />
+          <img referrerpolicy="no-referrer" class="document-qr-image" data-ceres-field="documentQr"{{#if vaishnavi.compliance.documentQr}} src="{{qrSrc vaishnavi.compliance.documentQr}}"{{/if}} alt="Document QR code" />
         </div>
       </div>
       {{#if display.document.catalogueLogo}}<div class="brand-logo" data-ceres-field-container="logo">{{> CeresImage src=display.document.catalogueLogo alt=invoice.billedBy.name class="brand-logo-image"}}</div>{{/if}}
@@ -76,12 +76,12 @@
         <h2>{{vaishnavi.compliance.title}}</h2>
         <div class="compliance-body">
           <div class="key-value-list compliance-details">{{#each vaishnavi.compliance.irnRows}}<p class="key-value compliance-row"><span>{{label}}</span><strong class="compliance-value"{{#if isIrn}} data-ceres-field="irn"{{/if}}>{{#if isUtcDate}}{{formatDateInTimeZone value "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}{{else if isOffsetDate}}{{formateShortDateWithOffset value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>
-          <div class="compliance-qr{{#unless vaishnavi.compliance.eInvoiceQr}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img referrerpolicy="no-referrer" class="compliance-qr-image" data-ceres-field="qrCode"{{#if vaishnavi.compliance.eInvoiceQr}} src="{{vaishnavi.compliance.eInvoiceQr}}"{{/if}} alt="E-Invoice QR code" /></div>
+          <div class="compliance-qr{{#unless vaishnavi.compliance.eInvoiceQr}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img referrerpolicy="no-referrer" class="compliance-qr-image" data-ceres-field="qrCode"{{#if vaishnavi.compliance.eInvoiceQr}} src="{{qrSrc vaishnavi.compliance.eInvoiceQr}}"{{/if}} alt="E-Invoice QR code" /></div>
         </div>
       </article>{{/if}}{{/if}}
     </section>{{/if}}
-    {{#if display.compliance.zatcaQrCode}}<section class="compliance-qr-grid">{{> CeresImage src=display.compliance.zatcaQrCode alt="ZATCA QR code" class="compliance-qr"}}</section>{{/if}}
-    {{#if display.compliance.lhdnQrCode}}<section class="compliance-qr-grid">{{> CeresImage src=display.compliance.lhdnQrCode alt="LHDN QR code" class="compliance-qr"}}</section>{{/if}}
+    {{#if display.compliance.zatcaQrCode}}<section class="compliance-qr-grid"><img class="compliance-qr" src="{{qrSrc display.compliance.zatcaQrCode}}" alt="ZATCA QR code" /></section>{{/if}}
+    {{#if display.compliance.lhdnQrCode}}<section class="compliance-qr-grid"><img class="compliance-qr" src="{{qrSrc display.compliance.lhdnQrCode}}" alt="LHDN QR code" /></section>{{/if}}
 
     <div class="items-table-wrap">
       <table class="items-table">
@@ -145,18 +145,19 @@
         <h2>{{vaishnavi.compliance.title}}</h2>
         <div class="compliance-body">
           <div class="key-value-list compliance-details">{{#each vaishnavi.compliance.irnRows}}<p class="key-value compliance-row"><span>{{label}}</span><strong class="compliance-value"{{#if isIrn}} data-ceres-field="irn"{{/if}}>{{#if isUtcDate}}{{formatDateInTimeZone value "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}{{else if isOffsetDate}}{{formateShortDateWithOffset value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>
-          <div class="compliance-qr{{#unless vaishnavi.compliance.eInvoiceQr}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img referrerpolicy="no-referrer" class="compliance-qr-image" data-ceres-field="qrCode"{{#if vaishnavi.compliance.eInvoiceQr}} src="{{vaishnavi.compliance.eInvoiceQr}}"{{/if}} alt="E-Invoice QR code" /></div>
+          <div class="compliance-qr{{#unless vaishnavi.compliance.eInvoiceQr}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img referrerpolicy="no-referrer" class="compliance-qr-image" data-ceres-field="qrCode"{{#if vaishnavi.compliance.eInvoiceQr}} src="{{qrSrc vaishnavi.compliance.eInvoiceQr}}"{{/if}} alt="E-Invoice QR code" /></div>
         </div>
       </article></section>{{/unless}}{{/if}}
 
     {{#if vaishnavi.showClosingGrid}}<section class="closing-grid{{#if vaishnavi.closingGridSingleColumn}} is-single-column{{/if}}">
       {{#if vaishnavi.showClosingLeft}}<div class="closing-left">
-        {{#if mapped.visibility.showBankUpiSection}}<article class="detail-card payment-card">
-          {{#if mapped.visibility.showBankAccount}}<div class="bank-details"><h2>{{display.document.labels.bankDetails}}</h2>
+        {{#if mapped.visibility.showTotalInWords}}<p class="total-in-words"><span>{{display.document.labels.totalInWords}} :</span> <strong>{{#if display.totalInWordsValue}}{{display.totalInWordsValue}}{{else}}{{amountInWords invoice.finalTotal.total}}{{/if}}</strong></p>{{/if}}
+        {{#if mapped.visibility.showBankUpiSection}}<div class="payment-row">
+          {{#if mapped.visibility.showBankAccount}}<article class="detail-card payment-card bank-details"><h2>{{display.document.labels.bankDetails}}</h2>
             {{#each display.bankRows}}<p class="key-value"><span>{{label}}</span><strong class="{{#if nowrap}}code-value{{/if}}">{{#each values}}{{this}}{{#unless @last}} / {{/unless}}{{/each}}</strong></p>{{/each}}
-          </div>{{/if}}
-          {{#if mapped.visibility.showUpi}}<div class="upi-details"><h2>{{vaishnavi.labels.scanToPay}}</h2><p>{{vaishnavi.labels.upiLimitMessage}}</p>{{#if vaishnavi.upiQr}}{{> CeresImage src=vaishnavi.upiQr alt="UPI payment QR code" class="upi-qr"}}{{/if}}<strong>{{display.upiId}}</strong></div>{{/if}}
-        </article>{{/if}}
+          </article>{{/if}}
+          {{#if mapped.visibility.showUpi}}<div class="upi-details"><h2>{{vaishnavi.labels.scanToPay}}</h2><p>{{vaishnavi.labels.upiLimitMessage}}</p>{{#if mapped.qr.upi}}<img class="upi-qr" src="{{qrSrc mapped.qr.upi}}" alt="UPI payment QR code" />{{/if}}<strong>{{mapped.upi.id}}</strong></div>{{/if}}
+        </div>{{/if}}
       </div>{{/if}}
 
       {{#if vaishnavi.showClosingRight}}<aside class="summary-panel">
@@ -172,7 +173,6 @@
           {{#each vaishnavi.summaryPaymentBalanceRows}}<p class="summary-total-row"><span>{{label}}</span><strong>{{#if deduction}}({{formatVaishnaviCurrency amount ../invoice}}){{else}}{{formatVaishnaviCurrency amount ../invoice}}{{/if}}</strong></p>{{/each}}
           {{#if mapped.visibility.showDueAmount}}<p class="summary-total-row"><span>{{display.labels.dueAmount}}</span><strong>{{formatVaishnaviCurrency totals.dueAmount invoice}}</strong></p>{{/if}}
         </div>{{/if}}
-        {{#if mapped.visibility.showTotalInWords}}<div class="summary-total-words"><span>{{display.document.labels.totalInWords}}</span><strong>{{#if display.totalInWordsValue}}{{titleCaseWords display.totalInWordsValue}}{{else}}{{titleCaseWords (amountInWords invoice.finalTotal.total)}}{{/if}}</strong></div>{{/if}}
         {{#if mapped.visibility.showSignature}}<div class="signature-box"><div class="signature-space">{{#if display.signature}}{{> CeresImage src=display.signature alt="Authorised signature" class="signature-image"}}{{/if}}</div><span>{{display.labels.signature}}</span></div>{{/if}}
       </aside>{{/if}}
     </section>{{/if}}

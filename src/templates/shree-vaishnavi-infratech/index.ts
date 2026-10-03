@@ -20,7 +20,6 @@ import {
   normalizeKey,
   shouldShowItemSku,
   summarizeItemQuantity,
-  toTitleCaseWords,
 } from "./helpers";
 import "./styles.css";
 
@@ -36,6 +35,7 @@ import "../../widgets/hsn-summary";
 import "../../widgets/payment-table";
 import "../../widgets/currency-format";
 import "../../widgets/image";
+import "../../widgets/qr-code";
 
 const numericValue = (value: any): number => {
   const parsed = Number(String(value ?? "").replace(/[,%\s]/g, ""));
@@ -146,7 +146,6 @@ if (hb) {
       ? "align-right"
       : "align-left";
   });
-  hb.registerHelper("titleCaseWords", toTitleCaseWords);
   hb.registerHelper("amountInWords", (value: any) =>
     amountInWords(Number(String(value ?? 0).replace(/,/g, "")) || 0)
   );
