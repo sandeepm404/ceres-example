@@ -346,20 +346,17 @@ const compactDecimal = (value: number): string =>
 const mapPrintAppearance = (pdfOptionsValue: any) => {
   const pdfOptions = asRecord(pdfOptionsValue);
   // zoomSize is the print size picked in Lydia: 0.8 smaller, 0.9 small,
-  // 1 normal, 1.1 large, 1.2 larger. It zooms the whole container. The
-  // renderer also zooms the page by zoomSize, except at 0.8 (its default),
-  // so the template divides that renderer zoom back out.
+  // 1 normal, 1.1 large, 1.2 larger. The renderer zooms the printed page by
+  // it, except at 0.8, which the template applies itself (as in
+  // sami-contracting). The text scale is a zoom on top of that.
   const zoomSize = optionalPrintNumber(pdfOptions.zoomSize);
-  const pageZoom = zoomSize !== undefined && zoomSize > 0 ? zoomSize : 1;
-  const rendererZoom = pageZoom !== 0.8 ? pageZoom : 1;
+  const templateZoom = zoomSize === 0.8 ? 0.8 : 1;
   const scale = normalizePrintScale(
     firstConfiguredValue(pdfOptions.textScale, pdfOptions.scale)
   );
 
   return {
-    scale: compactDecimal(scale),
-    pageZoom: compactDecimal(pageZoom),
-    rendererZoom: compactDecimal(rendererZoom),
+    zoom: compactDecimal(templateZoom * scale),
     pageless:
       firstBoolean(
         pdfOptions.pageless,

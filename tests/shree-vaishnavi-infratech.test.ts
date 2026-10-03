@@ -316,6 +316,20 @@ describe("shree-vaishnavi-infratech: data mapping", () => {
     expect(tag("INVOICE", "CANCELLED")).toBe(true);
   });
 
+  it("zooms the print only for zoomSize 0.8 and the text scale", () => {
+    const zoom = (pdfOptions: any) =>
+      mapVaishnaviTemplateData({ ...fixture, pdfOptions }).vaishnavi.print.zoom;
+
+    // Every other zoomSize is the renderer's own page zoom.
+    expect(zoom({})).toBe("1");
+    expect(zoom({ zoomSize: 0.9 })).toBe("1");
+    expect(zoom({ zoomSize: 1.2 })).toBe("1");
+    expect(zoom({ zoomSize: 0.8 })).toBe("0.8");
+    expect(zoom({ zoomSize: "0.8" })).toBe("0.8");
+    expect(zoom({ textScale: 1.1 })).toBe("1.1");
+    expect(zoom({ zoomSize: 0.8, textScale: 1.1 })).toBe("0.88");
+  });
+
   it("reduces an object cell value to something printable", () => {
     expect(
       getItemColumnValue(

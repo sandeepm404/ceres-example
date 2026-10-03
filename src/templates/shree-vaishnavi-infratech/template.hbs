@@ -1,4 +1,4 @@
-<div class="vaishnavi-invoice{{#if vaishnavi.hideFooter}} is-footer-hidden{{/if}}{{#if vaishnavi.print.pageless}} is-pageless-print{{/if}}" dir="{{vaishnavi.direction}}" style="--vaishnavi-text-scale: {{vaishnavi.print.scale}}; --vaishnavi-page-zoom: {{vaishnavi.print.pageZoom}}; --vaishnavi-renderer-zoom: {{vaishnavi.print.rendererZoom}};"{{#if vaishnavi.language}} lang="{{vaishnavi.language}}"{{/if}}{{#if vaishnavi.script}} data-ceres-script="{{vaishnavi.script}}"{{/if}}>
+<div class="vaishnavi-invoice{{#if vaishnavi.hideFooter}} is-footer-hidden{{/if}}{{#if vaishnavi.print.pageless}} is-pageless-print{{/if}}" dir="{{vaishnavi.direction}}" style="--vaishnavi-print-zoom: {{vaishnavi.print.zoom}};"{{#if vaishnavi.language}} lang="{{vaishnavi.language}}"{{/if}}{{#if vaishnavi.script}} data-ceres-script="{{vaishnavi.script}}"{{/if}}>
   {{!-- "Show only on first/last page" (pdfOptions.letterHeadOnFirstPage / footerOnLastPage):
        the PDF service stops drawing these in its page margins, so they stay in the document
        flow. Otherwise they carry no-dibella: the PDF service draws them on every page and

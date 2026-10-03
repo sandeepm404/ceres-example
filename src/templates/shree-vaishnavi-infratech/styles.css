@@ -989,11 +989,15 @@ body.ceres-hide-footer .vaishnavi-invoice .template-footer {
   margin: 0;
 }
 
-@container (max-width: 720px) {
-  .card-grid,
-  .closing-grid,
-  .closing-information {
-    grid-template-columns: 1fr;
+/* Screen only: the printed page is narrower than 720px at the larger print
+   sizes, and the printed blocks keep their two columns. */
+@media screen {
+  @container (max-width: 720px) {
+    .card-grid,
+    .closing-grid,
+    .closing-information {
+      grid-template-columns: 1fr;
+    }
   }
 }
 
@@ -1028,30 +1032,20 @@ body.ceres-hide-footer .vaishnavi-invoice .template-footer {
 }
 
 @media print {
-  /* Print the 999px web layout zoomed to fill the printable page width
-     (100vw is the page area in print). pdfOptions.zoomSize scales the whole
-     container: the layout is 999px / zoomSize wide and zoomed by the same
-     factor, so 0.8 prints everything smaller and 1.2 larger, and both still
-     fill the page. The renderer's own page zoom is divided back out.
-     tan(atan2(a, b)) is a / b as a plain number (Chrome 111+); 0.72 is the
-     fallback for older engines: an A4 portrait page with the default 10mm
-     margins (718px / 999px). */
+  /* As in sami-contracting, the printed invoice fills the printable page
+     width and its content reflows to it; nothing is worked out from the page
+     width. The print size is a plain number (--vaishnavi-print-zoom, from
+     mapPrintAppearance): the text scale, and zoomSize 0.8, which the renderer
+     leaves to the template. Every other zoomSize is the renderer's own page
+     zoom. */
   .vaishnavi-invoice {
-    --vaishnavi-print-zoom: calc(
-      var(--vaishnavi-page-zoom, 1) / var(--vaishnavi-renderer-zoom, 1)
-    );
-
-    width: calc(999px / var(--vaishnavi-page-zoom, 1));
+    width: auto;
     max-width: none;
     margin: 0;
     overflow: visible;
     border-radius: 0;
-    font-size: calc(
-      var(--vaishnavi-body-size) * var(--vaishnavi-text-scale, 1)
-    );
     print-color-adjust: exact;
-    zoom: calc(0.72 * var(--vaishnavi-print-zoom));
-    zoom: calc(tan(atan2(100vw, 999px)) * var(--vaishnavi-print-zoom));
+    zoom: var(--vaishnavi-print-zoom, 1);
   }
 
   /* Page margins belong to the browser or PDF service; the printed document
@@ -1087,6 +1081,12 @@ body.ceres-hide-footer .vaishnavi-invoice .template-footer {
     display: table-header-group;
   }
 
+  /* Headers wrap only between words, so a column is never narrower than its
+     longest header word ("S.NO", "QUANTITY") at the larger print sizes. */
+  .items-table thead th:not(.col-item) {
+    overflow-wrap: normal;
+  }
+
   /* Print the totals row once, after the last item. As a footer group the
      browser would repeat it at the foot of every page the table spans. */
   .items-table tfoot {
@@ -1108,7 +1108,8 @@ body.ceres-hide-footer .vaishnavi-invoice .template-footer {
   .items-table tr,
   .detail-card:not(.terms-card, .notes-card, .attachments-panel),
   .summary-panel,
-  .closing-information {
+  .closing-information,
+  .upi-details {
     break-inside: avoid;
   }
 
