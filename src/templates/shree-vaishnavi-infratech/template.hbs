@@ -14,7 +14,7 @@
         <div class="title-block">
         <div class="title-line">
           <h1>{{display.document.title}}</h1>
-          {{#if invoice.status}}{{> InvoiceStatus invoice}}{{/if}}
+          {{#if sri.showStatusTag}}{{> InvoiceStatus invoice}}{{/if}}
           {{#if sri.showDemoBadge}}{{> DemoBadge}}{{/if}}
         </div>
         {{#if display.document.subtitle}}<p class="document-subtitle">{{display.document.subtitle}}</p>{{/if}}

@@ -951,6 +951,34 @@ const DOCUMENT_TITLES: Record<string, string> = {
 const isQuotationLike = (billType: string): boolean =>
   ["QUOTATION", "ESTIMATE"].includes(billType);
 
+// Whether the shared InvoiceStatus tag prints. The API sends a payment status
+// on every document, quotations included, and the widget prints "Unpaid" for
+// anything it does not recognise. Only the statuses the printed PDF shows get
+// through (the same rule as saga-engineering): Paid and Partially Paid on a
+// document that is paid against, Cancelled on any document.
+const PAYABLE_BILL_TYPES = [
+  "INVOICE",
+  "PROFORMAINV",
+  "DEBITNOTE",
+  "PAYMENTRECEIPT",
+];
+
+export const showsStatusTag = (invoice: any): boolean => {
+  const billType = plainText(
+    invoice?.billType || invoice?.invoiceType
+  ).toUpperCase();
+  const status = plainText(invoice?.status).toUpperCase();
+  if (status === "CANCELED" || status === "CANCELLED") return true;
+  if (!PAYABLE_BILL_TYPES.includes(billType)) return false;
+  if (status === "PAID") return true;
+  // A part-paid overdue document would come out of the widget as "Overdue",
+  // which the PDF never shows.
+  return (
+    ["PARTIAL", "PARTIALLY_PAID"].includes(status) &&
+    optionalBoolean(invoice?.isOverdue) !== true
+  );
+};
+
 // Party detail rows. The key is the payload field, so mapVaishnaviTemplateData can apply
 // the party's own `<key>ShowInInvoice` switch to each row.
 const PARTY_ROWS: Array<{ key: string; label: string; isPhone?: boolean }> = [
@@ -1463,6 +1491,7 @@ export const mapBaseTemplateData = (payload: any) => {
       phoneLabel: firstPlainText(customLabels.contactPhone, "call on"),
     },
     showDemoBadge: optionalBoolean(invoice.isDemo) === true,
+    showStatusTag: showsStatusTag(invoice),
     showTaxSummary,
     showHsnSummary,
     showPayments,

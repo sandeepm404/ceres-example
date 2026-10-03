@@ -18,7 +18,6 @@
   --vaishnavi-strong-rule: #9ba0a8;
   --vaishnavi-on-accent: #fff;
   --vaishnavi-on-accent-rule: rgb(255 255 255 / 55%);
-  --vaishnavi-warning: #faa423;
   --vaishnavi-panel: #fff;
   --vaishnavi-paper: #fff;
 
@@ -47,7 +46,6 @@
   --vaishnavi-section-size: 1.1429em; /* 16px */
   --vaishnavi-heading-size: 1.4286em; /* 20px: party card titles, Total row */
   --vaishnavi-caption-size: 0.7857em; /* 11px */
-  --vaishnavi-badge-size: 0.8571em; /* 12px */
 }
 
 /* Like the other approved templates, nothing here styles the host page
@@ -965,18 +963,10 @@ body.ceres-hide-footer .vaishnavi-invoice .template-footer {
   object-fit: contain;
 }
 
+/* The status tag is the shared InvoiceStatus widget as it draws itself; only
+   its trailing margin goes, so the title line's gap spaces it. */
 .vaishnavi-invoice .invoice-tag {
   margin: 0;
-  border-radius: 8px;
-  padding: 4px 8px;
-  color: var(--vaishnavi-on-accent);
-  font-size: var(--vaishnavi-badge-size);
-  line-height: 1.6667;
-  font-weight: var(--vaishnavi-font-medium);
-}
-
-.vaishnavi-invoice .invoice-tag.warning {
-  background: var(--vaishnavi-warning);
 }
 
 .closing-information {

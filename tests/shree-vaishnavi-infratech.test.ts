@@ -299,6 +299,23 @@ describe("shree-vaishnavi-infratech: data mapping", () => {
     expect(off.sri.showHsnSummary).toBe(false);
   });
 
+  it("prints the status tag only for a status the PDF shows", () => {
+    const tag = (billType: string, status: string, isOverdue = false) =>
+      mapVaishnaviTemplateData({
+        invoice: { ...fixture.invoice, billType, status, isOverdue },
+      }).sri.showStatusTag;
+
+    expect(tag("QUOTATION", "UNPAID")).toBe(false);
+    expect(tag("QUOTATION", "PAID")).toBe(false);
+    expect(tag("QUOTATION", "CANCELED")).toBe(true);
+    expect(tag("INVOICE", "UNPAID")).toBe(false);
+    expect(tag("INVOICE", "UNPAID", true)).toBe(false);
+    expect(tag("INVOICE", "PAID")).toBe(true);
+    expect(tag("INVOICE", "PARTIAL")).toBe(true);
+    expect(tag("INVOICE", "PARTIAL", true)).toBe(false);
+    expect(tag("INVOICE", "CANCELLED")).toBe(true);
+  });
+
   it("reduces an object cell value to something printable", () => {
     expect(
       getItemColumnValue(
