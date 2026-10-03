@@ -2475,11 +2475,6 @@ export const mapVaishnaviTemplateData = (payload: any): any => {
       customLabels.upiPaymentLimitMessage,
       "Maximum of 1 lakh can be transferred via upi in a single day"
     ),
-    signaturePrefix: firstText(
-      customLabels.signaturePrefix,
-      customLabels.for,
-      "For"
-    ),
   };
   const showAppliedExchangeRate =
     firstBoolean(

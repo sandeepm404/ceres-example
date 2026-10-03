@@ -173,7 +173,7 @@
           {{#if mapped.visibility.showDueAmount}}<p class="summary-total-row"><span>{{display.labels.dueAmount}}</span><strong>{{formatVaishnaviCurrency totals.dueAmount invoice}}</strong></p>{{/if}}
         </div>{{/if}}
         {{#if mapped.visibility.showTotalInWords}}<div class="summary-total-words"><span>{{display.document.labels.totalInWords}}</span><strong>{{#if display.totalInWordsValue}}{{titleCaseWords display.totalInWordsValue}}{{else}}{{titleCaseWords (amountInWords invoice.finalTotal.total)}}{{/if}}</strong></div>{{/if}}
-        {{#if mapped.visibility.showSignature}}<div class="signature-box"><strong>{{vaishnavi.labels.signaturePrefix}} {{invoice.billedBy.name}}</strong><div class="signature-space">{{#if display.signature}}{{> CeresImage src=display.signature alt="Authorised signature" class="signature-image"}}{{/if}}</div><span>{{display.labels.signature}}</span></div>{{/if}}
+        {{#if mapped.visibility.showSignature}}<div class="signature-box"><div class="signature-space">{{#if display.signature}}{{> CeresImage src=display.signature alt="Authorised signature" class="signature-image"}}{{/if}}</div><span>{{display.labels.signature}}</span></div>{{/if}}
       </aside>{{/if}}
     </section>{{/if}}
 
