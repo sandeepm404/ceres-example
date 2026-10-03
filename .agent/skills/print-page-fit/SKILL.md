@@ -113,7 +113,7 @@ node .agent/skills/print-page-fit/dibella-sim.cjs --template=<name> \
   --payload=/tmp/doc.json --items=40 --out=/tmp/p.pdf                 # boxes off, media first
 node .agent/skills/print-page-fit/dibella-sim.cjs … --no-emulate        # straight to PDF
 node .agent/skills/print-page-fit/dibella-sim.cjs … --flags             # boxes on
-swift .agent/skills/print-page-fit/pdf2png.swift /tmp/p.pdf /tmp/p      # → /tmp/p-1.png …
+node .agent/skills/print-page-fit/pdf2png.cjs /tmp/p.pdf /tmp/p         # → /tmp/p-1.png …
 ```
 
 Run 1 item (single page), an item count that ends with the summary on the items' page,
@@ -125,7 +125,8 @@ Pitfalls seen:
 
 - The headless renderer's per-page PNGs are slices of one tall screenshot, cut on an
   A4 grid. They ignore page-break rules and can show a summary "split" that the PDF does
-  not have. Judge pagination from the PDF (rasterize it with `pdf2png.swift`).
+  not have. Judge pagination from the PDF (rasterize it with `pdf2png.cjs`; it loads
+  pdf.js from the jsDelivr CDN, so it needs network access).
 - A screen-only preview never shows any of this; the padding exists only while printing.
 - Real dibella output is the final check: ask the account for a PDF at 2–3 pages with the
   boxes on and off.
