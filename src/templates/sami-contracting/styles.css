@@ -249,6 +249,12 @@
   vertical-align: middle;
 }
 
+/* Figures line up with the item name, at the top of a row that a long
+   description makes tall. */
+.smc-items .line-items-table > tbody > tr > td {
+  vertical-align: top;
+}
+
 .smc-items .line-items-table > thead > tr > th {
   background: var(--smc-pill-bg);
   font-family: var(--smc-font-heading);
