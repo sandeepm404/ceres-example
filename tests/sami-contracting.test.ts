@@ -5,6 +5,8 @@ import sample from "../src/types/sample.json";
 import { normalizeInvoiceTemplateState } from "../src/main/invoiceTemplateNormalization";
 import template from "../src/templates/sami-contracting/template.hbs";
 import {
+  lastPageSlack,
+  pagedShift,
   attachmentName,
   totalQuantity,
   isIssuedFrom,
@@ -476,6 +478,34 @@ describe("sami-contracting table filler row", () => {
   it("renders the filler as an empty row the item rows keep their height above", () => {
     const html = template(withFillerRow(state()));
     expect(html).toMatch(/<tr class="row-filler" aria-hidden="true">/);
+  });
+});
+
+describe("sami-contracting multi-page print fit", () => {
+  const row = (top: number, height = 100) => ({ top, height, repeat: 40 });
+
+  it("moves a row that would cross a page end to the next page, with its header", () => {
+    // Page 1000 high: the row at 950 crosses, so it starts at 1000 + 40.
+    expect(pagedShift([row(800), row(950)], 1000)).toBe(50 + 40);
+  });
+
+  it("adds nothing when the layout is already split into pages", () => {
+    expect(pagedShift([row(800), row(1040), row(1140)], 1000)).toBe(0);
+  });
+
+  it("carries earlier breaks into later rows", () => {
+    // 950 → 1040 (+90); the next row, at 1050 + 90 = 1140, fits.
+    expect(pagedShift([row(950), row(1050)], 1000)).toBe(90);
+  });
+
+  it("leaves no slack on a single page: the CSS stretch covers it", () => {
+    expect(lastPageSlack(600, 1000)).toBe(0);
+    expect(lastPageSlack(1001, 1000)).toBe(0);
+  });
+
+  it("gives the rest of the last page, kept short of the page end", () => {
+    expect(lastPageSlack(1300, 1000)).toBe(698);
+    expect(lastPageSlack(2950, 1000)).toBe(48);
   });
 });
 
