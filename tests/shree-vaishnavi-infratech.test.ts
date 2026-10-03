@@ -1,12 +1,165 @@
 import fs from "node:fs";
 import path from "node:path";
-import fixture from "./fixtures/shree-vaishnavi-infratech.json";
 import {
   getItemColumnValue,
   mapVaishnaviTemplateData,
 } from "../src/templates/shree-vaishnavi-infratech/helpers";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// A month-grouped quotation: a widget group heading, three Oct-26 rows (two
+// with the same item name), one Nov-26 row and the group's sub-total row.
+const fixture = {
+  invoice: {
+    billType: "INVOICE",
+    invoiceType: "INVOICE",
+    status: "UNPAID",
+    invoiceNumber: "SVI/2026-27/0042",
+    invoiceDate: "2026-11-02T00:00:00.000Z",
+    ownerOffset: "+05:30",
+    currency: "INR",
+    businessCurrency: "INR",
+    businessLocale: "en-IN",
+    taxName: "GST",
+    taxType: "INDIA",
+    isIgst: false,
+    advanceOptions: {
+      taxSummaryView: "detailed",
+      showHsnSummary: true,
+      mergeIdenticalAdjacentCells: true,
+    },
+    columns: [
+      {
+        key: "month",
+        label: "Month",
+      },
+      {
+        key: "item",
+        label: "Name of Work",
+      },
+      {
+        key: "vehicleNumber",
+        label: "Vehicle Number",
+      },
+      {
+        key: "quantity",
+        label: "Qty",
+        dataType: "number",
+      },
+      {
+        key: "rate",
+        label: "Rate",
+        dataType: "currency",
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        dataType: "currency",
+      },
+      {
+        key: "total",
+        label: "Total",
+        dataType: "currency",
+      },
+    ],
+    items: [
+      {
+        name: "Municipal Services",
+        group: true,
+      },
+      {
+        month: "Oct-26",
+        name: "Road sweeping",
+        vehicleNumber: "KA 01 AB 1234",
+        quantity: 26,
+        rate: 2500,
+        amount: 65000,
+        hsn: "9985",
+        gstRate: 18,
+        cgst: 5850,
+        sgst: 5850,
+        taxAmount: 11700,
+        total: 76700,
+        subTotal: 76700,
+      },
+      {
+        month: "Oct-26",
+        name: "Road sweeping",
+        vehicleNumber: "KA 01 AB 5678",
+        quantity: 26,
+        rate: 2500,
+        amount: 65000,
+        hsn: "9985",
+        gstRate: 18,
+        cgst: 5850,
+        sgst: 5850,
+        taxAmount: 11700,
+        total: 76700,
+        subTotal: 76700,
+      },
+      {
+        month: "Oct-26",
+        name: "Garbage lifting",
+        vehicleNumber: "KA 01 CD 4321",
+        quantity: 30,
+        rate: 1800,
+        amount: 54000,
+        hsn: "9985",
+        gstRate: 18,
+        cgst: 4860,
+        sgst: 4860,
+        taxAmount: 9720,
+        total: 63720,
+        subTotal: 63720,
+      },
+      {
+        month: "Nov-26",
+        name: "Garbage lifting",
+        vehicleNumber: "KA 01 CD 4321",
+        quantity: 30,
+        rate: 1800,
+        amount: 54000,
+        hsn: "9985",
+        gstRate: 18,
+        cgst: 4860,
+        sgst: 4860,
+        taxAmount: 9720,
+        total: 63720,
+        subTotal: 63720,
+      },
+      {
+        name: "Sub total",
+        isGroupItemTotalRow: true,
+        quantity: 112,
+        amount: 238000,
+        cgst: 21420,
+        sgst: 21420,
+        taxAmount: 42840,
+        total: 280840,
+        subTotal: 280840,
+      },
+    ],
+    subTotal: 238000,
+    finalTotal: {
+      subTotal: 238000,
+      cgst: 21420,
+      sgst: 21420,
+      total: 280840,
+    },
+    billedBy: {
+      name: "Shree Vaishnavi Infratech",
+      gstin: "29ABCDE1234F1Z5",
+      state: "Karnataka",
+      country: "India",
+    },
+    billedTo: {
+      name: "Bruhat City Services Pvt Ltd",
+      gstin: "29AAACB5678K1Z2",
+      state: "Karnataka",
+      country: "India",
+    },
+  },
+};
 
 const TEMPLATE_DIR = path.join(
   __dirname,
