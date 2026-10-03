@@ -1,0 +1,231 @@
+{
+  "invoice": {
+    "_id": "vaishnavi-sample",
+    "billType": "INVOICE",
+    "invoiceType": "INVOICE",
+    "status": "UNPAID",
+    "invoiceNumber": "SVI/2026-27/0042",
+    "invoiceDate": "2026-11-02T00:00:00.000Z",
+    "dueDate": "2026-11-17T00:00:00.000Z",
+    "ownerOffset": "+05:30",
+    "currency": "INR",
+    "businessCurrency": "INR",
+    "businessLocale": "en-IN",
+    "taxName": "GST",
+    "taxType": "INDIA",
+    "isIgst": false,
+    "purchaseOrderNumber": "PO-7781",
+    "showDueAmount": true,
+    "advanceOptions": {
+      "taxSummaryView": "detailed",
+      "showHsnSummary": true,
+      "showTotals": true,
+      "showTotalInWords": true,
+      "showUnitInQuantity": true,
+      "mergeIdenticalAdjacentCells": true
+    },
+    "paymentOptions": {
+      "accountTransfer": true,
+      "upi": true
+    },
+    "contact": {
+      "email": "accounts@vaishnaviinfratech.example",
+      "phone": "+919845012345"
+    },
+    "billedBy": {
+      "name": "Shree Vaishnavi Infratech",
+      "gstin": "29ABCDE1234F1Z5",
+      "panNumber": "ABCDE1234F",
+      "street": "12, Industrial Layout",
+      "city": "Bengaluru",
+      "state": "Karnataka",
+      "country": "India",
+      "pincode": "560058",
+      "phone": "+919845012345",
+      "email": "accounts@vaishnaviinfratech.example"
+    },
+    "billedTo": {
+      "name": "Bruhat City Services Pvt Ltd",
+      "gstin": "29AAACB5678K1Z2",
+      "panNumber": "AAACB5678K",
+      "street": "45, MG Road",
+      "city": "Bengaluru",
+      "state": "Karnataka",
+      "country": "India",
+      "pincode": "560001",
+      "customFields": [
+        {
+          "label": "Vendor Code",
+          "value": "V-2291"
+        }
+      ]
+    },
+    "customHeaders": [
+      {
+        "key": "contract",
+        "label": "Contract No.",
+        "value": "BCS/SW/2026/17"
+      }
+    ],
+    "transportDetails": {
+      "transportMode": "Road",
+      "transporter": {
+        "name": "Vaishnavi Logistics",
+        "transporterId": "29TRNSP1234A1Z9"
+      },
+      "distance": "18",
+      "challanNumber": "CH-310",
+      "challanDate": "2026-11-01T00:00:00.000Z",
+      "vehicleType": "Regular",
+      "vehicleNumber": "KA 01 AB 1234"
+    },
+    "columns": [
+      {
+        "key": "month",
+        "label": "Month"
+      },
+      {
+        "key": "item",
+        "label": "Name of Work"
+      },
+      {
+        "key": "vehicleNumber",
+        "label": "Vehicle Number"
+      },
+      {
+        "key": "quantity",
+        "label": "Qty",
+        "dataType": "number"
+      },
+      {
+        "key": "rate",
+        "label": "Rate",
+        "dataType": "currency"
+      },
+      {
+        "key": "amount",
+        "label": "Amount",
+        "dataType": "currency"
+      },
+      {
+        "key": "total",
+        "label": "Total",
+        "dataType": "currency"
+      }
+    ],
+    "items": [
+      {
+        "_id": "group-1",
+        "name": "Municipal Services",
+        "group": true
+      },
+      {
+        "_id": "item-1",
+        "month": "Oct-26",
+        "name": "Road sweeping",
+        "vehicleNumber": "KA 01 AB 1234",
+        "quantity": 26,
+        "unit": "Day",
+        "rate": 2500,
+        "amount": 65000,
+        "hsn": "9985",
+        "gstRate": 18,
+        "cgst": 5850,
+        "sgst": 5850,
+        "taxAmount": 11700,
+        "total": 76700,
+        "subTotal": 76700
+      },
+      {
+        "_id": "item-2",
+        "month": "Oct-26",
+        "name": "Road sweeping",
+        "vehicleNumber": "KA 01 AB 5678",
+        "quantity": 26,
+        "unit": "Day",
+        "rate": 2500,
+        "amount": 65000,
+        "hsn": "9985",
+        "gstRate": 18,
+        "cgst": 5850,
+        "sgst": 5850,
+        "taxAmount": 11700,
+        "total": 76700,
+        "subTotal": 76700
+      },
+      {
+        "_id": "item-3",
+        "month": "Oct-26",
+        "name": "Garbage lifting",
+        "vehicleNumber": "KA 01 CD 4321",
+        "quantity": 30,
+        "unit": "Day",
+        "rate": 1800,
+        "amount": 54000,
+        "hsn": "9985",
+        "gstRate": 18,
+        "cgst": 4860,
+        "sgst": 4860,
+        "taxAmount": 9720,
+        "total": 63720,
+        "subTotal": 63720
+      },
+      {
+        "_id": "item-4",
+        "month": "Nov-26",
+        "name": "Garbage lifting",
+        "vehicleNumber": "KA 01 CD 4321",
+        "quantity": 30,
+        "unit": "Day",
+        "rate": 1800,
+        "amount": 54000,
+        "hsn": "9985",
+        "gstRate": 18,
+        "cgst": 4860,
+        "sgst": 4860,
+        "taxAmount": 9720,
+        "total": 63720,
+        "subTotal": 63720
+      },
+      {
+        "_id": "group-1-subtotal",
+        "name": "Sub total",
+        "isGroupItemTotalRow": true,
+        "quantity": 112,
+        "amount": 238000,
+        "cgst": 21420,
+        "sgst": 21420,
+        "taxAmount": 42840,
+        "total": 280840,
+        "subTotal": 280840
+      }
+    ],
+    "subTotal": 238000,
+    "finalTotal": {
+      "subTotal": 238000,
+      "cgst": 21420,
+      "sgst": 21420,
+      "total": 280840
+    },
+    "bankAccount": {
+      "name": "Shree Vaishnavi Infratech",
+      "accountNo": "50200012345678",
+      "bank": "HDFC Bank",
+      "ifsc": "HDFC0000123",
+      "branch": "Rajajinagar"
+    },
+    "upi": {
+      "upiId": "vaishnavi@okhdfcbank"
+    },
+    "terms": [
+      {
+        "label": "Terms",
+        "terms": [
+          "Payment due within 15 days of invoice date.",
+          "Interest at 18% p.a. applies on overdue amounts."
+        ]
+      }
+    ],
+    "notes": "Thank you for your business."
+  }
+}
