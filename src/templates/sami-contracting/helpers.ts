@@ -155,6 +155,52 @@ export const productCodeFirst = <T>(state: T): T => {
   };
 };
 
+// A blank row of empty cells after the items, ahead of any summary row. In
+// print it takes the page's spare height (styles.css), so the item rows keep
+// their own height while the table's box reaches down to the summary. The
+// shape mirrors the widget's own stretch filler; when the account already
+// has that stretch on, its filler is used as is.
+const fillerRow = (columns: any[]) => ({
+  cells: columns
+    .filter((column) => !column?.isHidden)
+    .map((column) => ({
+      key: column.key,
+      text: "",
+      className: column.className,
+      label: column.label,
+      isItemCell: false,
+    })),
+  lineNumber: null,
+  isGroupHeading: false,
+  isAdditionalCharge: false,
+  rowClass: "row-filler",
+  item: {
+    name: "",
+    showSku: false,
+    sku: "",
+    mergedAsNote: false,
+    mergedNotes: [],
+    showThumbnail: false,
+    thumbnailImages: [],
+  },
+  extras: { hasAny: false },
+  isTotalsRow: false,
+  isFillerRow: true,
+});
+
+export const withFillerRow = <T>(state: T): T => {
+  const mapped = (state as any)?.mapped;
+  const rows = asArray(mapped?.rows);
+  if (!rows.length || rows.some((row) => row?.isFillerRow)) return state;
+  const at = rows.findIndex((row) => row?.rowClass === "row-summary");
+  const filler = fillerRow(asArray(mapped.columns));
+  const next =
+    at < 0
+      ? [...rows, filler]
+      : [...rows.slice(0, at), filler, ...rows.slice(at)];
+  return { ...(state as any), mapped: { ...mapped, rows: next } };
+};
+
 // Lydia's text scale is the document's pdfOptions.zoomSize (smaller 0.8,
 // small 0.9, normal 1.0, …). The shared renderer zooms the printed page for
 // every value except 0.8, which it treats as "no zoom" — so "smaller" printed
@@ -337,6 +383,10 @@ export const attachmentName = (url: any): string => {
   }
 };
 
+/**
+ *
+ * @param HB
+ */
 export function registerSamiContractingTemplateHelpers(HB: any): void {
   HB.registerHelper("eq", (a: any, b: any) => a === b);
   // Handlebars passes its options hash as the last argument; drop it.

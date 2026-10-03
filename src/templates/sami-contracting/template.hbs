@@ -286,6 +286,26 @@
               so Lydia can patch qrCode / zatcaQrCode live. The API sends the ZATCA
               Phase 1 TLV as `zatcaQr`; `zatcaQrCode` (Lydia's live patch) wins when set. --}}
         <div class="smc-qrs">
+          {{!-- Signature in the QR row (start side), not under the totals: it then adds no
+                height, so the summary block can sit right above the page footer. --}}
+          {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+          {{#if invoice.signature}}
+          <div class="smc-signature">
+            {{> CeresImage src=invoice.signature alt="" class="smc-signature-img"}}
+            {{#if invoice.customLabels.signature}}<p class="smc-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
+          </div>
+          {{/if}}
+          {{else}}
+          {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+          <div class="smc-signature smc-signature-digital">
+            {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+            {{#if invoice.share.pdf}}<a class="smc-ltr" href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+          </div>
+          {{else}}
+          {{!-- Awaiting a digital signature: an invisible box the PDF pipeline measures. --}}
+          <div class="smc-signature-placeholder" data-ceres-signature-placeholder></div>
+          {{/if}}
+          {{/unless}}
           <div data-ceres-field-container="zatcaQrCode" class="smc-qr{{#unless (or invoice.zatcaQrCode invoice.zatcaQr)}} is-empty{{/unless}}">
             <img data-ceres-field="zatcaQrCode" src="{{#if invoice.zatcaQrCode}}{{qrSrc invoice.zatcaQrCode}}{{else}}{{qrSrc invoice.zatcaQr}}{{/if}}" alt="ZATCA QR" />
           </div>
@@ -356,25 +376,6 @@
           </table>
         </div>
         {{/with}}
-
-        {{#unless (eq invoice.signatureMethod "DIGITAL")}}
-        {{#if invoice.signature}}
-        <div class="smc-signature">
-          {{> CeresImage src=invoice.signature alt="" class="smc-signature-img"}}
-          {{#if invoice.customLabels.signature}}<p class="smc-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
-        </div>
-        {{/if}}
-        {{else}}
-        {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
-        <div class="smc-signature smc-signature-digital">
-          {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
-          {{#if invoice.share.pdf}}<a class="smc-ltr" href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
-        </div>
-        {{else}}
-        {{!-- Awaiting a digital signature: an invisible box the PDF pipeline measures. --}}
-        <div class="smc-signature-placeholder" data-ceres-signature-placeholder></div>
-        {{/if}}
-        {{/unless}}
       </div>
     </div>
 

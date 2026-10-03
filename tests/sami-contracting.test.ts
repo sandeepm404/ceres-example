@@ -21,6 +21,7 @@ import {
   printZoom,
   rendererPrintZoom,
   productCodeFirst,
+  withFillerRow,
   partyFields,
   registerSamiContractingTemplateHelpers,
 } from "../src/templates/sami-contracting/helpers";
@@ -436,6 +437,45 @@ describe("sami-contracting letterhead page scope", () => {
     const html = withScope(false, false);
     expect(html).toMatch(/<div class="no-dibella invoice-letterhead"/);
     expect(html).toMatch(/<div class="no-dibella invoice-letterhead-footer"/);
+  });
+});
+
+describe("sami-contracting table filler row", () => {
+  const state = () =>
+    normalizeInvoiceTemplateState({
+      ...(sample as any),
+      invoice: baseInvoice(),
+    }) as any;
+
+  it("adds one blank cell per visible column after the items, ahead of the summary row", () => {
+    const before = state();
+    const after = withFillerRow(before);
+    const { rows } = after.mapped;
+    expect(rows).toHaveLength(before.mapped.rows.length + 1);
+    const at = rows.findIndex((row: any) => row.isFillerRow);
+    const summaryAt = rows.findIndex(
+      (row: any) => row.rowClass === "row-summary"
+    );
+    if (summaryAt >= 0) expect(at).toBe(summaryAt - 1);
+    expect(rows[at].rowClass).toBe("row-filler");
+    expect(rows[at].cells.every((cell: any) => cell.text === "")).toBe(true);
+    expect(rows[at].cells.map((cell: any) => cell.key)).toEqual(
+      before.mapped.columns
+        .filter((column: any) => !column.isHidden)
+        .map((column: any) => column.key)
+    );
+  });
+
+  it("never adds a second filler", () => {
+    const once = withFillerRow(state());
+    expect(withFillerRow(once).mapped.rows).toHaveLength(
+      once.mapped.rows.length
+    );
+  });
+
+  it("renders the filler as an empty row the item rows keep their height above", () => {
+    const html = template(withFillerRow(state()));
+    expect(html).toMatch(/<tr class="row-filler" aria-hidden="true">/);
   });
 });
 

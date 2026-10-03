@@ -21,6 +21,7 @@ import "../../widgets/refrens-branding";
 import {
   productCodeFirst,
   registerSamiContractingTemplateHelpers,
+  withFillerRow,
 } from "./helpers";
 
 // Register custom helpers
@@ -29,5 +30,7 @@ registerSamiContractingTemplateHelpers(Handlebars);
 
 // Export template to global for main renderer to consume
 window.CeresTemplateDataMapper = ((payload: any) =>
-  productCodeFirst(normalizeInvoiceTemplateState(payload))) as any;
+  withFillerRow(
+    productCodeFirst(normalizeInvoiceTemplateState(payload))
+  )) as any;
 window.CeresTemplate = template;
