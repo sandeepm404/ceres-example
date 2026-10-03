@@ -19,6 +19,7 @@ import "../../widgets/watermark";
 import "../../widgets/refrens-branding";
 
 import {
+  descriptionInItemCell,
   installPrintFit,
   productCodeFirst,
   registerSamiContractingTemplateHelpers,
@@ -35,6 +36,8 @@ installPrintFit();
 // Export template to global for main renderer to consume
 window.CeresTemplateDataMapper = ((payload: any) =>
   withFillerRow(
-    productCodeFirst(normalizeInvoiceTemplateState(payload))
+    descriptionInItemCell(
+      productCodeFirst(normalizeInvoiceTemplateState(payload))
+    )
   )) as any;
 window.CeresTemplate = template;

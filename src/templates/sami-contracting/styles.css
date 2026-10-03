@@ -315,6 +315,13 @@
   white-space: normal;
 }
 
+/* A description that is not full width sits in the item pill, under the
+   name, at the body weight the extras row would have given it. */
+.smc-items .line-items-table > tbody > tr > td.col-item > .smc-item-description {
+  padding-block-start: 4px;
+  font-weight: 400;
+}
+
 /* The filler row (helpers.ts withFillerRow) only exists to fill a printed
    page; on screen there is no page to fill. */
 .smc-items .line-items-table > tbody > tr.row-filler {

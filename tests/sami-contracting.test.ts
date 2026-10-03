@@ -24,10 +24,10 @@ import {
   rendererPrintZoom,
   productCodeFirst,
   withFillerRow,
+  descriptionInItemCell,
   partyFields,
   registerSamiContractingTemplateHelpers,
 } from "../src/templates/sami-contracting/helpers";
-import lineItemsPartial from "../src/widgets/line-items/LineItemsTable.hbs";
 import subtotalPartial from "../src/widgets/subtotal/Subtotal.hbs";
 import ceresImagePartial from "../src/widgets/image/CeresImage.hbs";
 import brandingPartial from "../src/widgets/refrens-branding/RefrensBranding.hbs";
@@ -39,7 +39,7 @@ import registerTaxFlagHelpers from "../src/widgets/shared/registerTaxFlagHelpers
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /*
- * The shared widgets this template is built from render for real — LineItemsTable,
+ * The shared widgets this template is built from render for real —
  * Subtotal, CeresImage, RefrensBranding, qrSrc, formatCurrency. Only partials that
  * register against `window.Handlebars` with no importable logic are stubbed.
  */
@@ -49,7 +49,6 @@ beforeAll(() => {
   registerFormatCurrencyHelper(HB);
   registerTaxFlagHelpers(HB);
 
-  HB.registerPartial("LineItemsTable", lineItemsPartial);
   HB.registerPartial("Subtotal", subtotalPartial);
   HB.registerPartial("CeresImage", ceresImagePartial);
   HB.registerPartial("RefrensBranding", brandingPartial);
@@ -478,6 +477,63 @@ describe("sami-contracting table filler row", () => {
   it("renders the filler as an empty row the item rows keep their height above", () => {
     const html = template(withFillerRow(state()));
     expect(html).toMatch(/<tr class="row-filler" aria-hidden="true">/);
+  });
+});
+
+describe("sami-contracting item description placement", () => {
+  const state = (fullWidth?: boolean) => {
+    const invoice = baseInvoice();
+    if (fullWidth !== undefined) invoice.showDescriptionFullWidth = fullWidth;
+    return normalizeInvoiceTemplateState({
+      ...(sample as any),
+      invoice,
+    }) as any;
+  };
+  const itemRows = (html: string) =>
+    html.slice(html.indexOf("<tbody>"), html.indexOf("</tbody>"));
+
+  it("prints the description in the item cell when full width is off", () => {
+    const out = descriptionInItemCell(state(false));
+    const withDescription = out.mapped.rows.filter(
+      (row: any) => row.extras?.descriptionInItem
+    );
+    expect(withDescription.length).toBeGreaterThan(0);
+    withDescription.forEach((row: any) => {
+      expect(row.extras.hasDescription).toBe(false);
+      expect(row.extras.hasAny).toBe(
+        Boolean(row.extras.imagesInline || row.extras.imagesRow)
+      );
+    });
+    const html = itemRows(template(out));
+    expect(html).toMatch(
+      /<td class="[^"]*col-item[^"]*"[^>]*>[\s\S]*?<div class="item-description smc-item-description">/
+    );
+    expect(html).not.toMatch(
+      /item-extras-cell[^>]*>\s*<div class="item-description/
+    );
+  });
+
+  it("keeps the description in its own full-width row when full width is on", () => {
+    const before = state(true);
+    expect(descriptionInItemCell(before)).toBe(before);
+    const html = itemRows(template(before));
+    expect(html).not.toMatch(/smc-item-description/);
+    expect(html).toMatch(
+      /<div class="item-description item-description-full">/
+    );
+  });
+
+  it("leaves the item cell alone for an item with no description", () => {
+    const invoice = baseInvoice();
+    invoice.items = invoice.items.map((item: any) => ({
+      ...item,
+      description: "",
+    }));
+    const before = normalizeInvoiceTemplateState({
+      ...(sample as any),
+      invoice,
+    }) as any;
+    expect(descriptionInItemCell(before)).toBe(before);
   });
 });
 
