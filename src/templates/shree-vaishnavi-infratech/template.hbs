@@ -11,12 +11,14 @@
     <header class="document-header">
       <div class="document-heading">
         <div class="document-heading-text">
+        <div class="title-block">
         <div class="title-line">
           <h1>{{display.document.title}}</h1>
           {{#if invoice.status}}{{> InvoiceStatus invoice}}{{/if}}
           {{#if sri.showDemoBadge}}{{> DemoBadge}}{{/if}}
         </div>
         {{#if display.document.subtitle}}<p class="document-subtitle">{{display.document.subtitle}}</p>{{/if}}
+        </div>
         <dl class="invoice-meta">
           <div><dt>{{display.document.labels.number}}</dt><dd>{{display.document.number}}</dd></div>
           <div><dt>{{display.document.labels.date}}</dt><dd>{{formateShortDateWithOffset display.document.date invoice.ownerOffset}}</dd></div>
@@ -33,29 +35,30 @@
       {{#if display.document.catalogueLogo}}<div class="brand-logo" data-ceres-field-container="logo">{{> CeresImage src=display.document.catalogueLogo alt=invoice.billedBy.name class="brand-logo-image"}}</div>{{/if}}
     </header>
 
+    <div class="details-stack">
     <section class="card-grid parties-grid">
       <article class="detail-card">
         <h2>{{#if invoice.customLabels.billedBy}}{{invoice.customLabels.billedBy}}{{else}}Billed by{{/if}}</h2>
-        <h3>{{invoice.billedBy.name}}</h3>
-        <p class="address">{{#each (partyAddressLines invoice.billedBy)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        <div class="party-identity"><h3>{{invoice.billedBy.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.billedBy)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p></div>
         {{#if vaishnavi.partyDetails.billedBy}}<div class="key-value-list">{{#each vaishnavi.partyDetails.billedBy}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
       </article>
       <article class="detail-card">
         <h2>{{#if invoice.customLabels.billedTo}}{{invoice.customLabels.billedTo}}{{else}}Billed to{{/if}}</h2>
-        <h3>{{invoice.billedTo.name}}</h3>
-        <p class="address">{{#each (partyAddressLines invoice.billedTo)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        <div class="party-identity"><h3>{{invoice.billedTo.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.billedTo)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p></div>
         {{#if vaishnavi.partyDetails.billedTo}}<div class="key-value-list">{{#each vaishnavi.partyDetails.billedTo}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
       </article>
       {{#if mapped.visibility.shippedFrom}}<article class="detail-card">
         <h2>{{#if invoice.customLabels.shippedFrom}}{{invoice.customLabels.shippedFrom}}{{else}}Shipped From{{/if}}</h2>
-        <h3>{{invoice.shippedFrom.name}}</h3>
-        <p class="address">{{#each (partyAddressLines invoice.shippedFrom)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        <div class="party-identity"><h3>{{invoice.shippedFrom.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.shippedFrom)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p></div>
         {{#if vaishnavi.partyDetails.shippedFrom}}<div class="key-value-list">{{#each vaishnavi.partyDetails.shippedFrom}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
       </article>{{/if}}
       {{#if mapped.visibility.shippedTo}}<article class="detail-card">
         <h2>{{#if invoice.customLabels.shippedTo}}{{invoice.customLabels.shippedTo}}{{else}}Shipped To{{/if}}</h2>
-        <h3>{{invoice.shippedTo.name}}</h3>
-        <p class="address">{{#each (partyAddressLines invoice.shippedTo)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p>
+        <div class="party-identity"><h3>{{invoice.shippedTo.name}}</h3>
+        <p class="address">{{#each (partyAddressLines invoice.shippedTo)}}{{this}}{{#unless @last}}<br />{{/unless}}{{/each}}</p></div>
         {{#if vaishnavi.partyDetails.shippedTo}}<div class="key-value-list">{{#each vaishnavi.partyDetails.shippedTo}}<p class="key-value"><span>{{label}}</span><strong>{{#if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>{{/if}}
       </article>{{/if}}
     </section>
@@ -66,7 +69,7 @@
     {{#if vaishnavi.showLogisticsGrid}}<section class="card-grid logistics-grid">
       {{#if mapped.visibility.transport}}<article class="detail-card compact-card">
         <h2>{{vaishnavi.labels.transportDetails}}</h2>
-        {{#each sri.transportRows}}<p class="key-value"><span>{{label}}</span><strong>{{#if isDate}}{{formateShortDateWithOffset value ../invoice.ownerOffset}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}
+        <div class="key-value-list">{{#each sri.transportRows}}<p class="key-value"><span>{{label}}</span><strong>{{#if isDate}}{{formateShortDateWithOffset value ../invoice.ownerOffset}}{{else}}{{value}}{{/if}}</strong></p>{{/each}}</div>
       </article>{{/if}}
       {{#if vaishnavi.compliance.ewayRows.length}}<article class="detail-card compact-card eway-card">
         <h2>{{vaishnavi.labels.ewayBillDetails}}</h2>
@@ -82,7 +85,9 @@
     </section>{{/if}}
     {{#if display.compliance.zatcaQrCode}}<section class="compliance-qr-grid"><img class="compliance-qr" src="{{qrSrc display.compliance.zatcaQrCode}}" alt="ZATCA QR code" /></section>{{/if}}
     {{#if display.compliance.lhdnQrCode}}<section class="compliance-qr-grid"><img class="compliance-qr" src="{{qrSrc display.compliance.lhdnQrCode}}" alt="LHDN QR code" /></section>{{/if}}
+    </div>
 
+    <div class="items-stack">
     <div class="items-table-wrap">
       <table class="items-table">
         <colgroup>{{#each mapped.columns}}{{#unless isHidden}}<col class="{{className}}" />{{/unless}}{{/each}}</colgroup>
@@ -105,7 +110,7 @@
           {{#each group.rows as |line|}}<tr class="item-row{{#if line.pageBreakBefore}} page-break-before{{/if}}{{#if line.isAlternateRow}} is-alt-row{{/if}}">
             {{#each line.cells as |cell|}}{{#unless cell.skip}}<td class="{{cell.column.className}}{{#if (isCurrencyColumn cell.column)}} number-cell{{/if}}{{#if cell.isItemsEndCell}} is-items-end-cell{{/if}}" rowspan="{{cell.rowspan}}" data-merge-column="{{cell.column.key}}">
               {{#if cell.isRowNumber}}{{cell.groupNumber}}
-              {{else if (isDescriptionColumn cell.column)}}<strong class="item-name">{{cell.item.name}}</strong>
+              {{else if (isDescriptionColumn cell.column)}}<div class="item-cell"><strong class="item-name">{{cell.item.name}}</strong>
                 {{#if (showItemSku cell.item @root.mapped.visibility.showSkuInName)}}<span class="item-code">{{@root.display.labels.sku}}: {{itemSku cell.item}}</span>{{/if}}
                 {{#if @root.mapped.visibility.showSerialNumbersInDescription}}{{#if (itemSerialNumbers cell.item)}}<span class="item-code">{{@root.display.labels.serialNumber}}: {{itemSerialNumbers cell.item}}</span>{{/if}}{{/if}}
                 {{#if @root.mapped.visibility.showInlineHsn}}{{#if cell.item.hsn}}<span class="item-code">{{@root.display.labels.hsn}}: {{cell.item.hsn}}</span>{{/if}}{{/if}}
@@ -113,7 +118,7 @@
                 {{#if @root.mapped.visibility.showUnitInName}}{{#if (itemUnit cell.item @root.invoice)}}<span class="item-code">{{@root.display.document.labels.unit}}: {{itemUnit cell.item @root.invoice}}</span>{{/if}}{{/if}}
                 {{#if @root.mapped.visibility.showDescriptionsInline}}{{#each cell.descriptions}}<div class="item-description">{{> MarkdownViewer (prepareMarkdownViewerData this)}}</div>{{/each}}{{/if}}
                 {{#if cell.images}}{{> CeresImageGallery (prepareImageGallery cell.images variant="thumbnail" alt=cell.item.name link=false)}}{{/if}}
-                {{#if cell.originalImages}}{{> CeresImageGallery (prepareImageGallery cell.originalImages variant="original" alt=cell.item.name link=false)}}{{/if}}
+                {{#if cell.originalImages}}{{> CeresImageGallery (prepareImageGallery cell.originalImages variant="original" alt=cell.item.name link=false)}}{{/if}}</div>
               {{else if cell.suppressValue}}
               {{else if (isQuantityColumn cell.column)}}{{quantityOnly cell.item @root.invoice}}{{#if @root.mapped.visibility.showUnitInQuantity}}{{#if (itemUnit cell.item @root.invoice)}} {{itemUnit cell.item @root.invoice}}{{/if}}{{/if}}
               {{else if (isUnitColumn cell.column)}}{{itemUnit cell.item @root.invoice}}
@@ -148,13 +153,14 @@
           <div class="compliance-qr{{#unless vaishnavi.compliance.eInvoiceQr}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img referrerpolicy="no-referrer" class="compliance-qr-image" data-ceres-field="qrCode"{{#if vaishnavi.compliance.eInvoiceQr}} src="{{qrSrc vaishnavi.compliance.eInvoiceQr}}"{{/if}} alt="E-Invoice QR code" /></div>
         </div>
       </article></section>{{/unless}}{{/if}}
+    </div>
 
     {{#if vaishnavi.showClosingGrid}}<section class="closing-grid{{#if vaishnavi.closingGridSingleColumn}} is-single-column{{/if}}">
       {{#if vaishnavi.showClosingLeft}}<div class="closing-left">
         {{#if mapped.visibility.showTotalInWords}}<p class="total-in-words"><span>{{display.document.labels.totalInWords}} :</span> <strong>{{#if display.totalInWordsValue}}{{display.totalInWordsValue}}{{else}}{{amountInWords invoice.finalTotal.total}}{{/if}}</strong></p>{{/if}}
         {{#if mapped.visibility.showBankUpiSection}}<div class="payment-row">
           {{#if mapped.visibility.showBankAccount}}<article class="detail-card payment-card bank-details"><h2>{{display.document.labels.bankDetails}}</h2>
-            {{#each display.bankRows}}<p class="key-value"><span>{{label}}</span><strong class="{{#if nowrap}}code-value{{/if}}">{{#each values}}{{this}}{{#unless @last}} / {{/unless}}{{/each}}</strong></p>{{/each}}
+            <div class="key-value-list">{{#each display.bankRows}}<p class="key-value"><span>{{label}}</span><strong class="{{#if nowrap}}code-value{{/if}}">{{#each values}}{{this}}{{#unless @last}} / {{/unless}}{{/each}}</strong></p>{{/each}}</div>
           </article>{{/if}}
           {{#if mapped.visibility.showUpi}}<div class="upi-details"><h2>{{vaishnavi.labels.scanToPay}}</h2><p>{{vaishnavi.labels.upiLimitMessage}}</p>{{#if mapped.qr.upi}}<img class="upi-qr" src="{{qrSrc mapped.qr.upi}}" alt="UPI payment QR code" />{{/if}}<strong>{{mapped.upi.id}}</strong></div>{{/if}}
         </div>{{/if}}
@@ -199,7 +205,7 @@
       {{#if mapped.visibility.showTerms}}{{#each invoice.terms as |termGroup|}}<article class="detail-card text-card terms-card closing-full-width-card"><h2>{{#if termGroup.label}}{{termGroup.label}}{{else}}{{../display.labels.terms}}{{/if}}</h2><ol>{{#each termGroup.terms}}<li>{{this}}</li>{{/each}}</ol></article>{{/each}}{{/if}}
       {{#if mapped.visibility.showNotes}}<article class="detail-card text-card notes-card closing-full-width-card"><h2>{{display.labels.notes}}</h2>{{> MarkdownViewer (prepareMarkdownViewerData display.notes)}}</article>{{/if}}
       {{#if vaishnavi.showClosingInformation}}<section class="closing-information">
-        {{#if vaishnavi.showAdditionalInformation}}<article class="detail-card text-card additional-information-card"><h2>{{sri.additionalInformationLabel}}</h2>{{#if sri.additionalInformation}}<p>{{sri.additionalInformation}}</p>{{/if}}{{#each vaishnavi.informationRows}}<p class="key-value"><span>{{label}}</span><strong>{{value}}</strong></p>{{/each}}</article>{{/if}}
+        {{#if vaishnavi.showAdditionalInformation}}<article class="detail-card text-card additional-information-card"><h2>{{sri.additionalInformationLabel}}</h2>{{#if sri.additionalInformation}}<p>{{sri.additionalInformation}}</p>{{/if}}{{#if vaishnavi.informationRows.length}}<div class="key-value-list">{{#each vaishnavi.informationRows}}<p class="key-value"><span>{{label}}</span><strong>{{value}}</strong></p>{{/each}}</div>{{/if}}</article>{{/if}}
         {{#if sri.attachments.show}}<article class="detail-card text-card attachments-panel" data-ceres-attachments><h2>{{sri.attachments.label}}</h2><ol>{{#each sri.attachments.items}}<li><a href="{{url}}" target="_blank" rel="noopener noreferrer">{{label}}</a></li>{{/each}}</ol></article>{{/if}}
       </section>{{/if}}
     </div>
