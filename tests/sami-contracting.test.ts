@@ -959,7 +959,7 @@ describe("sami-contracting blocks", () => {
     expect(html).not.toContain("ceres-subtotal-converted");
   });
 
-  it("boxes the API's total in words in the start column, above the QR", () => {
+  it("boxes the API's total in words in the start column; the QR row follows the summary", () => {
     const words = "ثلاثة الف و مائة و خمسة ريال";
     const customLabels = {
       ...baseInvoice().customLabels,
@@ -975,7 +975,10 @@ describe("sami-contracting blocks", () => {
         `class="ceres-subtotal-words smc-words"\\s+data-ceres-total-in-words>${words}</p>`
       )
     );
-    expect(start.indexOf("smc-words")).toBeLessThan(start.indexOf("smc-qrs"));
+    expect(start).not.toContain("smc-qrs");
+    expect(html.indexOf('class="smc-summary-end"')).toBeLessThan(
+      html.indexOf('class="smc-qrs"')
+    );
   });
 
   it("keeps the widget's hide rule for the moved words box", () => {
@@ -1011,9 +1014,12 @@ describe("sami-contracting blocks", () => {
       `<span class="smc-count-value">${9 * items.length}</span>`
     );
     expect(start).toContain('<span class="smc-creator-value">سامي</span>');
-    const order = ["smc-count", "smc-words", "smc-creator", "smc-qrs"].map(
-      (c) => start.indexOf(c)
-    );
+    const order = [
+      "smc-count",
+      "smc-words",
+      "smc-creator",
+      "smc-signature",
+    ].map((c) => start.indexOf(c));
     expect(order).toEqual([...order].sort((x, y) => x - y));
   });
 

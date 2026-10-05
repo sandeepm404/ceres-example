@@ -52,7 +52,7 @@
     </div>
     {{/if}}
 
-    {{!-- ═══ Seller ids: VAT number (start) · phone (end) ═══
+    {{!-- ═══ Seller ids: VAT number · phone, centred ═══
           The rest of the seller's identity (name, address, CR, email) is the
           letterhead's. VAT label from the payload (vatLabel). --}}
     <div class="smc-seller">
@@ -65,7 +65,7 @@
       {{!-- Seller phone: billedBy.phone, else contact.phone (sellerPhone). The label is
             fixed text by request; the API has no label for the seller's phone. --}}
       {{#with (sellerPhone invoice) as |phone|}}
-      <div class="smc-kv smc-kv-strong smc-seller-end">
+      <div class="smc-kv smc-kv-strong">
         <span class="smc-key">رقم الهاتف / الجوال</span>
         <span class="smc-val">{{formatPhoneNumber phone}}</span>
       </div>
@@ -82,7 +82,7 @@
             المصدر من, matched by label (helpers.ts, issuedFromField). Printed with its own label and
             value, and left out of the details list below. --}}
       {{#with (issuedFromField invoice.customFields invoice.customHeaders) as |issuedFrom|}}
-      <div class="smc-kv smc-kv-strong smc-band-end">
+      <div class="smc-kv smc-kv-strong">
         <span class="smc-key">{{#if issuedFrom.label}}{{issuedFrom.label}}{{else}}{{issuedFrom.name}}{{/if}}</span>
         <span class="smc-val">{{issuedFrom.value}}</span>
       </div>
@@ -330,11 +330,11 @@
       {{/with}}
     </div>
 
-    {{!-- ═══ Summary: QR + payment info (start) · totals (end) ═══ --}}
+    {{!-- ═══ Summary: count, words, payment info (start) · totals (end) ═══ --}}
     <div class="smc-summary">
       <div class="smc-summary-start">
         {{!-- The design's start column, top to bottom: number of items, total in words,
-              created by, QR. The two line labels are fixed Arabic text by request — the
+              created by, signature. The two line labels are fixed Arabic text by request — the
               API carries no label for either (Lydia supplies "created by" from its own
               i18n). Their values are the API's: Σ items[].quantity, and creator.name
               behind the account's showCreatorInInvoice setting. --}}
@@ -375,45 +375,25 @@
         </p>
         {{/if}}{{/if}}
 
-        {{!-- QRs go through qrSrc, never the image widget: it passes a host-resolved data
-              URL through untouched and encodes raw content (documentQr has been seen
-              carrying the plain JSON it should encode). The containers stay in the DOM
-              so Lydia can patch qrCode / zatcaQrCode live. The API sends the ZATCA
-              Phase 1 TLV as `zatcaQr`; `zatcaQrCode` (Lydia's live patch) wins when set. --}}
-        <div class="smc-qrs">
-          {{!-- Signature in the QR row (start side), not under the totals: it then adds no
-                height, so the summary block can sit right above the page footer. --}}
-          {{#unless (eq invoice.signatureMethod "DIGITAL")}}
-          {{#if invoice.signature}}
-          <div class="smc-signature">
-            {{> CeresImage src=invoice.signature alt="" class="smc-signature-img"}}
-            {{#if invoice.customLabels.signature}}<p class="smc-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
-          </div>
-          {{/if}}
-          {{else}}
-          {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
-          <div class="smc-signature smc-signature-digital">
-            {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
-            {{#if invoice.share.pdf}}<a class="smc-ltr" href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
-          </div>
-          {{else}}
-          {{!-- Awaiting a digital signature: an invisible box the PDF pipeline measures. --}}
-          <div class="smc-signature-placeholder" data-ceres-signature-placeholder></div>
-          {{/if}}
-          {{/unless}}
-          <div data-ceres-field-container="zatcaQrCode" class="smc-qr{{#unless (or invoice.zatcaQrCode invoice.zatcaQr)}} is-empty{{/unless}}">
-            <img data-ceres-field="zatcaQrCode" src="{{#if invoice.zatcaQrCode}}{{qrSrc invoice.zatcaQrCode}}{{else}}{{qrSrc invoice.zatcaQr}}{{/if}}" alt="ZATCA QR" />
-          </div>
-          <div data-ceres-field-container="qrCode" class="smc-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
-            <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
-          </div>
-          {{#if invoice.lhdnQrCode}}
-          <div class="smc-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
-          {{/if}}
-          {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.zatcaQr invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
-          <div class="smc-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
-          {{/unless}}{{/if}}
+        {{!-- Signature, under created-by. --}}
+        {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+        {{#if invoice.signature}}
+        <div class="smc-signature">
+          {{> CeresImage src=invoice.signature alt="" class="smc-signature-img"}}
+          {{#if invoice.customLabels.signature}}<p class="smc-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
         </div>
+        {{/if}}
+        {{else}}
+        {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+        <div class="smc-signature smc-signature-digital">
+          {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+          {{#if invoice.share.pdf}}<a class="smc-ltr" href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+        </div>
+        {{else}}
+        {{!-- Awaiting a digital signature: an invisible box the PDF pipeline measures. --}}
+        <div class="smc-signature-placeholder" data-ceres-signature-placeholder></div>
+        {{/if}}
+        {{/unless}}
 
         {{!-- UPI stays here; the bank details sit under the totals. --}}
         {{#if mapped.visibility.showBankUpiSection}}{{#if mapped.visibility.showUpi}}
@@ -480,6 +460,28 @@
         {{/if}}{{/with}}
         {{/if}}{{/if}}
       </div>
+    </div>
+
+    {{!-- ═══ QR codes: their own row, centred under the summary ═══
+          QRs go through qrSrc, never the image widget: it passes a host-resolved data
+          URL through untouched and encodes raw content (documentQr has been seen
+          carrying the plain JSON it should encode). The containers stay in the DOM
+          so Lydia can patch qrCode / zatcaQrCode live. The API sends the ZATCA
+          Phase 1 TLV as `zatcaQr`; `zatcaQrCode` (Lydia's live patch) wins when set.
+          The row hides itself when every QR is empty (styles.css). --}}
+    <div class="smc-qrs">
+      <div data-ceres-field-container="zatcaQrCode" class="smc-qr{{#unless (or invoice.zatcaQrCode invoice.zatcaQr)}} is-empty{{/unless}}">
+        <img data-ceres-field="zatcaQrCode" src="{{#if invoice.zatcaQrCode}}{{qrSrc invoice.zatcaQrCode}}{{else}}{{qrSrc invoice.zatcaQr}}{{/if}}" alt="ZATCA QR" />
+      </div>
+      <div data-ceres-field-container="qrCode" class="smc-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
+        <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
+      </div>
+      {{#if invoice.lhdnQrCode}}
+      <div class="smc-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
+      {{/if}}
+      {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.zatcaQr invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
+      <div class="smc-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
+      {{/unless}}{{/if}}
     </div>
 
     {{!-- ═══ Summary tables — each behind the account's own setting ═══ --}}

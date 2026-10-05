@@ -20,7 +20,6 @@ import "../../widgets/refrens-branding";
 
 import {
   descriptionInItemCell,
-  installPrintFit,
   productCodeFirst,
   registerSamiContractingTemplateHelpers,
   withFillerRow,
@@ -31,7 +30,9 @@ declare const Handlebars: any;
 registerSamiContractingTemplateHelpers(Handlebars);
 
 // Multi-page print: summary at the foot of the last page (helpers.ts).
-installPrintFit();
+// Off with the single-page fill in styles.css; to restore, uncomment both and
+// import installPrintFit from ./helpers again.
+// installPrintFit();
 
 // Export template to global for main renderer to consume
 window.CeresTemplateDataMapper = ((payload: any) =>
