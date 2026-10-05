@@ -32,8 +32,8 @@
 
   /* Design colours, behind the host's theme variables. */
   --smc-brand: var(--primary-color, #1d5bbf);
-  --smc-pill-bg: #d4d4d4;
-  --smc-rule: #4a4a4a;
+  --smc-pill-bg: #e8e8e8;
+  --smc-rule: #aaa;
   --smc-ink: #1a1a1a;
   --smc-radius: 8px;
 
@@ -162,34 +162,26 @@
   font-weight: 600;
 }
 
-/* --- Seller ids: VAT number (start) · contact number (end) ---
-   The same two columns as the band and the details, so the phone starts where
-   "issued from" and the client address do. */
-.smc-seller {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* --- Seller ids (VAT number · contact number) and number band ---
+   Both size to their content and centre on the page; align-self: center in
+   the page's flex column caps them at the page width, and the items wrap
+   onto a second line before they would overflow it. */
+.smc-seller,
+.smc-band {
+  align-self: center;
+  max-width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 4px 32px;
 }
 
-.smc-seller-end {
-  grid-column: 2;
-}
-
-/* --- Number band ---
-   Two equal columns with the details' 32px gap: with 16px padding on both
-   sides the second column starts exactly where the details' end column does,
-   so "issued from" lines up with the client address below it. */
 .smc-band {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 32px;
+  min-width: 64%;
   padding: 4px 16px;
   background: var(--smc-pill-bg);
   border: 1px solid var(--smc-rule);
-}
-
-.smc-band-end {
-  grid-column: 2;
+  border-radius: var(--smc-radius);
 }
 
 .smc-kv-strong {
@@ -256,6 +248,7 @@
 }
 
 .smc-items .line-items-table > thead > tr > th {
+  padding: 8px;
   background: var(--smc-pill-bg);
   font-family: var(--smc-font-heading);
   font-weight: 700;
@@ -349,12 +342,18 @@
   gap: 12px;
 }
 
-/* QRs sit at the column's inline end — toward the totals — as in the design. */
+/* QRs: their own row under the summary, centred, as in the design. With
+   every QR empty the row goes too, so it leaves no gap in the page. */
 .smc-qrs {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
+  break-inside: avoid;
+}
+
+.smc-qrs:not(:has(> .smc-qr:not(.is-empty))) {
+  display: none;
 }
 
 .smc-qr img {
@@ -500,15 +499,13 @@
 
 /* --- Signature --- */
 
-/* Sits in the QR row, pushed to the start side (the QRs keep the end, by the
-   totals) and bottom-aligned with them. */
+/* At the start of the summary's start column. */
 .smc-signature {
   display: flex;
   flex-direction: column;
   align-items: center;
-  align-self: flex-end;
+  align-self: flex-start;
   gap: 4px;
-  margin-inline-end: auto;
   width: fit-content;
 }
 
@@ -580,27 +577,34 @@
 
     max-width: none;
 
-    /* The printed page is at least one page tall and the item table takes
-       the slack (below), so the summary lands at the foot of the page, just
-       above the footer. 100vh is the page area in the PDF service — the same
-       measure the line-items widget's own stretch uses — and is divided by
+    /* Page fill, switched off on request (2026-10-05): the summary no longer
+       sits at the page foot, so no blank gap opens under the item table.
+       To bring it back, uncomment the three lines below and the blocks
+       further down marked "page fill", and installPrintFit() in index.ts.
+
+       The printed page is at least one page tall and the item table takes
+       the slack, so the summary lands at the foot of the page, just above
+       the footer. 100vh is the page area in the PDF service, the same
+       measure the line-items widget's own stretch uses, and is divided by
        the renderer's page zoom, which would otherwise shrink it. Page margins
        are left to the PDF service. A longer document simply flows. In a
        browser print 100vh is the window, so it is capped at one A4 sheet
-       (less 1mm): a tall window can never spill a blank second page. */
+       (less 1mm): a tall window can never spill a blank second page.
     display: flex;
     flex-direction: column;
     min-height: calc(min(100vh, 296mm) / var(--smc-page-zoom, 1));
+    */
   }
 
   .smc-page {
-    flex: 1 0 auto;
+    /* page fill: flex: 1 0 auto; */
     padding: 16px;
     zoom: var(--smc-print-zoom, 1);
   }
 
-  /* Stretch the table, not the items: the table grows into the page's blank
-     space and the blank filler row below the items takes the extra height. */
+  /* page fill: stretch the table, not the items. The table grows into the
+     page's blank space and the blank filler row below the items takes the
+     extra height.
   .smc-items,
   .smc-items .line-items-table-wrapper {
     display: flex;
@@ -617,9 +621,10 @@
     height: 100%;
   }
 
-  /* Blank space only: no boxes drawn in the filler. */
+  Blank space only: no boxes drawn in the filler.
   .smc-items .line-items-table > tbody > tr.row-filler > td {
     border-color: transparent;
     background: transparent;
   }
+  */
 }
