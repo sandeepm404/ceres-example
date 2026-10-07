@@ -1,0 +1,368 @@
+{{!--
+  frigo-pro-eood — Bulgarian invoice (Фактура).
+
+  Payments recorded against the invoice print as extra lines at the end of the
+  item table ("Авансово плащане по ф-ра <number>/<payment date>", negative
+  amount). Those rows are added by the data mapper (helpers.ts withPaymentRows);
+  the table markup does not special-case them. Totals are the shared Subtotal
+  widget's, which already shows what was paid and what is still due.
+
+  Label text comes from the payload (customLabels, vatLabel, columns[].label,
+  party field labels). The only fixed words are the city/address row labels,
+  which no payload key carries, and the payment-line text.
+
+  The root is { invoice, advanceOptions, pdfOptions, mapped, derived } because
+  this template installs normalizeInvoiceTemplateState as its data mapper.
+--}}
+<div class="fpe-shell">
+  <div class="{{#unless pdfOptions.letterHeadOnFirstPage}}no-dibella {{/unless}}invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+    {{#if invoice.letterHead}}
+    <img src="{{invoice.letterHead}}" alt="" data-ceres-height="letterhead" />
+    {{else}}
+    <img alt="" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  {{!-- Text scale: zoom values per medium from helpers.ts pageZoomStyle,
+        applied by styles.css (.fpe-page). --}}
+  <div class="fpe-page"{{#with (pageZoomStyle invoice pdfOptions advanceOptions) as |zoom|}} style="{{zoom}}"{{/with}}>
+    {{!-- ═══ Title, centred; number and date at the end ═══ --}}
+    <header class="fpe-head">
+      <div class="fpe-title">
+        {{#if invoice.invoiceTitle}}<h1 class="fpe-title-main">{{invoice.invoiceTitle}}</h1>{{/if}}
+        {{#if invoice.invoiceSubTitle}}<p class="fpe-title-sub">{{invoice.invoiceSubTitle}}</p>{{/if}}
+      </div>
+
+      <dl class="fpe-meta">
+        <div class="fpe-kv">
+          <dt>{{invoice.customLabels.invoiceNumber}}{{#if invoice.customLabels.invoiceNumber}}:{{/if}}</dt>
+          <dd class="fpe-strong">{{invoice.invoiceNumber}}</dd>
+        </div>
+        <div class="fpe-kv">
+          <dt>{{invoice.customLabels.invoiceDate}}{{#if invoice.customLabels.invoiceDate}}:{{/if}}</dt>
+          <dd class="fpe-strong">{{dottedDate invoice.invoiceDate invoice.ownerOffset}}</dd>
+        </div>
+        {{#if invoice.dueDate}}
+        <div class="fpe-kv">
+          <dt>{{invoice.customLabels.dueDate}}{{#if invoice.customLabels.dueDate}}:{{/if}}</dt>
+          <dd>{{dottedDate invoice.dueDate invoice.ownerOffset}}</dd>
+        </div>
+        {{/if}}
+        {{#if invoice.purchaseOrderNumber}}
+        <div class="fpe-kv">
+          <dt>{{invoice.customLabels.purchaseOrderNumber}}{{#if invoice.customLabels.purchaseOrderNumber}}:{{/if}}</dt>
+          <dd>{{invoice.purchaseOrderNumber}}</dd>
+        </div>
+        {{/if}}
+        {{#each invoice.customFields}}
+        {{#if value}}{{#unless (eq params.showInInvoice false)}}
+        <div class="fpe-kv">
+          <dt>{{#if label}}{{label}}{{else}}{{name}}{{/if}}:</dt>
+          <dd>{{value}}</dd>
+        </div>
+        {{/unless}}{{/if}}
+        {{/each}}
+        {{#each invoice.customHeaders}}
+        {{#if value}}
+        <div class="fpe-kv">
+          <dt>{{label}}:</dt>
+          <dd>{{value}}</dd>
+        </div>
+        {{/if}}
+        {{/each}}
+      </dl>
+    </header>
+
+    {{!-- ═══ Parties: recipient (start) · supplier (end), each boxed ═══ --}}
+    <div class="fpe-parties">
+      {{#with invoice.billedTo as |party|}}
+      <dl class="fpe-party" data-party="billedTo">
+        <div class="fpe-row">
+          <dt>{{@root.invoice.customLabels.billedTo}}</dt>
+          <dd class="fpe-party-name">{{party.name}}</dd>
+        </div>
+        {{#if party.vatNumber}}
+        <div class="fpe-row"><dt>{{party.vatLabel}}</dt><dd>{{party.vatNumber}}</dd></div>
+        {{/if}}
+        {{#if party.gstin}}
+        <div class="fpe-row"><dt>GSTIN</dt><dd>{{party.gstin}}</dd></div>
+        {{/if}}
+        {{#if party.panNumber}}
+        <div class="fpe-row"><dt>PAN</dt><dd>{{party.panNumber}}</dd></div>
+        {{/if}}
+        {{#each (partyFields party)}}
+        <div class="fpe-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+        {{/each}}
+        {{#if party.city}}
+        <div class="fpe-row"><dt>Град</dt><dd>{{party.city}}</dd></div>
+        {{/if}}
+        {{#with (partyAddress party) as |address|}}
+        <div class="fpe-row"><dt>Адрес</dt><dd>{{address}}</dd></div>
+        {{/with}}
+        {{#if party.contactPerson.name}}
+        <div class="fpe-row"><dt>{{@root.invoice.customLabels.contactPersonLabel}}</dt><dd>{{party.contactPerson.name}}</dd></div>
+        {{/if}}
+        {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
+        <div class="fpe-row"><dt>{{@root.invoice.customLabels.phone}}</dt><dd>{{formatPhoneNumber party.phone}}</dd></div>
+        {{/unless}}{{/if}}
+        {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
+        <div class="fpe-row"><dt>{{@root.invoice.customLabels.email}}</dt><dd>{{party.email}}</dd></div>
+        {{/unless}}{{/if}}
+      </dl>
+      {{/with}}
+
+      {{#with invoice.billedBy as |party|}}
+      <dl class="fpe-party" data-party="billedBy">
+        <div class="fpe-row">
+          <dt>{{@root.invoice.customLabels.billedBy}}</dt>
+          <dd class="fpe-party-name">{{party.name}}</dd>
+        </div>
+        {{#if party.vatNumber}}
+        <div class="fpe-row"><dt>{{party.vatLabel}}</dt><dd>{{party.vatNumber}}</dd></div>
+        {{/if}}
+        {{#if party.gstin}}{{#unless (eq @root.invoice.owner.configuration.experimental.fieldVisibility.gst.showInDocument false)}}
+        <div class="fpe-row"><dt>GSTIN</dt><dd>{{party.gstin}}</dd></div>
+        {{/unless}}{{/if}}
+        {{#if party.panNumber}}{{#unless (eq @root.invoice.owner.configuration.experimental.fieldVisibility.pan.showInDocument false)}}
+        <div class="fpe-row"><dt>PAN</dt><dd>{{party.panNumber}}</dd></div>
+        {{/unless}}{{/if}}
+        {{#each (partyFields party)}}
+        <div class="fpe-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+        {{/each}}
+        {{#if party.city}}
+        <div class="fpe-row"><dt>Град</dt><dd>{{party.city}}</dd></div>
+        {{/if}}
+        {{#with (partyAddress party) as |address|}}
+        <div class="fpe-row"><dt>Адрес</dt><dd>{{address}}</dd></div>
+        {{/with}}
+        {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
+        <div class="fpe-row"><dt>{{@root.invoice.customLabels.phone}}</dt><dd>{{formatPhoneNumber party.phone}}</dd></div>
+        {{/unless}}{{/if}}
+        {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
+        <div class="fpe-row"><dt>{{@root.invoice.customLabels.email}}</dt><dd>{{party.email}}</dd></div>
+        {{/unless}}{{/if}}
+      </dl>
+      {{/with}}
+    </div>
+
+    {{!-- ═══ Shipping & transport (only when the document carries them) ═══ --}}
+    {{#if (or mapped.visibility.shippedFrom mapped.visibility.shippedTo mapped.visibility.transport)}}
+    <div class="fpe-parties">
+      {{#if mapped.visibility.shippedTo}}
+      {{#with invoice.shippedTo as |party|}}
+      <dl class="fpe-party" data-party="shippedTo">
+        <div class="fpe-row">
+          <dt>{{@root.invoice.customLabels.shippedTo}}</dt>
+          <dd class="fpe-party-name">{{party.name}}</dd>
+        </div>
+        {{#if party.city}}<div class="fpe-row"><dt>Град</dt><dd>{{party.city}}</dd></div>{{/if}}
+        {{#with (partyAddress party) as |address|}}<div class="fpe-row"><dt>Адрес</dt><dd>{{address}}</dd></div>{{/with}}
+        {{#each (partyFields party)}}<div class="fpe-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/each}}
+      </dl>
+      {{/with}}
+      {{/if}}
+      {{#if mapped.visibility.shippedFrom}}
+      {{#with invoice.shippedFrom as |party|}}
+      <dl class="fpe-party" data-party="shippedFrom">
+        <div class="fpe-row">
+          <dt>{{@root.invoice.customLabels.shippedFrom}}</dt>
+          <dd class="fpe-party-name">{{party.name}}</dd>
+        </div>
+        {{#if party.city}}<div class="fpe-row"><dt>Град</dt><dd>{{party.city}}</dd></div>{{/if}}
+        {{#with (partyAddress party) as |address|}}<div class="fpe-row"><dt>Адрес</dt><dd>{{address}}</dd></div>{{/with}}
+        {{#each (partyFields party)}}<div class="fpe-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/each}}
+      </dl>
+      {{/with}}
+      {{/if}}
+      {{#if mapped.visibility.transport}}
+      <dl class="fpe-party" data-party="transport">
+        {{#if invoice.customLabels.transport}}<div class="fpe-row"><dt class="fpe-heading">{{invoice.customLabels.transport}}</dt><dd></dd></div>{{/if}}
+        {{#if invoice.transportDetails.transporter.name}}
+        <div class="fpe-row"><dt>{{invoice.customLabels.transportName}}</dt><dd>{{invoice.transportDetails.transporter.name}}</dd></div>
+        {{else}}{{#if invoice.transportDetails.transporterName}}
+        <div class="fpe-row"><dt>{{invoice.customLabels.transportName}}</dt><dd>{{invoice.transportDetails.transporterName}}</dd></div>
+        {{/if}}{{/if}}
+        {{#if invoice.transportDetails.challanNumber}}
+        <div class="fpe-row"><dt>{{invoice.customLabels.challanNumber}}</dt><dd>{{invoice.transportDetails.challanNumber}}</dd></div>
+        {{/if}}
+        {{#if invoice.transportDetails.challanDate}}
+        <div class="fpe-row"><dt>{{invoice.customLabels.challanDate}}</dt><dd>{{dottedDate invoice.transportDetails.challanDate invoice.ownerOffset}}</dd></div>
+        {{/if}}
+        {{#if invoice.transportDetails.transportMode}}<div class="fpe-row"><dt></dt><dd>{{invoice.transportDetails.transportMode}}</dd></div>{{/if}}
+        {{#if invoice.transportDetails.vehicleNumber}}<div class="fpe-row"><dt></dt><dd>{{invoice.transportDetails.vehicleNumber}}</dd></div>{{/if}}
+        {{#if invoice.transportDetails.extraInformation}}
+        <div class="fpe-row"><dt>{{invoice.customLabels.transportExtraInfo}}</dt><dd>{{invoice.transportDetails.extraInformation}}</dd></div>
+        {{/if}}
+      </dl>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Line items: the shared widget, with the payment lines already in mapped.rows ═══ --}}
+    <div class="fpe-items">
+      {{> LineItemsTable mapped}}
+    </div>
+
+    {{!-- ═══ Totals: the shared widget ═══
+          Its Conversion Rate row is hidden unless the account turned on
+          "Show Applied Exchange Rate" (helpers.ts showExchangeRate). --}}
+    <div class="fpe-totals{{#unless (showExchangeRate advanceOptions invoice)}} is-exchange-rate-hidden{{/unless}}">
+      <div class="fpe-totals-stack">
+      {{> Subtotal (computeSubtotalRows invoice
+                      columns=mapped.columns
+                      businessCurrency=invoice.businessCurrency
+                      businessLocale=invoice.businessLocale) }}
+
+      {{!-- After payments: tax base, VAT and amount due, net of the payments
+            recorded on the document (helpers.ts settlementTotals). Only when a
+            payment is recorded; paid in full, all three are 0.00. --}}
+      {{#with (settlementTotals invoice mapped.visibility) as |settled|}}
+      <div class="ceres-subtotal fpe-settlement" data-ceres-settlement>
+        <table class="ceres-subtotal-table">
+          <tbody>
+            {{#each settled.rows}}
+            <tr class="ceres-subtotal-row fpe-settlement-{{key}}{{#if settled.hidden}} is-hidden-by-totals{{/if}}" data-ceres-settlement-row="{{key}}">
+              <th class="ceres-subtotal-label">{{label}}:</th>
+              <td class="ceres-subtotal-value">{{value}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{/with}}
+      </div>
+    </div>
+
+    {{!-- ═══ Summary tables — each behind the account's own setting ═══ --}}
+    {{#if mapped.visibility.showTaxTable}}
+    <div class="fpe-block" data-ceres-tax-summary>
+      {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showHsnSummary}}
+    <div class="fpe-block" data-ceres-hsn-summary>
+      {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showPaymentsTable}}
+    <div class="fpe-block" data-ceres-payment-table>
+      {{> PaymentTable (computePaymentColumns invoice.allPayments businessCurrency=invoice.businessCurrency currency=invoice.currency)
+          ownerOffset=invoice.ownerOffset
+          heading=invoice.customLabels.paymentRecord
+      }}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Bank / UPI ═══ --}}
+    {{#if mapped.visibility.showBankUpiSection}}
+    <div class="fpe-pay">
+      {{#if mapped.visibility.showBankAccount}}
+      <dl class="fpe-bank">
+        {{#if invoice.customLabels.bankDetails}}<div class="fpe-row"><dt class="fpe-heading">{{invoice.customLabels.bankDetails}}</dt><dd></dd></div>{{/if}}
+        {{#with invoice.bankAccount as |bank|}}
+        {{#if (or bank.name bank.accountHolderName)}}<div class="fpe-row"><dt>{{bank.customLabels.accountHolderName}}</dt><dd>{{#if bank.name}}{{bank.name}}{{else}}{{bank.accountHolderName}}{{/if}}</dd></div>{{/if}}
+        {{#if (or bank.bank bank.bankName)}}<div class="fpe-row"><dt>{{bank.customLabels.bankName}}</dt><dd>{{#if bank.bank}}{{bank.bank}}{{else}}{{bank.bankName}}{{/if}}</dd></div>{{/if}}
+        {{#if (or bank.accountNo bank.accountNumber)}}<div class="fpe-row"><dt>{{bank.customLabels.accountNumber}}</dt><dd>{{#if bank.accountNo}}{{bank.accountNo}}{{else}}{{bank.accountNumber}}{{/if}}</dd></div>{{/if}}
+        {{#if bank.iban}}<div class="fpe-row"><dt>{{bank.customLabels.iban}}</dt><dd>{{bank.iban}}</dd></div>{{/if}}
+        {{#if (or bank.swift bank.swiftCode)}}<div class="fpe-row"><dt>{{bank.customLabels.swiftCode}}</dt><dd>{{#if bank.swift}}{{bank.swift}}{{else}}{{bank.swiftCode}}{{/if}}</dd></div>{{/if}}
+        {{#if (or bank.ifsc bank.ifscCode)}}<div class="fpe-row"><dt>{{bank.customLabels.ifsc}}</dt><dd>{{#if bank.ifsc}}{{bank.ifsc}}{{else}}{{bank.ifscCode}}{{/if}}</dd></div>{{/if}}
+        {{#if bank.sortCode}}<div class="fpe-row"><dt>{{bank.customLabels.sortCode}}</dt><dd>{{bank.sortCode}}</dd></div>{{/if}}
+        {{#if bank.accountType}}<div class="fpe-row"><dt>{{bank.customLabels.accountType}}</dt><dd>{{bank.accountType}}</dd></div>{{/if}}
+        {{#each bank.customFields}}{{#if value}}{{#unless (eq params.showInInvoice false)}}
+        <div class="fpe-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+        {{/unless}}{{/if}}{{/each}}
+        {{/with}}
+      </dl>
+      {{/if}}
+      {{#if mapped.visibility.showUpi}}
+      <div class="fpe-upi">
+        {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="fpe-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
+        <p>{{mapped.upi.id}}</p>
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Notes, terms, attachments ═══ --}}
+    {{#if invoice.notes}}
+    <section class="fpe-note">
+      {{#if invoice.customLabels.notes}}<h2 class="fpe-heading">{{invoice.customLabels.notes}}</h2>{{/if}}
+      {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+    </section>
+    {{/if}}
+
+    {{#each invoice.terms}}
+    {{#if terms.length}}
+    <section class="fpe-note">
+      {{#if label}}<h2 class="fpe-heading">{{label}}</h2>{{else}}{{#if @root.invoice.customLabels.terms}}<h2 class="fpe-heading">{{@root.invoice.customLabels.terms}}</h2>{{/if}}{{/if}}
+      <ol class="fpe-terms">
+        {{#each terms}}<li>{{this}}</li>{{/each}}
+      </ol>
+    </section>
+    {{/if}}
+    {{/each}}
+
+    {{#if invoice.attachments.length}}
+    <section class="fpe-note">
+      {{#if invoice.customLabels.attachment}}<h2 class="fpe-heading">{{invoice.customLabels.attachment}}</h2>{{/if}}
+      <ul class="fpe-attachments">
+        {{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{this}}</a></li>{{/each}}
+      </ul>
+    </section>
+    {{/if}}
+
+    {{!-- ═══ Signature ═══ --}}
+    {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+    {{#if invoice.signature}}
+    <div class="fpe-signature">
+      {{> CeresImage src=invoice.signature alt="" class="fpe-signature-img"}}
+      {{#if invoice.customLabels.signature}}<p class="fpe-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
+    </div>
+    {{/if}}
+    {{else}}
+    {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+    <div class="fpe-signature fpe-signature-digital">
+      {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+      {{#if invoice.share.pdf}}<a href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+    </div>
+    {{else}}
+    <div class="fpe-signature-placeholder" data-ceres-signature-placeholder></div>
+    {{/if}}
+    {{/unless}}
+
+    {{!-- ═══ QR codes: containers stay in the DOM so Lydia can patch them live ═══ --}}
+    <div class="fpe-qrs">
+      <div data-ceres-field-container="zatcaQrCode" class="fpe-qr{{#unless (or invoice.zatcaQrCode invoice.zatcaQr)}} is-empty{{/unless}}">
+        <img data-ceres-field="zatcaQrCode" src="{{#if invoice.zatcaQrCode}}{{qrSrc invoice.zatcaQrCode}}{{else}}{{qrSrc invoice.zatcaQr}}{{/if}}" alt="ZATCA QR" />
+      </div>
+      <div data-ceres-field-container="qrCode" class="fpe-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
+        <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
+      </div>
+      {{#if invoice.lhdnQrCode}}
+      <div class="fpe-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
+      {{/if}}
+      {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.zatcaQr invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
+      <div class="fpe-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
+      {{/unless}}{{/if}}
+    </div>
+
+    {{#if (or invoice.customFooters.length invoice.footers.length)}}
+    <dl class="fpe-footer-fields">
+      {{#each invoice.customFooters}}{{#if value}}<div class="fpe-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+      {{#each invoice.footers}}{{#if value}}<div class="fpe-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+    </dl>
+    {{/if}}
+
+    {{> RefrensBranding invoice}}
+  </div>
+
+  <div class="{{#unless pdfOptions.footerOnLastPage}}no-dibella {{/unless}}invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if invoice.letterHeadFooter}}
+    <img src="{{invoice.letterHeadFooter}}" alt="" data-ceres-height="letterhead-footer" />
+    {{else}}
+    <img alt="" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>

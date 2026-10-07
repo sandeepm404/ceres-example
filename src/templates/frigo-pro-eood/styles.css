@@ -1,0 +1,448 @@
+@import "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap";
+
+/*
+ * frigo-pro-eood — Bulgarian invoice.
+ * Black on white, thin rules, a grey item-table header, two boxed parties.
+ */
+
+.fpe-shell {
+  --fpe-font-body: var(--ceres-font-family, "Roboto", Arial, sans-serif);
+  --fpe-font-heading: var(--ceres-heading-font-family, var(--fpe-font-body));
+  --fpe-ink: var(--ceres-primary-color, #000);
+  --fpe-muted: #333;
+  --fpe-rule: #000;
+  --fpe-head-fill: var(--ceres-primary-background, #d9d9d9);
+  --fpe-font-size-xs: 10px;
+  --fpe-font-size-s: 11px;
+  --fpe-font-size-base: 13px;
+  --fpe-font-size-m: 15px;
+  --fpe-font-size-lg: 18px;
+  --fpe-font-size-xl: 28px;
+
+  position: relative;
+  max-width: 820px;
+  margin: 0 auto;
+  color: var(--fpe-ink);
+  background: #fff;
+  font-family: var(--fpe-font-body);
+  font-size: var(--fpe-font-size-base);
+  line-height: 1.5;
+}
+
+.fpe-shell *,
+.fpe-shell *::before,
+.fpe-shell *::after {
+  box-sizing: border-box;
+}
+
+.fpe-shell dl,
+.fpe-shell dd,
+.fpe-shell p,
+.fpe-shell h1,
+.fpe-shell h2,
+.fpe-shell ol,
+.fpe-shell ul {
+  margin: 0;
+}
+
+/* --- Letterhead slots (host-measured via data-ceres-height) --- */
+.fpe-shell .invoice-letterhead,
+.fpe-shell .invoice-letterhead-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.fpe-shell .invoice-letterhead img,
+.fpe-shell .invoice-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.fpe-shell .invoice-letterhead.is-empty,
+.fpe-shell .invoice-letterhead-footer.is-empty {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+}
+
+/* --- Page: one column, blocks spaced by gap ---
+   The width cap sits on the shell, not here, so the letterhead and footer
+   images span exactly the page's width rather than the whole viewport. */
+.fpe-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+}
+
+/* Text scale (helpers.ts pageZoom). Zooming the page, not the shell, keeps it
+   filling the page width — as the renderer's own print zoom does. */
+@media screen {
+  .fpe-page {
+    zoom: var(--fpe-screen-zoom, 1);
+  }
+}
+
+@media print {
+  .fpe-page {
+    zoom: var(--fpe-print-zoom, 1);
+  }
+}
+
+/* --- Header: centred title, number/date at the end --- */
+.fpe-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 16px;
+}
+
+.fpe-title {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.fpe-title-main {
+  font-family: var(--fpe-font-heading);
+  font-size: var(--fpe-font-size-xl);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.fpe-title-sub {
+  font-size: var(--fpe-font-size-base);
+  font-style: italic;
+  font-weight: 700;
+}
+
+.fpe-meta {
+  grid-column: 3;
+  place-self: end end;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 16px;
+}
+
+.fpe-meta .fpe-kv {
+  display: contents;
+}
+
+.fpe-meta dt {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.fpe-meta dd {
+  text-align: end;
+}
+
+.fpe-strong {
+  font-weight: 700;
+}
+
+/* --- Parties: two boxes, label | value rows --- */
+.fpe-parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.fpe-party {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  align-content: start;
+  column-gap: 12px;
+  padding: 4px 8px;
+  border: 1px solid var(--fpe-rule);
+  border-radius: 4px;
+  font-size: var(--fpe-font-size-s);
+}
+
+.fpe-row {
+  display: contents;
+}
+
+.fpe-party dt,
+.fpe-bank dt,
+.fpe-footer-fields dt {
+  color: var(--fpe-muted);
+}
+
+.fpe-party dd {
+  overflow-wrap: anywhere;
+}
+
+.fpe-party-name {
+  font-weight: 700;
+}
+
+.fpe-heading {
+  font-family: var(--fpe-font-heading);
+  font-size: var(--fpe-font-size-m);
+  font-weight: 700;
+}
+
+/* --- Item table: full grid, grey bold header --- */
+.fpe-items .line-items-table {
+  font-size: var(--fpe-font-size-s);
+  table-layout: auto;
+}
+
+.fpe-items .line-items-table > thead > tr > th,
+.fpe-items .line-items-table > tbody > tr > td {
+  padding: 0 4px;
+  border: 1px solid var(--fpe-rule);
+  vertical-align: top;
+}
+
+.fpe-items .line-items-table > thead > tr > th {
+  background: var(--fpe-head-fill);
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* The serial column has no payload label; № is a symbol, not a word. */
+.fpe-items .line-items-table > thead > tr > th.col-index::before {
+  content: "№";
+}
+
+.fpe-items .line-items-table .col-index {
+  width: 1%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Figures never break: "-BGN 738,650.50" stays on one line in every mode.
+   With text wrap on, the widget switches to a fixed layout that hands every
+   column an equal share, which is what split figures (and squeezed the item
+   column). This template keeps the content-sized layout instead: figures take
+   the width they need, and the item column takes the rest and wraps — long
+   unbroken words included (overflow-wrap below). */
+.fpe-items .line-items-table.is-wrap-enabled {
+  table-layout: auto;
+}
+
+/* Numbers size to their content; the item column takes the slack. */
+.fpe-items .line-items-table > tbody > tr:not(.item-extras-row) > td:not(.col-item) {
+  width: 1%;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  text-align: end;
+}
+
+.fpe-items .line-items-table > tbody > tr > td.col-item,
+.fpe-items .line-items-table > thead > tr > th.col-item {
+  width: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+
+.fpe-items .line-items-table tbody tr.row-even {
+  background: transparent;
+}
+
+.fpe-items .line-items-table tbody tr.row-summary td,
+.fpe-items .line-items-table tbody tr.row-group-subtotal td {
+  background: transparent;
+  font-weight: 700;
+}
+
+.fpe-items .line-items-table small {
+  font-size: var(--fpe-font-size-xs);
+}
+
+.fpe-items .line-items-table tr.item-extras-row td.item-extras-cell {
+  border-top: 0;
+}
+
+/* --- Totals: the shared widget, at the end, bold labels --- */
+.fpe-totals {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* The widget's rows and the after-payment rows stack in one column of one
+   width; each value column takes the same share, so labels and figures line
+   up across both tables. */
+.fpe-totals-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 360px;
+}
+
+.fpe-totals .ceres-subtotal {
+  width: 100%;
+}
+
+.fpe-totals .ceres-subtotal-table .ceres-subtotal-value {
+  width: 45%;
+}
+
+.fpe-settlement {
+  padding: 4px 0 0;
+  border-top: 1px solid var(--fpe-rule);
+}
+
+.fpe-totals .ceres-subtotal-label {
+  padding: 0 16px 0 0;
+  text-align: end;
+  font-weight: 700;
+}
+
+.fpe-totals .ceres-subtotal-value {
+  padding: 0;
+  font-weight: 700;
+}
+
+.fpe-totals .ceres-subtotal-row-grand > .ceres-subtotal-label,
+.fpe-totals .ceres-subtotal-row-grand > .ceres-subtotal-value {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.fpe-totals.is-exchange-rate-hidden [data-ceres-subtotal-row="conversionRate"] {
+  display: none;
+}
+
+/* The business-currency amount under each total (e.g. INR under BGN) is not
+   printed for now; the item table drops its copy in the data mapper
+   (helpers.ts withoutSecondCurrency). */
+.fpe-totals .ceres-subtotal-converted {
+  display: none;
+}
+
+/* --- Summary tables, payment info, notes --- */
+.fpe-block {
+  font-size: var(--fpe-font-size-s);
+}
+
+.fpe-pay {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.fpe-bank,
+.fpe-footer-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 12px;
+  font-size: var(--fpe-font-size-s);
+}
+
+.fpe-upi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fpe-font-size-xs);
+}
+
+.fpe-upi-qr {
+  width: 96px;
+  height: 96px;
+}
+
+.fpe-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--fpe-font-size-s);
+}
+
+.fpe-terms,
+.fpe-attachments {
+  padding: 0 0 0 20px;
+}
+
+.fpe-attachments a {
+  overflow-wrap: anywhere;
+}
+
+.fpe-signature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: var(--fpe-font-size-s);
+}
+
+.fpe-signature-img {
+  max-width: 160px;
+  max-height: 64px;
+}
+
+.fpe-signature-placeholder {
+  align-self: flex-end;
+  width: 160px;
+  height: 64px;
+}
+
+.fpe-qrs {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.fpe-qrs:not(:has(.fpe-qr:not(.is-empty))) {
+  display: none;
+}
+
+.fpe-qr.is-empty {
+  display: none;
+}
+
+.fpe-qr img {
+  display: block;
+  width: 96px;
+  height: 96px;
+}
+
+@media print {
+  .fpe-shell {
+    --fpe-font-size-xs: 10px;
+    --fpe-font-size-s: 11px;
+    --fpe-font-size-base: 13px;
+    --fpe-font-size-m: 14px;
+    --fpe-font-size-lg: 16px;
+    --fpe-font-size-xl: 24px;
+  }
+
+  .fpe-page {
+    max-width: none;
+    padding: 0;
+  }
+
+  .fpe-shell {
+    max-width: none;
+  }
+
+  .fpe-items .line-items-table > thead > tr > th {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .fpe-items .line-items-table > tbody > tr {
+    break-inside: avoid;
+  }
+
+  .fpe-totals,
+  .fpe-signature {
+    break-inside: avoid;
+  }
+}
