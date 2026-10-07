@@ -1,0 +1,552 @@
+{{!--
+  Modern Manufacturing Template (Figma "Modern Manufacturing Template.", node 18506:2360;
+  item images per node 18743:689; behaviour per INVOICE_TEMPLATE_SPEC_v2).
+
+  Root is normalizeInvoiceTemplateState's output. Every block below reads the view model built
+  once by `mmView` (helpers.ts) — labels, visibility and table columns all come from the
+  payload; nothing from the reference design is written into this file.
+
+  Section order is fixed: header, banner, invoice details, parties, (dispatch), items, bank +
+  totals, terms | notes, additional info | attachments, (notes row), HSN summary, (tax summary,
+  payment record), signature.
+  A section that is switched off is not rendered. data-testid / data-section / data-pair /
+  data-role / data-col are the spec's test hooks (section 11).
+--}}
+{{#with (mmView @root) as |view|}}
+<div class="mm-doc" data-testid="invoice-root" style="--mm-text-scale: {{view.print.textScale}};{{#if view.theme}} --mm-theme: {{view.theme.accent}}; --mm-theme-tint: {{view.theme.tint}};{{/if}}">
+  <div class="no-dibella invoice-letterhead mm-letterhead{{#unless @root.invoice.letterHead}} is-empty{{/unless}}">
+    {{#if @root.invoice.letterHead}}
+      <img src="{{@root.invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+    {{else}}
+      <img alt="Letterhead" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  {{!--
+    Print frame: on screen the table is transparent (display: contents). In print, when the
+    footer repeats on every page (pdfOptions.footerOnLastPage off), the real footer is fixed
+    to the foot of each page and this repeating <tfoot> holds an invisible copy of it, so
+    content never runs under it.
+  --}}
+  <table class="mm-page-frame" role="presentation">
+    {{#if view.footerEveryPage}}
+      <tfoot class="mm-page-frame-footer">
+        <tr>
+          <td>
+            <div class="no-dibella invoice-letterhead-footer mm-letterhead-footer mm-footer-spacer{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" aria-hidden="true">
+              {{#if @root.invoice.letterHeadFooter}}<img src="{{@root.invoice.letterHeadFooter}}" alt="" />{{else}}<img alt="" />{{/if}}
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    {{/if}}
+    <tbody>
+      <tr>
+        <td class="mm-page-frame-cell">
+          <div class="mm-page-body">
+          <header class="mm-header" data-testid="section" data-section="header">
+            <div class="mm-brand">
+              {{!-- No logo, no stand-in: the company name leads the header (user request). --}}
+              {{#if view.brand.logo}}
+                <div class="mm-logo">{{> CeresImage src=view.brand.logo alt=view.brand.name class="mm-logo-image"}}</div>
+              {{/if}}
+              {{#if view.brand.name}}<h1 class="mm-brand-name" data-role="company-name">{{view.brand.name}}</h1>{{/if}}
+            </div>
+            {{!-- The seller block, then the document QR beside it (12 px apart). --}}
+            <div class="mm-header-end">
+              {{#if view.brand.seller}}
+                <div class="mm-seller">
+                  {{#if view.brand.seller.address}}
+                    <div class="mm-seller-address">
+                      {{#if view.brand.seller.street}}<p class="mm-seller-street">{{view.brand.seller.street}}</p>{{/if}}
+                      {{#if view.brand.seller.region}}<p class="mm-seller-region">{{view.brand.seller.region}}</p>{{/if}}
+                    </div>
+                  {{/if}}
+                  {{#if view.brand.seller.hasIdLines}}
+                    <div class="mm-id-grid">
+                      {{#each view.brand.seller.lines}}
+                        <p class="mm-id-line">{{#each this}}<span class="mm-id">{{label}}: <span{{#if noWrap}} class="mm-num"{{else if isEmail}} class="mm-email"{{/if}}{{#if isNum}} data-testid="num"{{/if}}>{{#if isDate}}{{mmDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</span></span>{{/each}}</p>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+              <div class="mm-qr mm-header-qr{{#unless view.compliance.qr.document}} is-empty{{/unless}}" data-ceres-field-container="documentQr">
+                <img data-ceres-field="documentQr"{{#if view.compliance.qr.document}} src="{{view.compliance.qr.document}}"{{/if}} alt="Document QR Code" />
+              </div>
+            </div>
+          </header>
+
+          {{#if view.title}}
+            <div class="mm-banner" data-testid="section" data-section="banner">
+              <h2 class="mm-banner-title" data-role="title">{{view.title}}</h2>
+              {{!-- The copy tag, then the subtitle last, at the banner's right end. --}}
+              {{#if view.copy}}<span class="mm-copy" data-role="tag">{{view.copy}}</span>{{/if}}
+              {{#if view.subtitle}}<span class="mm-subtitle">{{view.subtitle}}</span>{{/if}}
+            </div>
+          {{/if}}
+
+          {{#if view.meta.length}}
+            <section class="mm-box mm-details" data-testid="section" data-section="details" style="--mm-detail-columns: {{view.detailColumns}}">
+              {{#each view.meta}}
+                <div class="mm-detail mm-detail-{{key}}"{{#if attr}} {{attr}}{{/if}}{{#if isHidden}} style="display:none"{{/if}}>
+                  <span class="mm-label">{{label}}</span>
+                  <span class="mm-value{{#if isNum}} mm-num{{/if}}"{{#if isNum}} data-testid="num"{{/if}}>{{#if isDate}}{{mmDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{mmDate value 0}}{{else}}{{value}}{{/if}}</span>
+                </div>
+              {{/each}}
+            </section>
+          {{/if}}
+
+          {{#if view.parties.length}}
+            <section class="mm-pair mm-parties" data-testid="section" data-section="parties" data-pair="parties">
+              {{#each view.parties}}
+                <div class="mm-pair-box mm-party{{#if isBillTo}} is-bill-to{{/if}}">
+                  {{#if title}}<h3 class="mm-label mm-party-label">{{title}}</h3>{{/if}}
+                  <p class="mm-party-name">{{name}}</p>
+                  {{#if address}}<p class="mm-party-address" data-role="address">{{address}}</p>{{/if}}
+                  {{#if hasIdLines}}
+                    <div class="mm-id-grid">
+                      {{#each lines}}
+                        <p class="mm-id-line">{{#each this}}<span class="mm-id">{{label}}: <span{{#if noWrap}} class="mm-num"{{else if isEmail}} class="mm-email"{{/if}}{{#if isNum}} data-testid="num"{{/if}}>{{#if isDate}}{{mmDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</span></span>{{/each}}</p>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div>
+              {{/each}}
+            </section>
+          {{/if}}
+
+          {{#if view.hasDispatch}}
+            <section class="mm-pair mm-dispatch" data-testid="section" data-section="dispatch" data-pair="dispatch">
+              {{#if view.shippedFrom}}
+                <div class="mm-pair-box mm-party">
+                  {{#if view.shippedFrom.title}}<h3 class="mm-label mm-party-label">{{view.shippedFrom.title}}</h3>{{/if}}
+                  <p class="mm-party-name">{{view.shippedFrom.name}}</p>
+                  {{#if view.shippedFrom.address}}<p class="mm-party-address" data-role="address">{{view.shippedFrom.address}}</p>{{/if}}
+                  {{#if view.shippedFrom.hasIdLines}}
+                    <div class="mm-id-grid">
+                      {{#each view.shippedFrom.lines}}
+                        <p class="mm-id-line">{{#each this}}<span class="mm-id">{{label}}: <span{{#if noWrap}} class="mm-num"{{else if isEmail}} class="mm-email"{{/if}}{{#if isNum}} data-testid="num"{{/if}}>{{#if isDate}}{{mmDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</span></span>{{/each}}</p>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+              {{#if view.transport}}
+                <div class="mm-pair-box mm-transport">
+                  {{#if view.transport.title}}<h3 class="mm-label mm-party-label">{{view.transport.title}}</h3>{{/if}}
+                  {{#each view.transport.rows}}
+                    <div class="mm-kv-row mm-transport-{{key}}">
+                      <span class="mm-kv-label">{{label}}</span>
+                      <span class="mm-kv-value{{#if isNum}} mm-num{{/if}}"{{#if isNum}} data-testid="num"{{/if}}>{{#if isDate}}{{mmDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{mmDate value 0}}{{else}}{{value}}{{/if}}</span>
+                    </div>
+                  {{/each}}
+                </div>
+              {{/if}}
+            </section>
+          {{/if}}
+
+          {{!--
+            IRN and e-invoice QR codes, below the dispatch row (Shipped From | Transport). Its
+            fields read like the party fields (label: value on the same aligned grid): the IRN on
+            a line of its own, then Ack No. | Ack Date. The containers stay in the DOM so the
+            host can post values in live; the block shows only once one has a value.
+          --}}
+          <div class="mm-box mm-compliance">
+            <div class="mm-id-grid mm-compliance-fields">
+              {{#if view.compliance.showIrn}}
+                <p class="mm-id-line mm-irn-row"><span class="mm-id">{{view.compliance.irnLabel}}: <span class="mm-irn-value" data-ceres-field="irn">{{view.compliance.irn}}</span></span></p>
+              {{/if}}
+              {{#each view.compliance.rowLines}}
+                <p class="mm-id-line">{{#each this}}<span class="mm-id">{{label}}: <span class="mm-num" data-testid="num">{{#if isDate}}{{mmDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{mmDate value 0}}{{else}}{{value}}{{/if}}</span></span>{{/each}}</p>
+              {{/each}}
+            </div>
+            <div class="mm-qr-list">
+              <div class="mm-qr{{#unless view.compliance.qr.irn}} is-empty{{/unless}}" data-ceres-field-container="qrCode">
+                <img data-ceres-field="qrCode"{{#if view.compliance.qr.irn}} src="{{view.compliance.qr.irn}}"{{/if}} alt="E-Invoice QR Code" />
+              </div>
+              <div class="mm-qr{{#unless view.compliance.qr.zatca}} is-empty{{/unless}}" data-ceres-field-container="zatcaQrCode">
+                <img data-ceres-field="zatcaQrCode"{{#if view.compliance.qr.zatca}} src="{{view.compliance.qr.zatca}}"{{/if}} alt="ZATCA QR Code" />
+              </div>
+              <div class="mm-qr{{#unless view.compliance.qr.lhdn}} is-empty{{/unless}}" data-ceres-field-container="lhdnQrCode">
+                <img data-ceres-field="lhdnQrCode"{{#if view.compliance.qr.lhdn}} src="{{view.compliance.qr.lhdn}}"{{/if}} alt="LHDN QR Code" />
+              </div>
+            </div>
+          </div>
+
+          {{#if view.supply.show}}
+            {{!-- Country of Supply | Place of Supply, a row of their own above the items (as Refrens). --}}
+            <div class="mm-supply-row" data-ceres-country-of-supply{{#if view.supply.hidden}} style="display:none"{{/if}}>
+              {{#each view.supply.rows}}
+                <p class="mm-supply-cell"{{#if attr}} {{attr}}{{/if}}{{#if isHidden}} style="display:none"{{/if}}><span class="mm-supply-label">{{label}}:</span> <span class="mm-supply-value">{{value}}</span></p>
+              {{/each}}
+            </div>
+          {{/if}}
+
+          <section class="mm-items-section" data-testid="section" data-section="items">
+            <div class="mm-items-scroll" data-testid="items-scroll">
+              <table class="mm-items{{#if view.print.compactTable}} is-print-compact{{/if}}{{#if view.table.showThumbnail}} has-thumbnails{{/if}}{{#if view.table.smallNumbers}} has-small-numbers{{/if}}" data-testid="items-table">
+                <thead>
+                  <tr data-testid="items-header">
+                    <th class="mm-col-serial is-fixed" data-col="sr" style="width: {{view.table.serialWidth}}px">{{view.table.serialLabel}}</th>
+                    {{#each view.table.header}}
+                      <th class="{{className}}" data-col="{{col}}"{{#if width}} style="width: {{width}}px"{{/if}}>
+                        {{#if isName}}<span class="mm-desc-min" aria-hidden="true" style="width: {{view.table.descriptionMin}}px"></span>{{/if}}
+                        {{#each labelParts}}{{this}}{{#unless @last}}<wbr />{{/unless}}{{/each}}
+                      </th>
+                    {{/each}}
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each view.table.rows}}
+                    {{#if isGroupHeader}}
+                      <tr class="mm-group-row">
+                        <td colspan="{{colspan}}">{{name}}</td>
+                      </tr>
+                    {{else}}
+                      <tr class="mm-item-row{{#if isStripe}} is-stripe{{/if}}{{#if isRich}} is-rich{{/if}}{{#if isGroupTotal}} mm-group-total-row{{/if}}" data-testid="item-row" data-item-index="{{itemIndex}}">
+                        <td class="mm-col-serial is-fixed" data-col="sr">{{#if serial}}<span class="mm-num" data-testid="num">{{serial}}</span>{{/if}}</td>
+                        {{#each cells}}
+                          {{#if isName}}
+                            <td class="{{className}}" data-col="{{col}}">
+                              {{#if ../thumbnail}}
+                                <div class="mm-item-thumbnail">{{> CeresImage src=../thumbnail alt=../name class="mm-thumbnail" href=../thumbnail}}</div>
+                              {{/if}}
+                              <span class="mm-item-name">{{../name}}</span>
+                              {{#if ../inlineCodes.length}}<span class="mm-item-codes">{{#each ../inlineCodes}}<span class="mm-item-code">{{this}}</span>{{/each}}</span>{{/if}}
+                              {{#if ../detailInline}}
+                                <div class="mm-item-detail">
+                                  {{#if ../description}}<div class="mm-item-desc">{{> MarkdownViewer (prepareMarkdownViewerData ../description) }}</div>{{/if}}
+                                  {{#if ../images.length}}{{> CeresImageGallery (prepareImageGallery ../images variant="thumbnail" alt=../name) }}{{/if}}
+                                </div>
+                              {{/if}}
+                            </td>
+                          {{else}}
+                            <td class="{{className}}" data-col="{{col}}">{{#if isNum}}<span class="mm-num" data-testid="num">{{value}}</span>{{else}}{{value}}{{/if}}</td>
+                          {{/if}}
+                        {{/each}}
+                      </tr>
+                      {{#if detailRow}}
+                        <tr class="mm-detail-row{{#if isStripe}} is-stripe{{/if}}" data-testid="item-detail-row" data-item-index="{{itemIndex}}">
+                          <td class="mm-col-serial is-fixed"></td>
+                          <td colspan="{{detailColspan}}">
+                            <div class="mm-item-detail">
+                              {{#if description}}<div class="mm-item-desc">{{> MarkdownViewer (prepareMarkdownViewerData description) }}</div>{{/if}}
+                              {{#if images.length}}{{> CeresImageGallery (prepareImageGallery images variant="thumbnail" alt=name) }}{{/if}}
+                            </div>
+                          </td>
+                        </tr>
+                      {{/if}}
+                      {{#if imageRow}}
+                        {{!-- Original images: their own row under the item, across the whole table. --}}
+                        <tr class="mm-image-row{{#if isStripe}} is-stripe{{/if}}" data-testid="item-detail-row" data-item-index="{{itemIndex}}">
+                          <td colspan="{{colspan}}">
+                            {{#each originalImages}}<img class="mm-large-image" data-testid="large-image" src="{{this}}" alt="{{../name}}" referrerpolicy="no-referrer" />{{/each}}
+                          </td>
+                        </tr>
+                      {{/if}}
+                    {{/if}}
+                  {{/each}}
+                </tbody>
+                {{#if view.table.footer.show}}
+                  <tfoot>
+                    <tr class="mm-total-row" data-testid="items-total">
+                      <td class="mm-col-serial is-fixed" data-col="sr">{{#if view.table.footer.labelInSerial}}{{view.table.footer.label}}{{/if}}</td>
+                      {{#each view.table.footer.cells}}
+                        <td class="{{className}}" data-col="{{col}}">{{#if isName}}{{view.table.footer.label}}{{else if isNum}}<span class="mm-num" data-testid="num">{{value}}</span>{{/if}}</td>
+                      {{/each}}
+                    </tr>
+                  </tfoot>
+                {{/if}}
+              </table>
+            </div>
+          </section>
+
+          {{!-- Bank + totals: one container, bank details and the Scan to Pay QR left, totals right. --}}
+          <section class="mm-summary-row" data-testid="section" data-section="summary" data-pair="summary">
+            {{#if view.bank.show}}
+              <section class="mm-bank" data-testid="section" data-section="bank">
+                <div class="mm-bank-head">
+                  {{#if view.bank.title}}<h3 class="mm-section-title" data-role="title">{{view.bank.title}}</h3>{{/if}}
+                  {{#if view.bank.upi.qr}}<span class="mm-section-title mm-scan-title">{{view.bank.upi.scanLabel}}</span>{{/if}}
+                </div>
+                <div class="mm-bank-body">
+                  <div class="mm-bank-main">
+                    <div class="mm-bank-rows">
+                      {{#each view.bank.rows}}
+                        <div class="mm-kv-row mm-bank-{{key}}">
+                          <span class="mm-kv-label">{{label}}</span>
+                          <span class="mm-kv-value{{#if isNum}} mm-num{{/if}}"{{#if isNum}} data-testid="num"{{/if}}>{{value}}</span>
+                        </div>
+                      {{/each}}
+                      {{#if view.bank.upi}}
+                        <div class="mm-kv-row mm-bank-upi">
+                          <span class="mm-kv-label">{{view.bank.upi.label}}</span>
+                          <span class="mm-kv-value mm-num" data-testid="num">{{view.bank.upi.id}}</span>
+                        </div>
+                      {{/if}}
+                    </div>
+                    {{#if view.bank.upi.qr}}
+                      <img class="mm-upi-qr" data-testid="upi-qr" src="{{view.bank.upi.qr}}" alt="{{view.bank.upi.label}} {{view.bank.upi.id}}" />
+                    {{/if}}
+                  </div>
+                  {{#if view.bank.upi.note}}<p class="mm-upi-note">{{view.bank.upi.note}}</p>{{/if}}
+                </div>
+              </section>
+            {{else}}
+              {{!-- Keeps the totals in the right half when the bank side is off (spec C3). --}}
+              <div class="mm-summary-spacer" aria-hidden="true"></div>
+            {{/if}}
+
+            <section class="mm-totals" data-testid="section" data-section="totals">
+              {{!--
+                The shared Subtotal widget's rows (view.totals = computeSubtotalRows, figures printed
+                without the currency symbol, plus Round Off). The markup keeps the widget partial's
+                classes and data-ceres-* hooks exactly, so the host's live hideTotals / hideTaxes
+                toggles and the widget's visibility CSS still work.
+              --}}
+              <div class="ceres-subtotal" data-ceres-subtotal>
+                <table class="ceres-subtotal-table">
+                  <tbody>
+                    {{#each view.totals.main}}
+                      <tr
+                        class="ceres-subtotal-row ceres-subtotal-row-{{emphasis}}{{#if view.totals.hidden}}{{#unless survivesHideTotals}} is-hidden-by-totals{{/unless}}{{/if}}{{#if isTaxRow}}{{#if view.totals.hideTaxes}} is-hidden-by-taxes{{/if}}{{/if}}"
+                        data-ceres-subtotal-row="{{key}}"
+                        {{#if isTaxRow}}data-ceres-subtotal-taxes{{/if}}
+                        {{#if survivesHideTotals}}data-ceres-subtotal-keep{{/if}}
+                      >
+                        <th class="ceres-subtotal-label">
+                          {{label}}
+                          {{#if note}}<div class="ceres-subtotal-note">{{note}}</div>{{/if}}
+                        </th>
+                        <td class="ceres-subtotal-value">
+                          <span class="mm-num"{{#if isNum}} data-testid="num"{{/if}}{{#if isGrand}} data-role="grand-total"{{/if}}>{{value}}</span>
+                          {{#if converted}}<div class="ceres-subtotal-converted">{{converted}}</div>{{/if}}
+                          {{#if extra}}
+                            <div class="ceres-subtotal-extra">
+                              {{extra.value}}
+                              {{#if extra.converted}}<div class="ceres-subtotal-converted">{{extra.converted}}</div>{{/if}}
+                            </div>
+                          {{/if}}
+                        </td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+                {{#if view.totals.extra.length}}
+                  <table class="ceres-subtotal-table ceres-subtotal-table-extra">
+                    <tbody>
+                      {{#each view.totals.extra}}
+                        <tr class="ceres-subtotal-row{{#if view.totals.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+                          <th class="ceres-subtotal-label">{{label}}</th>
+                          <td class="ceres-subtotal-value">
+                            {{value}}
+                            {{#if converted}}<div class="ceres-subtotal-converted">{{converted}}</div>{{/if}}
+                          </td>
+                        </tr>
+                      {{/each}}
+                    </tbody>
+                  </table>
+                {{/if}}
+                {{#if view.totals.due.length}}
+                  <table class="ceres-subtotal-table ceres-subtotal-table-due">
+                    <tbody>
+                      {{#each view.totals.due}}
+                        <tr class="ceres-subtotal-row ceres-subtotal-row-{{emphasis}}{{#if view.totals.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+                          <th class="ceres-subtotal-label">{{label}}</th>
+                          <td class="ceres-subtotal-value">
+                            <span class="mm-num"{{#if isNum}} data-testid="num"{{/if}}>{{value}}</span>
+                            {{#if converted}}<div class="ceres-subtotal-converted">{{converted}}</div>{{/if}}
+                          </td>
+                        </tr>
+                      {{/each}}
+                    </tbody>
+                  </table>
+                {{/if}}
+              </div>
+              {{#if view.words}}
+                <p class="mm-words"><span class="mm-words-label">{{view.words.label}}:</span> {{view.words.value}}</p>
+              {{/if}}
+            </section>
+          </section>
+
+          {{#if view.termsRow.show}}
+            <div class="mm-pair mm-notes" data-pair="terms-notes">
+              {{#if view.termsRow.terms.length}}
+                <section class="mm-pair-box mm-note-block mm-terms-box" data-testid="section" data-section="terms">
+                  {{#each view.termsRow.terms}}
+                    <div class="mm-note-group">
+                      <h3 class="mm-section-title" data-role="title">{{title}}</h3>
+                      <ol class="mm-terms">
+                        {{#each items}}<li>{{this}}</li>{{/each}}
+                      </ol>
+                    </div>
+                  {{/each}}
+                </section>
+              {{/if}}
+              {{#if view.termsRow.notes}}
+                <section class="mm-pair-box mm-note-block" data-testid="section" data-section="notes">
+                  <div class="mm-note-group">
+                    {{#if view.termsRow.notes.title}}<h3 class="mm-section-title" data-role="title">{{view.termsRow.notes.title}}</h3>{{/if}}
+                    <div class="mm-note-body">{{> MarkdownViewer (prepareMarkdownViewerData view.termsRow.notes.body) }}</div>
+                  </div>
+                </section>
+              {{/if}}
+            </div>
+          {{/if}}
+
+          {{#if view.infoRow.show}}
+            <div class="mm-pair mm-notes" data-pair="additional-attachments">
+              {{#if view.infoRow.additional}}
+                <section class="mm-pair-box mm-note-block" data-testid="section" data-section="additional">
+                  <div class="mm-note-group">
+                    {{#if view.infoRow.additional.title}}<h3 class="mm-section-title" data-role="title">{{view.infoRow.additional.title}}</h3>{{/if}}
+                    <div class="mm-info-rows">
+                      {{#each view.infoRow.additional.rows}}
+                        <div class="mm-info-row">
+                          <span class="mm-info-label" data-role="ai-label">{{label}}</span>
+                          <span class="mm-info-value{{#if isDate}} mm-num{{/if}}" data-role="ai-value"{{#if isDate}} data-testid="num"{{/if}}>{{#if isDate}}{{mmDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</span>
+                        </div>
+                      {{/each}}
+                    </div>
+                  </div>
+                </section>
+              {{/if}}
+              {{#if view.infoRow.attachments}}
+                <section class="mm-pair-box mm-note-block" data-testid="section" data-section="attachments">
+                  <div class="mm-note-group">
+                    {{#if view.infoRow.attachments.title}}<h3 class="mm-section-title" data-role="title">{{view.infoRow.attachments.title}}</h3>{{/if}}
+                    <ol class="mm-attachments">
+                      {{#each view.infoRow.attachments.files}}<li><a href="{{url}}" target="_blank" rel="noopener noreferrer" title="{{name}}">{{name}}</a></li>{{/each}}
+                    </ol>
+                  </div>
+                </section>
+              {{/if}}
+            </div>
+          {{/if}}
+
+          {{#if view.notesRow}}
+            <section class="mm-box mm-note-block mm-notes-row" data-testid="section" data-section="notes">
+              <div class="mm-note-group">
+                {{#if view.notesRow.title}}<h3 class="mm-section-title" data-role="title">{{view.notesRow.title}}</h3>{{/if}}
+                <div class="mm-note-body">{{> MarkdownViewer (prepareMarkdownViewerData view.notesRow.body) }}</div>
+              </div>
+            </section>
+          {{/if}}
+
+          {{#if view.showHsn}}
+            <section class="mm-box mm-hsn" data-testid="section" data-section="hsn" data-ceres-hsn-summary>
+              <table class="mm-hsn-table">
+                <thead>
+                  <tr>
+                    <th class="is-text">{{view.hsn.labels.hsn}}</th>
+                    <th class="is-num">{{view.hsn.labels.taxable}}</th>
+                    {{#if view.hsn.showIgst}}
+                      <th class="is-num">{{view.hsn.labels.igst}}</th>
+                    {{else}}
+                      <th class="is-num">{{view.hsn.labels.cgst}}</th>
+                      <th class="is-num">{{view.hsn.labels.sgst}}</th>
+                    {{/if}}
+                    {{#if view.hsn.hasCess}}<th class="is-num">{{view.hsn.labels.cess}}</th>{{/if}}
+                    <th class="is-num">{{view.hsn.labels.total}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each view.hsn.rows}}
+                    <tr>
+                      <td class="is-text" data-label="{{view.hsn.labels.hsn}}"><span class="mm-num" data-testid="num">{{hsn}}</span></td>
+                      <td class="is-num" data-label="{{view.hsn.labels.taxable}}"><span class="mm-num" data-testid="num">{{taxable}}</span></td>
+                      {{#if view.hsn.showIgst}}
+                        <td class="is-num" data-label="{{view.hsn.labels.igst}}"><span class="mm-num" data-testid="num">{{igst}}</span></td>
+                      {{else}}
+                        <td class="is-num" data-label="{{view.hsn.labels.cgst}}"><span class="mm-num" data-testid="num">{{cgst}}</span></td>
+                        <td class="is-num" data-label="{{view.hsn.labels.sgst}}"><span class="mm-num" data-testid="num">{{sgst}}</span></td>
+                      {{/if}}
+                      {{#if view.hsn.hasCess}}<td class="is-num" data-label="{{view.hsn.labels.cess}}"><span class="mm-num" data-testid="num">{{cess}}</span></td>{{/if}}
+                      <td class="is-num" data-label="{{view.hsn.labels.total}}"><span class="mm-num" data-testid="num">{{total}}</span></td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td class="is-text">{{view.table.footer.label}}</td>
+                    <td class="is-num" data-label="{{view.hsn.labels.taxable}}"><span class="mm-num" data-testid="num">{{view.hsn.totals.taxable}}</span></td>
+                    {{#if view.hsn.showIgst}}
+                      <td class="is-num" data-label="{{view.hsn.labels.igst}}"><span class="mm-num" data-testid="num">{{view.hsn.totals.igst}}</span></td>
+                    {{else}}
+                      <td class="is-num" data-label="{{view.hsn.labels.cgst}}"><span class="mm-num" data-testid="num">{{view.hsn.totals.cgst}}</span></td>
+                      <td class="is-num" data-label="{{view.hsn.labels.sgst}}"><span class="mm-num" data-testid="num">{{view.hsn.totals.sgst}}</span></td>
+                    {{/if}}
+                    {{#if view.hsn.hasCess}}<td class="is-num" data-label="{{view.hsn.labels.cess}}"><span class="mm-num" data-testid="num">{{view.hsn.totals.cess}}</span></td>{{/if}}
+                    <td class="is-num" data-label="{{view.hsn.labels.total}}"><span class="mm-num" data-testid="num">{{view.hsn.totals.total}}</span></td>
+                  </tr>
+                  <tr class="mm-hsn-words">
+                    <td colspan="{{view.hsn.columnCount}}">{{view.hsn.words.label}}: {{view.hsn.words.value}}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </section>
+          {{/if}}
+
+          {{!-- The optional tax summary and payment record follow the HSN summary. --}}
+          {{#if view.showTaxSummary}}
+            <div class="mm-widget-box mm-widget-table" data-ceres-tax-summary>
+              {{> TaxSummaryTable (computeTaxSummary @root.invoice.items isIgst=(showIgst @root.invoice) isUtgst=(showUtgst @root.invoice)) }}
+            </div>
+          {{/if}}
+
+          {{#if view.payments.show}}
+            <div class="mm-widget-box mm-widget-table" data-ceres-payment-table>
+              {{> PaymentTable (computePaymentColumns @root.invoice.allPayments businessCurrency=@root.invoice.businessCurrency currency=@root.invoice.currency)
+                  ownerOffset=@root.invoice.ownerOffset
+                  heading=view.payments.heading
+              }}
+            </div>
+          {{/if}}
+
+          <section class="mm-signature-section" data-testid="section" data-section="signature">
+            <div class="mm-signature" data-testid="signature">
+              {{#if view.signature.hasMark}}
+                <div class="mm-signature-mark">
+                  {{#if view.signature.image}}
+                    {{> CeresImage src=view.signature.image alt=view.signature.label class="mm-signature-image"}}
+                  {{else if view.signature.awaitingDigital}}
+                    <div class="mm-signature-placeholder" aria-hidden="true"></div>
+                    <p class="mm-signature-banner">Awaiting Digital Signature</p>
+                  {{else if view.signature.signedDigital}}
+                    <p class="mm-signature-banner">
+                      Digitally signed{{#if view.signature.signerName}} by {{view.signature.signerName}}{{/if}}
+                      {{#if view.signature.verifyUrl}}<a href="{{view.signature.verifyUrl}}" target="_blank" rel="noopener noreferrer">Verify</a>{{/if}}
+                    </p>
+                  {{/if}}
+                </div>
+              {{/if}}
+              <div class="mm-signature-line"></div>
+              {{#if view.signature.forLabel}}<p class="mm-signature-for">{{view.signature.forLabel}}</p>{{/if}}
+              {{#if view.signature.label}}<p class="mm-signature-label">{{view.signature.label}}</p>{{/if}}
+            </div>
+          </section>
+
+          {{#if view.footer.contact}}
+            <p class="mm-contact">
+              {{view.footer.contact.lead}}
+              {{#if view.footer.contact.email}}{{view.footer.contact.emailLabel}} <strong>{{view.footer.contact.email}}</strong>{{/if}}{{#if view.footer.contact.phone}}{{#if view.footer.contact.email}}, {{/if}}{{view.footer.contact.phoneLabel}} <strong>{{view.footer.contact.phone}}</strong>{{/if}}
+            </p>
+          {{/if}}
+
+          {{> RefrensBranding @root.invoice}}
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="no-dibella invoice-letterhead-footer mm-letterhead-footer{{#if view.footerEveryPage}} mm-footer-fixed{{/if}}{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if @root.invoice.letterHeadFooter}}
+      <img src="{{@root.invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+      <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>
+{{/with}}
