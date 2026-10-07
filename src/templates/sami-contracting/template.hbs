@@ -243,222 +243,226 @@
     </div>
     {{/if}}
 
-    {{!-- ═══ Line items — the shared LineItemsTable widget's markup, with one change:
-          a description that is not full width (helpers.ts descriptionInItemCell)
-          prints in the item cell, under the name. Columns, labels, order and
-          cells are still the widget's normalisation. Keep the `~` tildes, as in
-          the widget: a blank cell must hold no whitespace text node. ═══ --}}
-    <div class="smc-items">
-      {{#with mapped}}
-      <div class="line-items-table-wrapper{{#if visibility.tableStretchEnabled}} is-stretch{{/if}}">
-      <table class="line-items-table{{#if visibility.textWrapEnabled}} is-wrap-enabled{{/if}}{{#if visibility.usesShortSet}} uses-short-set{{/if}}">
-        <thead>
-          <tr>
-            <th class="col-index" aria-label="Line number"></th>
-            {{#each columns}}{{#unless isHidden}}<th class="{{className}}">{{label}}</th>{{/unless}}{{/each}}
-          </tr>
-        </thead>
-        <tbody>
-          {{#each rows}}
-            <tr class="{{rowClass}}"{{#if isFillerRow}} aria-hidden="true"{{/if}}>
-              <td class="col-index">{{lineNumber}}</td>
-              {{#each cells}}
-                <td class="{{className}}" data-label="{{label}}">
-                  {{~#if ../isTotalsRow~}}
-                    {{~text~}}
-                  {{~else~}}
-                    {{#if isItemCell}}
-                      <span class="item-name">{{../item.name}}</span>
-                      {{#if ../item.showSku}}<small class="item-sku">SKU: {{../item.sku}}</small>{{/if}}
-                      {{#if ../item.mergedAsNote}}
-                        {{#each ../item.mergedNotes}}<small class="item-merged-note">{{this}}</small>{{/each}}
-                      {{else}}
-                        {{#each ../item.mergedNotes}}<span class="item-merged-inline">{{this}}</span>{{/each}}
-                      {{/if}}
-                      {{#if ../item.showThumbnail}}
-                        {{> CeresImageGallery (prepareImageGallery ../item.thumbnailImages variant="thumbnail" alt=../item.name) }}
-                      {{/if}}
-                      {{#if ../extras.descriptionInItem}}
-                        <div class="item-description smc-item-description">
-                          {{> MarkdownViewer (prepareMarkdownViewerData ../extras.description) }}
-                        </div>
-                      {{/if}}
-                    {{else}}
-                      {{~text~}}
-                      {{#if secondaryText}}<br><small class="second-currency-amount">{{secondaryText}}</small>{{/if}}
-                    {{~/if~}}
-                  {{~/if~}}
-                </td>
-              {{/each}}
+    {{!-- Items and totals as one group: a tighter gap between them than the
+          page gap between other blocks. --}}
+    <div class="smc-items-group">
+      {{!-- ═══ Line items — the shared LineItemsTable widget's markup, with one change:
+            a description that is not full width (helpers.ts descriptionInItemCell)
+            prints in the item cell, under the name. Columns, labels, order and
+            cells are still the widget's normalisation. Keep the `~` tildes, as in
+            the widget: a blank cell must hold no whitespace text node. ═══ --}}
+      <div class="smc-items">
+        {{#with mapped}}
+        <div class="line-items-table-wrapper{{#if visibility.tableStretchEnabled}} is-stretch{{/if}}">
+        <table class="line-items-table{{#if visibility.textWrapEnabled}} is-wrap-enabled{{/if}}{{#if visibility.usesShortSet}} uses-short-set{{/if}}">
+          <thead>
+            <tr>
+              <th class="col-index" aria-label="Line number"></th>
+              {{#each columns}}{{#unless isHidden}}<th class="{{className}}">{{label}}</th>{{/unless}}{{/each}}
             </tr>
-            {{#if extras.hasAny}}
-              <tr class="item-extras-row {{rowClass}}">
-                <td class="col-index"></td>
-                <td class="item-extras-cell" colspan="{{cells.length}}">
-                  {{#if extras.hasDescription}}
-                    <div class="item-description{{#if extras.descriptionFullWidth}} item-description-full{{/if}}">
-                      {{> MarkdownViewer (prepareMarkdownViewerData extras.description) }}
-                    </div>
-                  {{/if}}
-                  {{#if extras.imagesInline}}
-                    <div class="item-images-inline">
-                      {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
-                    </div>
-                  {{/if}}
-                  {{#if extras.imagesRow}}
-                    <div class="item-images-row">
-                      {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
-                    </div>
-                  {{/if}}
-                  {{#if extras.hasOriginalImages}}
-                    <div class="item-original-images-row">
-                      {{> CeresImageGallery (prepareImageGallery extras.originalImages variant="original" alt=item.name) }}
-                    </div>
-                  {{/if}}
-                  {{#if extras.hasSerials}}
-                    <div class="item-serials">
-                      <small><b>Serial No:</b> {{extras.serialsLabel}}</small>
-                    </div>
-                  {{/if}}
-                </td>
-              </tr>
-            {{/if}}
-          {{/each}}
-        </tbody>
-      </table>
-      </div>
-      {{/with}}
-    </div>
-
-    {{!-- ═══ Summary: count, words, payment info (start) · totals (end) ═══ --}}
-    <div class="smc-summary">
-      <div class="smc-summary-start">
-        {{!-- The design's start column, top to bottom: number of items, total in words,
-              created by, signature. The two line labels are fixed Arabic text by request — the
-              API carries no label for either (Lydia supplies "created by" from its own
-              i18n). Their values are the API's: Σ items[].quantity, and creator.name
-              behind the account's showCreatorInInvoice setting. --}}
-        <p class="smc-count">
-          <span class="smc-count-label">عدد العناصر</span>
-          <span class="smc-count-value">{{totalQuantity invoice.items}}</span>
-        </p>
-
-        {{!-- The totals area's custom fields (extraTotalFields). The shared totals
-              widget prints them as rows under the totals; the fixed totals here
-              don't, so they sit under the item count instead, at body weight.
-              Label and value as entered (labels carry their own colon); an empty
-              value drops the row, as in the widget. --}}
-        {{#if invoice.extraTotalFields.length}}
-        <dl class="smc-extra-fields">
-          {{#each invoice.extraTotalFields}}{{#if value}}
-          <div class="smc-extra-field"><dt>{{label}}</dt><dd>{{value}}</dd></div>
-          {{/if}}{{/each}}
-        </dl>
-        {{/if}}
-
-        {{!-- Total in words, boxed on its own above the QR (as in the design), not inside
-              the totals. The model is the totals widget's own, so the value
-              (customLabels.totalInWordsValue) and every reason to hide it — hideTotals,
-              hideTotalInWords, a sub-unit longer than words can express — stay the
-              widget's decisions. The widget's in-block copy is hidden in styles.css. --}}
-        {{#with (computeSubtotalRows invoice columns=mapped.columns businessCurrency=invoice.currency businessLocale=invoice.businessLocale) as |totals|}}
-        {{#if totals.totalInWords}}
-        <p class="ceres-subtotal-words smc-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
-          data-ceres-total-in-words>{{totals.totalInWords.value}}</p>
-        {{/if}}
-        {{/with}}
-
-        {{#if advanceOptions.showCreatorInInvoice}}{{#if invoice.creator.name}}
-        <p class="smc-creator">
-          <span class="smc-creator-label">تم الإنشاء من قبل</span>
-          <span class="smc-creator-value">{{invoice.creator.name}}</span>
-        </p>
-        {{/if}}{{/if}}
-
-        {{!-- Signature, under created-by. --}}
-        {{#unless (eq invoice.signatureMethod "DIGITAL")}}
-        {{#if invoice.signature}}
-        <div class="smc-signature">
-          {{> CeresImage src=invoice.signature alt="" class="smc-signature-img"}}
-          {{#if invoice.customLabels.signature}}<p class="smc-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
-        </div>
-        {{/if}}
-        {{else}}
-        {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
-        <div class="smc-signature smc-signature-digital">
-          {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
-          {{#if invoice.share.pdf}}<a class="smc-ltr" href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
-        </div>
-        {{else}}
-        {{!-- Awaiting a digital signature: an invisible box the PDF pipeline measures. --}}
-        <div class="smc-signature-placeholder" data-ceres-signature-placeholder></div>
-        {{/if}}
-        {{/unless}}
-
-        {{!-- UPI stays here; the bank details sit under the totals. --}}
-        {{#if mapped.visibility.showBankUpiSection}}{{#if mapped.visibility.showUpi}}
-        <div class="smc-pay">
-          <div class="smc-upi">
-            {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="smc-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
-            <p class="smc-ltr">{{mapped.upi.id}}</p>
-          </div>
-        </div>
-        {{/if}}{{/if}}
-      </div>
-
-      <div class="smc-summary-end">
-        {{!-- Totals: five fixed rows by request — excl. VAT, VAT, incl. VAT, paid,
-              due — always printed, whatever the account's totals visibility
-              settings say, with the design's own Arabic labels. Figures come from
-              fixedTotals (helpers.ts), already formatted in the document's
-              currency. --}}
-        {{#with (fixedTotals invoice) as |t|}}
-        <div class="ceres-subtotal smc-totals">
-          <table class="ceres-subtotal-table">
-            <tbody>
-              <tr class="ceres-subtotal-row">
-                <th class="ceres-subtotal-label">الإجمالي غير شامل ضريبة القيمة المضافة</th>
-                <td class="ceres-subtotal-value">{{t.text.exclVat}}</td>
-              </tr>
-              <tr class="ceres-subtotal-row">
-                <th class="ceres-subtotal-label"><bdi>ضريبة القيمة المضافة{{#if t.vatRate}} <bdi dir="ltr">{{t.vatRate}}%</bdi>{{/if}}</bdi></th>
-                <td class="ceres-subtotal-value">{{t.text.vat}}</td>
-              </tr>
-              <tr class="ceres-subtotal-row">
-                <th class="ceres-subtotal-label">الإجمالي (شامل ضريبة القيمة المضافة)</th>
-                <td class="ceres-subtotal-value">{{t.text.total}}</td>
-              </tr>
-              <tr class="ceres-subtotal-row">
-                <th class="ceres-subtotal-label">إجمالي المدفوع</th>
-                <td class="ceres-subtotal-value">{{t.text.paid}}</td>
-              </tr>
-              <tr class="ceres-subtotal-row">
-                <th class="ceres-subtotal-label">إجمالي المستحق</th>
-                <td class="ceres-subtotal-value">{{t.text.due}}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        {{/with}}
-
-        {{!-- Bank details under the totals, headed "تفاصيل البنك" (Bank Details; fixed text by
-              request). Same gates as before: the account's bank/UPI section and
-              its bank-account setting. --}}
-        {{#if mapped.visibility.showBankUpiSection}}{{#if mapped.visibility.showBankAccount}}
-        {{#with (bankFields invoice) as |rows|}}{{#if rows.length}}
-        <div class="smc-bank-details">
-          <p class="smc-bank-title">تفاصيل البنك</p>
-          <dl class="smc-bank">
+          </thead>
+          <tbody>
             {{#each rows}}
-            <div class="smc-kv">
-              {{#if label}}<dt>{{label}}</dt>{{/if}}
-              <dd class="smc-ltr">{{value}}</dd>
-            </div>
+              <tr class="{{rowClass}}"{{#if isFillerRow}} aria-hidden="true"{{/if}}>
+                <td class="col-index">{{lineNumber}}</td>
+                {{#each cells}}
+                  <td class="{{className}}" data-label="{{label}}">
+                    {{~#if ../isTotalsRow~}}
+                      {{~text~}}
+                    {{~else~}}
+                      {{#if isItemCell}}
+                        <span class="item-name">{{../item.name}}</span>
+                        {{#if ../item.showSku}}<small class="item-sku">SKU: {{../item.sku}}</small>{{/if}}
+                        {{#if ../item.mergedAsNote}}
+                          {{#each ../item.mergedNotes}}<small class="item-merged-note">{{this}}</small>{{/each}}
+                        {{else}}
+                          {{#each ../item.mergedNotes}}<span class="item-merged-inline">{{this}}</span>{{/each}}
+                        {{/if}}
+                        {{#if ../item.showThumbnail}}
+                          {{> CeresImageGallery (prepareImageGallery ../item.thumbnailImages variant="thumbnail" alt=../item.name) }}
+                        {{/if}}
+                        {{#if ../extras.descriptionInItem}}
+                          <div class="item-description smc-item-description">
+                            {{> MarkdownViewer (prepareMarkdownViewerData ../extras.description) }}
+                          </div>
+                        {{/if}}
+                      {{else}}
+                        {{~text~}}
+                        {{#if secondaryText}}<br><small class="second-currency-amount">{{secondaryText}}</small>{{/if}}
+                      {{~/if~}}
+                    {{~/if~}}
+                  </td>
+                {{/each}}
+              </tr>
+              {{#if extras.hasAny}}
+                <tr class="item-extras-row {{rowClass}}">
+                  <td class="col-index"></td>
+                  <td class="item-extras-cell" colspan="{{cells.length}}">
+                    {{#if extras.hasDescription}}
+                      <div class="item-description{{#if extras.descriptionFullWidth}} item-description-full{{/if}}">
+                        {{> MarkdownViewer (prepareMarkdownViewerData extras.description) }}
+                      </div>
+                    {{/if}}
+                    {{#if extras.imagesInline}}
+                      <div class="item-images-inline">
+                        {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
+                      </div>
+                    {{/if}}
+                    {{#if extras.imagesRow}}
+                      <div class="item-images-row">
+                        {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
+                      </div>
+                    {{/if}}
+                    {{#if extras.hasOriginalImages}}
+                      <div class="item-original-images-row">
+                        {{> CeresImageGallery (prepareImageGallery extras.originalImages variant="original" alt=item.name) }}
+                      </div>
+                    {{/if}}
+                    {{#if extras.hasSerials}}
+                      <div class="item-serials">
+                        <small><b>Serial No:</b> {{extras.serialsLabel}}</small>
+                      </div>
+                    {{/if}}
+                  </td>
+                </tr>
+              {{/if}}
             {{/each}}
-          </dl>
+          </tbody>
+        </table>
         </div>
-        {{/if}}{{/with}}
-        {{/if}}{{/if}}
+        {{/with}}
+      </div>
+
+      {{!-- ═══ Summary: count, words, payment info (start) · totals (end) ═══ --}}
+      <div class="smc-summary">
+        <div class="smc-summary-start">
+          {{!-- The design's start column, top to bottom: number of items, total in words,
+                created by, signature. The two line labels are fixed Arabic text by request — the
+                API carries no label for either (Lydia supplies "created by" from its own
+                i18n). Their values are the API's: Σ items[].quantity, and creator.name
+                behind the account's showCreatorInInvoice setting. --}}
+          <p class="smc-count">
+            <span class="smc-count-label">عدد العناصر</span>
+            <span class="smc-count-value">{{totalQuantity invoice.items}}</span>
+          </p>
+
+          {{!-- The totals area's custom fields (extraTotalFields). The shared totals
+                widget prints them as rows under the totals; the fixed totals here
+                don't, so they sit under the item count instead, at body weight.
+                Label and value as entered (labels carry their own colon); an empty
+                value drops the row, as in the widget. --}}
+          {{#if invoice.extraTotalFields.length}}
+          <dl class="smc-extra-fields">
+            {{#each invoice.extraTotalFields}}{{#if value}}
+            <div class="smc-extra-field"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+            {{/if}}{{/each}}
+          </dl>
+          {{/if}}
+
+          {{!-- Total in words, boxed on its own above the QR (as in the design), not inside
+                the totals. The model is the totals widget's own, so the value
+                (customLabels.totalInWordsValue) and every reason to hide it — hideTotals,
+                hideTotalInWords, a sub-unit longer than words can express — stay the
+                widget's decisions. The widget's in-block copy is hidden in styles.css. --}}
+          {{#with (computeSubtotalRows invoice columns=mapped.columns businessCurrency=invoice.currency businessLocale=invoice.businessLocale) as |totals|}}
+          {{#if totals.totalInWords}}
+          <p class="ceres-subtotal-words smc-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+            data-ceres-total-in-words>{{totals.totalInWords.value}}</p>
+          {{/if}}
+          {{/with}}
+
+          {{#if advanceOptions.showCreatorInInvoice}}{{#if invoice.creator.name}}
+          <p class="smc-creator">
+            <span class="smc-creator-label">تم الإنشاء من قبل</span>
+            <span class="smc-creator-value">{{invoice.creator.name}}</span>
+          </p>
+          {{/if}}{{/if}}
+
+          {{!-- Signature, under created-by. --}}
+          {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+          {{#if invoice.signature}}
+          <div class="smc-signature">
+            {{> CeresImage src=invoice.signature alt="" class="smc-signature-img"}}
+            {{#if invoice.customLabels.signature}}<p class="smc-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
+          </div>
+          {{/if}}
+          {{else}}
+          {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+          <div class="smc-signature smc-signature-digital">
+            {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+            {{#if invoice.share.pdf}}<a class="smc-ltr" href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+          </div>
+          {{else}}
+          {{!-- Awaiting a digital signature: an invisible box the PDF pipeline measures. --}}
+          <div class="smc-signature-placeholder" data-ceres-signature-placeholder></div>
+          {{/if}}
+          {{/unless}}
+
+          {{!-- UPI stays here; the bank details sit under the totals. --}}
+          {{#if mapped.visibility.showBankUpiSection}}{{#if mapped.visibility.showUpi}}
+          <div class="smc-pay">
+            <div class="smc-upi">
+              {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="smc-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
+              <p class="smc-ltr">{{mapped.upi.id}}</p>
+            </div>
+          </div>
+          {{/if}}{{/if}}
+        </div>
+
+        <div class="smc-summary-end">
+          {{!-- Totals: five fixed rows by request — excl. VAT, VAT, incl. VAT, paid,
+                due — always printed, whatever the account's totals visibility
+                settings say, with the design's own Arabic labels. Figures come from
+                fixedTotals (helpers.ts), already formatted in the document's
+                currency. --}}
+          {{#with (fixedTotals invoice) as |t|}}
+          <div class="ceres-subtotal smc-totals">
+            <table class="ceres-subtotal-table">
+              <tbody>
+                <tr class="ceres-subtotal-row">
+                  <th class="ceres-subtotal-label">الإجمالي غير شامل ضريبة القيمة المضافة</th>
+                  <td class="ceres-subtotal-value">{{t.text.exclVat}}</td>
+                </tr>
+                <tr class="ceres-subtotal-row">
+                  <th class="ceres-subtotal-label"><bdi>ضريبة القيمة المضافة{{#if t.vatRate}} <bdi dir="ltr">{{t.vatRate}}%</bdi>{{/if}}</bdi></th>
+                  <td class="ceres-subtotal-value">{{t.text.vat}}</td>
+                </tr>
+                <tr class="ceres-subtotal-row">
+                  <th class="ceres-subtotal-label">الإجمالي (شامل ضريبة القيمة المضافة)</th>
+                  <td class="ceres-subtotal-value">{{t.text.total}}</td>
+                </tr>
+                <tr class="ceres-subtotal-row">
+                  <th class="ceres-subtotal-label">إجمالي المدفوع</th>
+                  <td class="ceres-subtotal-value">{{t.text.paid}}</td>
+                </tr>
+                <tr class="ceres-subtotal-row">
+                  <th class="ceres-subtotal-label">إجمالي المستحق</th>
+                  <td class="ceres-subtotal-value">{{t.text.due}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          {{/with}}
+
+          {{!-- Bank details under the totals, headed "تفاصيل البنك" (Bank Details; fixed text by
+                request). Same gates as before: the account's bank/UPI section and
+                its bank-account setting. --}}
+          {{#if mapped.visibility.showBankUpiSection}}{{#if mapped.visibility.showBankAccount}}
+          {{#with (bankFields invoice) as |rows|}}{{#if rows.length}}
+          <div class="smc-bank-details">
+            <p class="smc-bank-title">تفاصيل البنك</p>
+            <dl class="smc-bank">
+              {{#each rows}}
+              <div class="smc-kv">
+                {{#if label}}<dt>{{label}}</dt>{{/if}}
+                <dd class="smc-ltr">{{value}}</dd>
+              </div>
+              {{/each}}
+            </dl>
+          </div>
+          {{/if}}{{/with}}
+          {{/if}}{{/if}}
+        </div>
       </div>
     </div>
 

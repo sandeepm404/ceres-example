@@ -496,11 +496,16 @@ const printUnits = (shell: HTMLElement, origin: number): PrintUnit[] => {
       : 0;
   const items = shell.querySelector<HTMLElement>(".smc-items");
   const tail: HTMLElement[] = [];
-  let next = items?.nextElementSibling as HTMLElement | null;
-  while (next) {
-    if (getComputedStyle(next).breakInside === "avoid") tail.push(next);
-    next = next.nextElementSibling as HTMLElement | null;
-  }
+  // The items' own siblings (the summary, in .smc-items-group), then the
+  // blocks after the group.
+  const group = items?.closest<HTMLElement>(".smc-items-group");
+  [items, group].forEach((start) => {
+    let next = start?.nextElementSibling as HTMLElement | null;
+    while (next) {
+      if (getComputedStyle(next).breakInside === "avoid") tail.push(next);
+      next = next.nextElementSibling as HTMLElement | null;
+    }
+  });
   const unit = (el: HTMLElement, carried: number): PrintUnit => {
     const rect = el.getBoundingClientRect();
     return { top: rect.top - origin, height: rect.height, repeat: carried };
