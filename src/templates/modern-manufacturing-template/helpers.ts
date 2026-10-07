@@ -12,11 +12,6 @@
  * template by the shared date-time widget, so the owner offset rule lives in one place.
  */
 
-import {
-  normalizeCountryOfSupply,
-  normalizePlaceOfSupply,
-} from "../../main/invoiceTemplateNormalization";
-import type { FlattenedInvoicePayload } from "../../main/invoicePayloadContract";
 import amountInWords from "../../widgets/shared/amountInWords";
 import formatCurrency from "../../widgets/shared/formatCurrency";
 import {
@@ -951,16 +946,31 @@ const gstCode = (value: unknown): string => {
 };
 
 /*
- * Indian place of supply prints as "State (code)". The name comes from the shared
- * normalizer; the code from the same raw value it read, so the two cannot disagree.
+ * Country of supply: the document's own, else the buyer's country.
+ * Place of supply: the document's own, else pos, then the buyer's GST state, state or
+ * state code (the fallbacks Refrens prints with).
+ */
+const countryOfSupply = (invoice: UnknownRecord): string =>
+  firstText(invoice.countryOfSupply, asRecord(invoice.billedTo).country);
+
+const placeOfSupply = (invoice: UnknownRecord): string => {
+  const billedTo = asRecord(invoice.billedTo);
+  return firstText(
+    invoice.placeOfSupply,
+    invoice.pos,
+    billedTo.gstState,
+    billedTo.state,
+    billedTo.stateCode
+  );
+};
+
+/*
+ * Indian place of supply prints as "State (code)". The name and the code come from
+ * the same raw value, so the two cannot disagree.
  */
 export const placeOfSupplyText = (invoice: UnknownRecord): string => {
-  const contractInvoice = invoice as unknown as FlattenedInvoicePayload;
-  const name = normalizePlaceOfSupply(contractInvoice).replace(
-    /^0?\d{1,2}\s*[-:]\s*/,
-    ""
-  );
-  const country = normalizeCountryOfSupply(contractInvoice).toUpperCase();
+  const name = placeOfSupply(invoice).replace(/^0?\d{1,2}\s*[-:]\s*/, "");
+  const country = countryOfSupply(invoice).toUpperCase();
   const billedTo = asRecord(invoice.billedTo);
   const code = gstCode(
     pickFirst(
@@ -1102,9 +1112,7 @@ export const mapSupply = (state: UnknownRecord) => {
     {
       key: "countryOfSupply",
       label: labelOr(labels, "countryOfSupply", "Country of Supply"),
-      value: regionName(
-        normalizeCountryOfSupply(invoice as unknown as FlattenedInvoicePayload)
-      ),
+      value: regionName(countryOfSupply(invoice)),
       isHidden: country.configured === false,
       attr: "",
     },
