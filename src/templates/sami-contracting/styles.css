@@ -16,11 +16,11 @@
 @import "https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&text=%E2%83%81&display=swap";
 
 .smc-shell {
-  /* Six-step type scale; base pinned at 13px, 10px floor. */
+  /* Six-step type scale; base pinned at 14px, 10px floor. */
   --smc-font-size-xs: 10px;
   --smc-font-size-s: 11px;
-  --smc-font-size-base: 13px;
-  --smc-font-size-m: 15px;
+  --smc-font-size-base: 14px;
+  --smc-font-size-m: 16px;
   --smc-font-size-lg: 18px;
   --smc-font-size-xl: 24px;
 
@@ -33,9 +33,9 @@
   /* Design colours, behind the host's theme variables. */
   --smc-brand: var(--primary-color, #1d5bbf);
   --smc-pill-bg: #e8e8e8;
-  --smc-rule: #aaa;
+  --smc-rule: #404040;
   --smc-ink: #1a1a1a;
-  --smc-radius: 8px;
+  --smc-radius: 12px;
 
   position: relative;
   max-width: 1000px;
@@ -111,7 +111,14 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px 24px 24px;
+  padding: 12px 24px;
+}
+
+/* Items and totals read as one block: a tighter gap than the page's. */
+.smc-items-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 /* --- Key/value rows --- */
@@ -145,7 +152,6 @@
   align-items: baseline;
   justify-content: center;
   column-gap: 24px;
-  padding-top: 8px;
 }
 
 .smc-title-main {
@@ -178,7 +184,7 @@
 
 .smc-band {
   min-width: 64%;
-  padding: 4px 16px;
+  padding: 8px 12px;
   background: var(--smc-pill-bg);
   border: 1px solid var(--smc-rule);
   border-radius: var(--smc-radius);
@@ -186,6 +192,10 @@
 
 .smc-kv-strong {
   font-size: var(--smc-font-size-m);
+}
+
+.smc-band .smc-kv-strong {
+  font-size: var(--smc-font-size-lg);
 }
 
 .smc-number {
@@ -228,13 +238,13 @@
    table, which must keep the markdown viewer's styling. */
 .smc-items .line-items-table {
   border-collapse: separate;
-  border-spacing: 2px;
+  border-spacing: 1px;
   font-size: var(--smc-font-size-base);
 }
 
-.smc-items .line-items-table > thead > tr > th,
-.smc-items .line-items-table > tbody > tr > td {
-  padding: 4px 8px;
+.smc-items .line-items-table>thead>tr>th,
+.smc-items .line-items-table>tbody>tr>td {
+  padding: 8px;
   border: 1px solid var(--smc-rule);
   border-radius: var(--smc-radius);
   text-align: center;
@@ -243,55 +253,50 @@
 
 /* Figures line up with the item name, at the top of a row that a long
    description makes tall. */
-.smc-items .line-items-table > tbody > tr > td {
+.smc-items .line-items-table>tbody>tr>td {
   vertical-align: top;
 }
 
-.smc-items .line-items-table > thead > tr > th {
-  padding: 8px;
+.smc-items .line-items-table>thead>tr>th {
   background: var(--smc-pill-bg);
   font-family: var(--smc-font-heading);
   font-weight: 700;
   line-height: 1.25;
 }
 
-.smc-items .line-items-table > tbody > tr > td.col-item,
-.smc-items .line-items-table > thead > tr > th.col-item {
+.smc-items .line-items-table>tbody>tr>td.col-item,
+.smc-items .line-items-table>thead>tr>th.col-item {
   text-align: start;
 }
 
-.smc-items .line-items-table > tbody > tr > td.col-item {
-  width: auto;
+/* The item column takes a quarter of the table; the figures share the rest. */
+.smc-items .line-items-table>thead>tr>th.col-item,
+.smc-items .line-items-table>tbody>tr>td.col-item {
+  width: 25%;
 }
 
 /* Item rows print bold, like the headings; the description row below an
    item keeps the body weight. */
-.smc-items .line-items-table > tbody > tr:not(.item-extras-row) > td {
+.smc-items .line-items-table>tbody>tr:not(.item-extras-row)>td {
   font-weight: 700;
 }
 
 /* With text wrap on, the widget fixes the table layout, which sizes columns
-   from the header row and splits the width evenly. Equal shares, with the
-   item column taking two, keeps it at twice any other column whatever the
-   column count. */
-.smc-items .line-items-table.is-wrap-enabled > thead > tr > th {
+   from the header row: the item column keeps its quarter and the figure
+   columns, left at auto, split the rest evenly. */
+.smc-items .line-items-table.is-wrap-enabled>thead>tr>th {
   box-sizing: border-box;
-  width: 10%;
 }
 
-.smc-items .line-items-table.is-wrap-enabled > thead > tr > th.col-item {
-  width: 20%;
-}
-
-/* Figures size to their content; the item column takes the slack. */
-.smc-items .line-items-table > tbody > tr:not(.item-extras-row) > td:not(.col-item) {
-  width: 1%;
+/* Figures stay on one line; with the item column at a set share they size
+   from the width that is left. */
+.smc-items .line-items-table>tbody>tr:not(.item-extras-row)>td:not(.col-item) {
   white-space: nowrap;
 }
 
 /* The fixed layout gives figures a set share, so they wrap inside it rather
    than spill into the next pill. */
-.smc-items .line-items-table.is-wrap-enabled > tbody > tr:not(.item-extras-row) > td:not(.col-item) {
+.smc-items .line-items-table.is-wrap-enabled>tbody>tr:not(.item-extras-row)>td:not(.col-item) {
   white-space: normal;
 }
 
@@ -316,14 +321,14 @@
 
 /* A description that is not full width sits in the item pill, under the
    name, at the body weight the extras row would have given it. */
-.smc-items .line-items-table > tbody > tr > td.col-item > .smc-item-description {
+.smc-items .line-items-table>tbody>tr>td.col-item>.smc-item-description {
   padding-block-start: 4px;
   font-weight: 400;
 }
 
 /* The filler row (helpers.ts withFillerRow) only exists to fill a printed
    page; on screen there is no page to fill. */
-.smc-items .line-items-table > tbody > tr.row-filler {
+.smc-items .line-items-table>tbody>tr.row-filler {
   display: none;
 }
 
@@ -410,16 +415,23 @@
 /* Totals: the shared Subtotal widget, each row a label pill beside a value pill. */
 .smc-summary-end .ceres-subtotal-table {
   border-collapse: separate;
-  border-spacing: 4px;
+  border-spacing: 1px;
 }
 
 .smc-summary-end .ceres-subtotal-label,
 .smc-summary-end .ceres-subtotal-value {
-  padding: 4px 12px;
+  padding: 8px;
   background: var(--smc-pill-bg);
   border: 1px solid var(--smc-rule);
   border-radius: var(--smc-radius);
   vertical-align: middle;
+}
+
+/* The last row's pills are square along the bottom. */
+.smc-summary-end .ceres-subtotal-row:last-child>.ceres-subtotal-label,
+.smc-summary-end .ceres-subtotal-row:last-child>.ceres-subtotal-value {
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
 }
 
 .smc-summary-end .ceres-subtotal-label {
@@ -433,9 +445,9 @@
   font-weight: 700;
 }
 
-.smc-summary-end .ceres-subtotal-row-grand > .ceres-subtotal-label,
-.smc-summary-end .ceres-subtotal-row-grand > .ceres-subtotal-value {
-  padding-top: 4px;
+.smc-summary-end .ceres-subtotal-row-grand>.ceres-subtotal-label,
+.smc-summary-end .ceres-subtotal-row-grand>.ceres-subtotal-value {
+  padding-top: 8px;
   border-top: 1px solid var(--smc-rule);
 }
 
@@ -560,7 +572,7 @@
 }
 
 /* --- Narrow screens: stack the two-column areas --- */
-@media screen and (width <= 640px) {
+@media screen and (width <=640px) {
   .smc-summary {
     grid-template-columns: 1fr;
   }
@@ -570,7 +582,7 @@
   .smc-shell {
     --smc-font-size-xs: 10px;
     --smc-font-size-s: 11px;
-    --smc-font-size-base: 13px;
+    --smc-font-size-base: 14px;
     --smc-font-size-m: 14px;
     --smc-font-size-lg: 16px;
     --smc-font-size-xl: 22px;
