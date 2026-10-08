@@ -238,7 +238,7 @@
    table, which must keep the markdown viewer's styling. */
 .smc-items .line-items-table {
   border-collapse: separate;
-  border-spacing: 1px;
+  border-spacing: 0;
   font-size: var(--smc-font-size-base);
 }
 
@@ -415,7 +415,7 @@
 /* Totals: the shared Subtotal widget, each row a label pill beside a value pill. */
 .smc-summary-end .ceres-subtotal-table {
   border-collapse: separate;
-  border-spacing: 1px;
+  border-spacing: 0;
 }
 
 .smc-summary-end .ceres-subtotal-label,
