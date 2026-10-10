@@ -111,7 +111,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 24px;
+  padding: 0 24px;
 }
 
 /* Items and totals read as one block: a tighter gap than the page's. */
@@ -186,7 +186,7 @@
   min-width: 64%;
   padding: 8px 12px;
   background: var(--smc-pill-bg);
-  border: 1px solid var(--smc-rule);
+  border: 2px solid var(--smc-rule);
   border-radius: var(--smc-radius);
 }
 
@@ -238,14 +238,14 @@
    table, which must keep the markdown viewer's styling. */
 .smc-items .line-items-table {
   border-collapse: separate;
-  border-spacing: 0;
+  border-spacing: 1px;
   font-size: var(--smc-font-size-base);
 }
 
 .smc-items .line-items-table>thead>tr>th,
 .smc-items .line-items-table>tbody>tr>td {
   padding: 8px;
-  border: 1px solid var(--smc-rule);
+  border: 2px solid var(--smc-rule);
   border-radius: var(--smc-radius);
   text-align: center;
   vertical-align: middle;
@@ -415,14 +415,14 @@
 /* Totals: the shared Subtotal widget, each row a label pill beside a value pill. */
 .smc-summary-end .ceres-subtotal-table {
   border-collapse: separate;
-  border-spacing: 0;
+  border-spacing: 1px;
 }
 
 .smc-summary-end .ceres-subtotal-label,
 .smc-summary-end .ceres-subtotal-value {
   padding: 8px;
   background: var(--smc-pill-bg);
-  border: 1px solid var(--smc-rule);
+  border: 2px solid var(--smc-rule);
   border-radius: var(--smc-radius);
   vertical-align: middle;
 }
@@ -448,7 +448,7 @@
 .smc-summary-end .ceres-subtotal-row-grand>.ceres-subtotal-label,
 .smc-summary-end .ceres-subtotal-row-grand>.ceres-subtotal-value {
   padding-top: 8px;
-  border-top: 1px solid var(--smc-rule);
+  border-top: 2px solid var(--smc-rule);
 }
 
 /* The words line moves to the start column (.smc-words); drop the widget's copy. */
@@ -503,7 +503,7 @@
 .smc-words {
   margin: 0;
   padding: 4px 12px;
-  border: 1px solid var(--smc-rule);
+  border: 2px solid var(--smc-rule);
   border-radius: var(--smc-radius);
   background: var(--smc-pill-bg);
   font-weight: 400;
@@ -610,7 +610,7 @@
 
   .smc-page {
     /* page fill: flex: 1 0 auto; */
-    padding: 16px;
+    padding: 0 16px;
     zoom: var(--smc-print-zoom, 1);
   }
 
