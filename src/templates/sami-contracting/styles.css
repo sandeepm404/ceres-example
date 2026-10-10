@@ -198,6 +198,12 @@
   font-size: var(--smc-font-size-lg);
 }
 
+/* Seller VAT number and phone: label and value both bold. */
+.smc-seller .smc-key,
+.smc-seller .smc-val {
+  font-weight: 700;
+}
+
 .smc-number {
   text-decoration: underline;
   text-underline-offset: 4px;
