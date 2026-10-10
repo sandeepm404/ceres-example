@@ -204,11 +204,6 @@
   font-weight: 700;
 }
 
-.smc-number {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
 /* --- Details --- */
 .smc-details,
 .smc-logistics {
