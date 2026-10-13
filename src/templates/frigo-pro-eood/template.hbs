@@ -5,11 +5,12 @@
   item table ("Авансово плащане по ф-ра <number>/<payment date>", negative
   amount). Those rows are added by the data mapper (helpers.ts withPaymentRows);
   the table markup does not special-case them. Totals are the shared Subtotal
-  widget's, which already shows what was paid and what is still due.
+  widget's rows, which already show what was paid and what is still due.
 
   Label text comes from the payload (customLabels, vatLabel, columns[].label,
-  party field labels). The only fixed words are the city/address row labels,
-  which no payload key carries, and the payment-line text.
+  party field labels). The only fixed words are the city/address/phone/email
+  row labels, which no payload key carries, the payment-line text, and the totals'
+  tax-base, amount-paid and amount-to-pay labels (helpers.ts).
 
   The root is { invoice, advanceOptions, pdfOptions, mapped, derived } because
   this template installs normalizeInvoiceTemplateState as its data mapper.
@@ -103,10 +104,10 @@
         <div class="fpe-row"><dt>{{@root.invoice.customLabels.contactPersonLabel}}</dt><dd>{{party.contactPerson.name}}</dd></div>
         {{/if}}
         {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
-        <div class="fpe-row"><dt>{{@root.invoice.customLabels.phone}}</dt><dd>{{formatPhoneNumber party.phone}}</dd></div>
+        <div class="fpe-row"><dt>Телефон</dt><dd>{{formatPhoneNumber party.phone}}</dd></div>
         {{/unless}}{{/if}}
         {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
-        <div class="fpe-row"><dt>{{@root.invoice.customLabels.email}}</dt><dd>{{party.email}}</dd></div>
+        <div class="fpe-row"><dt>Имейл</dt><dd>{{party.email}}</dd></div>
         {{/unless}}{{/if}}
       </dl>
       {{/with}}
@@ -136,10 +137,10 @@
         <div class="fpe-row"><dt>Адрес</dt><dd>{{address}}</dd></div>
         {{/with}}
         {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
-        <div class="fpe-row"><dt>{{@root.invoice.customLabels.phone}}</dt><dd>{{formatPhoneNumber party.phone}}</dd></div>
+        <div class="fpe-row"><dt>Телефон</dt><dd>{{formatPhoneNumber party.phone}}</dd></div>
         {{/unless}}{{/if}}
         {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
-        <div class="fpe-row"><dt>{{@root.invoice.customLabels.email}}</dt><dd>{{party.email}}</dd></div>
+        <div class="fpe-row"><dt>Имейл</dt><dd>{{party.email}}</dd></div>
         {{/unless}}{{/if}}
       </dl>
       {{/with}}
@@ -203,32 +204,62 @@
       {{> LineItemsTable mapped}}
     </div>
 
-    {{!-- ═══ Totals: the shared widget ═══
-          Its Conversion Rate row is hidden unless the account turned on
+    {{!-- ═══ Totals: settlement rows, with the business-currency amount in a
+          column of its own ═══
+          Tax base, VAT, amount paid and amount to pay, net of the payments
+          recorded on the document (helpers.ts settlementTotals). The Subtotal
+          widget's own rows are not printed; its model (computeSubtotalRows,
+          through helpers.ts frigoTotals: лв. for BGN, currency after the
+          amount) still supplies the VAT label, the business column, the
+          Conversion Rate row and the total in words. Classes and data
+          attributes on those last two are the widget's own, so its CSS and
+          the hideTotals / hideTotalInWords settings act on them.
+          The Conversion Rate row is hidden unless the account turned on
           "Show Applied Exchange Rate" (helpers.ts showExchangeRate). --}}
     <div class="fpe-totals{{#unless (showExchangeRate advanceOptions invoice)}} is-exchange-rate-hidden{{/unless}}">
       <div class="fpe-totals-stack">
-      {{> Subtotal (computeSubtotalRows invoice
-                      columns=mapped.columns
-                      businessCurrency=invoice.businessCurrency
-                      businessLocale=invoice.businessLocale) }}
-
-      {{!-- After payments: tax base, VAT and amount due, net of the payments
-            recorded on the document (helpers.ts settlementTotals). Only when a
-            payment is recorded; paid in full, all three are 0.00. --}}
-      {{#with (settlementTotals invoice mapped.visibility) as |settled|}}
-      <div class="ceres-subtotal fpe-settlement" data-ceres-settlement>
+      {{#with (frigoTotals (computeSubtotalRows invoice
+                  columns=mapped.columns
+                  businessCurrency=invoice.businessCurrency
+                  businessLocale=invoice.businessLocale)) as |totals|}}
+      {{#with (settlementTotals @root.invoice @root.mapped.visibility totals) as |settled|}}
+      <div class="ceres-subtotal fpe-settlement{{#if totals.businessColumn}} fpe-has-business{{/if}}" data-ceres-subtotal data-ceres-settlement>
         <table class="ceres-subtotal-table">
           <tbody>
             {{#each settled.rows}}
             <tr class="ceres-subtotal-row fpe-settlement-{{key}}{{#if settled.hidden}} is-hidden-by-totals{{/if}}" data-ceres-settlement-row="{{key}}">
               <th class="ceres-subtotal-label">{{label}}:</th>
+              {{#if totals.businessColumn}}
+              <td class="ceres-subtotal-value fpe-totals-business" data-ceres-business-amount>{{converted}}</td>
+              {{/if}}
               <td class="ceres-subtotal-value">{{value}}</td>
             </tr>
             {{/each}}
+            {{#each totals.groups.main}}
+            {{#if (eq key "conversionRate")}}
+            <tr class="ceres-subtotal-row{{#if totals.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+              <th class="ceres-subtotal-label">{{label}}:</th>
+              {{#if totals.businessColumn}}
+              <td class="ceres-subtotal-value fpe-totals-business"></td>
+              {{/if}}
+              <td class="ceres-subtotal-value">{{value}}</td>
+            </tr>
+            {{/if}}
+            {{/each}}
           </tbody>
         </table>
+
+        {{#if totals.totalInWords}}
+        <div
+          class="ceres-subtotal-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+          data-ceres-total-in-words
+        >
+          <span class="ceres-subtotal-words-label">{{totals.totalInWords.label}}:</span>
+          <span class="ceres-subtotal-words-value">{{totals.totalInWords.value}}</span>
+        </div>
+        {{/if}}
       </div>
+      {{/with}}
       {{/with}}
       </div>
     </div>

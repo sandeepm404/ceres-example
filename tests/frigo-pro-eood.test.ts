@@ -14,8 +14,14 @@ import {
   recordedPayments,
   registerFrigoProTemplateHelpers,
   showExchangeRate,
-  SETTLEMENT_LABELS,
+  hasBusinessColumn,
+  BGN_SYMBOL,
+  frigoTotals,
   settlementFigures,
+  TAX_BASE_LABEL,
+  PAID_LABEL,
+  DUE_LABEL,
+  totalsFigure,
   pageZoom,
   pageZoomStyle,
   withPaymentRows,
@@ -287,6 +293,17 @@ describe("frigo-pro-eood payment lines", () => {
     expect(html).toContain('class="row-payment"');
     expect(html).toContain(`${PAYMENT_LINE_TEXT} 3903/06.10.2025`);
   });
+
+  it("rounds a payment line's figures to the document's decimals", () => {
+    const state = mapState({
+      allPayments: [{ amount: 2991534.5260000005, paymentDate: "2026-10-06" }],
+    });
+    const [row] = state.mapped.rows.filter(
+      (r: any) => r.rowClass === "row-payment"
+    );
+    expect(cellText(row, "rate")).not.toMatch(/0000005/);
+    expect(cellText(row, "rate")).toMatch(/534\.53$/);
+  });
 });
 
 describe("frigo-pro-eood blocks", () => {
@@ -315,6 +332,25 @@ describe("frigo-pro-eood blocks", () => {
     expect(html).toContain('data-party="billedBy"');
     expect(html).toContain("Получател");
     expect(html).toContain("Доставчик");
+  });
+
+  it("labels the parties' phone and email rows", () => {
+    const html = render({
+      billedTo: {
+        ...baseInvoice().billedTo,
+        phone: "+359888314614",
+        phoneShowInInvoice: true,
+        emailShowInInvoice: true,
+        email: "office@laits.bg",
+      },
+    });
+    const box = html.slice(
+      html.indexOf('data-party="billedTo"'),
+      html.indexOf('data-party="billedBy"')
+    );
+    expect(box).toMatch(/<dt>Телефон<\/dt><dd>[^<]*\d/);
+    expect(box).toMatch(/<dt>Имейл<\/dt><dd>office@laits\.bg<\/dd>/);
+    expect(box).not.toMatch(/<dt><\/dt>/);
   });
 
   it("uses the shared Subtotal widget for totals", () => {
@@ -401,15 +437,323 @@ describe("frigo-pro-eood business-currency amounts", () => {
     expect(render(foreign)).not.toContain("second-currency-amount");
   });
 
-  it("hides the INR amount under each total", () => {
-    // The widget still emits it; the template's CSS hides it.
-    expect(render(foreign)).toContain("ceres-subtotal-converted");
-    const css = fs.readFileSync(
-      path.join(__dirname, "../src/templates/frigo-pro-eood/styles.css"),
-      "utf8"
+  const businessCells = (html: string): string[] =>
+    [...html.matchAll(/data-ceres-business-amount>\s*([^<]*?)\s*</g)].map(
+      (m) => m[1]
     );
-    expect(css).toMatch(
-      /\.fpe-totals \.ceres-subtotal-converted\s*\{\s*display:\s*none;/
+
+  it("prints the INR amount in its own column, before each total", () => {
+    const html = render(foreign);
+    expect(html).toContain("fpe-has-business");
+    const cells = businessCells(html);
+    expect(cells.length).toBeGreaterThan(0);
+    expect(cells.filter(Boolean).length).toBeGreaterThan(0);
+    // Not as the widget's sub-line under the figure.
+    expect(html).not.toContain("ceres-subtotal-converted");
+    // Business cell first, then the document-currency figure.
+    const row = html.slice(html.indexOf("data-ceres-business-amount"));
+    expect(row.indexOf("data-ceres-business-amount")).toBeLessThan(
+      row.indexOf('<td class="ceres-subtotal-value">')
+    );
+  });
+
+  it("has no business column when the currencies match", () => {
+    const html = render({ currency: "INR", businessCurrency: "INR" });
+    expect(html).not.toContain("fpe-has-business");
+    expect(businessCells(html)).toEqual([]);
+  });
+
+  it("has no business column without a conversion rate", () => {
+    const html = render({ ...foreign, conversionRates: {} });
+    expect(businessCells(html)).toEqual([]);
+  });
+
+  it("hides the totals block with the hideTotals setting", () => {
+    const html = render({ ...foreign, hideTotals: true });
+    expect(html).toContain("data-ceres-subtotal");
+    expect(html).toContain("is-hidden-by-totals");
+  });
+
+  it("prints the lev as лв., never BGN", () => {
+    // The normalization takes businessCurrency from the payload's top level.
+    const state = mapState({
+      currency: "EUR",
+      conversionRates: { BGN: 1.95583 },
+    });
+    const html = template({
+      ...state,
+      invoice: { ...state.invoice, businessCurrency: "BGN" },
+    });
+    const totals = html.slice(html.indexOf("data-ceres-subtotal"));
+    expect(totals).toContain(BGN_SYMBOL);
+    expect(totals).not.toContain("BGN");
+    expect(businessCells(html).filter(Boolean).length).toBeGreaterThan(0);
+  });
+
+  it("swaps BGN in every figure of the totals model", () => {
+    const model = frigoTotals({
+      groups: {
+        main: [
+          {
+            value: "€1 = BGN 1.96",
+            converted: null,
+            extra: { value: "BGN 2.00", converted: "BGN 3.00" },
+          },
+        ],
+        extra: [],
+        due: [{ value: "€5.00", converted: "BGN 9.78", extra: null }],
+      },
+    });
+    expect(model.groups.main[0].value).toBe(
+      `1\u00a0€ = 1.96\u00a0${BGN_SYMBOL}`
+    );
+    expect(model.groups.main[0].extra.converted).toBe(
+      `3.00\u00a0${BGN_SYMBOL}`
+    );
+    expect(model.groups.due[0].converted).toBe(`9.78\u00a0${BGN_SYMBOL}`);
+    expect(model.businessColumn).toBe(true);
+    expect(frigoTotals(null)).toBeNull();
+  });
+
+  it("puts the currency after the amount, and a minus for brackets", () => {
+    const nb = "\u00a0";
+    expect(totalsFigure("BGN\u00a01,186,473.02")).toBe(`1,186,473.02${nb}лв.`);
+    expect(totalsFigure("(лв. 1,400,038.16)")).toBe(`-1,400,038.16${nb}лв.`);
+    expect(totalsFigure("€6,25,975")).toBe(`6,25,975${nb}€`);
+    expect(totalsFigure("(€7,38,650.50)")).toBe(`-7,38,650.50${nb}€`);
+    expect(totalsFigure("-€880.00")).toBe(`-880.00${nb}€`);
+    expect(totalsFigure("US$1.00")).toBe(`1.00${nb}US$`);
+    expect(totalsFigure(null)).toBeNull();
+  });
+
+  it("prints the currency after each figure, minus not brackets", () => {
+    const html = render({
+      allPayments: [{ amount: 100, paymentDate: "2026-10-06" }],
+    });
+    const totals = html.slice(html.indexOf("data-ceres-subtotal"));
+    const figures = [
+      ...totals.matchAll(/class="ceres-subtotal-value">\s*([^<]*?)\s*</g),
+    ].map((m) => m[1]);
+    expect(figures.length).toBeGreaterThan(0);
+    figures.forEach((f) => {
+      expect(f).not.toMatch(/[()]/);
+      // Never a symbol before the number (rows without a currency are bare).
+      if (/\d/.test(f) && !f.includes("=")) expect(f).toMatch(/^-?\d/);
+    });
+  });
+
+  it("flags the column from any converted amount", () => {
+    expect(hasBusinessColumn({ groups: { main: [{ converted: null }] } })).toBe(
+      false
+    );
+    expect(
+      hasBusinessColumn({ groups: { main: [], due: [{ converted: "₹1.00" }] } })
+    ).toBe(true);
+    expect(
+      hasBusinessColumn({
+        groups: { main: [{ converted: null, extra: { converted: "₹1.00" } }] },
+      })
+    ).toBe(true);
+    expect(hasBusinessColumn(null)).toBe(false);
+  });
+});
+
+describe("frigo-pro-eood settlement rows", () => {
+  // 625,975 + 18% VAT = 738,650.50, as on the Frigo Pro document.
+  const doc = (paid: number[], over: any = {}) => ({
+    currency: "BGN",
+    finalTotal: { total: 738650.5, igst: 112675.5, cgst: 0, sgst: 0 },
+    allPayments: paid.map((amount) => ({ amount, paymentDate: "2026-10-06" })),
+    ...over,
+  });
+  const igst = { showIgst: true, showCgstSgst: false };
+  const settlement = (html: string) =>
+    html.slice(html.indexOf("data-ceres-settlement"));
+  const rowValues = (html: string) =>
+    [
+      ...settlement(html).matchAll(
+        /data-ceres-settlement-row="([^"]+)"[\s\S]*?<th class="ceres-subtotal-label">([^<]*)<\/th>[\s\S]*?<td class="ceres-subtotal-value">([^<]*)</g
+      ),
+    ].map((m) => ({ key: m[1], label: m[2].trim(), value: m[3].trim() }));
+
+  it("is the full figures when nothing is paid", () => {
+    expect(settlementFigures(doc([]), igst)).toEqual({
+      taxBase: 625975,
+      vat: 112675.5,
+      due: 738650.5,
+      paid: 0,
+    });
+  });
+
+  it("is all zero when the payments equal the invoice total", () => {
+    expect(settlementFigures(doc([738650.5]), igst)).toEqual({
+      taxBase: 0,
+      vat: 0,
+      due: 0,
+      paid: 738650.5,
+    });
+  });
+
+  it("splits a part payment between tax base and VAT in proportion", () => {
+    expect(settlementFigures(doc([369325.25]), igst)).toEqual({
+      taxBase: 312987.5,
+      vat: 56337.75,
+      due: 369325.25,
+      paid: 369325.25,
+    });
+  });
+
+  it("adds up every recorded payment", () => {
+    expect(settlementFigures(doc([700000, 38650.5]), igst).due).toBe(0);
+  });
+
+  it("counts CGST + SGST or IGST, never both", () => {
+    // A payload can carry both, IGST being their sum.
+    const both = doc([369325.25], {
+      finalTotal: {
+        total: 738650.5,
+        igst: 112675.5,
+        cgst: 56337.75,
+        sgst: 56337.75,
+      },
+    });
+    const split = settlementFigures(both, {
+      showIgst: false,
+      showCgstSgst: true,
+    });
+    expect(split.vat).toBe(56337.75);
+    expect(settlementFigures(both, igst).vat).toBe(56337.75);
+    expect(split.taxBase).toBe(312987.5);
+  });
+
+  it("caps the paid share at the total; an overpayment shows as a negative due", () => {
+    expect(settlementFigures(doc([800000]), igst)).toEqual({
+      taxBase: 0,
+      vat: 0,
+      due: -61349.5,
+      paid: 800000,
+    });
+  });
+
+  it("prints on an unpaid invoice too, after the totals", () => {
+    const html = render({ allPayments: [] });
+    expect(html).toContain("data-ceres-settlement");
+    expect(html.indexOf("data-ceres-settlement")).toBeGreaterThan(
+      html.indexOf("data-ceres-subtotal")
+    );
+    expect(rowValues(html).map((r) => r.key)).toEqual([
+      "taxBase",
+      "vat",
+      "due",
+    ]);
+  });
+
+  it("uses the fixed labels, whatever the payload's customLabels say", () => {
+    const html = render({
+      customLabels: {
+        ...baseInvoice().customLabels,
+        dueAmount: "Due Amount",
+        paidAmount: "Paid Amount",
+      },
+    });
+    const rows = rowValues(html);
+    expect(rows[0].label).toBe(`${TAX_BASE_LABEL}:`);
+    expect(rows[rows.length - 1].label).toBe(`${DUE_LABEL}:`);
+    expect(DUE_LABEL).toBe("Сума за плащане");
+    expect(PAID_LABEL).toBe("Платена сума");
+    expect(html).not.toMatch(/Due Amount|Paid Amount/);
+    // The VAT row is the totals' tax-row label without its rate.
+    expect(rows[1].label).not.toMatch(/%/);
+    expect(rows[1].label).toMatch(/\S+:$/);
+  });
+
+  it("prints 0.00 in every row when paid in full", () => {
+    const { total } = baseInvoice().finalTotal;
+    const html = render({
+      allPayments: [{ amount: total, paymentDate: "2026-10-06" }],
+    });
+    const rows = rowValues(html);
+    expect(rows.map((r) => r.key)).toEqual(["taxBase", "vat", "due"]);
+    rows.forEach((r) => expect(r.value).toMatch(/^0\.00\D*$/));
+  });
+
+  it("keeps two decimals when the document sets no sub-unit length", () => {
+    const html = render({
+      subUnitLength: undefined,
+      allPayments: [
+        { amount: baseInvoice().finalTotal.total, paymentDate: "2026-10-06" },
+      ],
+    });
+    rowValues(html).forEach((r) => expect(r.value).toMatch(/^0\.00\D*$/));
+  });
+
+  it("fills the business column too", () => {
+    const state = mapState({
+      currency: "EUR",
+      conversionRates: { BGN: 1.95583 },
+    });
+    const html = template({
+      ...state,
+      invoice: { ...state.invoice, businessCurrency: "BGN" },
+    });
+    const cells = [
+      ...settlement(html).matchAll(
+        /data-ceres-business-amount>\s*([^<]*?)\s*</g
+      ),
+    ].map((m) => m[1]);
+    expect(cells).toHaveLength(rowValues(html).length);
+    cells.forEach((c) => expect(c).toMatch(/\d\u00a0лв\.$/));
+  });
+
+  it("prints amount paid above amount to pay", () => {
+    const { total } = baseInvoice().finalTotal;
+    const html = render({
+      allPayments: [{ amount: total / 4, paymentDate: "2026-10-06" }],
+    });
+    const rows = rowValues(html);
+    expect(rows.map((r) => r.key)).toEqual(["taxBase", "vat", "paid", "due"]);
+    expect(rows[2].label).toBe(`${PAID_LABEL}:`);
+    expect(rows[2].value).toMatch(/^-\d/);
+  });
+
+  it("has no amount-paid row when paid in full or more", () => {
+    const { total } = baseInvoice().finalTotal;
+    [total, total + 100].forEach((amount) => {
+      const html = render({
+        allPayments: [{ amount, paymentDate: "2026-10-06" }],
+      });
+      expect(rowValues(html).map((r) => r.key)).toEqual([
+        "taxBase",
+        "vat",
+        "due",
+      ]);
+    });
+  });
+
+  it("has no amount-paid row when nothing is paid", () => {
+    const keys = rowValues(render({ allPayments: [] })).map((r) => r.key);
+    expect(keys).toEqual(["taxBase", "vat", "due"]);
+  });
+
+  it("does not print the widget's own total rows", () => {
+    const html = render();
+    ["subTotal", "amount", "total", "amountPaid", "dueAmount"].forEach((key) =>
+      expect(html).not.toContain(`data-ceres-subtotal-row="${key}"`)
+    );
+  });
+
+  it("keeps the Conversion Rate row for the exchange-rate setting", () => {
+    const html = render({
+      currency: "BGN",
+      businessCurrency: "INR",
+      conversionRates: { INR: 57.22 },
+    });
+    expect(html).toContain('data-ceres-subtotal-row="conversionRate"');
+  });
+
+  it("is hidden with the totals", () => {
+    expect(settlement(render({ hideTotals: true }))).toContain(
+      "is-hidden-by-totals"
     );
   });
 });
@@ -486,108 +830,6 @@ describe("frigo-pro-eood text scale", () => {
     expect(css).toMatch(
       /@media print \{\s*\.fpe-page \{\s*zoom: var\(--fpe-print-zoom, 1\);/
     );
-  });
-});
-
-describe("frigo-pro-eood totals after payments", () => {
-  // 625,975 + 18% VAT = 738,650.50, as on the Frigo Pro document.
-  const doc = (paid: number[], over: any = {}) => ({
-    currency: "BGN",
-    finalTotal: { total: 738650.5, igst: 112675.5, cgst: 0, sgst: 0 },
-    allPayments: paid.map((amount) => ({ amount, paymentDate: "2026-10-06" })),
-    ...over,
-  });
-  const igst = { showIgst: true, showCgstSgst: false };
-
-  it("is all zero when the payments equal the invoice total", () => {
-    expect(settlementFigures(doc([738650.5]), igst)).toEqual({
-      taxBase: 0,
-      vat: 0,
-      due: 0,
-      paid: 738650.5,
-    });
-  });
-
-  it("splits a part payment between tax base and VAT in proportion", () => {
-    expect(settlementFigures(doc([369325.25]), igst)).toEqual({
-      taxBase: 312987.5,
-      vat: 56337.75,
-      due: 369325.25,
-      paid: 369325.25,
-    });
-  });
-
-  it("adds up every recorded payment", () => {
-    expect(settlementFigures(doc([700000, 38650.5]), igst)?.due).toBe(0);
-  });
-
-  it("counts CGST + SGST or IGST, never both", () => {
-    // A payload can carry both, IGST being their sum.
-    const both = doc([369325.25], {
-      finalTotal: {
-        total: 738650.5,
-        igst: 112675.5,
-        cgst: 56337.75,
-        sgst: 56337.75,
-      },
-    });
-    const split = settlementFigures(both, {
-      showIgst: false,
-      showCgstSgst: true,
-    });
-    const single = settlementFigures(both, igst);
-    expect(split?.vat).toBe(56337.75);
-    expect(single?.vat).toBe(56337.75);
-    expect(split?.taxBase).toBe(312987.5);
-  });
-
-  it("caps the paid share at the total; an overpayment shows as a negative due", () => {
-    expect(settlementFigures(doc([800000]), igst)).toEqual({
-      taxBase: 0,
-      vat: 0,
-      due: -61349.5,
-      paid: 800000,
-    });
-  });
-
-  it("has no rows when nothing is paid", () => {
-    expect(settlementFigures(doc([]), igst)).toBeNull();
-    expect(render({ allPayments: [] })).not.toContain("data-ceres-settlement");
-  });
-
-  it("prints the three rows under the widget's rows", () => {
-    const { total } = baseInvoice().finalTotal;
-    const html = render({
-      allPayments: [{ amount: total, paymentDate: "2026-10-06" }],
-    });
-    expect(html).toContain("data-ceres-subtotal");
-    const block = html.slice(html.indexOf("data-ceres-settlement"));
-    expect(html.indexOf("data-ceres-settlement")).toBeGreaterThan(
-      html.indexOf("data-ceres-subtotal")
-    );
-    [
-      SETTLEMENT_LABELS.taxBase,
-      SETTLEMENT_LABELS.vat,
-      SETTLEMENT_LABELS.due,
-    ].forEach((label) => expect(block).toContain(`${label}:`));
-    const values = [
-      ...block.matchAll(
-        /data-ceres-settlement-row="[^"]+"[\s\S]*?ceres-subtotal-value">([^<]*)</g
-      ),
-    ].map((m) => m[1].trim());
-    expect(values).toHaveLength(3);
-    values.forEach((v) => expect(v).toMatch(/^[^1-9]*0\.00$/));
-  });
-
-  it("rounds a payment line's figures to the document's decimals", () => {
-    const state = mapState({
-      allPayments: [{ amount: 2991534.5260000005, paymentDate: "2026-10-06" }],
-    });
-    const [row] = state.mapped.rows.filter(
-      (r: any) => r.rowClass === "row-payment"
-    );
-    expect(cellText(row, "rate")).not.toMatch(/0000005/);
-    expect(cellText(row, "rate")).toMatch(/534\.53$/);
   });
 });
 

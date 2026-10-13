@@ -12,10 +12,10 @@
   --fpe-muted: #333;
   --fpe-rule: #000;
   --fpe-head-fill: var(--ceres-primary-background, #d9d9d9);
-  --fpe-font-size-xs: 10px;
-  --fpe-font-size-s: 11px;
+  --fpe-font-size-xs: 11px;
+  --fpe-font-size-s: 12px;
   --fpe-font-size-base: 13px;
-  --fpe-font-size-m: 15px;
+  --fpe-font-size-m: 16px;
   --fpe-font-size-lg: 18px;
   --fpe-font-size-xl: 28px;
 
@@ -199,14 +199,14 @@
   table-layout: auto;
 }
 
-.fpe-items .line-items-table > thead > tr > th,
-.fpe-items .line-items-table > tbody > tr > td {
+.fpe-items .line-items-table>thead>tr>th,
+.fpe-items .line-items-table>tbody>tr>td {
   padding: 0 4px;
   border: 1px solid var(--fpe-rule);
   vertical-align: top;
 }
 
-.fpe-items .line-items-table > thead > tr > th {
+.fpe-items .line-items-table>thead>tr>th {
   background: var(--fpe-head-fill);
   font-weight: 700;
   text-align: center;
@@ -214,7 +214,7 @@
 }
 
 /* The serial column has no payload label; № is a symbol, not a word. */
-.fpe-items .line-items-table > thead > tr > th.col-index::before {
+.fpe-items .line-items-table>thead>tr>th.col-index::before {
   content: "№";
 }
 
@@ -235,15 +235,15 @@
 }
 
 /* Numbers size to their content; the item column takes the slack. */
-.fpe-items .line-items-table > tbody > tr:not(.item-extras-row) > td:not(.col-item) {
+.fpe-items .line-items-table>tbody>tr:not(.item-extras-row)>td:not(.col-item) {
   width: 1%;
   white-space: nowrap;
   overflow-wrap: normal;
   text-align: end;
 }
 
-.fpe-items .line-items-table > tbody > tr > td.col-item,
-.fpe-items .line-items-table > thead > tr > th.col-item {
+.fpe-items .line-items-table>tbody>tr>td.col-item,
+.fpe-items .line-items-table>thead>tr>th.col-item {
   width: auto;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -292,11 +292,6 @@
   width: 45%;
 }
 
-.fpe-settlement {
-  padding: 4px 0 0;
-  border-top: 1px solid var(--fpe-rule);
-}
-
 .fpe-totals .ceres-subtotal-label {
   padding: 0 16px 0 0;
   text-align: end;
@@ -308,8 +303,19 @@
   font-weight: 700;
 }
 
-.fpe-totals .ceres-subtotal-row-grand > .ceres-subtotal-label,
-.fpe-totals .ceres-subtotal-row-grand > .ceres-subtotal-value {
+/* Settlement rows: tax base and VAT in regular weight, amount to pay bold. */
+.fpe-totals .fpe-settlement .ceres-subtotal-label,
+.fpe-totals .fpe-settlement .ceres-subtotal-value {
+  font-weight: 400;
+}
+
+.fpe-totals .fpe-settlement .fpe-settlement-due>.ceres-subtotal-label,
+.fpe-totals .fpe-settlement .fpe-settlement-due>.ceres-subtotal-value {
+  font-weight: 700;
+}
+
+.fpe-totals .ceres-subtotal-row-grand>.ceres-subtotal-label,
+.fpe-totals .ceres-subtotal-row-grand>.ceres-subtotal-value {
   padding-top: 0;
   border-top: 0;
 }
@@ -318,11 +324,20 @@
   display: none;
 }
 
-/* The business-currency amount under each total (e.g. INR under BGN) is not
-   printed for now; the item table drops its copy in the data mapper
-   (helpers.ts withoutSecondCurrency). */
-.fpe-totals .ceres-subtotal-converted {
-  display: none;
+/* The business-currency column (e.g. INR beside BGN), between label and
+   figure. Fixed shares, not auto, so the figures line up across the widget's
+   separate main / extra / due tables. The item table prints no business
+   amount (helpers.ts withoutSecondCurrency). */
+.fpe-totals .fpe-has-business {
+  min-width: 440px;
+}
+
+.fpe-totals .fpe-has-business .ceres-subtotal-table .ceres-subtotal-value {
+  width: 30%;
+}
+
+.fpe-totals .ceres-subtotal-table .fpe-totals-business {
+  padding-right: 16px;
 }
 
 /* --- Summary tables, payment info, notes --- */
@@ -432,12 +447,12 @@
     max-width: none;
   }
 
-  .fpe-items .line-items-table > thead > tr > th {
+  .fpe-items .line-items-table>thead>tr>th {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .fpe-items .line-items-table > tbody > tr {
+  .fpe-items .line-items-table>tbody>tr {
     break-inside: avoid;
   }
 

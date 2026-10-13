@@ -152,9 +152,66 @@ export const showExchangeRate = (advanceOptions: any, invoice: any): boolean =>
     invoice?.advanceOptions?.showAppliedExchangeRate ??
     invoice?.showAppliedExchangeRate) === true;
 
-// The business-currency amount (e.g. INR under a BGN figure) is not printed
-// for now. In the item table it rides on each cell as `secondaryText`; the
-// totals widget's copy is hidden in styles.css (.ceres-subtotal-converted).
+// The totals print the business-currency amount (e.g. INR beside a BGN
+// figure) in a column of its own, between label and figure. The Subtotal
+// widget only offers it as a sub-line inside the figure's cell, so the
+// template renders the widget's rows itself (template.hbs) and this flag
+// says whether the column exists: only when some row carries a converted
+// amount, i.e. the document and business currencies differ and a rate is set.
+export const hasBusinessColumn = (model: any): boolean =>
+  ["main", "extra", "due"].some((group) =>
+    asArray(model?.groups?.[group]).some(
+      (row: any) => row?.converted || row?.extra?.converted
+    )
+  );
+
+// The lev prints as "лв.", never its ISO code. The widget formats through Intl,
+// which has no symbol for BGN and writes "BGN 1,234.00"; the code is swapped
+// in every figure of the totals block (both columns and the rate row).
+// The currency then follows the amount, as Bulgarian invoices write it:
+// "1,234.00 лв.", "-625,975 €", "1 € = 1.96 лв.". A negative figure carries a
+// minus sign, never the widget's accounting brackets ("(€200)").
+export const BGN_SYMBOL = "лв.";
+
+const SYMBOL_BEFORE_AMOUNT = /(лв\.|[^\d\s()\-−=,.]+)\s*(\d(?:[\d,.]*\d)?)/g;
+
+export const totalsFigure = (text: any): any =>
+  typeof text === "string"
+    ? text
+        .replace(/BGN/g, BGN_SYMBOL)
+        .replace(SYMBOL_BEFORE_AMOUNT, "$2\u00a0$1")
+        .replace(/^\s*\((.*)\)\s*$/, "-$1")
+    : text;
+
+// computeSubtotalRows' model, as the totals block in template.hbs prints it:
+// every figure through totalsFigure, and `businessColumn` (hasBusinessColumn).
+export const frigoTotals = (model: any): any => {
+  if (!model?.groups) return model;
+  const row = (r: any) => ({
+    ...r,
+    value: totalsFigure(r?.value),
+    converted: totalsFigure(r?.converted),
+    extra: r?.extra
+      ? {
+          ...r.extra,
+          value: totalsFigure(r.extra.value),
+          converted: totalsFigure(r.extra.converted),
+        }
+      : r?.extra,
+  });
+  return {
+    ...model,
+    businessColumn: hasBusinessColumn(model),
+    groups: {
+      main: asArray(model.groups.main).map(row),
+      extra: asArray(model.groups.extra).map(row),
+      due: asArray(model.groups.due).map(row),
+    },
+  };
+};
+
+// The business-currency amount is not printed in the item table. There it
+// rides on each cell as `secondaryText`, which this mapper drops.
 export const withoutSecondCurrency = <T>(state: T): T => {
   const mapped = (state as any)?.mapped;
   const rows = asArray(mapped?.rows);
@@ -316,28 +373,33 @@ export const withPaymentRows = <T>(state: T): T => {
   return { ...root, mapped: { ...mapped, rows: next } };
 };
 
-// ─── Totals after payments ──────────────────────────────────────────────────
+// ─── Settlement rows ────────────────────────────────────────────────────────
 //
-// Under the shared Subtotal widget's rows, three rows settle the invoice
-// against the payments recorded on it (the payment lines in the item table):
+// The totals block, on every invoice, settles it against the payments
+// recorded on it (the payment lines in the item table):
 //
 //   Данъчна основа   tax base × (1 − paid share)
 //   ДДС              VAT      × (1 − paid share)
+//   Amount paid      −paid            (part-paid only: hidden unpaid or paid in full)
 //   Сума за плащане  total − paid
 //
-// A payment includes VAT, so it is split between the two in proportion: the
-// paid share is paid ÷ total, capped at 1. Paid in full, all three print 0.00.
-// VAT is the document's tax: IGST or CGST + SGST — whichever the document
-// prints (mapped.visibility, the same decision as the item table; a payload can
-// carry both, IGST then being their sum) — plus cess. The tax base is the
-// total less that VAT, so discounts, charges and round-off are inside it. Labels are the design's Bulgarian wording — the payload
-// has no label for any of these rows.
+// Unpaid, they are the full figures; paid in full, tax base, VAT and amount
+// to pay are 0.00. A
+// payment includes VAT, so it is split between the two in proportion: the
+// paid share is paid ÷ total, capped at 1. VAT is the document's tax: IGST or
+// CGST + SGST — whichever the document prints (mapped.visibility, the same
+// decision as the item table; a payload can carry both, IGST then being their
+// sum) — plus cess. The tax base is the total less that VAT, so discounts,
+// charges and round-off are inside it.
+//
+// Labels: the VAT row reuses the totals' own tax-row label without its rate.
+// The other three are the design's fixed Bulgarian wording: no payload key
+// carries a tax-base label, and the account asked for these two over its
+// customLabels.paidAmount / dueAmount.
 
-export const SETTLEMENT_LABELS = {
-  taxBase: "Данъчна основа",
-  vat: "ДДС",
-  due: "Сума за плащане",
-};
+export const TAX_BASE_LABEL = "Данъчна основа";
+export const PAID_LABEL = "Платена сума";
+export const DUE_LABEL = "Сума за плащане";
 
 const amountOf = (value: any): number => {
   const n = Number(value);
@@ -362,10 +424,7 @@ const documentVat = (finalTotal: any, visibility: any): number => {
 export const settlementFigures = (
   invoice: any,
   visibility?: any
-): { taxBase: number; vat: number; due: number; paid: number } | null => {
-  const payments = recordedPayments(invoice);
-  if (payments.length === 0) return null;
-
+): { taxBase: number; vat: number; due: number; paid: number } => {
   const digits =
     typeof invoice?.subUnitLength === "number" ? invoice.subUnitLength : 2;
   const round = (n: number): number => {
@@ -376,7 +435,10 @@ export const settlementFigures = (
 
   const total = amountOf(invoice?.finalTotal?.total);
   const vat = documentVat(invoice?.finalTotal, visibility);
-  const paid = payments.reduce((sum, p) => sum + Math.abs(Number(p.amount)), 0);
+  const paid = recordedPayments(invoice).reduce(
+    (sum, p) => sum + Math.abs(Number(p.amount)),
+    0
+  );
   const share = total > 0 ? Math.min(Math.max(paid / total, 0), 1) : 0;
 
   return {
@@ -387,40 +449,77 @@ export const settlementFigures = (
   };
 };
 
-// Formatted exactly as the Subtotal widget formats its own rows (document
-// currency and locale, the document's sub-unit length), so the figures align.
+// The totals' first tax row (IGST, or CGST under a split), rate dropped:
+// "ДДС (18%)" → "ДДС".
+const vatLabel = (totals: any): string => {
+  const row = asArray(totals?.groups?.main).find((r: any) => r?.isTaxRow);
+  return asText(row?.label).replace(/\s*\([^)]*%\)\s*$/, "");
+};
+
+// Formatted as the Subtotal widget formats its rows (document currency and
+// locale, the document's sub-unit length), then through totalsFigure like
+// every other totals figure. Without a sub-unit length the widget drops the
+// decimals of a whole number; these rows keep two, so a settled invoice
+// reads "0.00 €" as the design shows. The business column, when the totals print one,
+// converts at the document's rate for the business currency.
 export const settlementTotals = (
   invoice: any,
-  visibility?: any
+  visibility: any,
+  totals: any
 ): {
   hidden: boolean;
-  rows: Array<{ key: string; label: string; value: string }>;
-} | null => {
+  rows: Array<{
+    key: string;
+    label: string;
+    value: string;
+    converted: string | null;
+  }>;
+} => {
   const figures = settlementFigures(invoice, visibility);
-  if (!figures) return null;
   const currency = asText(invoice?.currency) || "INR";
   const locale =
     asText(invoice?.locale) || asText(invoice?.businessLocale) || undefined;
   const subUnitLength =
-    typeof invoice?.subUnitLength === "number"
-      ? invoice.subUnitLength
-      : undefined;
+    typeof invoice?.subUnitLength === "number" ? invoice.subUnitLength : 2;
   const symbol = asText(invoice?.customCurrencySymbol) || undefined;
-  const money = (n: number): string =>
-    formatCurrency(n, currency, locale, subUnitLength, symbol);
+  const businessCurrency =
+    asText(invoice?.businessCurrency) || asText(invoice?.owner?.currency);
+  const businessLocale =
+    asText(invoice?.businessLocale) ||
+    asText(invoice?.owner?.locale) ||
+    undefined;
+  const rate = amountOf(invoice?.conversionRates?.[businessCurrency]);
+  const converts = Boolean(totals?.businessColumn) && rate > 0;
+
+  const row = (key: string, label: string, amount: number) => ({
+    key,
+    label,
+    value: totalsFigure(
+      formatCurrency(amount, currency, locale, subUnitLength, symbol)
+    ),
+    converted: converts
+      ? totalsFigure(
+          formatCurrency(
+            amount * rate,
+            businessCurrency,
+            businessLocale,
+            subUnitLength
+          )
+        )
+      : null,
+  });
 
   return {
     hidden:
       invoice?.hideTotals === true ||
       invoice?.advanceOptions?.hideTotals === true,
     rows: [
-      {
-        key: "taxBase",
-        label: SETTLEMENT_LABELS.taxBase,
-        value: money(figures.taxBase),
-      },
-      { key: "vat", label: SETTLEMENT_LABELS.vat, value: money(figures.vat) },
-      { key: "due", label: SETTLEMENT_LABELS.due, value: money(figures.due) },
+      row("taxBase", TAX_BASE_LABEL, figures.taxBase),
+      row("vat", vatLabel(totals), figures.vat),
+      ...(figures.paid > 0 && figures.due > 0
+        ? [row("paid", PAID_LABEL, -figures.paid)]
+        : []),
+      row("due", DUE_LABEL, figures.due),
     ],
   };
 };
@@ -433,8 +532,9 @@ export function registerFrigoProTemplateHelpers(HB: any): void {
   HB.registerHelper("partyFields", partyFields);
   HB.registerHelper("partyAddress", partyAddress);
   HB.registerHelper("showExchangeRate", showExchangeRate);
-  HB.registerHelper("pageZoomStyle", pageZoomStyle);
+  HB.registerHelper("frigoTotals", frigoTotals);
   HB.registerHelper("settlementTotals", settlementTotals);
+  HB.registerHelper("pageZoomStyle", pageZoomStyle);
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
