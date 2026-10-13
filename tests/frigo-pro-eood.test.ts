@@ -27,7 +27,9 @@ import {
   pageZoom,
   pageZoomStyle,
   withPaymentRows,
+  withoutCurrencyMarks,
   withoutSecondCurrency,
+  currencyMark,
 } from "../src/templates/frigo-pro-eood/helpers";
 import lineItemsPartial from "../src/widgets/line-items/LineItemsTable.hbs";
 import subtotalPartial from "../src/widgets/subtotal/Subtotal.hbs";
@@ -88,12 +90,14 @@ const baseInvoice = (): any =>
 
 // Mirrors index.ts's data mapper.
 const mapState = (over: Record<string, unknown> = {}): any =>
-  withoutSecondCurrency(
-    withPaymentRows(
-      normalizeInvoiceTemplateState({
-        ...(sample as any),
-        invoice: { ...baseInvoice(), ...over },
-      })
+  withoutCurrencyMarks(
+    withoutSecondCurrency(
+      withPaymentRows(
+        normalizeInvoiceTemplateState({
+          ...(sample as any),
+          invoice: { ...baseInvoice(), ...over },
+        })
+      )
     )
   );
 
@@ -341,6 +345,71 @@ describe("frigo-pro-eood payment lines", () => {
     );
     expect(cellText(row, "rate")).not.toMatch(/0000005/);
     expect(cellText(row, "rate")).toMatch(/534\.53$/);
+  });
+});
+
+describe("frigo-pro-eood item table figures", () => {
+  const MONEY_KEYS = ["rate", "amount", "igst", "cgst", "sgst", "total"];
+  const asCells = (row: any): any[] =>
+    Array.isArray(row?.cells) ? row.cells : [];
+  const moneyTexts = (state: any): string[] =>
+    state.mapped.rows.flatMap((row: any) =>
+      asCells(row)
+        .filter((cell: any) => MONEY_KEYS.includes(cell.key) && cell.text)
+        .map((cell: any) => cell.text)
+    );
+
+  it("reads the document's currency mark", () => {
+    expect(currencyMark({ currency: "BGN" })).toBe("BGN");
+    expect(currencyMark({ currency: "EUR" })).toBe("€");
+    expect(currencyMark({ currency: "INR" })).toBe("₹");
+  });
+
+  it("prints item and payment figures without the currency", () => {
+    const state = mapState({
+      currency: "BGN",
+      items: [
+        {
+          name: "Item",
+          quantity: 4,
+          rate: 1,
+          gstRate: 20,
+          amount: 4,
+          igst: 0.8,
+          total: 4.8,
+        },
+      ],
+      allPayments: [
+        { amount: 2.4, paymentDate: "2026-10-13", isRemoved: false },
+      ],
+    });
+    const texts = moneyTexts(state);
+    expect(texts.length).toBeGreaterThan(0);
+    texts.forEach((text) => expect(text).toMatch(/^-?\d[\d.,]*$/));
+    const [row] = paymentRows(state);
+    expect(cellText(row, "total")).toBe("-2.40");
+  });
+
+  it("leaves a cell that is more than a figure alone", () => {
+    const state = withoutCurrencyMarks({
+      invoice: { currency: "BGN" },
+      mapped: {
+        rows: [
+          {
+            cells: [
+              { key: "name", text: "Fee BGN 5" },
+              { key: "amount", text: "-BGN 1,234.50" },
+              { key: "total", text: "BGN 4" },
+            ],
+          },
+        ],
+      },
+    });
+    expect(state.mapped.rows[0].cells.map((c: any) => c.text)).toEqual([
+      "Fee BGN 5",
+      "-1,234.50",
+      "4",
+    ]);
   });
 });
 

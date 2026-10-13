@@ -243,6 +243,61 @@ export const withoutSecondCurrency = <T>(state: T): T => {
   };
 };
 
+// The item table prints bare figures ("4.00", "-2.40"): the currency is said
+// once, in the totals under it. The shared cell builder formats every money
+// cell with the document's symbol or code ("BGN 4.00", "€4.00", "4,00 лв."),
+// so this mapper takes that mark back off. Only a cell that is exactly a
+// figure plus the mark is touched — an item name that mentions "BGN" is not.
+const escapeRegExp = (text: string): string =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const currencyMark = (invoice: any): string =>
+  formatCurrency(
+    1,
+    asText(invoice?.currency) || "INR",
+    asText(invoice?.locale) || undefined,
+    0,
+    asText(invoice?.customCurrencySymbol) || undefined
+  )
+    .replace("1", "")
+    .trim();
+
+export const withoutCurrencyMarks = <T>(state: T): T => {
+  const root = state as any;
+  const mapped = root?.mapped;
+  const mark = currencyMark(root?.invoice);
+  if (!mapped || !mark) return state;
+
+  const m = escapeRegExp(mark);
+  const figure = String.raw`\d(?:[\d.,'’\s]*\d)?`;
+  const marked = new RegExp(
+    String.raw`^([-−]?)\s*${m}\s*([-−]?)(${figure})$|^([-−]?${figure})\s*${m}$`
+  );
+  const bare = (text: unknown): unknown => {
+    if (typeof text !== "string") return text;
+    const hit = marked.exec(text.trim());
+    if (!hit) return text;
+    return hit[3] !== undefined ? `${hit[1] || hit[2]}${hit[3]}` : hit[4];
+  };
+  return {
+    ...root,
+    mapped: {
+      ...mapped,
+      rows: asArray(mapped.rows).map((row) =>
+        Array.isArray(row?.cells)
+          ? {
+              ...row,
+              cells: row.cells.map((cell: any) => ({
+                ...cell,
+                text: bare(cell?.text),
+              })),
+            }
+          : row
+      ),
+    },
+  };
+};
+
 // ─── Payment lines ──────────────────────────────────────────────────────────
 //
 // Each payment recorded against the invoice prints as one more line at the
