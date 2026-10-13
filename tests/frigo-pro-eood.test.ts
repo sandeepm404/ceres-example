@@ -11,6 +11,8 @@ import {
   partyAddress,
   partyFields,
   paymentLineText,
+  paymentSplit,
+  paymentVatRate,
   recordedPayments,
   registerFrigoProTemplateHelpers,
   showExchangeRate,
@@ -25,7 +27,9 @@ import {
   pageZoom,
   pageZoomStyle,
   withPaymentRows,
+  withoutCurrencyMarks,
   withoutSecondCurrency,
+  currencyMark,
 } from "../src/templates/frigo-pro-eood/helpers";
 import lineItemsPartial from "../src/widgets/line-items/LineItemsTable.hbs";
 import subtotalPartial from "../src/widgets/subtotal/Subtotal.hbs";
@@ -86,12 +90,14 @@ const baseInvoice = (): any =>
 
 // Mirrors index.ts's data mapper.
 const mapState = (over: Record<string, unknown> = {}): any =>
-  withoutSecondCurrency(
-    withPaymentRows(
-      normalizeInvoiceTemplateState({
-        ...(sample as any),
-        invoice: { ...baseInvoice(), ...over },
-      })
+  withoutCurrencyMarks(
+    withoutSecondCurrency(
+      withPaymentRows(
+        normalizeInvoiceTemplateState({
+          ...(sample as any),
+          invoice: { ...baseInvoice(), ...over },
+        })
+      )
     )
   );
 
@@ -206,7 +212,7 @@ describe("frigo-pro-eood payment lines", () => {
     ]);
   });
 
-  it("prints text, -1, rate and a negative amount; leaves tax columns blank", () => {
+  it("without an item VAT rate: the payment as all net, tax columns blank", () => {
     const state = mapState({
       invoiceNumber: "3903",
       ownerOffset: "+03:00",
@@ -229,6 +235,42 @@ describe("frigo-pro-eood payment lines", () => {
     row.cells.forEach((cell: any) =>
       expect(cell.secondaryText).toBeUndefined()
     );
+  });
+
+  // One item at 20% VAT, as on the Frigo Pro documents.
+  const vatItems = () =>
+    baseInvoice().items.map((item: any) => ({ ...item, gstRate: 20 }));
+
+  it("splits a payment at the items' VAT rate", () => {
+    expect(paymentVatRate({ items: [{ gstRate: 20 }] })).toBe(20);
+    expect(paymentVatRate({ items: [{}, { gstRate: "9" }] })).toBe(9);
+    expect(paymentVatRate({ items: [{ gstRate: null }] })).toBeNull();
+    // The reference document: 2.40 paid on a 20% invoice is 2.00 + 0.40.
+    expect(paymentSplit({ items: [{ gstRate: 20 }] }, { amount: 2.4 })).toEqual(
+      { gross: 2.4, net: 2, vat: 0.4, rate: 20 }
+    );
+    // net + vat is always exactly the payment.
+    const odd = paymentSplit({ items: [{ gstRate: 20 }] }, { amount: 1000 });
+    expect(odd.net).toBe(833.33);
+    expect(odd.net + odd.vat).toBeCloseTo(1000, 10);
+  });
+
+  it("prints the net price, VAT rate, VAT and gross on the payment line", () => {
+    const state = mapState({
+      items: vatItems(),
+      allPayments: [{ ...payment, amount: 2.4 }],
+    });
+    const [row] = paymentRows(state);
+    expect(cellText(row, "quantity")).toMatch(/^-1\b/);
+    expect(cellText(row, "gstRate")).toMatch(/^20(\.00)?%$/);
+    expect(cellText(row, "rate")).toMatch(/2\.00$|2$/);
+    expect(cellText(row, "amount")).toMatch(/^-\D*2(\.00)?$/);
+    expect(cellText(row, "total")).toMatch(/^-\D*2\.40$/);
+    const vat = ["igst", "cgst", "sgst"]
+      .map((key) => cellText(row, key))
+      .filter((text) => text);
+    expect(vat.length).toBeGreaterThan(0);
+    vat.forEach((text) => expect(text).toMatch(/^-\D*0\.[24]0?$/));
   });
 
   it("prints бр. in a separate unit column", () => {
@@ -303,6 +345,71 @@ describe("frigo-pro-eood payment lines", () => {
     );
     expect(cellText(row, "rate")).not.toMatch(/0000005/);
     expect(cellText(row, "rate")).toMatch(/534\.53$/);
+  });
+});
+
+describe("frigo-pro-eood item table figures", () => {
+  const MONEY_KEYS = ["rate", "amount", "igst", "cgst", "sgst", "total"];
+  const asCells = (row: any): any[] =>
+    Array.isArray(row?.cells) ? row.cells : [];
+  const moneyTexts = (state: any): string[] =>
+    state.mapped.rows.flatMap((row: any) =>
+      asCells(row)
+        .filter((cell: any) => MONEY_KEYS.includes(cell.key) && cell.text)
+        .map((cell: any) => cell.text)
+    );
+
+  it("reads the document's currency mark", () => {
+    expect(currencyMark({ currency: "BGN" })).toBe("BGN");
+    expect(currencyMark({ currency: "EUR" })).toBe("€");
+    expect(currencyMark({ currency: "INR" })).toBe("₹");
+  });
+
+  it("prints item and payment figures without the currency", () => {
+    const state = mapState({
+      currency: "BGN",
+      items: [
+        {
+          name: "Item",
+          quantity: 4,
+          rate: 1,
+          gstRate: 20,
+          amount: 4,
+          igst: 0.8,
+          total: 4.8,
+        },
+      ],
+      allPayments: [
+        { amount: 2.4, paymentDate: "2026-10-13", isRemoved: false },
+      ],
+    });
+    const texts = moneyTexts(state);
+    expect(texts.length).toBeGreaterThan(0);
+    texts.forEach((text) => expect(text).toMatch(/^-?\d[\d.,]*$/));
+    const [row] = paymentRows(state);
+    expect(cellText(row, "total")).toBe("-2.40");
+  });
+
+  it("leaves a cell that is more than a figure alone", () => {
+    const state = withoutCurrencyMarks({
+      invoice: { currency: "BGN" },
+      mapped: {
+        rows: [
+          {
+            cells: [
+              { key: "name", text: "Fee BGN 5" },
+              { key: "amount", text: "-BGN 1,234.50" },
+              { key: "total", text: "BGN 4" },
+            ],
+          },
+        ],
+      },
+    });
+    expect(state.mapped.rows[0].cells.map((c: any) => c.text)).toEqual([
+      "Fee BGN 5",
+      "-1,234.50",
+      "4",
+    ]);
   });
 });
 
@@ -563,6 +670,7 @@ describe("frigo-pro-eood settlement rows", () => {
   const doc = (paid: number[], over: any = {}) => ({
     currency: "BGN",
     finalTotal: { total: 738650.5, igst: 112675.5, cgst: 0, sgst: 0 },
+    items: [{ gstRate: 18, amount: 625975 }],
     allPayments: paid.map((amount) => ({ amount, paymentDate: "2026-10-06" })),
     ...over,
   });
@@ -594,7 +702,7 @@ describe("frigo-pro-eood settlement rows", () => {
     });
   });
 
-  it("splits a part payment between tax base and VAT in proportion", () => {
+  it("deducts a part payment's net and VAT at the item rate", () => {
     expect(settlementFigures(doc([369325.25]), igst)).toEqual({
       taxBase: 312987.5,
       vat: 56337.75,
@@ -626,7 +734,7 @@ describe("frigo-pro-eood settlement rows", () => {
     expect(split.taxBase).toBe(312987.5);
   });
 
-  it("caps the paid share at the total; an overpayment shows as a negative due", () => {
+  it("zeroes tax base and VAT once paid in full; an overpayment shows as a negative due", () => {
     expect(settlementFigures(doc([800000]), igst)).toEqual({
       taxBase: 0,
       vat: 0,

@@ -18,6 +18,11 @@ const asText = (value: any): string => {
   return typeof value === "string" ? value.trim() : "";
 };
 
+const amountOf = (value: any): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+};
+
 const pad = (n: number): string => String(n).padStart(2, "0");
 
 // "+05:30", "-0300", "+2" → minutes east of UTC. Anything else is UTC.
@@ -238,26 +243,130 @@ export const withoutSecondCurrency = <T>(state: T): T => {
   };
 };
 
+// The item table prints bare figures ("4.00", "-2.40"): the currency is said
+// once, in the totals under it. The shared cell builder formats every money
+// cell with the document's symbol or code ("BGN 4.00", "€4.00", "4,00 лв."),
+// so this mapper takes that mark back off. Only a cell that is exactly a
+// figure plus the mark is touched — an item name that mentions "BGN" is not.
+const escapeRegExp = (text: string): string =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const currencyMark = (invoice: any): string =>
+  formatCurrency(
+    1,
+    asText(invoice?.currency) || "INR",
+    asText(invoice?.locale) || undefined,
+    0,
+    asText(invoice?.customCurrencySymbol) || undefined
+  )
+    .replace("1", "")
+    .trim();
+
+export const withoutCurrencyMarks = <T>(state: T): T => {
+  const root = state as any;
+  const mapped = root?.mapped;
+  const mark = currencyMark(root?.invoice);
+  if (!mapped || !mark) return state;
+
+  const m = escapeRegExp(mark);
+  const figure = String.raw`\d(?:[\d.,'’\s]*\d)?`;
+  const marked = new RegExp(
+    String.raw`^([-−]?)\s*${m}\s*([-−]?)(${figure})$|^([-−]?${figure})\s*${m}$`
+  );
+  const bare = (text: unknown): unknown => {
+    if (typeof text !== "string") return text;
+    const hit = marked.exec(text.trim());
+    if (!hit) return text;
+    return hit[3] !== undefined ? `${hit[1] || hit[2]}${hit[3]}` : hit[4];
+  };
+  return {
+    ...root,
+    mapped: {
+      ...mapped,
+      rows: asArray(mapped.rows).map((row) =>
+        Array.isArray(row?.cells)
+          ? {
+              ...row,
+              cells: row.cells.map((cell: any) => ({
+                ...cell,
+                text: bare(cell?.text),
+              })),
+            }
+          : row
+      ),
+    },
+  };
+};
+
 // ─── Payment lines ──────────────────────────────────────────────────────────
 //
 // Each payment recorded against the invoice prints as one more line at the
-// end of the item table, the way Bulgarian invoices deduct an advance:
+// end of the item table, the way Bulgarian invoices deduct an advance: a
+// line at the items' VAT rate whose price is the payment net of VAT.
 //
-//   Авансово плащане по ф-ра <invoice number>/<payment date>   бр.   -1   1 533.87   -1 533.87
+//   Авансово плащане по ф-ра <№>/<date>   бр.   -1   20%   1 278.23   -1 278.23   -255.64   -1 533.87
+//                                                       rate   price      amount      VAT       total
 //
-// The line is a reference only: the totals under the table stay the shared
-// Subtotal widget's, which already subtracts what was paid (Amount Paid /
-// Due Amount from the document's balance).
+// A payment is VAT-inclusive, so it splits as net = payment ÷ (1 + rate) and
+// VAT = payment − net (paymentSplit). The totals under the table deduct the
+// same figures (settlementFigures), so the table and the totals agree.
 
 export const PAYMENT_LINE_TEXT = "Авансово плащане по ф-ра";
 export const PAYMENT_LINE_UNIT = "бр.";
 
-// Columns a payment line fills. Every other column (HSN, tax rate, tax
-// amounts, discount, a business's own columns) stays blank: the payment has
-// no value there, and a "0%" or "0.00" would read as data.
+// Columns a payment line fills. Every other column (HSN, discount, a
+// business's own columns) stays blank: the payment has no value there, and a
+// "0.00" would read as data.
 const NAME_KEYS = new Set(["name", "item"]);
-const SIGNED_KEYS = new Set(["quantity", "amount", "total"]);
-const FILLED_KEYS = new Set([...NAME_KEYS, ...SIGNED_KEYS, "rate", "unit"]);
+const TAX_AMOUNT_KEYS = ["igst", "cgst", "sgst", "tax", "taxAmount"];
+const SIGNED_KEYS = new Set([
+  "quantity",
+  "amount",
+  "total",
+  ...TAX_AMOUNT_KEYS,
+]);
+const FILLED_KEYS = new Set([
+  ...NAME_KEYS,
+  ...SIGNED_KEYS,
+  "rate",
+  "gstRate",
+  "unit",
+]);
+
+const digitsOf = (invoice: any): number =>
+  typeof invoice?.subUnitLength === "number" ? invoice.subUnitLength : 2;
+
+const roundTo = (n: number, digits: number): number => {
+  const factor = 10 ** digits;
+  const r = Math.round(n * factor) / factor;
+  return Object.is(r, -0) ? 0 : r;
+};
+
+// The VAT rate a payment is deducted at: the line items' own rate (gstRate,
+// e.g. 20). A document whose items carry different rates uses the first
+// item's; one whose items carry no rate gets null, and the payment is
+// deducted as all net with the rate column left blank.
+export const paymentVatRate = (invoice: any): number | null => {
+  const rates = asArray(invoice?.items)
+    .map((it: any) => it?.gstRate)
+    .filter((r: any) => typeof r === "number" || asText(r) !== "")
+    .map(Number)
+    .filter((r: number) => Number.isFinite(r) && r >= 0);
+  return rates.length > 0 ? rates[0] : null;
+};
+
+// One payment, VAT-inclusive, split at that rate and rounded to the
+// document's decimals; net + vat is always exactly the payment.
+export const paymentSplit = (
+  invoice: any,
+  payment: any
+): { gross: number; net: number; vat: number; rate: number | null } => {
+  const digits = digitsOf(invoice);
+  const rate = paymentVatRate(invoice);
+  const gross = roundTo(Math.abs(amountOf(payment?.amount)), digits);
+  const net = roundTo(gross / (1 + (rate ?? 0) / 100), digits);
+  return { gross, net, vat: roundTo(gross - net, digits), rate };
+};
 
 // The payments that count: every one still on the document. A removed or
 // unapproved payment, or one with no amount, never reached the balance.
@@ -289,18 +398,42 @@ const buildPaymentRow = (
   payment: any,
   lineNumber: number
 ): any => {
-  // Rounded to the document's sub-unit first: the rate cell prints every
-  // decimal it is given, so a float leftover (29,91,534.5260000005) would show.
-  const factor = 10 ** context.subUnitLength;
-  const amount = Math.round(Math.abs(Number(payment.amount)) * factor) / factor;
+  // Rounded to the document's sub-unit first (paymentSplit): the rate cell
+  // prints every decimal it is given, so a float leftover
+  // (29,91,534.5260000005) would show.
+  const { gross, net, vat, rate } = paymentSplit(invoice, payment);
   const name = paymentLineText(invoice, payment);
+  // Under a CGST + SGST split each column carries half the VAT.
+  const cgst = roundTo(vat / 2, digitsOf(invoice));
   // Formatted by the same cell builder as every real line, so the money and
   // quantity follow the document's currency, locale and rounding settings.
   // The builder prints magnitudes (a quantity is always abs()), so the sign
   // is put back below.
-  const item = { name, quantity: 1, rate: amount, amount, total: amount };
+  // Without a rate the VAT cells stay blank (below) rather than print 0.00.
+  const vatCells =
+    rate === null
+      ? {}
+      : {
+          gstRate: rate,
+          igst: vat,
+          cgst,
+          sgst: roundTo(vat - cgst, digitsOf(invoice)),
+          tax: vat,
+          taxAmount: vat,
+        };
+  const item = {
+    name,
+    quantity: 1,
+    rate: net,
+    amount: net,
+    ...vatCells,
+    total: gross,
+  };
+  const blank = (key: string) =>
+    !FILLED_KEYS.has(key) ||
+    (rate === null && (key === "gstRate" || TAX_AMOUNT_KEYS.includes(key)));
   const cells = buildRowCells(context, visibleColumns, item).map((cell) => {
-    if (!FILLED_KEYS.has(cell.key)) return { ...cell, text: "" };
+    if (blank(cell.key)) return { ...cell, text: "" };
     if (cell.key === "unit") return { ...cell, text: PAYMENT_LINE_UNIT };
     const next: any = { ...cell };
     // The second-currency amount is presentational and unsigned; a payment
@@ -308,7 +441,8 @@ const buildPaymentRow = (
     delete next.secondaryText;
     if (cell.key === "quantity" && context.showUnitInQuantity) {
       next.text = `${negate(cell.text)} (${PAYMENT_LINE_UNIT})`;
-    } else if (SIGNED_KEYS.has(cell.key)) {
+    } else if (SIGNED_KEYS.has(cell.key) && !/^[^1-9]*$/.test(cell.text)) {
+      // A zero (no VAT) prints unsigned.
       next.text = negate(cell.text);
     }
     return next;
@@ -376,17 +510,16 @@ export const withPaymentRows = <T>(state: T): T => {
 // ─── Settlement rows ────────────────────────────────────────────────────────
 //
 // The totals block, on every invoice, settles it against the payments
-// recorded on it (the payment lines in the item table):
+// recorded on it, deducting exactly what the payment lines in the item table
+// show (paymentSplit):
 //
-//   Данъчна основа   tax base × (1 − paid share)
-//   ДДС              VAT      × (1 − paid share)
+//   Данъчна основа   tax base − Σ payment nets
+//   ДДС              VAT      − Σ payment VAT
 //   Amount paid      −paid            (part-paid only: hidden unpaid or paid in full)
 //   Сума за плащане  total − paid
 //
-// Unpaid, they are the full figures; paid in full, tax base, VAT and amount
-// to pay are 0.00. A
-// payment includes VAT, so it is split between the two in proportion: the
-// paid share is paid ÷ total, capped at 1. VAT is the document's tax: IGST or
+// Unpaid, they are the full figures; paid in full (or over), tax base and VAT
+// are 0.00 and amount to pay is total − paid. VAT is the document's tax: IGST or
 // CGST + SGST — whichever the document prints (mapped.visibility, the same
 // decision as the item table; a payload can carry both, IGST then being their
 // sum) — plus cess. The tax base is the total less that VAT, so discounts,
@@ -400,11 +533,6 @@ export const withPaymentRows = <T>(state: T): T => {
 export const TAX_BASE_LABEL = "Данъчна основа";
 export const PAID_LABEL = "Платена сума";
 export const DUE_LABEL = "Сума за плащане";
-
-const amountOf = (value: any): number => {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-};
 
 const documentVat = (finalTotal: any, visibility: any): number => {
   const cess = finalTotal?.cessTotal;
@@ -425,26 +553,22 @@ export const settlementFigures = (
   invoice: any,
   visibility?: any
 ): { taxBase: number; vat: number; due: number; paid: number } => {
-  const digits =
-    typeof invoice?.subUnitLength === "number" ? invoice.subUnitLength : 2;
-  const round = (n: number): number => {
-    const factor = 10 ** digits;
-    const r = Math.round(n * factor) / factor;
-    return Object.is(r, -0) ? 0 : r;
-  };
+  const digits = digitsOf(invoice);
+  const round = (n: number): number => roundTo(n, digits);
 
   const total = amountOf(invoice?.finalTotal?.total);
   const vat = documentVat(invoice?.finalTotal, visibility);
-  const paid = recordedPayments(invoice).reduce(
-    (sum, p) => sum + Math.abs(Number(p.amount)),
-    0
-  );
-  const share = total > 0 ? Math.min(Math.max(paid / total, 0), 1) : 0;
+  const splits = recordedPayments(invoice).map((p) => paymentSplit(invoice, p));
+  const sum = (key: "gross" | "net" | "vat") =>
+    splits.reduce((acc, split) => acc + split[key], 0);
+  const paid = sum("gross");
+  const due = round(total - paid);
+  const settled = due <= 0;
 
   return {
-    taxBase: round((total - vat) * (1 - share)),
-    vat: round(vat * (1 - share)),
-    due: round(total - paid),
+    taxBase: settled ? 0 : round(total - vat - sum("net")),
+    vat: settled ? 0 : round(vat - sum("vat")),
+    due,
     paid: round(paid),
   };
 };

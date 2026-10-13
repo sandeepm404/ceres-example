@@ -20,6 +20,7 @@ import "../../widgets/refrens-branding";
 import {
   registerFrigoProTemplateHelpers,
   withPaymentRows,
+  withoutCurrencyMarks,
   withoutSecondCurrency,
 } from "./helpers";
 
@@ -29,9 +30,12 @@ registerFrigoProTemplateHelpers(Handlebars);
 
 // Export template to global for main renderer to consume. Payments recorded
 // against the invoice are appended to the item table as advance-payment lines;
-// the business-currency amount under item figures is dropped (for now).
+// the business-currency amount under item figures is dropped (for now), and
+// the item figures print without the currency.
 window.CeresTemplateDataMapper = ((payload: any) =>
-  withoutSecondCurrency(
-    withPaymentRows(normalizeInvoiceTemplateState(payload))
+  withoutCurrencyMarks(
+    withoutSecondCurrency(
+      withPaymentRows(normalizeInvoiceTemplateState(payload))
+    )
   )) as any;
 window.CeresTemplate = template;
