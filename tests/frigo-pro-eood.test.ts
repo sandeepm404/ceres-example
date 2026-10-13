@@ -11,6 +11,8 @@ import {
   partyAddress,
   partyFields,
   paymentLineText,
+  paymentSplit,
+  paymentVatRate,
   recordedPayments,
   registerFrigoProTemplateHelpers,
   showExchangeRate,
@@ -206,7 +208,7 @@ describe("frigo-pro-eood payment lines", () => {
     ]);
   });
 
-  it("prints text, -1, rate and a negative amount; leaves tax columns blank", () => {
+  it("without an item VAT rate: the payment as all net, tax columns blank", () => {
     const state = mapState({
       invoiceNumber: "3903",
       ownerOffset: "+03:00",
@@ -229,6 +231,42 @@ describe("frigo-pro-eood payment lines", () => {
     row.cells.forEach((cell: any) =>
       expect(cell.secondaryText).toBeUndefined()
     );
+  });
+
+  // One item at 20% VAT, as on the Frigo Pro documents.
+  const vatItems = () =>
+    baseInvoice().items.map((item: any) => ({ ...item, gstRate: 20 }));
+
+  it("splits a payment at the items' VAT rate", () => {
+    expect(paymentVatRate({ items: [{ gstRate: 20 }] })).toBe(20);
+    expect(paymentVatRate({ items: [{}, { gstRate: "9" }] })).toBe(9);
+    expect(paymentVatRate({ items: [{ gstRate: null }] })).toBeNull();
+    // The reference document: 2.40 paid on a 20% invoice is 2.00 + 0.40.
+    expect(paymentSplit({ items: [{ gstRate: 20 }] }, { amount: 2.4 })).toEqual(
+      { gross: 2.4, net: 2, vat: 0.4, rate: 20 }
+    );
+    // net + vat is always exactly the payment.
+    const odd = paymentSplit({ items: [{ gstRate: 20 }] }, { amount: 1000 });
+    expect(odd.net).toBe(833.33);
+    expect(odd.net + odd.vat).toBeCloseTo(1000, 10);
+  });
+
+  it("prints the net price, VAT rate, VAT and gross on the payment line", () => {
+    const state = mapState({
+      items: vatItems(),
+      allPayments: [{ ...payment, amount: 2.4 }],
+    });
+    const [row] = paymentRows(state);
+    expect(cellText(row, "quantity")).toMatch(/^-1\b/);
+    expect(cellText(row, "gstRate")).toMatch(/^20(\.00)?%$/);
+    expect(cellText(row, "rate")).toMatch(/2\.00$|2$/);
+    expect(cellText(row, "amount")).toMatch(/^-\D*2(\.00)?$/);
+    expect(cellText(row, "total")).toMatch(/^-\D*2\.40$/);
+    const vat = ["igst", "cgst", "sgst"]
+      .map((key) => cellText(row, key))
+      .filter((text) => text);
+    expect(vat.length).toBeGreaterThan(0);
+    vat.forEach((text) => expect(text).toMatch(/^-\D*0\.[24]0?$/));
   });
 
   it("prints бр. in a separate unit column", () => {
@@ -563,6 +601,7 @@ describe("frigo-pro-eood settlement rows", () => {
   const doc = (paid: number[], over: any = {}) => ({
     currency: "BGN",
     finalTotal: { total: 738650.5, igst: 112675.5, cgst: 0, sgst: 0 },
+    items: [{ gstRate: 18, amount: 625975 }],
     allPayments: paid.map((amount) => ({ amount, paymentDate: "2026-10-06" })),
     ...over,
   });
@@ -594,7 +633,7 @@ describe("frigo-pro-eood settlement rows", () => {
     });
   });
 
-  it("splits a part payment between tax base and VAT in proportion", () => {
+  it("deducts a part payment's net and VAT at the item rate", () => {
     expect(settlementFigures(doc([369325.25]), igst)).toEqual({
       taxBase: 312987.5,
       vat: 56337.75,
@@ -626,7 +665,7 @@ describe("frigo-pro-eood settlement rows", () => {
     expect(split.taxBase).toBe(312987.5);
   });
 
-  it("caps the paid share at the total; an overpayment shows as a negative due", () => {
+  it("zeroes tax base and VAT once paid in full; an overpayment shows as a negative due", () => {
     expect(settlementFigures(doc([800000]), igst)).toEqual({
       taxBase: 0,
       vat: 0,
