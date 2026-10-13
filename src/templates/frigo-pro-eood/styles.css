@@ -6,6 +6,7 @@
  */
 
 .fpe-shell {
+  --fpe-page-width: 100%;
   --fpe-font-body: var(--ceres-font-family, "Roboto", Arial, sans-serif);
   --fpe-font-heading: var(--ceres-heading-font-family, var(--fpe-font-body));
   --fpe-ink: var(--ceres-primary-color, #000);
@@ -20,8 +21,6 @@
   --fpe-font-size-xl: 28px;
 
   position: relative;
-  max-width: 820px;
-  margin: 0 auto;
   color: var(--fpe-ink);
   background: #fff;
   font-family: var(--fpe-font-body);
@@ -46,12 +45,17 @@
 }
 
 /* --- Letterhead slots (host-measured via data-ceres-height) --- */
+
+/* Same box as `.fpe-page` (width + centering), so the bands' edges line up
+   with the content's edges. */
 .fpe-shell .invoice-letterhead,
 .fpe-shell .invoice-letterhead-footer {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
+  max-width: var(--fpe-page-width);
+  margin: 0 auto;
 }
 
 .fpe-shell .invoice-letterhead img,
@@ -72,13 +76,13 @@
   overflow: hidden;
 }
 
-/* --- Page: one column, blocks spaced by gap ---
-   The width cap sits on the shell, not here, so the letterhead and footer
-   images span exactly the page's width rather than the whole viewport. */
+/* --- Page: one column, blocks spaced by gap --- */
 .fpe-page {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: var(--fpe-page-width);
+  margin: 0 auto;
   padding: 32px;
 }
 
@@ -439,12 +443,7 @@
   }
 
   .fpe-page {
-    max-width: none;
     padding: 0;
-  }
-
-  .fpe-shell {
-    max-width: none;
   }
 
   .fpe-items .line-items-table>thead>tr>th {
