@@ -631,6 +631,9 @@ export interface ColumnDef {
   fxReturnType?: string;
   summarise?: boolean;
   isHidden?: boolean;
+  // Set when the column is linked to a field of the line's item (SKU for now,
+  // key `inv_sku`). Its value still lives in `item.custom[key]`.
+  source?: { entity: string; field: string };
 }
 
 // Host-level keys of the wrapped payload, minus the two that are resolved rather

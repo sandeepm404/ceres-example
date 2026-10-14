@@ -8,6 +8,10 @@ import "../../widgets/date-time";
 import "../../widgets/markdown-viewer";
 import "../../widgets/currency-format";
 import "../../widgets/subtotal";
+import { registerDefaultTemplateHelpers } from "./helpers";
+
+declare const Handlebars: any;
+registerDefaultTemplateHelpers(Handlebars);
 
 // Export template to global for main renderer to consume
 window.CeresTemplateDataMapper = normalizeInvoiceTemplateState as any;

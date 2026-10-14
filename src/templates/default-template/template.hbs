@@ -177,6 +177,7 @@
         <tr>
           <th class="description-col">Service Description</th>
           {{#if derived.showHsnColumn}}<th>HSN/SAC</th>{{/if}}
+          {{#with (skuColumn mapped.columns)}}<th>{{label}}</th>{{/with}}
           <th class="text-right">QTY</th>
           <th class="text-right">Rate</th>
           <th class="text-right">Amount</th>
@@ -200,6 +201,8 @@
               {{/if}}
             </td>
             {{#if ../derived.showHsnColumn}}<td>{{hsn}}</td>{{/if}}
+            {{!-- The line's own SKU column value (editable per document), not the item's SKU. --}}
+            {{#with (skuColumn ../mapped.columns)}}<td>{{lookup ../custom key}}</td>{{/with}}
             <td class="text-right">{{quantity}}</td>
             <td class="text-right">{{formatCurrency rate}}</td>
             <td class="text-right">{{formatCurrency amount}}</td>

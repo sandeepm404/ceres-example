@@ -6,8 +6,10 @@ import subtotalPartial from "../src/widgets/subtotal/Subtotal.hbs";
 import { computeSubtotalRows } from "../src/widgets/subtotal/utils";
 import registerFormatCurrencyHelper from "../src/widgets/shared/registerFormatCurrencyHelper";
 import registerTaxFlagHelpers from "../src/widgets/shared/registerTaxFlagHelpers";
+import { registerDefaultTemplateHelpers } from "../src/templates/default-template/helpers";
 
 beforeAll(() => {
+  registerDefaultTemplateHelpers(HandlebarsRuntime);
   HandlebarsRuntime.registerPartial("DemoBadge", () => "");
   HandlebarsRuntime.registerPartial(
     "InvoiceStatus",

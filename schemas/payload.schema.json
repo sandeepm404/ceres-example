@@ -553,6 +553,21 @@
         "label": {
           "type": "string"
         },
+        "source": {
+          "properties": {
+            "entity": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "entity",
+            "field"
+          ],
+          "type": "object"
+        },
         "summarise": {
           "type": "boolean"
         }
