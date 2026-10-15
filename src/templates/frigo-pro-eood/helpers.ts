@@ -515,8 +515,10 @@ export const withPaymentRows = <T>(state: T): T => {
 //
 //   Данъчна основа   tax base − Σ payment nets
 //   ДДС              VAT      − Σ payment VAT
-//   Amount paid      −paid            (part-paid only: hidden unpaid or paid in full)
 //   Сума за плащане  total − paid
+//
+// What was paid is not a row of its own: the payment lines in the item table
+// already show it.
 //
 // Unpaid, they are the full figures; paid in full (or over), tax base and VAT
 // are 0.00 and amount to pay is total − paid. VAT is the document's tax: IGST or
@@ -526,12 +528,11 @@ export const withPaymentRows = <T>(state: T): T => {
 // charges and round-off are inside it.
 //
 // Labels: the VAT row reuses the totals' own tax-row label without its rate.
-// The other three are the design's fixed Bulgarian wording: no payload key
-// carries a tax-base label, and the account asked for these two over its
-// customLabels.paidAmount / dueAmount.
+// The other two are the design's fixed Bulgarian wording: no payload key
+// carries a tax-base label, and the account asked for this one over its
+// customLabels.dueAmount.
 
 export const TAX_BASE_LABEL = "Данъчна основа";
-export const PAID_LABEL = "Платена сума";
 export const DUE_LABEL = "Сума за плащане";
 
 const documentVat = (finalTotal: any, visibility: any): number => {
@@ -640,9 +641,6 @@ export const settlementTotals = (
     rows: [
       row("taxBase", TAX_BASE_LABEL, figures.taxBase),
       row("vat", vatLabel(totals), figures.vat),
-      ...(figures.paid > 0 && figures.due > 0
-        ? [row("paid", PAID_LABEL, -figures.paid)]
-        : []),
       row("due", DUE_LABEL, figures.due),
     ],
   };
