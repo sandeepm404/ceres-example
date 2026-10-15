@@ -21,7 +21,6 @@ import {
   frigoTotals,
   settlementFigures,
   TAX_BASE_LABEL,
-  PAID_LABEL,
   DUE_LABEL,
   totalsFigure,
   pageZoom,
@@ -768,7 +767,6 @@ describe("frigo-pro-eood settlement rows", () => {
     expect(rows[0].label).toBe(`${TAX_BASE_LABEL}:`);
     expect(rows[rows.length - 1].label).toBe(`${DUE_LABEL}:`);
     expect(DUE_LABEL).toBe("Сума за плащане");
-    expect(PAID_LABEL).toBe("Платена сума");
     expect(html).not.toMatch(/Due Amount|Paid Amount/);
     // The VAT row is the totals' tax-row label without its rate.
     expect(rows[1].label).not.toMatch(/%/);
@@ -813,20 +811,9 @@ describe("frigo-pro-eood settlement rows", () => {
     cells.forEach((c) => expect(c).toMatch(/\d\u00a0лв\.$/));
   });
 
-  it("prints amount paid above amount to pay", () => {
+  it("has no amount-paid row, whatever was paid", () => {
     const { total } = baseInvoice().finalTotal;
-    const html = render({
-      allPayments: [{ amount: total / 4, paymentDate: "2026-10-06" }],
-    });
-    const rows = rowValues(html);
-    expect(rows.map((r) => r.key)).toEqual(["taxBase", "vat", "paid", "due"]);
-    expect(rows[2].label).toBe(`${PAID_LABEL}:`);
-    expect(rows[2].value).toMatch(/^-\d/);
-  });
-
-  it("has no amount-paid row when paid in full or more", () => {
-    const { total } = baseInvoice().finalTotal;
-    [total, total + 100].forEach((amount) => {
+    [total / 4, total, total + 100].forEach((amount) => {
       const html = render({
         allPayments: [{ amount, paymentDate: "2026-10-06" }],
       });

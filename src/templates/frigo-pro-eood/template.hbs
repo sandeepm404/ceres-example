@@ -10,7 +10,7 @@
   Label text comes from the payload (customLabels, vatLabel, columns[].label,
   party field labels). The only fixed words are the city/address/phone/email
   row labels, which no payload key carries, the payment-line text, and the totals'
-  tax-base, amount-paid and amount-to-pay labels (helpers.ts).
+  tax-base and amount-to-pay labels (helpers.ts).
 
   The root is { invoice, advanceOptions, pdfOptions, mapped, derived } because
   this template installs normalizeInvoiceTemplateState as its data mapper.
@@ -206,7 +206,7 @@
 
     {{!-- ═══ Totals: settlement rows, with the business-currency amount in a
           column of its own ═══
-          Tax base, VAT, amount paid and amount to pay, net of the payments
+          Tax base, VAT and amount to pay, net of the payments
           recorded on the document (helpers.ts settlementTotals). The Subtotal
           widget's own rows are not printed; its model (computeSubtotalRows,
           through helpers.ts frigoTotals: лв. for BGN, currency after the
