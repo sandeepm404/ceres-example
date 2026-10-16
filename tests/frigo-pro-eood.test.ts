@@ -159,19 +159,31 @@ describe("frigo-pro-eood helpers", () => {
     expect(payments).toEqual([{ amount: 100 }]);
   });
 
-  it("writes the payment text as <invoice number>/<payment date>", () => {
+  it("writes the payment text as <payment ref ID>/<payment date>", () => {
     expect(
       paymentLineText(
-        { invoiceNumber: "3903", ownerOffset: "+03:00" },
-        { paymentDate: "2025-10-06T08:00:00.000Z" }
+        { invoiceNumber: "0039", ownerOffset: "+03:00" },
+        { refId: "3903", paymentDate: "2025-10-06T08:00:00.000Z" }
       )
     ).toBe(`${PAYMENT_LINE_TEXT} 3903/06.10.2025`);
     expect(PAYMENT_LINE_TEXT).toBe("Авансово плащане по ф-ра");
+  });
+
+  it("prints the date alone when the payment has no ref ID", () => {
+    ["", "  ", null, undefined].forEach((refId) =>
+      expect(
+        paymentLineText(
+          { invoiceNumber: "0039", ownerOffset: "+03:00" },
+          { refId, paymentDate: "2025-10-06T08:00:00.000Z" }
+        )
+      ).toBe(`${PAYMENT_LINE_TEXT} 06.10.2025`)
+    );
   });
 });
 
 describe("frigo-pro-eood payment lines", () => {
   const payment = {
+    refId: "3903",
     paymentDate: "2025-10-06T08:00:00.000Z",
     amount: 1533.87,
     paymentMethod: "ACCOUNT_TRANSFER",

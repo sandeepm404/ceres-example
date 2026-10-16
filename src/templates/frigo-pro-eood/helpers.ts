@@ -304,7 +304,7 @@ export const withoutCurrencyMarks = <T>(state: T): T => {
 // end of the item table, the way Bulgarian invoices deduct an advance: a
 // line at the items' VAT rate whose price is the payment net of VAT.
 //
-//   Авансово плащане по ф-ра <№>/<date>   бр.   -1   20%   1 278.23   -1 278.23   -255.64   -1 533.87
+//   Авансово плащане по ф-ра <ref>/<date>   бр.   -1   20%   1 278.23   -1 278.23   -255.64   -1 533.87
 //                                                       rate   price      amount      VAT       total
 //
 // A payment is VAT-inclusive, so it splits as net = payment ÷ (1 + rate) and
@@ -379,8 +379,10 @@ export const recordedPayments = (invoice: any): any[] =>
     return Number.isFinite(amount) && amount !== 0;
   });
 
+// <ref> is the Ref ID entered on the payment record (payment.refId). A
+// payment without one prints the date alone — never the invoice's own number.
 export const paymentLineText = (invoice: any, payment: any): string => {
-  const number = asText(invoice?.invoiceNumber);
+  const number = asText(payment?.refId);
   const date = dottedDate(
     payment?.paymentDate ?? payment?.date ?? payment?.createdAt,
     invoice?.ownerOffset

@@ -2,7 +2,7 @@
   frigo-pro-eood — Bulgarian invoice (Фактура).
 
   Payments recorded against the invoice print as extra lines at the end of the
-  item table ("Авансово плащане по ф-ра <number>/<payment date>", negative
+  item table ("Авансово плащане по ф-ра <payment ref ID>/<payment date>", negative
   amount). Those rows are added by the data mapper (helpers.ts withPaymentRows);
   the table markup does not special-case them. Totals are the shared Subtotal
   widget's rows, which already show what was paid and what is still due.
