@@ -270,10 +270,10 @@
   text-align: start;
 }
 
-/* The item column takes a quarter of the table; the figures share the rest. */
+/* The item column takes 40% of the table; the figures share the rest. */
 .smc-items .line-items-table>thead>tr>th.col-item,
 .smc-items .line-items-table>tbody>tr>td.col-item {
-  width: 25%;
+  width: 40%;
 }
 
 /* Item rows print bold, like the headings; the description row below an
@@ -283,7 +283,7 @@
 }
 
 /* With text wrap on, the widget fixes the table layout, which sizes columns
-   from the header row: the item column keeps its quarter and the figure
+   from the header row: the item column keeps its 40% and the figure
    columns, left at auto, split the rest evenly. */
 .smc-items .line-items-table.is-wrap-enabled>thead>tr>th {
   box-sizing: border-box;
