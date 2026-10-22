@@ -561,6 +561,11 @@ describe("3d-align styles", () => {
     expect(css).toMatch(
       /\.line-items-table th,\s*\.tda-items \.line-items-table td \{\s*padding: 8px;/
     );
+    // The figure columns are spread by width, never by extra padding.
+    expect(css).not.toMatch(/padding-inline: 32px/);
+    expect(css).toMatch(
+      /:is\(th, td\):not\(\.col-index, \.col-item, \.item-extras-cell\) \{\s*width: 120px;/
+    );
   });
 
   it("sets the item description right under the item name", () => {
