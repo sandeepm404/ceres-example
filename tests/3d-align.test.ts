@@ -564,7 +564,7 @@ describe("3d-align styles", () => {
     // The figure columns are spread by width, never by extra padding.
     expect(css).not.toMatch(/padding-inline: 32px/);
     expect(css).toMatch(
-      /:is\(th, td\):not\(\.col-index, \.col-item, \.item-extras-cell\) \{\s*width: 120px;/
+      /:is\(th, td\):not\(\.col-index, \.col-item, \.item-extras-cell\) \{\s*min-width: 120px;/
     );
   });
 

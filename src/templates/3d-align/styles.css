@@ -274,15 +274,12 @@
 }
 
 /* Up to three figure columns (index + item + 3 headers), the design spaces
-   them out: each takes a set width, its figure centred in 8px cells. A wider
-   table sizes them to their figures so the item column has room. */
+   them out: each is at least 120px, its figure centred in 8px cells, and
+   grows if its figures need more. A wider table sizes them to their figures
+   so the item column has room. */
 .tda-items .line-items-table:not(:has(thead th:nth-child(6)))
   :is(th, td):not(.col-index, .col-item, .item-extras-cell) {
-  width: 120px;
-}
-
-.tda-items .line-items-table:not(:has(thead th:nth-child(6))) .col-item {
-  width: auto;
+  min-width: 120px;
 }
 
 /* The item column claims all the width; the nowrap columns keep their
