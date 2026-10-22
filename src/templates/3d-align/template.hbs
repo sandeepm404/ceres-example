@@ -330,7 +330,7 @@
     {{#each invoice.terms}}
     {{#if terms.length}}
     <section class="tda-note">
-      {{#if label}}<h2 class="tda-heading">{{label}}</h2>{{else}}{{#if @root.invoice.customLabels.terms}}<h2 class="tda-heading">{{@root.invoice.customLabels.terms}}</h2>{{/if}}{{/if}}
+      {{#if label}}<h2 class="tda-heading tda-heading-s">{{label}}</h2>{{else}}{{#if @root.invoice.customLabels.terms}}<h2 class="tda-heading tda-heading-s">{{@root.invoice.customLabels.terms}}</h2>{{/if}}{{/if}}
       <ol class="tda-terms">
         {{#each terms}}<li>{{this}}</li>{{/each}}
       </ol>
@@ -340,14 +340,14 @@
 
     {{#if invoice.notes}}
     <section class="tda-note">
-      {{#if invoice.customLabels.notes}}<h2 class="tda-heading">{{invoice.customLabels.notes}}</h2>{{/if}}
+      {{#if invoice.customLabels.notes}}<h2 class="tda-heading tda-heading-s">{{invoice.customLabels.notes}}</h2>{{/if}}
       {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
     </section>
     {{/if}}
 
     {{#if invoice.attachments.length}}
     <section class="tda-note">
-      {{#if invoice.customLabels.attachment}}<h2 class="tda-heading">{{invoice.customLabels.attachment}}</h2>{{/if}}
+      {{#if invoice.customLabels.attachment}}<h2 class="tda-heading tda-heading-s">{{invoice.customLabels.attachment}}</h2>{{/if}}
       <ul class="tda-attachments">
         {{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{this}}</a></li>{{/each}}
       </ul>

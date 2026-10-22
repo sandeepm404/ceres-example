@@ -246,6 +246,23 @@ describe("3d-align reference document", () => {
     expect(unlabelled).not.toContain("tda-signature-label");
   });
 
+  it("sizes the terms, notes and attachments headings like Bank Details", () => {
+    const html = render({
+      notes: "Note",
+      attachments: ["https://x.test/a.pdf"],
+    });
+    const headings = [...html.matchAll(/<h2 class="([^"]+)">([^<]+)<\/h2>/g)];
+    const byText = Object.fromEntries(
+      headings.map(([, cls, txt]) => [txt.trim(), cls])
+    );
+    [
+      "Bank Details",
+      "Terms and Conditions",
+      "Additional Notes",
+      "Attachments",
+    ].forEach((h) => expect(byText[h]).toBe("tda-heading tda-heading-s"));
+  });
+
   it("prints terms and the contact strip", () => {
     const out = text(render());
     expect(out).toContain(
@@ -468,6 +485,20 @@ describe("3d-align styles", () => {
       css.match(/\.tda-items \.line-items-table \{([^}]*)\}/)?.[1] ?? "";
     expect(table).toContain("border: 1px solid var(--tda-frame);");
     expect(table).toContain("border-top: 0;");
+  });
+
+  it("smooths text antialiased", () => {
+    const shell = css.match(/\.tda-shell \{([^}]*)\}/)?.[1] ?? "";
+    expect(shell).toContain("-webkit-font-smoothing: antialiased;");
+    expect(shell).toContain("-moz-osx-font-smoothing: grayscale;");
+  });
+
+  it("rounds the boxes and the item table at 8px", () => {
+    const radii = [...css.matchAll(/border-radius:\s*([^;]+);/g)].map(
+      (m) => m[1]
+    );
+    expect(radii.length).toBeGreaterThanOrEqual(2);
+    radii.forEach((r) => expect(r).toBe("8px"));
   });
 
   it("prints the line number as 1.", () => {
