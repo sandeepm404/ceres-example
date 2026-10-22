@@ -1,0 +1,562 @@
+@import "https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap";
+
+/*
+ * 3d-align — the platform's purple invoice layout on pre-printed stationery.
+ * Purple headings and item-table header, lavender boxes, ruled grand total.
+ */
+
+/* Pre-printed stationery: every printed page keeps its top 35mm and bottom
+   45mm blank. Only the top and bottom margins are set, so the side margins
+   stay the PDF service's (pdfOptions.xMargins). */
+@page {
+  margin-top: 35mm;
+  margin-bottom: 45mm;
+}
+
+.tda-shell {
+  --tda-band-top: 35mm;
+  --tda-band-bottom: 45mm;
+  --tda-font-body: var(--subtitle-font, "Noto Sans", Arial, sans-serif);
+  --tda-font-heading: var(--title-font, var(--tda-font-body));
+  --tda-accent: var(--primary-color, #6639b7);
+  --tda-tint: var(--primary-background, #efebf9);
+  --tda-row-tint: #f5f2fc;
+  --tda-rule: #d9d0f0;
+  --tda-ink: #000;
+  --tda-muted: #666;
+  --tda-font-size-xs: 10px;
+  --tda-font-size-s: 11px;
+  --tda-font-size-base: 13px;
+  --tda-font-size-m: 15px;
+  --tda-font-size-lg: 19px;
+  --tda-font-size-xl: 30px;
+
+  box-sizing: border-box;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-block: var(--tda-band-top) var(--tda-band-bottom);
+  color: var(--tda-ink);
+  background: #fff;
+  font-family: var(--tda-font-body);
+  font-size: var(--tda-font-size-base);
+  line-height: 1.5;
+}
+
+.tda-shell *,
+.tda-shell *::before,
+.tda-shell *::after {
+  box-sizing: border-box;
+}
+
+.tda-shell dl,
+.tda-shell dd,
+.tda-shell p,
+.tda-shell h1,
+.tda-shell h2,
+.tda-shell ol,
+.tda-shell ul {
+  margin: 0;
+}
+
+/* --- Page: one column, blocks spaced by gap --- */
+.tda-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-inline: 40px;
+}
+
+.tda-strong {
+  color: var(--tda-ink);
+  font-weight: 500;
+}
+
+.tda-break {
+  overflow-wrap: anywhere;
+}
+
+.tda-heading {
+  color: var(--tda-accent);
+  font-family: var(--tda-font-heading);
+  font-size: var(--tda-font-size-lg);
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.tda-heading-s {
+  font-size: var(--tda-font-size-m);
+}
+
+.tda-box {
+  padding: 12px 16px;
+  border-radius: 4px;
+  background: var(--tda-tint);
+}
+
+/* --- Header: title and details · logo and QR codes --- */
+.tda-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.tda-head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tda-title {
+  color: var(--tda-accent);
+  font-family: var(--tda-font-heading);
+  font-size: var(--tda-font-size-xl);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.tda-subtitle {
+  color: var(--tda-muted);
+  font-size: var(--tda-font-size-m);
+}
+
+.tda-meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 16px;
+}
+
+.tda-meta-row {
+  display: contents;
+}
+
+.tda-meta dt {
+  color: var(--tda-muted);
+}
+
+.tda-head-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.tda-logo-img {
+  display: block;
+  max-width: 200px;
+  max-height: 100px;
+  object-fit: contain;
+}
+
+.tda-qrs {
+  display: flex;
+  gap: 8px;
+}
+
+.tda-qr img {
+  display: block;
+  width: 112px;
+  height: 112px;
+}
+
+.tda-qr.is-empty {
+  display: none;
+}
+
+/* --- Parties --- */
+.tda-parties {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: 12px;
+}
+
+.tda-party {
+  display: flex;
+  flex-direction: column;
+}
+
+.tda-party .tda-heading {
+  padding-block-end: 4px;
+}
+
+.tda-party-name {
+  font-weight: 500;
+}
+
+/* --- Item table: the shared widget, dressed in the purple header --- */
+.tda-items .line-items-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  font-size: var(--tda-font-size-base);
+}
+
+.tda-items .line-items-table th,
+.tda-items .line-items-table td {
+  padding: 8px 12px;
+  border: 0;
+  vertical-align: top;
+}
+
+.tda-items .line-items-table thead th {
+  color: #fff;
+  background: var(--tda-accent);
+  font-weight: 500;
+  text-align: left;
+}
+
+.tda-items .line-items-table tbody tr,
+.tda-items .line-items-table tbody tr.row-even {
+  background: var(--tda-row-tint);
+}
+
+.tda-items .line-items-table tbody td {
+  border-block-end: 1px solid var(--tda-rule);
+}
+
+/* An item's description row belongs to the item above it: no rule between. */
+.tda-items .line-items-table tbody tr:has(+ .item-extras-row) > td {
+  border-block-end: 0;
+}
+
+.tda-items .line-items-table .col-index {
+  width: 1%;
+  white-space: nowrap;
+  text-align: left;
+}
+
+/* Number columns shrink to their figures and centre them; the item column
+   takes the remaining width. */
+.tda-items .line-items-table .col-qty,
+.tda-items .line-items-table .col-rate,
+.tda-items .line-items-table .col-amount,
+.tda-items .line-items-table .col-discount,
+.tda-items .line-items-table .col-gst-rate,
+.tda-items .line-items-table .col-igst,
+.tda-items .line-items-table .col-cgst,
+.tda-items .line-items-table .col-sgst,
+.tda-items .line-items-table .col-tax,
+.tda-items .line-items-table .col-cess,
+.tda-items .line-items-table .col-total,
+.tda-items .line-items-table .col-unit,
+.tda-items .line-items-table .col-hsn-sac {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.tda-items .line-items-table thead .col-qty,
+.tda-items .line-items-table thead .col-rate,
+.tda-items .line-items-table thead .col-amount,
+.tda-items .line-items-table thead .col-discount,
+.tda-items .line-items-table thead .col-gst-rate,
+.tda-items .line-items-table thead .col-igst,
+.tda-items .line-items-table thead .col-cgst,
+.tda-items .line-items-table thead .col-sgst,
+.tda-items .line-items-table thead .col-tax,
+.tda-items .line-items-table thead .col-cess,
+.tda-items .line-items-table thead .col-total,
+.tda-items .line-items-table thead .col-unit,
+.tda-items .line-items-table thead .col-hsn-sac {
+  text-align: center;
+}
+
+/* The item column claims all the width; the nowrap columns keep their
+   figures' width, so the item text takes whatever they leave. */
+.tda-items .line-items-table .col-item {
+  width: 100%;
+}
+
+/* Text wrap on: the widget's fixed layout would hand the item column the
+   whole width and crush the figures. Content sizing keeps them whole; the
+   item text still wraps in what is left. */
+.tda-items .line-items-table.is-wrap-enabled {
+  table-layout: auto;
+}
+
+.tda-items .line-items-table .item-description,
+.tda-items .line-items-table .item-description * {
+  font-family: inherit;
+}
+
+.tda-items .line-items-table .item-sku,
+.tda-items .line-items-table .item-merged-note {
+  display: block;
+  color: var(--tda-muted);
+  font-size: var(--tda-font-size-s);
+}
+
+.tda-items .line-items-table tr.row-summary,
+.tda-items .line-items-table tr.row-group-subtotal {
+  background: var(--tda-tint);
+  font-weight: 600;
+}
+
+/* --- Payment info · totals and signature --- */
+.tda-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  break-inside: avoid;
+}
+
+.tda-bank {
+  flex: 0 1 40%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tda-bank-rows {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 24px;
+}
+
+.tda-bank-row {
+  display: contents;
+}
+
+.tda-bank-row dt {
+  font-weight: 500;
+}
+
+.tda-bank-row dd {
+  overflow-wrap: anywhere;
+}
+
+.tda-upi {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 184px;
+  padding-block-start: 4px;
+  text-align: center;
+}
+
+.tda-upi .tda-heading-s {
+  font-size: var(--tda-font-size-base);
+}
+
+.tda-upi-note {
+  max-width: 152px;
+  font-size: var(--tda-font-size-xs);
+  line-height: 2;
+}
+
+.tda-upi-qr {
+  display: block;
+  width: 108px;
+  height: 108px;
+  margin-block-start: 8px;
+}
+
+.tda-upi-id {
+  overflow-wrap: anywhere;
+}
+
+.tda-totals {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 260px;
+}
+
+.tda-summary.is-totals-only .tda-totals {
+  flex: 0 1 45%;
+  margin-inline-start: auto;
+}
+
+.tda-totals .ceres-subtotal-table {
+  font-size: var(--tda-font-size-base);
+}
+
+.tda-totals .ceres-subtotal-label,
+.tda-totals .ceres-subtotal-value {
+  padding: 4px 0;
+}
+
+.tda-totals .ceres-subtotal-label {
+  padding-inline: 0 16px;
+}
+
+/* Grand total: larger figure between two rules, broken between the label
+   and the figure. */
+.tda-totals .ceres-subtotal-row-grand > .ceres-subtotal-label,
+.tda-totals .ceres-subtotal-row-grand > .ceres-subtotal-value {
+  padding-block: 4px;
+  border-block: 2px solid var(--tda-ink);
+  font-size: var(--tda-font-size-lg);
+  font-weight: 500;
+}
+
+.tda-totals .ceres-subtotal-row-grand > .ceres-subtotal-label {
+  border-inline-end: 4px solid #fff;
+}
+
+.tda-totals .ceres-subtotal-words {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--tda-font-size-s);
+}
+
+.tda-totals .ceres-subtotal-words-label {
+  color: var(--tda-muted);
+}
+
+.tda-signature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  align-self: center;
+  text-align: center;
+}
+
+.tda-signature-img {
+  display: block;
+  max-width: 160px;
+  max-height: 88px;
+  object-fit: contain;
+}
+
+.tda-signature-digital a {
+  color: var(--tda-accent);
+  font-size: var(--tda-font-size-s);
+  overflow-wrap: anywhere;
+}
+
+.tda-signature-placeholder {
+  align-self: center;
+  width: 180px;
+  height: 80px;
+}
+
+/* --- Summary tables --- */
+.tda-block {
+  break-inside: avoid;
+}
+
+/* --- Terms, notes, attachments, footer fields --- */
+.tda-note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tda-terms {
+  padding-inline-start: 24px;
+}
+
+.tda-attachments {
+  padding-inline-start: 20px;
+}
+
+.tda-attachments a {
+  color: var(--tda-accent);
+  overflow-wrap: anywhere;
+}
+
+.tda-footer-fields {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 16px;
+}
+
+.tda-footer-row {
+  display: contents;
+}
+
+.tda-footer-row dt {
+  font-weight: 500;
+}
+
+.tda-contact {
+  text-align: center;
+}
+
+.tda-contact b {
+  font-weight: 500;
+}
+
+/* --- Narrow preview --- */
+@media screen and (width <= 640px) {
+  .tda-page {
+    padding-inline: 16px;
+  }
+
+  .tda-head,
+  .tda-summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tda-parties {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tda-totals,
+  .tda-summary.is-totals-only .tda-totals {
+    flex-basis: auto;
+    min-width: 0;
+    margin-inline-start: 0;
+  }
+
+  .tda-upi {
+    width: auto;
+  }
+}
+
+@media print {
+  /* The page margins (@page) carry the blank bands in print, once per page. */
+  .tda-shell {
+    max-width: none;
+    padding-block: 0;
+
+    --tda-font-size-m: 14px;
+    --tda-font-size-lg: 18px;
+    --tda-font-size-xl: 28px;
+  }
+
+  /* Side margins are the PDF service's; adding our own would double them. */
+  .tda-page {
+    padding-inline: 0;
+  }
+
+  .tda-shell * {
+    box-shadow: none !important;
+  }
+
+  .tda-box,
+  .tda-items .line-items-table thead th,
+  .tda-items .line-items-table tbody tr {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .tda-items .line-items-table thead {
+    display: table-header-group;
+  }
+
+  /* An item's own row stays whole; its description row may run on to the
+     next page rather than leave a blank page foot. */
+  .tda-items .line-items-table tr:not(.item-extras-row) {
+    break-inside: avoid;
+  }
+
+  .tda-items .line-items-table tr:has(+ .item-extras-row) {
+    break-after: avoid;
+  }
+
+  .tda-party,
+  .tda-note {
+    break-inside: avoid;
+  }
+}

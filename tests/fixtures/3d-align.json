@@ -1,0 +1,299 @@
+{
+  "_id": "3da1218-reference",
+  "billType": "INVOICE",
+  "invoiceType": "BILLOFSUPPLY",
+  "status": "UNPAID",
+  "isExpenditure": false,
+  "invoiceNumber": "3DA1218",
+  "invoiceTitle": "Invoice",
+  "invoiceDate": "2026-10-17T06:30:00.000Z",
+  "invoiceDateUserInput": "Oct 17, 2026",
+  "currency": "INR",
+  "locale": "en-IN",
+  "subUnitLength": 2,
+  "taxType": "INDIA",
+  "taxName": "GST",
+  "igst": false,
+  "utgst": false,
+  "supplyType": "B2B",
+  "billedBy": {
+    "name": "3D ALIGN",
+    "street": "1st Floor - Shikhar Appartment, Opposite Prestige Tower, Bodakdev, Ahmedabad",
+    "city": "Ahmedabad",
+    "state": "Gujarat",
+    "country": "IN",
+    "pincode": "380015",
+    "phone": "+919925428288",
+    "phoneShowInInvoice": true,
+    "email": "3d.alignsolutions@gmail.com",
+    "emailShowInInvoice": false,
+    "gstin": "",
+    "panNumber": "",
+    "customFields": [],
+    "additionalIds": []
+  },
+  "billedTo": {
+    "name": "Dr. Shrinath Bhavsar",
+    "street": "C-4, 1st Floor, Ishwarcharan Complex, Jodhpur Gam, Satellite",
+    "city": "AHMEDABAD",
+    "state": "Gujarat",
+    "country": "IN",
+    "pincode": "380015",
+    "gstin": "",
+    "panNumber": "",
+    "customFields": [],
+    "additionalIds": []
+  },
+  "items": [
+    {
+      "_id": "tda-item-1",
+      "name": "Intraoral Scan & Simulation Charges",
+      "description": "**Patient :-** Khushi Ahuja",
+      "quantity": 1,
+      "rate": 3500,
+      "subTotal": 3500,
+      "amount": 3500,
+      "gstRate": 0,
+      "igst": 0,
+      "cgst": 0,
+      "sgst": 0,
+      "total": 3500,
+      "discount": {
+        "discountType": "PERCENTAGE",
+        "amount": 0
+      },
+      "images": [],
+      "originalImages": [],
+      "showSku": false,
+      "custom": {}
+    }
+  ],
+  "columns": [
+    {
+      "key": "name",
+      "label": "Item",
+      "dataType": "text",
+      "isHidden": false,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "hsn",
+      "label": "HSN/SAC",
+      "dataType": "number",
+      "isHidden": true,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "gstRate",
+      "label": "GST Rate",
+      "dataType": "number",
+      "isHidden": true,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "quantity",
+      "label": "Quantity",
+      "dataType": "number",
+      "isHidden": false,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "rate",
+      "label": "Rate",
+      "dataType": "currency",
+      "isHidden": false,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "discount",
+      "label": "Discount",
+      "dataType": "number",
+      "isHidden": true,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "amount",
+      "label": "Amount",
+      "dataType": "number",
+      "isHidden": false,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "igst",
+      "label": "IGST",
+      "dataType": "number",
+      "isHidden": true,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "cgst",
+      "label": "CGST",
+      "dataType": "number",
+      "isHidden": true,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "sgst",
+      "label": "SGST",
+      "dataType": "number",
+      "isHidden": true,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    },
+    {
+      "key": "total",
+      "label": "Total",
+      "dataType": "number",
+      "isHidden": true,
+      "system": true,
+      "summarise": false,
+      "fxReturnType": "number"
+    }
+  ],
+  "finalTotal": {
+    "total": 2000,
+    "amount": 2000,
+    "subTotal": 3500,
+    "discount": -1500,
+    "igst": 0,
+    "cgst": 0,
+    "sgst": 0,
+    "amountRoundOff": 0,
+    "totalRoundOff": 0,
+    "cessTotal": {},
+    "rcmTax": 0
+  },
+  "discount": {
+    "discountType": "FIXED",
+    "amount": 1500
+  },
+  "balance": {
+    "paid": 0,
+    "tds": 0,
+    "transactionCharge": 0,
+    "credit": 0,
+    "refund": 0,
+    "due": 2000
+  },
+  "allPayments": [],
+  "payments": [],
+  "bankAccount": {
+    "name": "3D ALIGN",
+    "accountNo": "38445234884",
+    "ifsc": "SBIN0004423",
+    "accountType": "CURRENT",
+    "bank": "State Bank of India",
+    "country": "IN",
+    "currency": "INR",
+    "customFields": []
+  },
+  "upi": {
+    "upi": "9898928288-1@okbizaxis"
+  },
+  "paymentOptions": {
+    "accountTransfer": true,
+    "upi": true
+  },
+  "terms": [
+    {
+      "label": "Terms and Conditions",
+      "terms": [
+        "Aligner Fabrication & Dispatch will be initiated after receiving the complete payment in advance.",
+        "Please quote invoice number when remitting funds.",
+        "Courier charges will be levied extra as applicable if 3D Aligners are demanded phase-wise."
+      ]
+    }
+  ],
+  "notes": "",
+  "attachments": [],
+  "customFields": [],
+  "customHeaders": [],
+  "customFooters": [],
+  "extraTotalFields": [],
+  "additionalCharges": [],
+  "cesses": [],
+  "contact": {
+    "email": "3d.alignsolutions@gmail.com",
+    "phone": "+91 99254 28288"
+  },
+  "customLabels": {
+    "invoiceNumber": "Invoice No",
+    "invoiceDate": "Invoice Date",
+    "dueDate": "Due Date",
+    "purchaseOrderNumber": "PO Number",
+    "quotationNumber": "Quotation No.",
+    "terms": "Terms and Conditions",
+    "notes": "Additional Notes",
+    "billedBy": "Billed By",
+    "billedTo": "Billed To",
+    "expenseNumber": "Expense No",
+    "shippedTo": "Shipped To",
+    "shippedFrom": "Shipped From",
+    "transport": "Transport Details",
+    "attachment": "Attachments",
+    "signature": "3D ALIGN",
+    "taxName": "GST",
+    "total": "Total",
+    "subTotal": "Amount",
+    "totalInWords": "Total (in words)",
+    "transportName": "Transport",
+    "challanDate": "Challan Date",
+    "challanNumber": "Challan Number",
+    "transportExtraInfo": "Extra Information",
+    "contact": "For any enquiry, reach out via",
+    "contactEmail": "email at",
+    "contactPhone": "call on",
+    "dueAmount": "Due Amount",
+    "paymentRecord": "Payment Record",
+    "invoiceDetails": "Invoice Details",
+    "paidAmount": "Paid Amount",
+    "discount": "Discounts"
+  },
+  "advanceOptions": {
+    "showCreatorInInvoice": true,
+    "hideCountryOfSupply": true,
+    "unitColumn": "MERGE_QUANTITY",
+    "hsnView": "DEFAULT"
+  },
+  "creator": {
+    "name": "Align 3D"
+  },
+  "signature": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTEwIj48cGF0aCBkPSJNMjAgNjAgQyA0MCAxMCwgNzAgMTAsIDgwIDUwIFMgMTIwIDkwLCAxNjAgMzAiIHN0cm9rZT0iIzhhMWMzYyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTMwIDk1IEMgNjAgNzAsIDkwIDEwMCwgMTUwIDc1IiBzdHJva2U9IiM4YTFjM2MiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==",
+  "template": {
+    "name": "3d-align",
+    "pdfOptions": {
+      "letterHeadOnFirstPage": false,
+      "footerOnLastPage": false,
+      "zoomSize": "1",
+      "format": "a4"
+    }
+  },
+  "transportDetails": {},
+  "hideTotals": false,
+  "hideTaxes": false,
+  "hideTotalInWords": true,
+  "showTotalsRow": false,
+  "showBranding": false,
+  "letterHead": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2ZkZTJlMiIvPjx0ZXh0IHg9IjQwMCIgeT0iNjAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCI+QUNDT1VOVCBMRVRURVJIRUFEIElNQUdFPC90ZXh0Pjwvc3ZnPg==",
+  "letterHeadFooter": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iMTAwIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2ZkZTJlMiIvPjx0ZXh0IHg9IjQwMCIgeT0iNjAiIGZvbnQtc2l6ZT0iMzIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCI+QUNDT1VOVCBGT09URVIgSU1BR0U8L3RleHQ+PC9zdmc+",
+  "isColumnsModified": true
+}
