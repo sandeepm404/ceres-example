@@ -546,6 +546,10 @@ describe("3d-align styles", () => {
     );
   });
 
+  it("leaves 12px between the total in words and the bank and UPI boxes", () => {
+    expect(css).toMatch(/\.tda-pay \{[^}]*gap: 12px;/);
+  });
+
   it("sets the UPI note at the body's 1.5 line height", () => {
     expect(css).toMatch(/\.tda-upi-note \{[^}]*line-height: 1\.5;/);
   });
