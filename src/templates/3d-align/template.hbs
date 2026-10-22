@@ -1,0 +1,375 @@
+{{!--
+  3d-align — tax invoice in the platform's purple layout, printed on the
+  account's pre-printed stationery.
+
+  Blank bands: every printed page keeps 35mm clear at the top and 45mm at the
+  bottom for the stationery's own header and footer (styles.css, @page). The
+  screen preview shows the same bands around the page.
+
+  No letterhead or letterhead-footer slot: the account's letterhead images are
+  never printed by this template, in the flow or otherwise.
+
+  Label text comes from the payload (customLabels, columns[].label, terms[].label,
+  party field labels). Fixed words, which no payload key carries: the party row
+  labels (GSTIN, PAN, Email, Phone), "Created By", the bank-row fallbacks
+  (helpers.ts bankRows), the UPI caption and transfer note, and the IRN rows.
+
+  The root is { invoice, advanceOptions, pdfOptions, mapped, derived } because this
+  template installs normalizeInvoiceTemplateState as its data mapper.
+--}}
+<div class="tda-shell">
+  <div class="tda-page">
+    {{!-- ═══ Header: title and document details · logo and QR codes ═══ --}}
+    <header class="tda-head">
+      <div class="tda-head-main">
+        {{#if invoice.invoiceTitle}}<h1 class="tda-title">{{invoice.invoiceTitle}}</h1>{{/if}}
+        {{#if invoice.invoiceSubTitle}}<p class="tda-subtitle">{{invoice.invoiceSubTitle}}</p>{{/if}}
+
+        <dl class="tda-meta">
+          <div class="tda-meta-row">
+            <dt>{{invoice.customLabels.invoiceNumber}}{{#unless invoice.hideHashInDocumentNumber}} #{{/unless}}</dt>
+            <dd class="tda-strong">{{invoice.invoiceNumber}}</dd>
+          </div>
+          <div class="tda-meta-row">
+            <dt>{{invoice.customLabels.invoiceDate}}</dt>
+            <dd class="tda-strong">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</dd>
+          </div>
+          {{#if invoice.dueDate}}
+          <div class="tda-meta-row">
+            <dt>{{invoice.customLabels.dueDate}}</dt>
+            <dd class="tda-strong">{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</dd>
+          </div>
+          {{/if}}
+          {{#if invoice.purchaseOrderNumber}}
+          <div class="tda-meta-row">
+            <dt>{{invoice.customLabels.purchaseOrderNumber}}</dt>
+            <dd class="tda-strong">{{invoice.purchaseOrderNumber}}</dd>
+          </div>
+          {{/if}}
+          {{#if advanceOptions.showCreatorInInvoice}}{{#if invoice.creator.name}}
+          <div class="tda-meta-row">
+            <dt>Created By</dt>
+            <dd class="tda-strong">{{invoice.creator.name}}</dd>
+          </div>
+          {{/if}}{{/if}}
+          {{#each invoice.customFields}}
+          {{#if value}}{{#unless (eq params.showInInvoice false)}}
+          <div class="tda-meta-row">
+            <dt>{{#if label}}{{label}}{{else}}{{name}}{{/if}}</dt>
+            <dd class="tda-strong">{{value}}</dd>
+          </div>
+          {{/unless}}{{/if}}
+          {{/each}}
+          {{#each invoice.customHeaders}}
+          {{#if value}}
+          <div class="tda-meta-row">
+            <dt>{{label}}</dt>
+            <dd class="tda-strong">{{value}}</dd>
+          </div>
+          {{/if}}
+          {{/each}}
+          {{#unless advanceOptions.hideCountryOfSupply}}
+          {{#if invoice.placeOfSupply}}
+          <div class="tda-meta-row">
+            <dt>Place of Supply</dt>
+            <dd class="tda-strong">{{invoice.placeOfSupply}}</dd>
+          </div>
+          {{/if}}
+          {{/unless}}
+          {{#if (or invoice.reverseCharge advanceOptions.reverseCharge)}}
+          <div class="tda-meta-row">
+            <dt>Reverse Charge</dt>
+            <dd class="tda-strong">Yes</dd>
+          </div>
+          {{/if}}
+          {{!-- e-invoice / e-way bill. A cancelled IRN keeps its number but drops
+                the acknowledgement rows and the QR. --}}
+          {{#if invoice.irn.Irn}}
+          <div class="tda-meta-row">
+            <dt>IRN</dt>
+            <dd class="tda-strong tda-break">{{invoice.irn.Irn}}</dd>
+          </div>
+          {{#unless mapped.irn.isCancelled}}
+          {{#if invoice.irn.AckNo}}
+          <div class="tda-meta-row">
+            <dt>Ack No.</dt>
+            <dd class="tda-strong">{{invoice.irn.AckNo}}</dd>
+          </div>
+          {{/if}}
+          {{#if invoice.irn.AckDt}}
+          <div class="tda-meta-row">
+            <dt>Ack Date</dt>
+            <dd class="tda-strong">{{formatDateInTimeZone invoice.irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</dd>
+          </div>
+          {{/if}}
+          {{/unless}}
+          {{/if}}
+          {{#if invoice.irn.EwbNo}}
+          <div class="tda-meta-row">
+            <dt>E-Way Bill No.</dt>
+            <dd class="tda-strong">{{invoice.irn.EwbNo}}</dd>
+          </div>
+          {{#if invoice.irn.EwbDt}}
+          <div class="tda-meta-row">
+            <dt>E-Way Bill Date</dt>
+            <dd class="tda-strong">{{formatDateInTimeZone invoice.irn.EwbDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</dd>
+          </div>
+          {{/if}}
+          {{/if}}
+        </dl>
+      </div>
+
+      {{!-- Logo and QR codes. The QR containers stay in the DOM so Lydia can
+            patch them live (data-ceres-field). --}}
+      <div class="tda-head-side">
+        {{#if invoice.logo}}
+        <div class="tda-logo">{{> CeresImage src=invoice.logo alt=invoice.billedBy.name class="tda-logo-img"}}</div>
+        {{/if}}
+        <div class="tda-qrs">
+          <div data-ceres-field-container="zatcaQrCode" class="tda-qr{{#unless (or invoice.zatcaQrCode invoice.zatcaQr)}} is-empty{{/unless}}">
+            <img data-ceres-field="zatcaQrCode" src="{{#if invoice.zatcaQrCode}}{{qrSrc invoice.zatcaQrCode}}{{else}}{{qrSrc invoice.zatcaQr}}{{/if}}" alt="ZATCA QR" />
+          </div>
+          <div data-ceres-field-container="qrCode" class="tda-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
+            <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
+          </div>
+          {{#if invoice.lhdnQrCode}}
+          <div class="tda-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
+          {{/if}}
+          {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.zatcaQr invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
+          <div class="tda-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
+          {{/unless}}{{/if}}
+        </div>
+      </div>
+    </header>
+
+    {{!-- ═══ Parties: Billed By · Billed To, each in a tinted box ═══ --}}
+    <div class="tda-parties">
+      {{#with invoice.billedBy as |party|}}
+      <section class="tda-box tda-party" data-party="billedBy">
+        {{#if @root.invoice.customLabels.billedBy}}<h2 class="tda-heading">{{@root.invoice.customLabels.billedBy}}</h2>{{/if}}
+        <p class="tda-party-name">{{party.name}}</p>
+        {{#each (partyAddressLines party)}}<p>{{this}}</p>{{/each}}
+        {{#if party.gstin}}{{#unless (eq @root.invoice.owner.configuration.experimental.fieldVisibility.gst.showInDocument false)}}
+        <p><b>GSTIN:</b> {{party.gstin}}</p>
+        {{/unless}}{{/if}}
+        {{#if party.panNumber}}{{#unless (eq @root.invoice.owner.configuration.experimental.fieldVisibility.pan.showInDocument false)}}
+        <p><b>PAN:</b> {{party.panNumber}}</p>
+        {{/unless}}{{/if}}
+        {{#if party.vatNumber}}
+        <p>{{#if party.vatLabel}}<b>{{party.vatLabel}}:</b> {{/if}}{{party.vatNumber}}</p>
+        {{/if}}
+        {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
+        <p><b>Email:</b> {{party.email}}</p>
+        {{/unless}}{{/if}}
+        {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
+        <p><b>Phone:</b> {{formatPhoneNumber party.phone}}</p>
+        {{/unless}}{{/if}}
+        {{#each (partyFields party)}}
+        <p><b>{{label}}:</b> {{value}}</p>
+        {{/each}}
+      </section>
+      {{/with}}
+
+      {{#with invoice.billedTo as |party|}}
+      <section class="tda-box tda-party" data-party="billedTo">
+        {{#if @root.invoice.customLabels.billedTo}}<h2 class="tda-heading">{{@root.invoice.customLabels.billedTo}}</h2>{{/if}}
+        <p class="tda-party-name">{{party.name}}</p>
+        {{#each (partyAddressLines party)}}<p>{{this}}</p>{{/each}}
+        {{#if party.gstin}}<p><b>GSTIN:</b> {{party.gstin}}</p>{{/if}}
+        {{#if party.panNumber}}<p><b>PAN:</b> {{party.panNumber}}</p>{{/if}}
+        {{#if party.vatNumber}}
+        <p>{{#if party.vatLabel}}<b>{{party.vatLabel}}:</b> {{/if}}{{party.vatNumber}}</p>
+        {{/if}}
+        {{#if party.contactPerson.name}}
+        <p>{{#if @root.invoice.customLabels.contactPersonLabel}}<b>{{@root.invoice.customLabels.contactPersonLabel}}:</b> {{/if}}{{party.contactPerson.name}}</p>
+        {{/if}}
+        {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
+        <p><b>Email:</b> {{party.email}}</p>
+        {{/unless}}{{/if}}
+        {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
+        <p><b>Phone:</b> {{formatPhoneNumber party.phone}}</p>
+        {{/unless}}{{/if}}
+        {{#each (partyFields party)}}
+        <p><b>{{label}}:</b> {{value}}</p>
+        {{/each}}
+      </section>
+      {{/with}}
+    </div>
+
+    {{!-- ═══ Shipping & transport (only when the document carries them) ═══ --}}
+    {{#if (or mapped.visibility.shippedFrom mapped.visibility.shippedTo mapped.visibility.transport)}}
+    <div class="tda-parties">
+      {{#if mapped.visibility.shippedFrom}}
+      {{#with invoice.shippedFrom as |party|}}
+      <section class="tda-box tda-party" data-party="shippedFrom">
+        {{#if @root.invoice.customLabels.shippedFrom}}<h2 class="tda-heading">{{@root.invoice.customLabels.shippedFrom}}</h2>{{/if}}
+        <p class="tda-party-name">{{party.name}}</p>
+        {{#each (partyAddressLines party)}}<p>{{this}}</p>{{/each}}
+        {{#each (partyFields party)}}<p><b>{{label}}:</b> {{value}}</p>{{/each}}
+      </section>
+      {{/with}}
+      {{/if}}
+      {{#if mapped.visibility.shippedTo}}
+      {{#with invoice.shippedTo as |party|}}
+      <section class="tda-box tda-party" data-party="shippedTo">
+        {{#if @root.invoice.customLabels.shippedTo}}<h2 class="tda-heading">{{@root.invoice.customLabels.shippedTo}}</h2>{{/if}}
+        <p class="tda-party-name">{{party.name}}</p>
+        {{#each (partyAddressLines party)}}<p>{{this}}</p>{{/each}}
+        {{#each (partyFields party)}}<p><b>{{label}}:</b> {{value}}</p>{{/each}}
+      </section>
+      {{/with}}
+      {{/if}}
+      {{#if mapped.visibility.transport}}
+      {{#with invoice.transportDetails as |transport|}}
+      <section class="tda-box tda-party" data-party="transport">
+        {{#if @root.invoice.customLabels.transport}}<h2 class="tda-heading">{{@root.invoice.customLabels.transport}}</h2>{{/if}}
+        {{#if transport.transporter.name}}
+        <p>{{#if @root.invoice.customLabels.transportName}}<b>{{@root.invoice.customLabels.transportName}}:</b> {{/if}}{{transport.transporter.name}}</p>
+        {{else}}{{#if transport.transporterName}}
+        <p>{{#if @root.invoice.customLabels.transportName}}<b>{{@root.invoice.customLabels.transportName}}:</b> {{/if}}{{transport.transporterName}}</p>
+        {{/if}}{{/if}}
+        {{#if transport.challanNumber}}
+        <p>{{#if @root.invoice.customLabels.challanNumber}}<b>{{@root.invoice.customLabels.challanNumber}}:</b> {{/if}}{{transport.challanNumber}}</p>
+        {{/if}}
+        {{#if transport.challanDate}}
+        <p>{{#if @root.invoice.customLabels.challanDate}}<b>{{@root.invoice.customLabels.challanDate}}:</b> {{/if}}{{formateShortDateWithOffset transport.challanDate @root.invoice.ownerOffset}}</p>
+        {{/if}}
+        {{#if transport.transportMode}}<p>{{transport.transportMode}}</p>{{/if}}
+        {{#if transport.vehicleNumber}}<p>{{transport.vehicleNumber}}</p>{{/if}}
+        {{#if transport.extraInformation}}
+        <p>{{#if @root.invoice.customLabels.transportExtraInfo}}<b>{{@root.invoice.customLabels.transportExtraInfo}}:</b> {{/if}}{{transport.extraInformation}}</p>
+        {{/if}}
+      </section>
+      {{/with}}
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Line items: the shared widget; columns, labels and order are the account's ═══ --}}
+    <div class="tda-items">
+      {{> LineItemsTable mapped}}
+    </div>
+
+    {{!-- ═══ Payment info · totals and signature ═══ --}}
+    <div class="tda-summary{{#unless mapped.visibility.showBankUpiSection}} is-totals-only{{/unless}}">
+      {{#if mapped.visibility.showBankUpiSection}}
+      {{#if mapped.visibility.showBankAccount}}
+      {{#with (bankRows invoice.bankAccount invoice.customLabels) as |bank|}}
+      <section class="tda-box tda-bank">
+        {{#if bank.heading}}<h2 class="tda-heading tda-heading-s">{{bank.heading}}</h2>{{/if}}
+        <dl class="tda-bank-rows">
+          {{#each bank.rows}}
+          <div class="tda-bank-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+          {{/each}}
+        </dl>
+      </section>
+      {{/with}}
+      {{/if}}
+
+      {{#if mapped.visibility.showUpi}}
+      <section class="tda-upi">
+        <h2 class="tda-heading tda-heading-s">Scan to pay via UPI</h2>
+        <p class="tda-upi-note">Maximum of 1 lakh can be transferred via upi in a single day</p>
+        {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="tda-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
+        <p class="tda-upi-id">{{mapped.upi.id}}</p>
+      </section>
+      {{/if}}
+      {{/if}}
+
+      <div class="tda-totals">
+        {{> Subtotal (computeSubtotalRows invoice
+              columns=mapped.columns
+              businessCurrency=invoice.businessCurrency
+              businessLocale=invoice.businessLocale) }}
+
+        {{!-- Signature: a plain image, or the digital-signature flow's two states. --}}
+        {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+        {{#if invoice.signature}}
+        <div class="tda-signature">
+          {{> CeresImage src=invoice.signature alt="" class="tda-signature-img"}}
+          {{#if invoice.customLabels.signature}}<p class="tda-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
+        </div>
+        {{/if}}
+        {{else}}
+        {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+        <div class="tda-signature tda-signature-digital">
+          {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+          {{#if invoice.share.pdf}}<a href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+          {{#if invoice.customLabels.signature}}<p class="tda-signature-label">{{invoice.customLabels.signature}}</p>{{/if}}
+        </div>
+        {{else}}
+        <div class="tda-signature-placeholder" data-ceres-signature-placeholder></div>
+        {{/if}}
+        {{/unless}}
+      </div>
+    </div>
+
+    {{!-- ═══ Summary tables — each behind the account's own setting ═══ --}}
+    {{#if mapped.visibility.showTaxTable}}
+    <div class="tda-block" data-ceres-tax-summary>
+      {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showHsnSummary}}
+    <div class="tda-block" data-ceres-hsn-summary>
+      {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showPaymentsTable}}
+    <div class="tda-block" data-ceres-payment-table>
+      {{> PaymentTable (computePaymentColumns invoice.allPayments businessCurrency=invoice.businessCurrency currency=invoice.currency)
+          ownerOffset=invoice.ownerOffset
+          heading=invoice.customLabels.paymentRecord
+      }}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Terms, notes, attachments ═══ --}}
+    {{#each invoice.terms}}
+    {{#if terms.length}}
+    <section class="tda-note">
+      {{#if label}}<h2 class="tda-heading">{{label}}</h2>{{else}}{{#if @root.invoice.customLabels.terms}}<h2 class="tda-heading">{{@root.invoice.customLabels.terms}}</h2>{{/if}}{{/if}}
+      <ol class="tda-terms">
+        {{#each terms}}<li>{{this}}</li>{{/each}}
+      </ol>
+    </section>
+    {{/if}}
+    {{/each}}
+
+    {{#if invoice.notes}}
+    <section class="tda-note">
+      {{#if invoice.customLabels.notes}}<h2 class="tda-heading">{{invoice.customLabels.notes}}</h2>{{/if}}
+      {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+    </section>
+    {{/if}}
+
+    {{#if invoice.attachments.length}}
+    <section class="tda-note">
+      {{#if invoice.customLabels.attachment}}<h2 class="tda-heading">{{invoice.customLabels.attachment}}</h2>{{/if}}
+      <ul class="tda-attachments">
+        {{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{this}}</a></li>{{/each}}
+      </ul>
+    </section>
+    {{/if}}
+
+    {{#if (or invoice.customFooters.length invoice.footers.length)}}
+    <dl class="tda-footer-fields">
+      {{#each invoice.customFooters}}{{#if value}}<div class="tda-footer-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+      {{#each invoice.footers}}{{#if value}}<div class="tda-footer-row"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+    </dl>
+    {{/if}}
+
+    {{!-- ═══ Contact strip ═══ --}}
+    {{#if mapped.visibility.contactStrip}}
+    <p class="tda-contact">
+      {{invoice.customLabels.contact}}
+      {{~#if invoice.contact.email}} {{invoice.customLabels.contactEmail}} <b>{{invoice.contact.email}}</b>{{/if~}}
+      {{~#if invoice.contact.phone}}{{#if invoice.contact.email}},{{/if}} {{invoice.customLabels.contactPhone}} <b>{{formatPhoneNumber invoice.contact.phone}}</b>{{/if~}}
+    </p>
+    {{/if}}
+
+    {{> RefrensBranding invoice}}
+  </div>
+</div>
