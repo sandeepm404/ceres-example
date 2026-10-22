@@ -298,6 +298,20 @@
   font-family: inherit;
 }
 
+/* The description sits right under the item name: its row drops the top
+   padding, and the markdown's outer paragraph margins go. */
+.tda-items .line-items-table tr.item-extras-row td {
+  padding-block-start: 0;
+}
+
+.tda-items .line-items-table .item-description .toastui-editor-contents > :first-child {
+  margin-block-start: 0;
+}
+
+.tda-items .line-items-table .item-description .toastui-editor-contents > :last-child {
+  margin-block-end: 0;
+}
+
 .tda-items .line-items-table .item-sku,
 .tda-items .line-items-table .item-merged-note {
   display: block;

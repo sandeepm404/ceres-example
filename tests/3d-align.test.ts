@@ -557,6 +557,16 @@ describe("3d-align styles", () => {
     );
   });
 
+  it("sets the item description right under the item name", () => {
+    expect(css).toMatch(/tr\.item-extras-row td \{\s*padding-block-start: 0;/);
+    expect(css).toMatch(
+      /\.toastui-editor-contents > :first-child \{\s*margin-block-start: 0;/
+    );
+    expect(css).toMatch(
+      /\.toastui-editor-contents > :last-child \{\s*margin-block-end: 0;/
+    );
+  });
+
   it("never resolves a font size below 10px, screen or print", () => {
     const sizes = [
       ...css.matchAll(/(?:font-size|--tda-font-size-[a-z]+)\s*:\s*([\d.]+)px/g),
