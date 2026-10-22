@@ -2,7 +2,7 @@
   3d-align — tax invoice in the platform's purple layout, printed on the
   account's pre-printed stationery.
 
-  Blank bands: every printed page keeps 35mm clear at the top and 45mm at the
+  Blank bands: every printed page keeps 38mm clear at the top and 45mm at the
   bottom for the stationery's own header and footer (styles.css, @page). The
   screen preview shows the same bands around the page.
 
@@ -253,6 +253,26 @@
     {{!-- ═══ Payment info · totals and signature ═══ --}}
     <div class="tda-summary{{#unless mapped.visibility.showBankUpiSection}} is-totals-only{{/unless}}">
       {{#if mapped.visibility.showBankUpiSection}}
+      <div class="tda-pay">
+      {{!-- Total in words heads the payment side, as in the design; the Subtotal
+            widget's own copy under the total is hidden while this side shows.
+            Same model, classes and data attribute as the widget's, so the
+            hideTotals / hideTotalInWords settings act on it alike. --}}
+      {{#with (computeSubtotalRows invoice
+                columns=mapped.columns
+                businessCurrency=invoice.businessCurrency
+                businessLocale=invoice.businessLocale) as |totals|}}
+      {{#if totals.totalInWords}}
+      <div
+        class="ceres-subtotal-words tda-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+        data-ceres-total-in-words
+      >
+        <span class="ceres-subtotal-words-label">{{totals.totalInWords.label}} :</span>
+        <span class="ceres-subtotal-words-value">{{totals.totalInWords.value}}</span>
+      </div>
+      {{/if}}
+      {{/with}}
+      <div class="tda-pay-row">
       {{#if mapped.visibility.showBankAccount}}
       {{#with (bankRows invoice.bankAccount invoice.customLabels) as |bank|}}
       <section class="tda-box tda-bank">
@@ -274,6 +294,8 @@
         <p class="tda-upi-id">{{mapped.upi.id}}</p>
       </section>
       {{/if}}
+      </div>
+      </div>
       {{/if}}
 
       <div class="tda-totals">
@@ -330,7 +352,7 @@
     {{#each invoice.terms}}
     {{#if terms.length}}
     <section class="tda-note">
-      {{#if label}}<h2 class="tda-heading">{{label}}</h2>{{else}}{{#if @root.invoice.customLabels.terms}}<h2 class="tda-heading">{{@root.invoice.customLabels.terms}}</h2>{{/if}}{{/if}}
+      {{#if label}}<h2 class="tda-heading tda-heading-s">{{label}}</h2>{{else}}{{#if @root.invoice.customLabels.terms}}<h2 class="tda-heading tda-heading-s">{{@root.invoice.customLabels.terms}}</h2>{{/if}}{{/if}}
       <ol class="tda-terms">
         {{#each terms}}<li>{{this}}</li>{{/each}}
       </ol>
@@ -340,14 +362,14 @@
 
     {{#if invoice.notes}}
     <section class="tda-note">
-      {{#if invoice.customLabels.notes}}<h2 class="tda-heading">{{invoice.customLabels.notes}}</h2>{{/if}}
+      {{#if invoice.customLabels.notes}}<h2 class="tda-heading tda-heading-s">{{invoice.customLabels.notes}}</h2>{{/if}}
       {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
     </section>
     {{/if}}
 
     {{#if invoice.attachments.length}}
     <section class="tda-note">
-      {{#if invoice.customLabels.attachment}}<h2 class="tda-heading">{{invoice.customLabels.attachment}}</h2>{{/if}}
+      {{#if invoice.customLabels.attachment}}<h2 class="tda-heading tda-heading-s">{{invoice.customLabels.attachment}}</h2>{{/if}}
       <ul class="tda-attachments">
         {{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{this}}</a></li>{{/each}}
       </ul>

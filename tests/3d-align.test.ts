@@ -246,6 +246,56 @@ describe("3d-align reference document", () => {
     expect(unlabelled).not.toContain("tda-signature-label");
   });
 
+  it("sizes the terms, notes and attachments headings like Bank Details", () => {
+    const html = render({
+      notes: "Note",
+      attachments: ["https://x.test/a.pdf"],
+    });
+    const headings = [...html.matchAll(/<h2 class="([^"]+)">([^<]+)<\/h2>/g)];
+    const byText = Object.fromEntries(
+      headings.map(([, cls, txt]) => [txt.trim(), cls])
+    );
+    [
+      "Bank Details",
+      "Terms and Conditions",
+      "Additional Notes",
+      "Attachments",
+    ].forEach((h) => expect(byText[h]).toBe("tda-heading tda-heading-s"));
+  });
+
+  it("heads the payment side with the total in words, on one line", () => {
+    const customLabels = {
+      ...basePayload().customLabels,
+      totalInWordsValue: "two thousand rupees only",
+    };
+    const html = render({ hideTotalInWords: false, customLabels });
+    const pay = html.slice(
+      html.indexOf('class="tda-pay"'),
+      html.indexOf('class="tda-pay-row"')
+    );
+    expect(text(pay)).toContain("Total (in words) : two thousand rupees only");
+    expect(pay).toContain("data-ceres-total-in-words");
+    // The account's "hide total in words" setting still hides it.
+    const hidden = render({ hideTotalInWords: true, customLabels });
+    expect(hidden).toMatch(
+      /ceres-subtotal-words tda-words is-hidden-by-words-setting/
+    );
+  });
+
+  it("keeps the total in words under the total when there is no payment side", () => {
+    const customLabels = {
+      ...basePayload().customLabels,
+      totalInWordsValue: "two thousand rupees only",
+    };
+    const html = render({
+      hideTotalInWords: false,
+      customLabels,
+      paymentOptions: { accountTransfer: false, upi: false },
+    });
+    expect(html).not.toContain("tda-words");
+    expect(html).toMatch(/class="tda-totals"[\s\S]*data-ceres-total-in-words/);
+  });
+
   it("prints terms and the contact strip", () => {
     const out = text(render());
     expect(out).toContain(
@@ -409,8 +459,8 @@ describe("3d-align styles", () => {
   );
   const pageRule = css.match(/@page\s*\{([^}]*)\}/)?.[1] ?? "";
 
-  it("keeps 35mm clear at the top and 45mm at the bottom of every printed page", () => {
-    expect(pageRule).toMatch(/margin-top:\s*35mm;/);
+  it("keeps 38mm clear at the top and 45mm at the bottom of every printed page", () => {
+    expect(pageRule).toMatch(/margin-top:\s*38mm;/);
     expect(pageRule).toMatch(/margin-bottom:\s*45mm;/);
   });
 
@@ -422,7 +472,7 @@ describe("3d-align styles", () => {
   });
 
   it("shows the same bands on screen and drops them in print", () => {
-    expect(css).toMatch(/--tda-band-top:\s*35mm;/);
+    expect(css).toMatch(/--tda-band-top:\s*38mm;/);
     expect(css).toMatch(/--tda-band-bottom:\s*45mm;/);
     expect(css).toMatch(
       /\.tda-shell \{[^}]*padding-block: var\(--tda-band-top\) var\(--tda-band-bottom\);/
@@ -444,6 +494,66 @@ describe("3d-align styles", () => {
   it("keeps content-sized columns when the account turns text wrap on", () => {
     expect(css).toMatch(
       /\.tda-items \.line-items-table\.is-wrap-enabled \{\s*table-layout: auto;/
+    );
+  });
+
+  it("stripes item rows white then lavender, with no rules or dividers", () => {
+    expect(css).toMatch(/tbody tr\.row-even \{\s*background: #fff;/);
+    expect(css).toMatch(
+      /tbody tr\.row-odd \{\s*background: var\(--tda-row-tint\);/
+    );
+    expect(css).toMatch(/--tda-row-tint: #efebf8;/);
+    expect(css).not.toMatch(/tbody td[^{]*\{[^}]*border-(block|inline)/);
+  });
+
+  it("adds no side gutter of its own; the host's side margins frame the page", () => {
+    const page = css.match(/\.tda-page \{([^}]*)\}/)?.[1] ?? "";
+    expect(page).toContain("gap: 12px;");
+    expect(page).not.toMatch(/padding/);
+  });
+
+  it("frames the item table in faint lavender on the sides and foot", () => {
+    expect(css).toMatch(/--tda-frame: #e6e0f3;/);
+    const table =
+      css.match(/\.tda-items \.line-items-table \{([^}]*)\}/)?.[1] ?? "";
+    expect(table).toContain("border: 1px solid var(--tda-frame);");
+    expect(table).toContain("border-top: 0;");
+  });
+
+  it("smooths text antialiased", () => {
+    const shell = css.match(/\.tda-shell \{([^}]*)\}/)?.[1] ?? "";
+    expect(shell).toContain("-webkit-font-smoothing: antialiased;");
+    expect(shell).toContain("-moz-osx-font-smoothing: grayscale;");
+  });
+
+  it("rules the grand total with 1px lines above and below", () => {
+    const grand =
+      css.match(
+        /\.ceres-subtotal-row-grand > \.ceres-subtotal-value \{([^}]*)\}/
+      )?.[1] ?? "";
+    expect(grand).toContain("border-block: 1px solid var(--tda-ink);");
+  });
+
+  it("hides the widget's own total in words while the payment side shows it", () => {
+    expect(css).toMatch(
+      /\.tda-summary:not\(\.is-totals-only\) \.tda-totals \.ceres-subtotal-words \{\s*display: none;/
+    );
+    expect(css).toMatch(
+      /\.tda-words \.ceres-subtotal-words-value \{\s*text-transform: uppercase;/
+    );
+  });
+
+  it("rounds the boxes and the item table at 8px", () => {
+    const radii = [...css.matchAll(/border-radius:\s*([^;]+);/g)].map(
+      (m) => m[1]
+    );
+    expect(radii.length).toBeGreaterThanOrEqual(2);
+    radii.forEach((r) => expect(r).toBe("8px"));
+  });
+
+  it("prints the line number as 1.", () => {
+    expect(css).toMatch(
+      /tbody td\.col-index:not\(:empty\)::after \{\s*content: "\.";/
     );
   });
 
