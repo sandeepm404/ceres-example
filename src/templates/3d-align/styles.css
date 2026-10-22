@@ -57,12 +57,14 @@
   margin: 0;
 }
 
-/* --- Page: one column, blocks spaced by gap --- */
+/* --- Page: one column, blocks spaced by gap ---
+   No side gutter of its own: the account's side margins (pdfOptions.xMargins)
+   are drawn around the page by Lydia's preview and by the PDF service, so a
+   gutter here would double them. */
 .tda-page {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding-inline: 40px;
 }
 
 .tda-strong {
@@ -531,11 +533,6 @@
     --tda-font-size-m: 14px;
     --tda-font-size-lg: 18px;
     --tda-font-size-xl: 28px;
-  }
-
-  /* Side margins are the PDF service's; adding our own would double them. */
-  .tda-page {
-    padding-inline: 0;
   }
 
   .tda-shell * {

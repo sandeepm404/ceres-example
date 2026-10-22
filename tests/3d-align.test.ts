@@ -456,6 +456,12 @@ describe("3d-align styles", () => {
     expect(css).not.toMatch(/tbody td[^{]*\{[^}]*border-(block|inline)/);
   });
 
+  it("adds no side gutter of its own; the host's side margins frame the page", () => {
+    const page = css.match(/\.tda-page \{([^}]*)\}/)?.[1] ?? "";
+    expect(page).toContain("gap: 12px;");
+    expect(page).not.toMatch(/padding/);
+  });
+
   it("prints the line number as 1.", () => {
     expect(css).toMatch(
       /tbody td\.col-index:not\(:empty\)::after \{\s*content: "\.";/
