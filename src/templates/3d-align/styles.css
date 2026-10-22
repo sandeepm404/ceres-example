@@ -5,22 +5,23 @@
  * Purple headings and item-table header, lavender boxes, ruled grand total.
  */
 
-/* Pre-printed stationery: every printed page keeps its top 35mm and bottom
+/* Pre-printed stationery: every printed page keeps its top 38mm and bottom
    45mm blank. Only the top and bottom margins are set, so the side margins
    stay the PDF service's (pdfOptions.xMargins). */
 @page {
-  margin-top: 35mm;
+  margin-top: 38mm;
   margin-bottom: 45mm;
 }
 
 .tda-shell {
-  --tda-band-top: 35mm;
+  --tda-band-top: 38mm;
   --tda-band-bottom: 45mm;
   --tda-font-body: var(--subtitle-font, "Noto Sans", Arial, sans-serif);
   --tda-font-heading: var(--title-font, var(--tda-font-body));
   --tda-accent: var(--primary-color, #6538bf);
   --tda-tint: var(--primary-background, #efebf9);
   --tda-row-tint: #efebf8;
+  --tda-frame: #e6e0f3;
   --tda-ink: #000;
   --tda-muted: #666;
   --tda-font-size-xs: 10px;
@@ -187,7 +188,11 @@
 }
 
 /* --- Item table: the shared widget, dressed in the purple header --- */
+
+/* A faint lavender frame on the sides and foot; the header's purple is the top. */
 .tda-items .line-items-table {
+  border: 1px solid var(--tda-frame);
+  border-top: 0;
   border-collapse: separate;
   border-spacing: 0;
   border-radius: 4px;

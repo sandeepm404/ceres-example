@@ -409,8 +409,8 @@ describe("3d-align styles", () => {
   );
   const pageRule = css.match(/@page\s*\{([^}]*)\}/)?.[1] ?? "";
 
-  it("keeps 35mm clear at the top and 45mm at the bottom of every printed page", () => {
-    expect(pageRule).toMatch(/margin-top:\s*35mm;/);
+  it("keeps 38mm clear at the top and 45mm at the bottom of every printed page", () => {
+    expect(pageRule).toMatch(/margin-top:\s*38mm;/);
     expect(pageRule).toMatch(/margin-bottom:\s*45mm;/);
   });
 
@@ -422,7 +422,7 @@ describe("3d-align styles", () => {
   });
 
   it("shows the same bands on screen and drops them in print", () => {
-    expect(css).toMatch(/--tda-band-top:\s*35mm;/);
+    expect(css).toMatch(/--tda-band-top:\s*38mm;/);
     expect(css).toMatch(/--tda-band-bottom:\s*45mm;/);
     expect(css).toMatch(
       /\.tda-shell \{[^}]*padding-block: var\(--tda-band-top\) var\(--tda-band-bottom\);/
@@ -460,6 +460,14 @@ describe("3d-align styles", () => {
     const page = css.match(/\.tda-page \{([^}]*)\}/)?.[1] ?? "";
     expect(page).toContain("gap: 12px;");
     expect(page).not.toMatch(/padding/);
+  });
+
+  it("frames the item table in faint lavender on the sides and foot", () => {
+    expect(css).toMatch(/--tda-frame: #e6e0f3;/);
+    const table =
+      css.match(/\.tda-items \.line-items-table \{([^}]*)\}/)?.[1] ?? "";
+    expect(table).toContain("border: 1px solid var(--tda-frame);");
+    expect(table).toContain("border-top: 0;");
   });
 
   it("prints the line number as 1.", () => {
