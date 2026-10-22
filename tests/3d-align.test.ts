@@ -557,6 +557,12 @@ describe("3d-align styles", () => {
     );
   });
 
+  it("pads the item table's cells 8px", () => {
+    expect(css).toMatch(
+      /\.line-items-table th,\s*\.tda-items \.line-items-table td \{\s*padding: 8px;/
+    );
+  });
+
   it("sets the item description right under the item name", () => {
     expect(css).toMatch(/tr\.item-extras-row td \{\s*padding-block-start: 0;/);
     expect(css).toMatch(

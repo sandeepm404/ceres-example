@@ -204,7 +204,7 @@
 
 .tda-items .line-items-table th,
 .tda-items .line-items-table td {
-  padding: 8px 12px;
+  padding: 8px;
   border: 0;
   vertical-align: top;
 }
@@ -274,7 +274,7 @@
 }
 
 /* Up to three figure columns (index + item + 3 headers), the design spaces
-   them out; a wider table keeps the 12px cells so the item column has room. */
+   them out; a wider table keeps the 8px cells so the item column has room. */
 .tda-items .line-items-table:not(:has(thead th:nth-child(6)))
   :is(th, td):not(.col-index, .col-item, .item-extras-cell) {
   padding-inline: 32px;
