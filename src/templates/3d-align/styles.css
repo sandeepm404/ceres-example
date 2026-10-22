@@ -18,10 +18,9 @@
   --tda-band-bottom: 45mm;
   --tda-font-body: var(--subtitle-font, "Noto Sans", Arial, sans-serif);
   --tda-font-heading: var(--title-font, var(--tda-font-body));
-  --tda-accent: var(--primary-color, #6639b7);
+  --tda-accent: var(--primary-color, #6538bf);
   --tda-tint: var(--primary-background, #efebf9);
-  --tda-row-tint: #f5f2fc;
-  --tda-rule: #d9d0f0;
+  --tda-row-tint: #efebf8;
   --tda-ink: #000;
   --tda-muted: #666;
   --tda-font-size-xs: 10px;
@@ -204,28 +203,30 @@
 .tda-items .line-items-table thead th {
   color: #fff;
   background: var(--tda-accent);
-  font-weight: 500;
+  font-weight: 600;
   text-align: left;
 }
 
+/* Rows alternate white and lavender, with no rules between them. An item's
+   description row carries the item's own row class, so it shares its shade. */
 .tda-items .line-items-table tbody tr,
 .tda-items .line-items-table tbody tr.row-even {
+  background: #fff;
+}
+
+.tda-items .line-items-table tbody tr.row-odd {
   background: var(--tda-row-tint);
-}
-
-.tda-items .line-items-table tbody td {
-  border-block-end: 1px solid var(--tda-rule);
-}
-
-/* An item's description row belongs to the item above it: no rule between. */
-.tda-items .line-items-table tbody tr:has(+ .item-extras-row) > td {
-  border-block-end: 0;
 }
 
 .tda-items .line-items-table .col-index {
   width: 1%;
   white-space: nowrap;
   text-align: left;
+}
+
+/* "1." — the widget prints the bare line number. */
+.tda-items .line-items-table tbody td.col-index:not(:empty)::after {
+  content: ".";
 }
 
 /* Number columns shrink to their figures and centre them; the item column
@@ -261,6 +262,13 @@
 .tda-items .line-items-table thead .col-unit,
 .tda-items .line-items-table thead .col-hsn-sac {
   text-align: center;
+}
+
+/* Up to three figure columns (index + item + 3 headers), the design spaces
+   them out; a wider table keeps the 12px cells so the item column has room. */
+.tda-items .line-items-table:not(:has(thead th:nth-child(6)))
+  :is(th, td):not(.col-index, .col-item, .item-extras-cell) {
+  padding-inline: 32px;
 }
 
 /* The item column claims all the width; the nowrap columns keep their

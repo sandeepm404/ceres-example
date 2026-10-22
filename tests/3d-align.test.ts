@@ -447,6 +447,21 @@ describe("3d-align styles", () => {
     );
   });
 
+  it("stripes item rows white then lavender, with no rules or dividers", () => {
+    expect(css).toMatch(/tbody tr\.row-even \{\s*background: #fff;/);
+    expect(css).toMatch(
+      /tbody tr\.row-odd \{\s*background: var\(--tda-row-tint\);/
+    );
+    expect(css).toMatch(/--tda-row-tint: #efebf8;/);
+    expect(css).not.toMatch(/tbody td[^{]*\{[^}]*border-(block|inline)/);
+  });
+
+  it("prints the line number as 1.", () => {
+    expect(css).toMatch(
+      /tbody td\.col-index:not\(:empty\)::after \{\s*content: "\.";/
+    );
+  });
+
   it("never resolves a font size below 10px, screen or print", () => {
     const sizes = [
       ...css.matchAll(/(?:font-size|--tda-font-size-[a-z]+)\s*:\s*([\d.]+)px/g),
