@@ -482,12 +482,13 @@ describe("3d-align styles", () => {
     );
   });
 
-  it("previews at the same 1000px page width as the other templates", () => {
+  it("fills the preview's width up to 1000px, as the other templates do", () => {
+    // The host body is a flex row: without a width the page shrinks to its content.
     expect(css).toMatch(
-      /\.tda-shell \{[^}]*max-width: 1000px;\s*margin: 0 auto;/
+      /\.tda-shell \{[^}]*width: min\(100vw, 1000px\);\s*max-width: 1000px;\s*margin: 0 auto;/
     );
     expect(css).toMatch(
-      /@media print \{[\s\S]*?\.tda-shell \{[^}]*max-width: none;/
+      /@media print \{[\s\S]*?\.tda-shell \{\s*width: auto;\s*max-width: none;/
     );
   });
 
@@ -534,6 +535,26 @@ describe("3d-align styles", () => {
     expect(grand).toContain("border-block: 1px solid var(--tda-ink);");
   });
 
+  it("sets the total in words at 13px bold, label and value alike", () => {
+    expect(css).toMatch(
+      /\.ceres-subtotal-words\.tda-words \{[^}]*font-size: var\(--tda-font-size-base\);/
+    );
+    expect(css).toMatch(
+      /\.ceres-subtotal-words\.tda-words \{[^}]*font-weight: 600;/
+    );
+    expect(css).toMatch(
+      /\.tda-words \.ceres-subtotal-words-label \{\s*font-weight: 600;/
+    );
+  });
+
+  it("leaves 12px between the total in words and the bank and UPI boxes", () => {
+    expect(css).toMatch(/\.tda-pay \{[^}]*gap: 12px;/);
+  });
+
+  it("sets the UPI note at the body's 1.5 line height", () => {
+    expect(css).toMatch(/\.tda-upi-note \{[^}]*line-height: 1\.5;/);
+  });
+
   it("hides the widget's own total in words while the payment side shows it", () => {
     expect(css).toMatch(
       /\.tda-summary:not\(\.is-totals-only\) \.tda-totals \.ceres-subtotal-words \{\s*display: none;/
@@ -554,6 +575,27 @@ describe("3d-align styles", () => {
   it("prints the line number as 1.", () => {
     expect(css).toMatch(
       /tbody td\.col-index:not\(:empty\)::after \{\s*content: "\.";/
+    );
+  });
+
+  it("pads the item table's cells 8px", () => {
+    expect(css).toMatch(
+      /\.line-items-table th,\s*\.tda-items \.line-items-table td \{\s*padding: 8px;/
+    );
+    // The figure columns are spread by width, never by extra padding.
+    expect(css).not.toMatch(/padding-inline: 32px/);
+    expect(css).toMatch(
+      /:is\(th, td\):not\(\.col-index, \.col-item, \.item-extras-cell\) \{\s*min-width: 120px;/
+    );
+  });
+
+  it("sets the item description right under the item name", () => {
+    expect(css).toMatch(/tr\.item-extras-row td \{\s*padding-block-start: 0;/);
+    expect(css).toMatch(
+      /\.toastui-editor-contents > :first-child \{\s*margin-block-start: 0;/
+    );
+    expect(css).toMatch(
+      /\.toastui-editor-contents > :last-child \{\s*margin-block-end: 0;/
     );
   });
 

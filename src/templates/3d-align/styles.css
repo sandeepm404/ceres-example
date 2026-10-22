@@ -31,7 +31,11 @@
   --tda-font-size-lg: 19px;
   --tda-font-size-xl: 30px;
 
+  /* The host body is a flex row, so #documentOutput shrinks to its content.
+     A width taken from the viewport (the iframe) fills the preview, up to
+     1000px. */
   box-sizing: border-box;
+  width: min(100vw, 1000px);
   max-width: 1000px;
   margin: 0 auto;
   padding-block: var(--tda-band-top) var(--tda-band-bottom);
@@ -204,7 +208,7 @@
 
 .tda-items .line-items-table th,
 .tda-items .line-items-table td {
-  padding: 8px 12px;
+  padding: 8px;
   border: 0;
   vertical-align: top;
 }
@@ -274,10 +278,12 @@
 }
 
 /* Up to three figure columns (index + item + 3 headers), the design spaces
-   them out; a wider table keeps the 12px cells so the item column has room. */
+   them out: each is at least 120px, its figure centred in 8px cells, and
+   grows if its figures need more. A wider table sizes them to their figures
+   so the item column has room. */
 .tda-items .line-items-table:not(:has(thead th:nth-child(6)))
   :is(th, td):not(.col-index, .col-item, .item-extras-cell) {
-  padding-inline: 32px;
+  min-width: 120px;
 }
 
 /* The item column claims all the width; the nowrap columns keep their
@@ -296,6 +302,20 @@
 .tda-items .line-items-table .item-description,
 .tda-items .line-items-table .item-description * {
   font-family: inherit;
+}
+
+/* The description sits right under the item name: its row drops the top
+   padding, and the markdown's outer paragraph margins go. */
+.tda-items .line-items-table tr.item-extras-row td {
+  padding-block-start: 0;
+}
+
+.tda-items .line-items-table .item-description .toastui-editor-contents > :first-child {
+  margin-block-start: 0;
+}
+
+.tda-items .line-items-table .item-description .toastui-editor-contents > :last-child {
+  margin-block-end: 0;
 }
 
 .tda-items .line-items-table .item-sku,
@@ -324,7 +344,7 @@
   flex: 0 1 62%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -340,11 +360,12 @@
   flex-wrap: wrap;
   gap: 4px;
   margin: 0;
-  font-size: var(--tda-font-size-s);
+  font-size: var(--tda-font-size-base);
+  font-weight: 600;
 }
 
 .tda-words .ceres-subtotal-words-label {
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .tda-words .ceres-subtotal-words-value {
@@ -400,7 +421,7 @@
 .tda-upi-note {
   max-width: 152px;
   font-size: var(--tda-font-size-xs);
-  line-height: 2;
+  line-height: 1.5;
 }
 
 .tda-upi-qr {
@@ -576,6 +597,7 @@
 @media print {
   /* The page margins (@page) carry the blank bands in print, once per page. */
   .tda-shell {
+    width: auto;
     max-width: none;
     padding-block: 0;
 
