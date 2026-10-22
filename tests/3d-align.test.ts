@@ -534,6 +534,22 @@ describe("3d-align styles", () => {
     expect(grand).toContain("border-block: 1px solid var(--tda-ink);");
   });
 
+  it("sets the total in words at 13px bold, label and value alike", () => {
+    expect(css).toMatch(
+      /\.ceres-subtotal-words\.tda-words \{[^}]*font-size: var\(--tda-font-size-base\);/
+    );
+    expect(css).toMatch(
+      /\.ceres-subtotal-words\.tda-words \{[^}]*font-weight: 600;/
+    );
+    expect(css).toMatch(
+      /\.tda-words \.ceres-subtotal-words-label \{\s*font-weight: 600;/
+    );
+  });
+
+  it("sets the UPI note at the body's 1.5 line height", () => {
+    expect(css).toMatch(/\.tda-upi-note \{[^}]*line-height: 1\.5;/);
+  });
+
   it("hides the widget's own total in words while the payment side shows it", () => {
     expect(css).toMatch(
       /\.tda-summary:not\(\.is-totals-only\) \.tda-totals \.ceres-subtotal-words \{\s*display: none;/

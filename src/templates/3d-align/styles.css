@@ -356,11 +356,12 @@
   flex-wrap: wrap;
   gap: 4px;
   margin: 0;
-  font-size: var(--tda-font-size-s);
+  font-size: var(--tda-font-size-base);
+  font-weight: 600;
 }
 
 .tda-words .ceres-subtotal-words-label {
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .tda-words .ceres-subtotal-words-value {
@@ -416,7 +417,7 @@
 .tda-upi-note {
   max-width: 152px;
   font-size: var(--tda-font-size-xs);
-  line-height: 2;
+  line-height: 1.5;
 }
 
 .tda-upi-qr {
