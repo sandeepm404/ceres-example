@@ -31,7 +31,11 @@
   --tda-font-size-lg: 19px;
   --tda-font-size-xl: 30px;
 
+  /* The host body is a flex row, so #documentOutput shrinks to its content.
+     A width taken from the viewport (the iframe) fills the preview, up to
+     1000px. */
   box-sizing: border-box;
+  width: min(100vw, 1000px);
   max-width: 1000px;
   margin: 0 auto;
   padding-block: var(--tda-band-top) var(--tda-band-bottom);
@@ -593,6 +597,7 @@
 @media print {
   /* The page margins (@page) carry the blank bands in print, once per page. */
   .tda-shell {
+    width: auto;
     max-width: none;
     padding-block: 0;
 

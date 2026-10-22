@@ -482,12 +482,13 @@ describe("3d-align styles", () => {
     );
   });
 
-  it("previews at the same 1000px page width as the other templates", () => {
+  it("fills the preview's width up to 1000px, as the other templates do", () => {
+    // The host body is a flex row: without a width the page shrinks to its content.
     expect(css).toMatch(
-      /\.tda-shell \{[^}]*max-width: 1000px;\s*margin: 0 auto;/
+      /\.tda-shell \{[^}]*width: min\(100vw, 1000px\);\s*max-width: 1000px;\s*margin: 0 auto;/
     );
     expect(css).toMatch(
-      /@media print \{[\s\S]*?\.tda-shell \{[^}]*max-width: none;/
+      /@media print \{[\s\S]*?\.tda-shell \{\s*width: auto;\s*max-width: none;/
     );
   });
 
