@@ -319,8 +319,45 @@
   break-inside: avoid;
 }
 
+/* Payment side: total in words on top, bank details and UPI below it. */
+.tda-pay {
+  flex: 0 1 62%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tda-pay-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* One line, as in the design: "Total (in words) : TWO THOUSAND RUPEES ONLY". */
+.ceres-subtotal-words.tda-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  font-size: var(--tda-font-size-s);
+}
+
+.tda-words .ceres-subtotal-words-label {
+  font-weight: 400;
+}
+
+.tda-words .ceres-subtotal-words-value {
+  text-transform: uppercase;
+}
+
+/* The widget's own copy under the total gives way to the one above. */
+.tda-summary:not(.is-totals-only) .tda-totals .ceres-subtotal-words {
+  display: none;
+}
+
 .tda-bank {
-  flex: 0 1 40%;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -368,8 +405,8 @@
 
 .tda-upi-qr {
   display: block;
-  width: 108px;
-  height: 108px;
+  width: 96px;
+  height: 96px;
   margin-block-start: 8px;
 }
 
@@ -408,7 +445,7 @@
 .tda-totals .ceres-subtotal-row-grand > .ceres-subtotal-label,
 .tda-totals .ceres-subtotal-row-grand > .ceres-subtotal-value {
   padding-block: 4px;
-  border-block: 2px solid var(--tda-ink);
+  border-block: 1px solid var(--tda-ink);
   font-size: var(--tda-font-size-lg);
   font-weight: 500;
 }
@@ -509,9 +546,14 @@
   }
 
   .tda-head,
-  .tda-summary {
+  .tda-summary,
+  .tda-pay-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .tda-pay {
+    flex-basis: auto;
   }
 
   .tda-parties {

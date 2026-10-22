@@ -253,6 +253,26 @@
     {{!-- ═══ Payment info · totals and signature ═══ --}}
     <div class="tda-summary{{#unless mapped.visibility.showBankUpiSection}} is-totals-only{{/unless}}">
       {{#if mapped.visibility.showBankUpiSection}}
+      <div class="tda-pay">
+      {{!-- Total in words heads the payment side, as in the design; the Subtotal
+            widget's own copy under the total is hidden while this side shows.
+            Same model, classes and data attribute as the widget's, so the
+            hideTotals / hideTotalInWords settings act on it alike. --}}
+      {{#with (computeSubtotalRows invoice
+                columns=mapped.columns
+                businessCurrency=invoice.businessCurrency
+                businessLocale=invoice.businessLocale) as |totals|}}
+      {{#if totals.totalInWords}}
+      <div
+        class="ceres-subtotal-words tda-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+        data-ceres-total-in-words
+      >
+        <span class="ceres-subtotal-words-label">{{totals.totalInWords.label}} :</span>
+        <span class="ceres-subtotal-words-value">{{totals.totalInWords.value}}</span>
+      </div>
+      {{/if}}
+      {{/with}}
+      <div class="tda-pay-row">
       {{#if mapped.visibility.showBankAccount}}
       {{#with (bankRows invoice.bankAccount invoice.customLabels) as |bank|}}
       <section class="tda-box tda-bank">
@@ -274,6 +294,8 @@
         <p class="tda-upi-id">{{mapped.upi.id}}</p>
       </section>
       {{/if}}
+      </div>
+      </div>
       {{/if}}
 
       <div class="tda-totals">

@@ -263,6 +263,39 @@ describe("3d-align reference document", () => {
     ].forEach((h) => expect(byText[h]).toBe("tda-heading tda-heading-s"));
   });
 
+  it("heads the payment side with the total in words, on one line", () => {
+    const customLabels = {
+      ...basePayload().customLabels,
+      totalInWordsValue: "two thousand rupees only",
+    };
+    const html = render({ hideTotalInWords: false, customLabels });
+    const pay = html.slice(
+      html.indexOf('class="tda-pay"'),
+      html.indexOf('class="tda-pay-row"')
+    );
+    expect(text(pay)).toContain("Total (in words) : two thousand rupees only");
+    expect(pay).toContain("data-ceres-total-in-words");
+    // The account's "hide total in words" setting still hides it.
+    const hidden = render({ hideTotalInWords: true, customLabels });
+    expect(hidden).toMatch(
+      /ceres-subtotal-words tda-words is-hidden-by-words-setting/
+    );
+  });
+
+  it("keeps the total in words under the total when there is no payment side", () => {
+    const customLabels = {
+      ...basePayload().customLabels,
+      totalInWordsValue: "two thousand rupees only",
+    };
+    const html = render({
+      hideTotalInWords: false,
+      customLabels,
+      paymentOptions: { accountTransfer: false, upi: false },
+    });
+    expect(html).not.toContain("tda-words");
+    expect(html).toMatch(/class="tda-totals"[\s\S]*data-ceres-total-in-words/);
+  });
+
   it("prints terms and the contact strip", () => {
     const out = text(render());
     expect(out).toContain(
@@ -491,6 +524,23 @@ describe("3d-align styles", () => {
     const shell = css.match(/\.tda-shell \{([^}]*)\}/)?.[1] ?? "";
     expect(shell).toContain("-webkit-font-smoothing: antialiased;");
     expect(shell).toContain("-moz-osx-font-smoothing: grayscale;");
+  });
+
+  it("rules the grand total with 1px lines above and below", () => {
+    const grand =
+      css.match(
+        /\.ceres-subtotal-row-grand > \.ceres-subtotal-value \{([^}]*)\}/
+      )?.[1] ?? "";
+    expect(grand).toContain("border-block: 1px solid var(--tda-ink);");
+  });
+
+  it("hides the widget's own total in words while the payment side shows it", () => {
+    expect(css).toMatch(
+      /\.tda-summary:not\(\.is-totals-only\) \.tda-totals \.ceres-subtotal-words \{\s*display: none;/
+    );
+    expect(css).toMatch(
+      /\.tda-words \.ceres-subtotal-words-value \{\s*text-transform: uppercase;/
+    );
   });
 
   it("rounds the boxes and the item table at 8px", () => {
