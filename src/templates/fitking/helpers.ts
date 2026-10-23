@@ -55,6 +55,10 @@ const GST_STATE_CODES: Record<string, string> = {
   "99": "Centre Jurisdiction",
 };
 
+/**
+ *
+ * @param HB
+ */
 export function registerFitkingTemplateHelpers(HB: any): void {
   // `placeOfSupply` is a bare numeric code on most payloads ("07"), so the
   // state name has to come from a lookup — falls back to whatever text was
@@ -76,9 +80,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return raw;
   });
 
-  HB.registerHelper("increment", function (value: number) {
-    return value + 1;
-  });
   HB.registerHelper("eq", function (a: any, b: any) {
     return a === b;
   });
@@ -112,13 +113,17 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return PAGE_SIZE_KEYWORDS[key] || "A4";
   });
 
+  /**
+   *
+   * @param val
+   */
   function extractNumericValue(val: any): number | null {
     if (val === undefined || val === null || val === "") return null;
-    if (typeof val === "number") return isNaN(val) ? null : val;
+    if (typeof val === "number") return Number.isNaN(val) ? null : val;
     if (typeof val === "string") {
       const cleaned = val.replace(/,/g, "").trim();
       const parsed = parseFloat(cleaned);
-      return isNaN(parsed) ? null : parsed;
+      return Number.isNaN(parsed) ? null : parsed;
     }
     if (typeof val === "object" && val !== null) {
       const candidateKeys = [
@@ -131,12 +136,11 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         "price",
         "rate",
       ];
-      for (const k of candidateKeys) {
-        if (val[k] !== undefined && val[k] !== null) {
-          const res = extractNumericValue(val[k]);
-          if (res !== null) return res;
-        }
-      }
+      const match = candidateKeys
+        .filter((k) => val[k] !== undefined && val[k] !== null)
+        .map((k) => extractNumericValue(val[k]))
+        .find((res) => res !== null);
+      if (match !== undefined) return match;
     }
     return null;
   }
@@ -150,10 +154,14 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // A party's operator-defined extras arrive in three differently shaped
   // buckets, and any of them can be absent. Flatten them to one {label, value}
   // list so each party block renders with a single loop.
+  /**
+   *
+   * @param val
+   */
   function stringifyFieldValue(val: any): string {
     if (val === undefined || val === null) return "";
     if (typeof val === "string") return val.trim();
-    if (typeof val === "number") return isNaN(val) ? "" : String(val);
+    if (typeof val === "number") return Number.isNaN(val) ? "" : String(val);
     if (typeof val === "boolean") return val ? "Yes" : "No";
     if (Array.isArray(val)) {
       return val.map(stringifyFieldValue).filter(Boolean).join(", ");
@@ -163,17 +171,44 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return "";
   }
 
+  // Keys and labels compared with punctuation and case stripped.
+  const normalizeColumnKey = (key: any) =>
+    String(key || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+
+  // The first of `keys` a label map carries, matched on normalized keys.
+  const firstLabel = (labels: any, keys: string[]): string => {
+    const available = new Map<string, string>();
+    Object.entries(labels).forEach(([key, val]) => {
+      if (typeof val === "string" && val.trim()) {
+        available.set(normalizeColumnKey(key), val.trim());
+      }
+    });
+    return (
+      keys.map((key) => available.get(normalizeColumnKey(key))).find(Boolean) ||
+      ""
+    );
+  };
+
   // Strips a trailing blank line/`<br>` a rich-text editor leaves behind when
   // a description is composed with an empty line at the end. MarkdownViewer
   // renders that as a genuine empty `<p><br></p>`, which — inside a table
   // cell sharing its row's height with much shorter cells (rate, total, tax)
   // — shows up as dead space at the bottom of the row, bounded by the row's
   // own borders like an extra blank row. Only trailing emptiness is removed;
-  // a `<br>` anywhere else in the text is a deliberate line break.
-  HB.registerHelper("trimTrailingBlankLines", function (text: any) {
+  // a `<br>` anywhere else in the text is a deliberate line break. Line-item
+  // descriptions go through the same trim in `fitkingLineItems` below.
+  /**
+   *
+   * @param text
+   */
+  function trimTrailingBlankLines(text: any) {
     if (typeof text !== "string") return text;
     return text.replace(/(?:\s*<br\s*\/?>\s*)+$/gi, "").replace(/\s+$/, "");
-  });
+  }
+
+  HB.registerHelper("trimTrailingBlankLines", trimTrailingBlankLines);
 
   HB.registerHelper("partyFields", function (party: any) {
     if (!party || typeof party !== "object") return [];
@@ -190,19 +225,19 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     // `showInInvoice` is opt-out: it is frequently absent on records that are
     // meant to print, so only an explicit false hides the row.
-    for (const field of asArray(party.customFields)) {
+    asArray(party.customFields).forEach((field) =>
       add(
         field?.label ?? field?.name,
         field?.value,
         field?.params?.showInInvoice === false
-      );
-    }
-    for (const id of asArray(party.additionalIds)) {
-      add(id?.label, id?.value, id?.showInInvoice === false);
-    }
-    for (const header of asArray(party.customHeaders)) {
-      add(header?.label, header?.value, header?.showInInvoice === false);
-    }
+      )
+    );
+    asArray(party.additionalIds).forEach((id) =>
+      add(id?.label, id?.value, id?.showInInvoice === false)
+    );
+    asArray(party.customHeaders).forEach((header) =>
+      add(header?.label, header?.value, header?.showInInvoice === false)
+    );
 
     return fields;
   });
@@ -212,15 +247,20 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // the raw value in an `src` renders "[object Object]", which the browser
   // resolves to a broken image: the block keeps its height but shows nothing.
   // Resolving here means a value we cannot turn into a URL reads as absent, so
-  // the surrounding `is-empty` guard collapses the block instead. `itemImages`
-  // below reuses the same unwrapping for line-item photos.
+  // the surrounding `is-empty` guard collapses the block instead. The photo
+  // column below reuses the same unwrapping for line-item photos.
+  /**
+   *
+   * @param val
+   */
   function resolveAssetUrl(val: any): string {
     if (typeof val === "string") return val.trim();
     if (val && typeof val === "object") {
-      for (const key of ["url", "src", "link", "href"]) {
-        const nested = (val as any)[key];
-        if (typeof nested === "string" && nested.trim()) return nested.trim();
-      }
+      const key = ["url", "src", "link", "href"].find(
+        (candidate) =>
+          typeof val[candidate] === "string" && val[candidate].trim()
+      );
+      if (key) return val[key].trim();
     }
     return "";
   }
@@ -229,9 +269,60 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     return resolveAssetUrl(val);
   });
 
+  // ── Line items ───────────────────────────────────────────────────────────
+  //
+  // The table is the shared LineItemsTable widget, which stays pinned. What
+  // fitking prints differently is done here, on a copy of `mapped` handed to
+  // the widget, rather than by editing it: descriptions lose their trailing
+  // blank lines, each line's photo gets a column of its own beside the item
+  // name, and a description that is not full width prints in the item cell,
+  // under the name. The widget prints a cell's `text` as `{{text}}`, and
+  // Handlebars passes a SafeString through unescaped, so the photo and item
+  // cells carry their markup that way.
+
+  // Every real line is one row, in `invoice.items` order; totals and the
+  // stretch filler are the only rows normalization adds in between.
+  const isLineRow = (row: any) => !row.isTotalsRow && !row.isFillerRow;
+
+  // Whether anything is left to print in the widget's row under the line.
+  const extrasHaveAny = (extras: any) =>
+    Boolean(
+      extras?.hasDescription ||
+        extras?.imagesInline ||
+        extras?.imagesRow ||
+        extras?.hasOriginalImages ||
+        extras?.hasSerials
+    );
+
+  /**
+   *
+   * @param mapped
+   */
+  function withTrimmedDescriptions(mapped: any) {
+    const rows = Array.isArray(mapped?.rows) ? mapped.rows : [];
+    return {
+      ...mapped,
+      rows: rows.map((row: any) => {
+        const extras = row?.extras;
+        if (!extras?.hasDescription) return row;
+        const description = trimTrailingBlankLines(extras.description);
+        const next = {
+          ...extras,
+          description,
+          hasDescription: description.length > 0,
+        };
+        return { ...row, extras: { ...next, hasAny: extrasHaveAny(next) } };
+      }),
+    };
+  }
+
   // A line item's pictures. The photo column always shows the thumbnail
   // array (`images`), never `originalImages` — those are full-resolution
   // uploads that are too heavy for the small in-table photo.
+  /**
+   *
+   * @param item
+   */
   function resolveItemImages(item: any): string[] {
     if (!item || typeof item !== "object") return [];
 
@@ -240,8 +331,343 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       .filter(Boolean);
   }
 
-  HB.registerHelper("itemImages", function (item: any) {
-    return resolveItemImages(item);
+  /**
+   *
+   * @param mapped
+   * @param invoice
+   */
+  function withPhotoColumn(mapped: any, invoice: any) {
+    const columns = Array.isArray(mapped?.columns) ? mapped.columns : [];
+    const rows = Array.isArray(mapped?.rows) ? mapped.rows : [];
+    const items = Array.isArray(invoice?.items) ? invoice.items : [];
+    // Only the first image per line item.
+    const photos = items.map((item: any) => resolveItemImages(item)[0] || "");
+    // No item has a photo: no column at all, rather than an empty strip.
+    if (!photos.some(Boolean)) return mapped;
+
+    const at = (rows.find(isLineRow)?.cells || []).findIndex(
+      (cell: any) => cell.isItemCell
+    );
+    if (at === -1) return mapped;
+
+    // Cells exist only for visible columns, so the photo column goes in
+    // after the same visible column the item cell sits under.
+    const visible = columns.filter((column: any) => !column.isHidden);
+    const columnAt = columns.indexOf(visible[at]);
+    const photoColumn = {
+      ...visible[at],
+      key: "photo",
+      label: "",
+      className: "col-photo",
+      summarise: false,
+    };
+
+    const esc = HB.Utils.escapeExpression;
+    let line = 0;
+    const nextRows = rows.map((row: any) => {
+      let src = "";
+      if (isLineRow(row)) {
+        src = photos[line] || "";
+        line += 1;
+      }
+      const cells = [...row.cells];
+      cells.splice(at + 1, 0, {
+        key: "photo",
+        className: "col-photo",
+        label: "",
+        isItemCell: false,
+        text: src
+          ? new HB.SafeString(
+              `<img src="${esc(src)}" alt="${esc(
+                row.item?.name || ""
+              )}" class="fk-product-img" />`
+            )
+          : "",
+      });
+      if (!isLineRow(row)) return { ...row, cells };
+
+      // The photo column is where a line's picture prints, so the widget's
+      // own thumbnail and image gallery would print it a second time.
+      const extras = { ...row.extras, imagesInline: false, imagesRow: false };
+      return {
+        ...row,
+        cells,
+        item: { ...row.item, showThumbnail: false },
+        extras: { ...extras, hasAny: extrasHaveAny(extras) },
+      };
+    });
+
+    return {
+      ...mapped,
+      columns: [
+        ...columns.slice(0, columnAt + 1),
+        photoColumn,
+        ...columns.slice(columnAt + 1),
+      ],
+      rows: nextRows,
+    };
+  }
+
+  // The widget's own item-cell markup (name, SKU, merged notes, thumbnail),
+  // followed by the description. Kept in step with LineItemsTable.hbs.
+  /**
+   *
+   * @param item
+   * @param description
+   */
+  function itemCellWithDescription(item: any, description: string): any {
+    const esc = HB.Utils.escapeExpression;
+    const parts = [`<span class="item-name">${esc(item?.name)}</span>`];
+    if (item?.showSku) {
+      parts.push(`<small class="item-sku">SKU: ${esc(item.sku)}</small>`);
+    }
+    (Array.isArray(item?.mergedNotes) ? item.mergedNotes : []).forEach(
+      (note: any) =>
+        parts.push(
+          item.mergedAsNote
+            ? `<small class="item-merged-note">${esc(note)}</small>`
+            : `<span class="item-merged-inline">${esc(note)}</span>`
+        )
+    );
+    if (item?.showThumbnail) {
+      parts.push(
+        HB.partials.CeresImageGallery(
+          HB.helpers.prepareImageGallery(item.thumbnailImages, {
+            hash: { variant: "thumbnail", alt: item.name },
+          })
+        )
+      );
+    }
+    const viewer = HB.partials.MarkdownViewer(
+      HB.helpers.prepareMarkdownViewerData(description, { hash: {} })
+    );
+    parts.push(`<div class="item-description">${viewer}</div>`);
+    return new HB.SafeString(parts.join("\n"));
+  }
+
+  /**
+   *
+   * @param mapped
+   */
+  function withDescriptionsInItemCell(mapped: any) {
+    // Both come from other widgets' registrations; without them the
+    // description stays in the widget's own row rather than going missing.
+    const canRender =
+      typeof HB.partials?.MarkdownViewer === "function" &&
+      typeof HB.helpers?.prepareMarkdownViewerData === "function" &&
+      typeof HB.partials?.CeresImageGallery === "function" &&
+      typeof HB.helpers?.prepareImageGallery === "function";
+    if (!canRender) return mapped;
+
+    const rows = Array.isArray(mapped?.rows) ? mapped.rows : [];
+    return {
+      ...mapped,
+      rows: rows.map((row: any) => {
+        const { extras } = row;
+        if (!isLineRow(row) || !extras?.hasDescription) return row;
+        // The account's full-width choice keeps the widget's own row.
+        if (extras.descriptionFullWidth) return row;
+        const at = row.cells.findIndex((cell: any) => cell.isItemCell);
+        if (at === -1) return row;
+
+        const cells = [...row.cells];
+        cells[at] = {
+          ...cells[at],
+          isItemCell: false,
+          text: itemCellWithDescription(row.item, extras.description),
+        };
+        const next = { ...extras, hasDescription: false };
+        return {
+          ...row,
+          cells,
+          extras: { ...next, hasAny: extrasHaveAny(next) },
+        };
+      }),
+    };
+  }
+
+  // ── Column widths ──
+  //
+  // The table is `table-layout: fixed`, so nothing in it — a long figure, a
+  // table pasted into a description — can push it past the page edge. Each
+  // column is as wide as the text this document prints in it, and the item
+  // column keeps the rest. Everything is a percentage of the table, so the
+  // smaller print font scales with it. The widths go out as a <style> block
+  // in front of the widget, keyed by the widget's own column classes.
+
+  // Rough advance width of one character at the table's base font. Digits and
+  // uppercase run wider than lowercase, so this errs high — a column half a
+  // character too wide costs the item nothing noticeable, a column half a
+  // character too narrow clips a figure.
+  const CHAR_PX = 7;
+  // Headings are bold, so a character runs wider.
+  const HEADING_CHAR_PX = 8;
+  // Cell padding plus both borders, which the text never gets to use.
+  const CELL_CHROME_PX = 18;
+  // Nominal content width of the table: page width less the page and
+  // main-box padding. Only used to turn px into a share.
+  const TABLE_PX = 950;
+  // The item column is the point of the table; it keeps this share unless
+  // the other columns' content alone needs more.
+  const MIN_ITEM_PCT = 26;
+  // How far the photo may shrink to make room.
+  const MIN_PHOTO_SHARE = 0.6;
+
+  // Per column class: floor, ceiling, and whether the text can wrap. A
+  // wrapping column is measured by its longest word, since the rest can fall
+  // to the next line.
+  type WidthRule = { min: number; max: number; wraps?: boolean };
+  const TAX_RULE: WidthRule = { min: 60, max: 130 };
+  const MONEY_RULE: WidthRule = { min: 90, max: 200 };
+  const WIDTH_RULES: Record<string, WidthRule> = {
+    "col-index": { min: 30, max: 46 },
+    "col-photo": { min: 152, max: 152 },
+    "col-hsn-sac": { min: 66, max: 110 },
+    "col-rate": { min: 82, max: 190 },
+    "col-qty": { min: 46, max: 90 },
+    "col-discount": { min: 64, max: 130 },
+    "col-gst-rate": TAX_RULE,
+    "col-igst": TAX_RULE,
+    "col-cgst": TAX_RULE,
+    "col-sgst": TAX_RULE,
+    "col-tax": TAX_RULE,
+    "col-cess": TAX_RULE,
+    "col-amount": MONEY_RULE,
+    "col-total": MONEY_RULE,
+  };
+  // An account's own column: one that prints figures is treated like money,
+  // anything else as wrapping text. Decided from what its cells print, not
+  // its declared type — payloads mark text columns (Unit, Model No.) with a
+  // numeric `fxReturnType` too.
+  const TEXT_RULE: WidthRule = { min: 70, max: 150, wraps: true };
+
+  const longestWord = (text: string) =>
+    text
+      .split(/\s+/)
+      .reduce((longest, word) => Math.max(longest, word.length), 0);
+
+  type SizedColumn = { cls: string; px: number; need: number };
+
+  // Shrinks the columns to `budget` px in the order that costs the least:
+  // first the room a column's floor gives it beyond what its content needs,
+  // then the photo, down to MIN_PHOTO_SHARE. Whatever is still over is the
+  // item column's to give; a figure or a word is never cut.
+  /**
+   *
+   * @param sized
+   * @param budget
+   */
+  function fitColumns(sized: SizedColumn[], budget: number): void {
+    const sum = () => sized.reduce((total, column) => total + column.px, 0);
+
+    let over = sum() - budget;
+    const slack = sized.reduce(
+      (total, column) => total + (column.px - column.need),
+      0
+    );
+    if (over > 0 && slack > 0) {
+      const share = Math.min(1, over / slack);
+      sized.forEach((column) => {
+        column.px -= (column.px - column.need) * share;
+      });
+    }
+
+    over = sum() - budget;
+    const photo = sized.find((column) => column.cls === "col-photo");
+    if (over > 0 && photo) {
+      photo.px = Math.max(photo.px * MIN_PHOTO_SHARE, photo.px - over);
+    }
+  }
+
+  /**
+   *
+   * @param mapped
+   */
+  function withColumnWidths(mapped: any) {
+    const columns = Array.isArray(mapped?.columns) ? mapped.columns : [];
+    const rows = Array.isArray(mapped?.rows) ? mapped.rows : [];
+    const lines = rows.filter(isLineRow);
+    const itemAt = (lines[0]?.cells || []).findIndex(
+      (cell: any) => cell.isItemCell
+    );
+    const visible = columns.filter((column: any) => !column.isHidden);
+
+    const sized: SizedColumn[] = [];
+    const measure = (
+      cls: string,
+      rule: WidthRule,
+      label: string,
+      values: string[]
+    ) => {
+      // A heading wraps between its words, never inside one.
+      const headingPx = longestWord(label) * HEADING_CHAR_PX;
+      const contentPx =
+        values.reduce(
+          (most, text) =>
+            Math.max(most, rule.wraps ? longestWord(text) : text.length),
+          0
+        ) * CHAR_PX;
+      const need = Math.min(
+        rule.max,
+        Math.max(headingPx, contentPx) + CELL_CHROME_PX
+      );
+      // The photo has no text to measure: its floor is its size.
+      const floor = cls === "col-photo" ? rule.min : need;
+      sized.push({
+        cls,
+        px: Math.min(rule.max, Math.max(rule.min, need)),
+        need: floor,
+      });
+    };
+
+    // The widget's own line-number column.
+    measure("col-index", WIDTH_RULES["col-index"], "", [String(lines.length)]);
+    visible.forEach((column: any, i: number) => {
+      if (i === itemAt) return;
+      const cls = String(column.className || "").split(/\s+/)[0];
+      const values: string[] = [];
+      if (cls !== "col-photo") {
+        lines.forEach((row: any) => {
+          const cell = row.cells?.[i];
+          if (typeof cell?.text === "string") values.push(cell.text);
+          if (cell?.secondaryText) values.push(String(cell.secondaryText));
+        });
+      }
+      const printed = values.filter((text) => text.trim());
+      const numeric =
+        printed.length > 0 && printed.every((text) => !/\p{L}/u.test(text));
+      const rule = WIDTH_RULES[cls] || (numeric ? MONEY_RULE : TEXT_RULE);
+      measure(cls, rule, String(column.label || ""), values);
+    });
+
+    fitColumns(sized, TABLE_PX * (1 - MIN_ITEM_PCT / 100));
+
+    const head = ".fk-items .line-items-table > thead > tr > th";
+    const css = sized
+      // A class from an account's own column key is only trusted as a
+      // selector when it is plainly one.
+      .filter((column) => /^[A-Za-z0-9_-]+$/.test(column.cls))
+      .map(
+        (column) =>
+          `${head}.${column.cls} { width: ${(
+            (column.px / TABLE_PX) *
+            100
+          ).toFixed(3)}%; }`
+      )
+      .join("\n");
+
+    return { ...mapped, fitkingColumnCss: new HB.SafeString(css) };
+  }
+
+  // The photo column is placed, and the widths measured, before the
+  // descriptions move: both find the item cell by `isItemCell`, which a moved
+  // description's cell no longer has.
+  HB.registerHelper("fitkingLineItems", function (mapped: any, invoice: any) {
+    return withDescriptionsInItemCell(
+      withColumnWidths(
+        withPhotoColumn(withTrimmedDescriptions(mapped), invoice)
+      )
+    );
   });
 
   // The bank block, built from the payload rather than written out row by row.
@@ -298,55 +724,46 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     // The account's own labels win over the document's, which win over ours.
     const labelSources = [account.customLabels, invoice?.customLabels];
-    const labelFor = (labelKeys: string[], fallback: string) => {
-      for (const source of labelSources) {
-        if (!source || typeof source !== "object") continue;
-        const available = new Map<string, string>();
-        for (const [key, val] of Object.entries(source)) {
-          if (typeof val === "string" && val.trim()) {
-            available.set(normalizeColumnKey(key), val.trim());
-          }
-        }
-        for (const key of labelKeys) {
-          const match = available.get(normalizeColumnKey(key));
-          if (match) return match;
-        }
-      }
-      return fallback;
-    };
+    const labelFor = (labelKeys: string[], fallback: string) =>
+      labelSources
+        .filter((source) => source && typeof source === "object")
+        .map((source) => firstLabel(source, labelKeys))
+        .find(Boolean) || fallback;
 
     const rows: Array<{ label: string; value: string }> = [];
-    for (const row of BANK_ROWS) {
-      let value = "";
-      for (const key of row.valueKeys) {
-        const text = stringifyFieldValue(account[key]);
-        if (text) {
-          value = text;
-          break;
-        }
-      }
+    BANK_ROWS.forEach((row) => {
+      let value =
+        row.valueKeys
+          .map((key) => stringifyFieldValue(account[key]))
+          .find(Boolean) || "";
       // The holder name is the one row that prints regardless: an account with
       // no name on it belongs to the business issuing the document.
       if (!value && row.label === "Account Name") {
         value = stringifyFieldValue(invoice?.billedBy?.name);
       }
-      if (!value) continue;
+      if (!value) return;
       rows.push({ label: labelFor(row.labelKeys, row.label), value });
-    }
+    });
 
     // Whatever else the account has been configured to carry.
-    for (const field of Array.isArray(account.customFields)
-      ? account.customFields
-      : []) {
-      if (field?.params?.showInInvoice === false) continue;
-      const label = typeof field?.label === "string" ? field.label.trim() : "";
-      const value = stringifyFieldValue(field?.value);
-      if (label && value) rows.push({ label, value });
-    }
+    (Array.isArray(account.customFields) ? account.customFields : []).forEach(
+      (field: any) => {
+        if (field?.params?.showInInvoice === false) return;
+        const label =
+          typeof field?.label === "string" ? field.label.trim() : "";
+        const value = stringifyFieldValue(field?.value);
+        if (label && value) rows.push({ label, value });
+      }
+    );
 
     return rows;
   });
 
+  /**
+   *
+   * @param value
+   * @param invoiceOrSymbol
+   */
   function formatCurrencyValue(value: any, invoiceOrSymbol?: any): string {
     const num = extractNumericValue(value);
     if (num === null) {
@@ -379,597 +796,11 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
   HB.registerHelper("formatCurrency", formatCurrencyValue);
 
-  // The line discount arrives as an object (`{ amount, discountType }`), never
-  // a ready-made string: a PERCENTAGE discount prints as its rate, any other
-  // type as money. A missing or zero discount prints nothing, so rows the
-  // business did not discount stay blank instead of reading "0%".
-  function itemDiscountText(item: any, invoice: any): string {
-    const discount = item?.discount;
-    const raw =
-      discount && typeof discount === "object" ? discount.amount : discount;
-    const amount = extractNumericValue(raw);
-    if (amount === null || amount === 0) return "";
-    const type = String(discount?.discountType || "").toUpperCase();
-    if (type === "PERCENTAGE") return `${amount}%`;
-    return formatCurrencyValue(amount, invoice);
-  }
-
-  HB.registerHelper("formatItemDiscount", itemDiscountText);
-
-  // The item's tax-inclusive total for the declared `total` column — see
-  // `lineItemTax` below for how the tax figure is derived.
-  HB.registerHelper(
-    "formatLineTotal",
-    function (item: any, invoice: any, visibility: any) {
-      const amount = extractNumericValue(item?.amount) ?? 0;
-      return formatCurrencyValue(
-        amount + lineItemTax(item, visibility),
-        invoice
-      );
-    }
-  );
-
   HB.registerHelper("formatPhone", function (phone: any) {
     if (typeof phone !== "string" && typeof phone !== "number") return "";
     const phoneStr = String(phone).trim();
     if (!phoneStr) return "";
     return formatPhoneNumberIntl(phoneStr) ?? phoneStr;
-  });
-
-  const COLUMN_ALIASES: Record<string, string[]> = {
-    item: ["name", "description", "item", "productdescription"],
-    model: ["model", "modelno", "model_no"],
-    rate: ["rate", "price", "unitprice", "unit_price"],
-    quantity: ["quantity", "qty"],
-    total: ["total", "amount", "linetotal"],
-    hsn: ["hsn", "hsnsac", "hsn_sac", "sac"],
-    discount: ["discount"],
-    igst: ["igst"],
-    cgst: ["cgst"],
-    sgst: ["sgst"],
-  };
-
-  HB.registerHelper(
-    "getColumnLabel",
-    function (key: string, fallback: string, options: any) {
-      const root = options?.data?.root;
-      const columns = root?.columns || root?.invoice?.columns;
-      const target = (key || "").toLowerCase();
-      if (Array.isArray(columns)) {
-        const keyOf = (c: any) => (c.key || c.id || c.name || "").toLowerCase();
-        // Exact key first. Aliases are only a fallback: payloads ship both `amount`
-        // and `total` columns, and `amount` sits earlier in the array, so an
-        // alias-first search would label the Total column with the Amount label.
-        const col =
-          columns.find((c: any) => keyOf(c) === target) ||
-          columns.find((c: any) =>
-            (COLUMN_ALIASES[target] || []).includes(keyOf(c))
-          );
-        if (
-          col &&
-          col.label &&
-          typeof col.label === "string" &&
-          col.label.trim()
-        ) {
-          return col.label.trim();
-        }
-      }
-
-      const customLabels = root?.invoice?.customLabels;
-      if (customLabels && customLabels[key]) {
-        return customLabels[key];
-      }
-
-      return fallback;
-    }
-  );
-
-  // ── Item table columns ───────────────────────────────────────────────────
-  //
-  // The order comes from `invoice.columns` as the API returns it. Each declared
-  // column maps to a `kind` the row markup knows how to render; anything
-  // unrecognised is a user-defined column and renders from the item's own data.
-
-  // Declared key (punctuation and case stripped) -> render kind.
-  const COLUMN_KEY_KINDS: Record<string, string> = {
-    name: "name",
-    item: "name",
-    itemname: "name",
-    description: "name",
-    model: "model",
-    modelno: "model",
-    modelnumber: "model",
-    hsn: "hsn",
-    sac: "hsn",
-    hsnsac: "hsn",
-    rate: "rate",
-    price: "rate",
-    unitprice: "rate",
-    quantity: "qty",
-    qty: "qty",
-    discount: "discount",
-    igst: "igst",
-    cgst: "cgst",
-    sgst: "sgst",
-    utgst: "sgst",
-    amount: "amount",
-    total: "total",
-  };
-
-  // Kind -> width class on its <col>, default heading, and the `customLabels`
-  // key that overrides that heading.
-  const COLUMN_KIND_META: Record<
-    string,
-    { colClass: string; label: string; labelKey?: string }
-  > = {
-    sno: { colClass: "fk-col-sno", label: "" },
-    name: { colClass: "fk-col-desc", label: "Item", labelKey: "item" },
-    photo: { colClass: "fk-col-photo", label: "" },
-    model: { colClass: "fk-col-model", label: "Model No.", labelKey: "model" },
-    hsn: { colClass: "fk-col-hsn", label: "HSN/SAC", labelKey: "hsn" },
-    rate: { colClass: "fk-col-price", label: "Unit Price", labelKey: "rate" },
-    qty: { colClass: "fk-col-qty", label: "Qty", labelKey: "quantity" },
-    discount: {
-      colClass: "fk-col-disc",
-      label: "Discount",
-      labelKey: "discount",
-    },
-    igst: { colClass: "fk-col-tax", label: "IGST", labelKey: "igst" },
-    cgst: { colClass: "fk-col-tax", label: "CGST", labelKey: "cgst" },
-    sgst: { colClass: "fk-col-tax", label: "SGST", labelKey: "sgst" },
-    amount: { colClass: "fk-col-total", label: "Amount", labelKey: "amount" },
-    total: { colClass: "fk-col-total", label: "Total", labelKey: "total" },
-    custom: { colClass: "fk-col-custom", label: "" },
-  };
-
-  const normalizeColumnKey = (key: any) =>
-    String(key || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-
-  // Tax, discount and HSN columns stay subject to the document's visibility
-  // flags: a declared column set lists every column the account has configured,
-  // including ones that do not apply to this document (an intra-state invoice
-  // still declares IGST), and rendering those would print a column of zeros.
-  function isKindVisible(kind: string, root: any): boolean {
-    const visibility = root?.mapped?.visibility || {};
-    if (kind === "hsn") return Boolean(root?.derived?.showHsnColumn);
-    if (kind === "discount")
-      return Boolean(root?.invoice?.finalTotal?.discount);
-    if (kind === "igst") return Boolean(visibility.showIgst);
-    if (kind === "cgst" || kind === "sgst")
-      return Boolean(visibility.showCgstSgst);
-    if (kind === "photo") {
-      const items = Array.isArray(root?.invoice?.items)
-        ? root.invoice.items
-        : [];
-      return items.some((item: any) => resolveItemImages(item).length > 0);
-    }
-    return true;
-  }
-
-  function getItemColumns(root: any): Array<Record<string, any>> {
-    const rawColumns = root?.columns || root?.invoice?.columns;
-    const customLabels = root?.invoice?.customLabels || {};
-
-    // The declared set, minus the entries that never print, resolved to kinds.
-    const declared: Array<Record<string, any>> = [];
-    for (const col of Array.isArray(rawColumns) ? rawColumns : []) {
-      if (!col || typeof col !== "object") continue;
-      if (col.isHidden === true || col.private === true) continue;
-
-      const key = String(col.key || col.id || col.name || "").trim();
-      if (!key) continue;
-      const label = typeof col.label === "string" ? col.label.trim() : "";
-      // A business's own custom column (e.g. one it named "Model No.") has a
-      // random generated key, so it never matches by key. Falling back to the
-      // label catches that case and routes it through the "model" kind, which
-      // always renders the item's SKU rather than that column's stored value.
-      const kind =
-        COLUMN_KEY_KINDS[normalizeColumnKey(key)] ||
-        (COLUMN_KEY_KINDS[normalizeColumnKey(label)] === "model" ? "model" : undefined);
-
-      // An unrecognised key is a user-defined column, rendered from item data.
-      if (!kind && !label) continue;
-      declared.push({
-        kind: kind || "custom",
-        label,
-        key,
-        dataType: String(col.dataType || "").toLowerCase(),
-        fxReturnType: String(col.fxReturnType || "").toLowerCase(),
-      });
-    }
-
-    const columns: Array<Record<string, any>> = [];
-    const usedKinds = new Set<string>();
-    const declares = (kind: string) =>
-      declared.some((col) => col.kind === kind);
-
-    const add = (kind: string, extra: Record<string, any> = {}) => {
-      // Every kind but `custom` is a single column; payloads legitimately
-      // declare both `amount` and `total`, which are the same column here.
-      if (kind !== "custom" && usedKinds.has(kind)) return;
-      if (!isKindVisible(kind, root)) return;
-      usedKinds.add(kind);
-
-      const meta = COLUMN_KIND_META[kind] || COLUMN_KIND_META.custom;
-      const label =
-        extra.label ||
-        (meta.labelKey && customLabels[meta.labelKey]) ||
-        meta.label;
-      columns.push({
-        ...extra,
-        kind,
-        colClass: extra.colClass || meta.colClass,
-        label,
-      });
-    };
-
-    // The item name and its photo are one visual unit, so the photo is pinned
-    // beside the name rather than taking a slot from the declared order. It is
-    // the only column this template adds that the document does not declare —
-    // anything else invented here shows up as a duplicate of a declared column.
-    const addItemColumns = (label?: string) => {
-      if (usedKinds.has("name")) return;
-      add("name", label ? { label } : {});
-      add("photo");
-    };
-
-    add("sno");
-    if (!declares("name")) addItemColumns();
-
-    for (const col of declared) {
-      if (col.kind === "name") {
-        addItemColumns(col.label);
-      } else if (col.kind === "custom") {
-        add("custom", {
-          label: col.label,
-          key: col.key,
-          dataType: col.dataType,
-          fxReturnType: col.fxReturnType,
-        });
-      } else {
-        add(col.kind, col.label ? { label: col.label } : {});
-      }
-    }
-
-    // No column config at all: fall back to this template's own order so those
-    // documents keep rendering exactly as they did.
-    if (!declared.length) {
-      add("model");
-      add("hsn");
-      add("rate");
-      add("qty");
-      add("discount");
-      add("igst");
-      add("cgst");
-      add("sgst");
-      add("amount");
-    }
-
-    // A user-defined column the account configured but never actually filled
-    // in — no item on this document carries a value for its key under any of
-    // the three buckets `customColumnValue` checks — renders as a header over
-    // an empty strip. Built-in kinds are left alone: those are core invoice
-    // fields (rate, qty, tax…) where an all-zero column is still meaningful,
-    // just a `custom` column with nothing in it is dead weight.
-    const items = Array.isArray(root?.invoice?.items) ? root.invoice.items : [];
-    const visibleColumns = columns.filter(
-      (column) =>
-        column.kind !== "custom" ||
-        items.some(
-          (item: any) =>
-            customColumnValue(item, column, root?.invoice).text !== ""
-        )
-    );
-
-    assignColumnWidths(visibleColumns, root);
-    return visibleColumns;
-  }
-
-  // ── Column widths ────────────────────────────────────────────────────────
-  //
-  // Widths are measured from the values this document actually prints, not
-  // declared per column name in CSS: the column set comes from the payload, so
-  // a fixed px rule per name either clips a column whose figures are larger
-  // than the rule anticipated (a nowrap total spilling past the table edge) or
-  // hands width to a column that does not need it. Everything is emitted as a
-  // percentage, which keeps the row exactly as wide as the table under
-  // `table-layout: fixed` however many columns the payload declares.
-
-  // Rough advance width of one character at the table's base font. Digits and
-  // uppercase run wider than lowercase, so this errs high — a column half a
-  // character too wide costs the description nothing noticeable, a column half
-  // a character too narrow clips a figure.
-  const CHAR_PX = 7;
-  // Cell padding plus both borders, which the text never gets to use.
-  const CELL_CHROME_PX = 18;
-  // Nominal content width of the table: page width less the page and main-box
-  // padding. Only used to turn measured px into a ratio, so it does not have to
-  // track the real width exactly.
-  const TABLE_PX = 950;
-  // The description column is the point of the table; never let the measured
-  // columns squeeze it below this share.
-  const MIN_NAME_PCT = 26;
-
-  // Per kind: floor, ceiling, and whether the value can wrap. Wrapping columns
-  // are measured by their longest word rather than their whole text, since the
-  // rest can fall to the next line.
-  const COLUMN_WIDTH_RULES: Record<
-    string,
-    { min: number; max: number; wraps?: boolean }
-  > = {
-    sno: { min: 30, max: 46 },
-    photo: { min: 152, max: 152 },
-    model: { min: 70, max: 200 },
-    hsn: { min: 66, max: 110 },
-    rate: { min: 82, max: 190 },
-    qty: { min: 46, max: 90 },
-    discount: { min: 64, max: 130 },
-    igst: { min: 60, max: 130 },
-    cgst: { min: 60, max: 130 },
-    sgst: { min: 60, max: 130 },
-    amount: { min: 90, max: 200 },
-    total: { min: 90, max: 200 },
-    custom: { min: 70, max: 150, wraps: true },
-    // A user-defined column declared as a number or currency: same treatment
-    // as the built-in numeric kinds above, not the free-text `custom` rule.
-    customNumeric: { min: 90, max: 200 },
-  };
-
-  // Whether a declared column's own dataType — not the value it happens to
-  // hold — marks it as numeric. A payload can mark a column `currency` and
-  // still send an item where that field is blank or unparsable; the column is
-  // numeric regardless, so its cells must not wrap just because one row's
-  // value could not be parsed.
-  function isNumericColumnType(column: any): boolean {
-    const declared = `${column?.dataType || ""} ${column?.fxReturnType || ""}`;
-    return declared.includes("number") || declared.includes("currency");
-  }
-
-  const longestWordLength = (text: string) =>
-    String(text || "")
-      .split(/\s+/)
-      .reduce((longest, word) => Math.max(longest, word.length), 0);
-
-  // The text a given column prints for a given item, mirroring the row markup.
-  // Anything this returns short renders clipped, so it has to stay in step with
-  // the cells in template.hbs.
-  // The line's tax-inclusive total: `amount` (already net of the line
-  // discount) plus whatever tax the item carries. `taxAmount` wins when the
-  // backend has already summed it. Otherwise only ONE regime applies per
-  // invoice — inter-state IGST, or intra-state CGST+SGST/UTGST, never both —
-  // so which fields to sum follows `mapped.visibility`, same as the tax
-  // summary table does; a stale/leftover value in the field that does not
-  // apply (e.g. a nonzero `igst` left over on a CGST/SGST invoice) must not
-  // get added in, or the line double-counts tax.
-  function lineItemTax(
-    item: any,
-    visibility?: {
-      showIgst?: boolean;
-      showCgstSgst?: boolean;
-      isUtgst?: boolean;
-    }
-  ): number {
-    const explicit = extractNumericValue(item?.taxAmount);
-    if (explicit !== null) return explicit;
-
-    const cess = extractNumericValue(item?.cessAmount) ?? 0;
-
-    if (visibility?.showIgst) {
-      return (extractNumericValue(item?.igst) ?? 0) + cess;
-    }
-    if (visibility?.showCgstSgst) {
-      const stateTax = visibility.isUtgst
-        ? extractNumericValue(item?.utgst) ?? 0
-        : extractNumericValue(item?.sgst) ?? 0;
-      return (extractNumericValue(item?.cgst) ?? 0) + stateTax + cess;
-    }
-
-    // No visibility signal available (e.g. width measurement without root
-    // context) — fall back to summing whichever fields are actually present.
-    return (
-      (extractNumericValue(item?.igst) ?? 0) +
-      (extractNumericValue(item?.cgst) ?? 0) +
-      (extractNumericValue(item?.sgst) ?? 0) +
-      (extractNumericValue(item?.utgst) ?? 0) +
-      cess
-    );
-  }
-
-  function columnCellText(
-    kind: string,
-    column: any,
-    item: any,
-    invoice: any,
-    visibility?: any
-  ): string {
-    switch (kind) {
-      case "model":
-        return String(item?.sku || "");
-      case "hsn":
-        return String(item?.hsn || "");
-      case "rate":
-        return formatCurrencyValue(item?.rate, invoice);
-      case "qty": {
-        const qty =
-          item?.quantity !== undefined && item?.quantity !== null
-            ? item.quantity
-            : item?.qty;
-        if (qty === undefined || qty === null) return "";
-        // The unit prints on its own line under the figure, so the column only
-        // has to fit whichever of the two is wider.
-        const unit = resolveUnit(item?.unit, item, invoice);
-        return String(qty).length >= String(unit || "").length
-          ? String(qty)
-          : String(unit);
-      }
-      case "discount":
-        return itemDiscountText(item, invoice);
-      case "igst":
-        return formatCurrencyValue(item?.igst, invoice);
-      case "cgst":
-        return formatCurrencyValue(item?.cgst, invoice);
-      case "sgst":
-        return formatCurrencyValue(item?.sgst, invoice);
-      case "amount":
-        return formatCurrencyValue(item?.amount, invoice);
-      case "total": {
-        const amount = extractNumericValue(item?.amount) ?? 0;
-        return formatCurrencyValue(
-          amount + lineItemTax(item, visibility),
-          invoice
-        );
-      }
-      case "custom":
-        return customColumnValue(item, column, invoice).text;
-      default:
-        return "";
-    }
-  }
-
-  function assignColumnWidths(
-    columns: Array<Record<string, any>>,
-    root: any
-  ): void {
-    const invoice = root?.invoice;
-    const items = Array.isArray(invoice?.items) ? invoice.items : [];
-    const visibility = root?.mapped?.visibility;
-
-    // Measured px per column, name excluded: it takes whatever is left.
-    let measuredTotal = 0;
-    for (const column of columns) {
-      if (column.kind === "name") continue;
-
-      const rule =
-        column.kind === "custom" && isNumericColumnType(column)
-          ? COLUMN_WIDTH_RULES.customNumeric
-          : COLUMN_WIDTH_RULES[column.kind] || COLUMN_WIDTH_RULES.custom;
-      let widest = rule.wraps
-        ? longestWordLength(column.label)
-        : String(column.label || "").length;
-
-      if (column.kind === "sno") {
-        widest = Math.max(widest, String(items.length).length);
-      } else if (column.kind !== "photo") {
-        for (const item of items) {
-          const text = columnCellText(
-            column.kind,
-            column,
-            item,
-            invoice,
-            visibility
-          );
-          widest = Math.max(
-            widest,
-            rule.wraps ? longestWordLength(text) : text.length
-          );
-        }
-      }
-
-      const px = Math.min(
-        rule.max,
-        Math.max(rule.min, widest * CHAR_PX + CELL_CHROME_PX)
-      );
-      column.widthPx = px;
-      measuredTotal += px;
-    }
-
-    let measuredPct = (measuredTotal / TABLE_PX) * 100;
-    // Too many columns to fit alongside a readable description: give them their
-    // share of what is left over instead of their measured width.
-    const scale =
-      measuredPct > 100 - MIN_NAME_PCT ? (100 - MIN_NAME_PCT) / measuredPct : 1;
-    measuredPct *= scale;
-
-    for (const column of columns) {
-      if (column.kind === "name") continue;
-      column.widthPct = Number(
-        ((column.widthPx / TABLE_PX) * 100 * scale).toFixed(3)
-      );
-    }
-
-    const nameColumn = columns.find((column) => column.kind === "name");
-    if (nameColumn) {
-      nameColumn.widthPct = Number(
-        Math.max(MIN_NAME_PCT, 100 - measuredPct).toFixed(3)
-      );
-    }
-  }
-
-  HB.registerHelper("itemColumns", function (options: any) {
-    return getItemColumns(options?.data?.root);
-  });
-
-  // The rendered cell for a user-defined column: the text plus whether it came
-  // out numeric, which the markup uses to stop long figures wrapping mid-number.
-  // Payloads put these values on `custom` keyed by column key, on a
-  // `customFields` list, or occasionally flat on the item itself, so all three
-  // are checked before giving up.
-  function customColumnValue(item: any, column: any, invoice?: any) {
-    if (!item || !column?.key) return { text: "", isNumber: false };
-
-    const key = String(column.key);
-    let value = item.custom?.[key];
-
-    if (value === undefined || value === null || value === "") {
-      const match = (
-        Array.isArray(item.customFields) ? item.customFields : []
-      ).find((field: any) => {
-        const candidates = [field?.key, field?.name, field?.label];
-        return candidates.some(
-          (candidate: any) =>
-            typeof candidate === "string" &&
-            candidate.trim().toLowerCase() === key.toLowerCase()
-        );
-      });
-      value = match?.value;
-    }
-
-    if (value === undefined || value === null || value === "") {
-      value = item[key];
-    }
-
-    // Currency formatting only where the column declares it: everything else,
-    // `number` included, prints the value as the document stores it.
-    const declaredType = `${column.dataType || ""} ${
-      column.fxReturnType || ""
-    }`;
-    if (
-      declaredType.includes("currency") &&
-      extractNumericValue(value) !== null
-    ) {
-      return { text: formatCurrencyValue(value, invoice), isNumber: true };
-    }
-
-    // `isNumber` drives the nowrap class in the row markup. A column declared
-    // `number`/`currency` must not wrap even on a row where this value happens
-    // to be blank or unparsable — the column's shape doesn't change row to row.
-    return {
-      text: stringifyFieldValue(value),
-      isNumber:
-        isNumericColumnType(column) || extractNumericValue(value) !== null,
-    };
-  }
-
-  HB.registerHelper("customColumnCell", customColumnValue);
-
-  // Column count of the line-item table. The full-width description row spans
-  // the whole table, and a colspan larger than the real column count makes the
-  // browser invent the missing columns — they eat the width the auto-sized Item
-  // column should get and leave a dead strip at the right edge.
-  HB.registerHelper("itemColspan", function (options: any) {
-    return getItemColumns(options?.data?.root).length;
-  });
-
-  // The name header spans into the photo column via colspan, since photo
-  // never gets a <th> of its own — but isKindVisible drops photo entirely
-  // when no item has an image, so the colspan has to shrink to match or the
-  // header claims a column the body no longer has.
-  HB.registerHelper("hasPhotoColumn", function (options: any) {
-    return getItemColumns(options?.data?.root).some(
-      (col) => col.kind === "photo"
-    );
   });
 
   // Every heading the document names for itself. The account configures these
@@ -989,6 +820,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // the first key the payload carries wins. Keys are matched with punctuation
   // and case stripped, so `additionalInfo`, `additional_info` and
   // `Additional Info` are all the same key.
+  /**
+   *
+   * @param args
+   */
   function documentLabel(...args: any[]) {
     const options = args[args.length - 1];
     const positional = args
@@ -1000,16 +835,8 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     const customLabels = options?.data?.root?.invoice?.customLabels;
     if (customLabels) {
-      const available = new Map<string, string>();
-      for (const [ckey, cval] of Object.entries(customLabels)) {
-        if (typeof cval === "string" && cval.trim()) {
-          available.set(normalizeColumnKey(ckey), cval.trim());
-        }
-      }
-      for (const key of keys) {
-        const match = available.get(normalizeColumnKey(key));
-        if (match) return match;
-      }
+      const match = firstLabel(customLabels, keys);
+      if (match) return match;
     }
 
     return fallback;
@@ -1051,155 +878,8 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     return candidate ? String(candidate).trim() : "";
   });
-
-  function isDatabaseId(str: string): boolean {
-    if (!str) return false;
-    const trimmed = str.trim();
-    return (
-      /^[a-z0-9]{10,}$/i.test(trimmed) || /^[0-9a-fA-F]{24}$/.test(trimmed)
-    );
-  }
-
-  function lookupUnitInObjectOrArray(unitId: string, src: any): string {
-    if (!src || !unitId) return "";
-
-    if (typeof src === "object" && !Array.isArray(src)) {
-      const match = src[unitId];
-      if (typeof match === "string" && !isDatabaseId(match)) return match;
-      if (typeof match === "object" && match !== null) {
-        const name =
-          match.symbol ||
-          match.name ||
-          match.shortName ||
-          match.label ||
-          match.title;
-        if (name && !isDatabaseId(name)) return name;
-      }
-    }
-
-    if (Array.isArray(src)) {
-      const match = src.find(
-        (u: any) =>
-          u &&
-          (u.id === unitId ||
-            u._id === unitId ||
-            u.unitId === unitId ||
-            u.key === unitId ||
-            u.code === unitId)
-      );
-      if (match) {
-        if (typeof match === "string" && !isDatabaseId(match)) return match;
-        if (typeof match === "object" && match !== null) {
-          const name =
-            match.symbol ||
-            match.name ||
-            match.shortName ||
-            match.label ||
-            match.title ||
-            match.code;
-          if (name && !isDatabaseId(name)) return name;
-        }
-      }
-    }
-
-    return "";
-  }
-
-  function resolveUnit(unitRaw: any, item?: any, invoice?: any): string {
-    const candidates = [
-      item?.unitName,
-      item?.unit_name,
-      item?.unitSymbol,
-      item?.unit_symbol,
-      item?.unitTitle,
-      item?.unitLabel,
-      item?.unitDetails?.symbol,
-      item?.unitDetails?.name,
-      item?.unit_details?.symbol,
-      item?.unit_details?.name,
-      item?.custom?.unit,
-    ];
-
-    for (const cand of candidates) {
-      if (cand && typeof cand === "string" && !isDatabaseId(cand)) {
-        return cand.trim();
-      }
-    }
-
-    let rawStr = "";
-    if (typeof unitRaw === "string") {
-      rawStr = unitRaw.trim();
-    } else if (typeof unitRaw === "object" && unitRaw !== null) {
-      rawStr =
-        unitRaw.symbol ||
-        unitRaw.name ||
-        unitRaw.shortName ||
-        unitRaw.label ||
-        "";
-    }
-
-    if (rawStr && !isDatabaseId(rawStr)) {
-      return rawStr;
-    }
-
-    const unitIdToLookup =
-      rawStr || (typeof item?.unit === "string" ? item.unit : "");
-    if (unitIdToLookup && invoice) {
-      const sources = [
-        invoice.units,
-        invoice.unitList,
-        invoice.unitMap,
-        invoice.unitMapping,
-        invoice.masterUnits,
-        invoice.owner?.units,
-        invoice.business?.units,
-        invoice.company?.units,
-        invoice.masterData?.units,
-        invoice.advanceOptions?.units,
-      ];
-
-      for (const src of sources) {
-        const found = lookupUnitInObjectOrArray(unitIdToLookup, src);
-        if (found) return found;
-      }
-    }
-
-    if (isDatabaseId(unitIdToLookup)) {
-      return "Nos";
-    }
-
-    return rawStr;
-  }
-
-  HB.registerHelper(
-    "formatQtyCell",
-    function (item: any, invoice: any, advanceOptions: any) {
-      if (!item) return "";
-      const qty =
-        item.quantity !== undefined && item.quantity !== null
-          ? item.quantity
-          : item.qty;
-      if (qty === undefined || qty === null) return "";
-
-      const unitCol = (
-        advanceOptions?.unitColumn ||
-        invoice?.advanceOptions?.unitColumn ||
-        "MERGE_QUANTITY"
-      ).toUpperCase();
-
-      if (
-        ["MERGE_NAME", "SEPARATE", "HIDE", "NONE", "FALSE"].includes(unitCol)
-      ) {
-        return String(qty);
-      }
-
-      const unit = resolveUnit(item.unit, item, invoice);
-      if (unit) {
-        return new HB.SafeString(
-          `<div class="fk-qty-num">${qty}</div><div class="fk-qty-unit">${unit}</div>`
-        );
-      }
-      return String(qty);
-    }
-  );
 }
+
+export default registerFitkingTemplateHelpers;
+
+/* eslint-enable @typescript-eslint/no-explicit-any */
