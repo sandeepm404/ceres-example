@@ -1,0 +1,689 @@
+{{!--
+  Viraj Technologies template (Figma Document-Templates, node 18920:1491 "VIRAJ TECHNOLOGIES"):
+  a ruled quotation.
+
+  Root is normalizeInvoiceTemplateState's output. Every block reads the view model built once
+  by `vtView` (helpers.ts): labels, visibility and table columns all come from the payload.
+  The design's two images are the business's own: the logo (invoice.logo) and the UPI QR.
+
+  Order: the title; the letterhead (no logo and no Billed By in this template);
+  the buyer's box ("To", address, fields two to a row) | the document details; Shipped From /
+  Shipped To / Transport panels; E-Invoice / E-Way Bill (or below the items, irnPosition); the
+  items with the totals rows under them; the Additional Info grid (titled "Terms &
+  Conditions" in the design); notes ("Declaration") | bank account details and UPI; terms;
+  attachments; the summaries: tax, HSN, batch and payments; the signature; then the
+  document's contact line, last.
+  data-testid / data-section / data-col are test hooks; data-ceres-* are the host's live
+  update targets.
+--}}
+{{#with (vtView @root) as |view|}}
+<div class="vt-doc{{#if view.print.stretchTable}} is-stretch{{/if}}{{#if view.hideFooter}} is-footer-hidden{{/if}}{{#if view.pageless}} is-pageless{{/if}}" data-testid="invoice-root" dir="{{view.script.dir}}"{{#if view.script.lang}} lang="{{view.script.lang}}"{{/if}}{{#if view.script.script}} data-ceres-script="{{view.script.script}}"{{/if}} style="--vt-text-scale: {{view.print.textScale}}; --vt-print-width: {{view.print.printWidth}}px; --vt-browser-print-width: {{view.print.browserPrintWidth}}px; --vt-print-height: {{view.print.printHeight}}px;{{#if view.theme}} --vt-theme: {{view.theme.accent}};{{/if}}{{#if view.script.font}} --vt-script-font: '{{view.script.font}}';{{/if}}">
+  {{!-- The Language/Script setting's font, for the glyphs Inter lacks. --}}
+  {{#if view.script.fontUrl}}<link rel="stylesheet" href="{{view.script.fontUrl}}" />{{/if}}
+  {{!--
+    The title, centred, with the status tag, subtitle and copy label under it. It stands before
+    the print frame, so on paper too it opens the first page above the letterhead (as on
+    screen); a letterhead repeating on every page then follows it and tops the later pages.
+  --}}
+  <div class="vt-title-block" data-testid="section" data-section="title">
+    <div class="vt-title-row">
+      {{#if view.status}}
+        <span class="vt-status{{#unless view.status.inPrint}} no-print{{/unless}}"><span class="invoice-tag {{view.status.color}}">{{view.status.text}}</span></span>
+      {{/if}}
+      {{#if view.title}}<h1 class="vt-title" data-role="title"><span class="vt-text">{{view.title}}</span></h1>{{/if}}
+    </div>
+    {{#if view.subtitle}}<p class="vt-subtitle"><span class="vt-text">{{view.subtitle}}</span></p>{{/if}}
+    {{#if view.copy}}<p class="vt-copy" data-role="tag"><span class="vt-text">{{view.copy}}</span></p>{{/if}}
+  </div>
+
+  {{!--
+    Print frame: transparent on screen (display: contents). In print, the letterhead repeats
+    at the top of every page in the <thead> unless it is for the first page only; when the
+    footer repeats on every page (pdfOptions.footerOnLastPage off), the real footer is fixed
+    to the foot of each page and the repeating <tfoot> holds an invisible copy of it, so
+    content never runs under it.
+  --}}
+  <table class="vt-page-frame" role="presentation">
+    {{#if view.letterheadEveryPage}}
+      <thead class="vt-page-frame-header">
+        <tr>
+          <td>
+            <div class="no-dibella invoice-letterhead vt-letterhead{{#unless @root.invoice.letterHead}} is-empty{{/unless}}" data-ceres-page-header data-ceres-page-policy="all">
+              {{#if @root.invoice.letterHead}}
+                <img src="{{@root.invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+              {{else}}
+                <img alt="Letterhead" data-ceres-height="letterhead" />
+              {{/if}}
+            </div>
+          </td>
+        </tr>
+      </thead>
+    {{/if}}
+    {{#if view.footerEveryPage}}{{#unless view.hideFooter}}
+      <tfoot class="vt-page-frame-footer">
+        <tr>
+          <td>
+            <div class="no-dibella invoice-letterhead-footer vt-letterhead-footer vt-footer-spacer{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" aria-hidden="true">
+              {{#if @root.invoice.letterHeadFooter}}<img src="{{@root.invoice.letterHeadFooter}}" alt="" />{{else}}<img alt="" />{{/if}}
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    {{/unless}}{{/if}}
+    <tbody>
+      <tr>
+        <td class="vt-page-frame-cell">
+          <div class="vt-page-body">
+          {{!--
+            The letterhead (header image) just below the title and subtitle, in place of a logo
+            and rules (user request; Billed By is not printed in this template). When it repeats
+            on every printed page it comes from the print frame's <thead> instead, at the top of
+            each page, and this copy stays on screen only.
+          --}}
+          <div class="invoice-letterhead vt-letterhead{{#if view.letterheadEveryPage}} is-print-repeated{{/if}}{{#unless @root.invoice.letterHead}} is-empty{{/unless}}"{{#unless view.letterheadEveryPage}} data-ceres-page-header data-ceres-page-policy="first"{{/unless}} data-testid="section" data-section="letterhead">
+            {{#if @root.invoice.letterHead}}
+              <img src="{{@root.invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+            {{else}}
+              <img alt="Letterhead" data-ceres-height="letterhead" />
+            {{/if}}
+          </div>
+
+          {{!-- The buyer's box | the document details, side by side. --}}
+          <section class="vt-billing-row{{#unless view.billing}} is-details-only{{/unless}}" data-testid="section" data-section="parties">
+            {{#if view.billing}}
+              <div class="vt-billing" data-role="billing">
+                <div class="vt-billing-party">
+                  <p class="vt-billing-name"><span class="vt-billing-label vt-text">{{view.billing.title}}:</span> <strong class="vt-text">{{view.billing.name}}</strong></p>
+                  {{#if view.billing.addressLines.length}}
+                    <div class="vt-billing-address">
+                      <span class="vt-billing-label vt-text">{{view.billing.addressLabel}} :</span>
+                      <div class="vt-billing-address-lines">
+                        {{#each view.billing.addressLines}}<p><span class="vt-text">{{this}}</span></p>{{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                </div>
+                {{#if view.billing.rows.length}}<div class="vt-billing-grid">
+                {{#each view.billing.rows}}
+                  <div class="vt-billing-fields">
+                    {{#each cells}}
+                      {{#if this}}
+                        <div class="vt-cell vt-cell-label"><span class="vt-text">{{label}}:</span></div>
+                        <div class="vt-cell vt-cell-value"><span class="{{#if isNum}}vt-num{{else if isEmail}}vt-email{{/if}}{{#if isToken}} vt-break{{/if}}">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</span></div>
+                      {{else}}
+                        <div class="vt-cell vt-cell-label" aria-hidden="true"></div>
+                        <div class="vt-cell vt-cell-value" aria-hidden="true"></div>
+                      {{/if}}
+                    {{/each}}
+                  </div>
+                {{/each}}
+                </div>{{/if}}
+              </div>
+            {{/if}}
+            {{#if view.details.length}}
+              <div class="vt-details" data-testid="details">
+                <div class="vt-details-grid">
+                  {{#each view.details}}
+                    <div class="vt-details-row vt-ref-{{key}}">
+                      <div class="vt-cell vt-cell-label"><span class="vt-text">{{label}}</span></div>
+                      <div class="vt-cell vt-cell-value"><span class="{{#if isNum}}vt-num{{else if isEmail}}vt-email{{/if}}">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</span></div>
+                    </div>
+                  {{/each}}
+                  {{!-- No QR here: the e-invoice QR prints in the IRN details (helpers.ts mapCompliance). --}}
+                  {{#if view.compliance.qr.document}}
+                  <div class="vt-qr vt-doc-qr" data-ceres-field-container="documentQr"><img data-ceres-field="documentQr"{{#if view.compliance.qr.document}} src="{{view.compliance.qr.document}}"{{/if}} alt="{{view.compliance.qr.documentAlt}}" /></div>
+                  {{/if}}
+                </div>
+              </div>
+            {{/if}}
+          </section>
+
+
+          {{!-- Shipped From | Shipped To | Transport Details: titled panels side by side. --}}
+          {{#if view.showDispatch}}
+            <section class="vt-panel-row" data-testid="section" data-section="shipping">
+              {{#each view.shipping}}
+                <div class="vt-panel" data-role="{{role}}">
+                  <h3 class="vt-panel-title"><span class="vt-text">{{title}}</span></h3>
+                  <div class="vt-panel-body">
+                    <p class="vt-party-name"><span class="vt-text">{{name}}</span></p>
+                    {{#each addressLines}}<p><span class="vt-text">{{this}}</span></p>{{/each}}
+                    {{#each fields}}
+                      <p class="vt-field"><span class="vt-field-label">{{label}}:</span> <span class="vt-field-value{{#if isNum}} vt-num{{else if isEmail}} vt-email{{/if}}{{#if isToken}} vt-break{{/if}}">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</span></p>
+                    {{/each}}
+                    {{#if supply.lines.length}}
+                      <div class="vt-supply" data-ceres-country-of-supply{{#if supply.hidden}} style="display:none"{{/if}}>
+                        {{#each supply.lines}}
+                          <p class="vt-field"{{#if attr}} {{attr}}{{/if}}{{#if isHidden}} style="display:none"{{/if}}><span class="vt-field-label">{{label}}:</span> <span class="vt-field-value">{{value}}</span></p>
+                        {{/each}}
+                      </div>
+                    {{/if}}
+                  </div>
+                </div>
+              {{/each}}
+              {{#if view.transport}}
+                <div class="vt-panel" data-role="transport" data-testid="transport">
+                  <h3 class="vt-panel-title"><span class="vt-text">{{view.transport.title}}</span></h3>
+                  <div class="vt-panel-body">
+                    {{#each view.transport.rows}}
+                      <p class="vt-field vt-ref-{{key}}"><span class="vt-field-label">{{label}}:</span> <span class="vt-field-value{{#if isNum}} vt-num{{/if}}">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</span></p>
+                    {{/each}}
+                  </div>
+                </div>
+              {{/if}}
+            </section>
+          {{/if}}
+
+          {{!--
+            E-Invoice (IRN, Ack No., Ack Date) and E-Way Bill lines with the IRN / ZATCA / LHDN
+            QR codes: above the items, or below them when the business places them there
+            (irnPosition). The containers stay in the DOM so the host can post values in live;
+            the panel shows once one has a value.
+          --}}
+          {{#unless view.compliance.isBelowItems}}
+            <section class="vt-panel vt-compliance" data-testid="section" data-section="compliance">
+              <div class="vt-panel-body vt-compliance-body">
+                <div class="vt-compliance-groups">
+                  <div class="vt-compliance-group" data-role="einvoice">
+                    {{#if view.compliance.showIrn}}
+                      <p class="vt-field vt-irn-row"><span class="vt-field-label">{{view.compliance.irnLabel}}:</span> <span class="vt-irn-value" data-ceres-field="irn">{{view.compliance.irn}}</span></p>
+                    {{/if}}
+                    {{#each view.compliance.irnRows}}
+                      <p class="vt-field"><span class="vt-field-label">{{label}}:</span> <span class="vt-field-value vt-num">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{vtDate value 0}}{{else}}{{value}}{{/if}}</span></p>
+                    {{/each}}
+                  </div>
+                  {{#if view.compliance.eway.length}}
+                    <div class="vt-compliance-group" data-role="eway" data-testid="eway">
+                      {{#each view.compliance.eway}}
+                        <p class="vt-field"><span class="vt-field-label">{{label}}:</span> <span class="vt-field-value vt-num">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{vtDate value 0}}{{else}}{{value}}{{/if}}</span></p>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div>
+                <div class="vt-qr-list">
+                  <div class="vt-qr{{#unless view.compliance.qr.irn}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img data-ceres-field="qrCode"{{#if view.compliance.qr.irn}} src="{{view.compliance.qr.irn}}"{{/if}} alt="E-Invoice QR Code" /></div>
+                  <div class="vt-qr{{#unless view.compliance.qr.zatca}} is-empty{{/unless}}" data-ceres-field-container="zatcaQrCode"><img data-ceres-field="zatcaQrCode"{{#if view.compliance.qr.zatca}} src="{{view.compliance.qr.zatca}}"{{/if}} alt="ZATCA QR Code" /></div>
+                  <div class="vt-qr{{#unless view.compliance.qr.lhdn}} is-empty{{/unless}}" data-ceres-field-container="lhdnQrCode"><img data-ceres-field="lhdnQrCode"{{#if view.compliance.qr.lhdn}} src="{{view.compliance.qr.lhdn}}"{{/if}} alt="LHDN QR Code" /></div>
+                </div>
+              </div>
+            </section>
+          {{/unless}}
+
+          <section class="vt-items-section" data-testid="section" data-section="items">
+            <div class="vt-items-scroll" data-testid="items-scroll">
+              <table class="vt-items{{#if view.print.compactTable}} is-print-compact{{/if}}{{#if view.table.showThumbnail}} has-thumbnails{{/if}}{{#if view.table.roomy}} is-roomy{{/if}}{{#if view.table.manyFigures}} has-many-figures{{/if}}" data-testid="items-table" style="--vt-figures: {{view.table.figureCount}}; --vt-serial-width: {{view.table.serialWidth}}px;">
+                <thead>
+                  <tr data-testid="items-header">
+                    <th class="vt-col-serial" data-col="sr" style="width: {{view.table.serialWidth}}px">{{view.table.serialLabel}}</th>
+                    {{#each view.table.header}}
+                      <th class="{{className}}" data-col="{{col}}">{{#if isName}}<span class="vt-desc-min" aria-hidden="true"></span>{{else}}<span class="vt-col-min" aria-hidden="true"></span>{{/if}}{{#each labelParts}}{{this}}{{#unless @last}}<wbr />{{/unless}}{{/each}}</th>
+                    {{/each}}
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each view.table.rows}}
+                    {{#if isGroupHeader}}
+                      <tr class="vt-group-row" data-testid="group-row">
+                        <td colspan="{{colspan}}"><div class="vt-span">
+                          <span class="vt-group-name">{{name}}</span>
+                          {{#if images.length}}<div class="vt-group-images">{{> CeresImageGallery (prepareImageGallery images variant="thumbnail" alt=name) }}</div>{{/if}}
+                        </div></td>
+                      </tr>
+                      {{#if originalImages.length}}
+                        <tr class="vt-image-row" data-testid="group-image-row">
+                          <td colspan="{{colspan}}"><div class="vt-span">
+                            {{#each originalImages}}<img class="vt-large-image" data-testid="large-image" src="{{this}}" alt="{{../name}}" referrerpolicy="no-referrer" />{{/each}}
+                          </div></td>
+                        </tr>
+                      {{/if}}
+                    {{else}}
+                      {{#if nameRow}}
+                        <tr class="vt-name-row" data-testid="item-name-row" data-item-index="{{itemIndex}}">
+                          <td class="vt-col-serial" data-col="sr" rowspan="2">{{#if serial}}<span class="vt-num" data-testid="num">{{serial}}</span>{{/if}}</td>
+                          <td colspan="{{detailColspan}}">
+                            <div class="vt-span">
+                              <span class="vt-item-name">{{name}}</span>
+                              {{#if inlineCodes.length}}<span class="vt-item-codes">{{#each inlineCodes}}<span class="vt-item-code">{{this}}</span>{{/each}}</span>{{/if}}
+                            </div>
+                          </td>
+                        </tr>
+                      {{/if}}
+                      <tr class="vt-item-row{{#if isGroupTotal}} vt-group-total-row{{/if}}{{#if nameRow}} has-name-row{{/if}}" data-testid="item-row" data-item-index="{{itemIndex}}">
+                        {{#unless nameRow}}<td class="vt-col-serial" data-col="sr">{{#if serial}}<span class="vt-num" data-testid="num">{{serial}}</span>{{/if}}</td>{{/unless}}
+                        {{#each cells}}
+                          {{#if isName}}
+                            <td class="{{className}}" data-col="{{col}}">
+                              {{#if ../thumbnail}}
+                                <div class="vt-item-thumbnail">{{> CeresImage src=../thumbnail alt=../name class="vt-thumbnail" href=../thumbnail}}</div>
+                              {{/if}}
+                              {{#unless ../nameRow}}
+                                <span class="vt-item-name">{{../name}}</span>
+                                {{#if ../inlineCodes.length}}<span class="vt-item-codes">{{#each ../inlineCodes}}<span class="vt-item-code">{{this}}</span>{{/each}}</span>{{/if}}
+                              {{/unless}}
+                              {{#if ../hasDetail}}
+                                <div class="vt-item-detail" data-ceres-description-inline{{#if ../detailRow}} style="display: none;"{{/if}}>
+                                  {{#unless ../detailRow}}
+                                    <div data-ceres-description-content>
+                                      {{#if ../description}}<div class="vt-item-desc">{{> MarkdownViewer (prepareMarkdownViewerData ../description) }}</div>{{/if}}
+                                      {{#if ../images.length}}{{> CeresImageGallery (prepareImageGallery ../images variant="thumbnail" alt=../name) }}{{/if}}
+                                    </div>
+                                  {{/unless}}
+                                </div>
+                              {{/if}}
+                            </td>
+                          {{else}}
+                            <td class="{{className}}" data-col="{{col}}" data-label="{{label}}">{{#if isNum}}<span class="vt-num" data-testid="num">{{value}}</span>{{else}}{{value}}{{/if}}</td>
+                          {{/if}}
+                        {{/each}}
+                      </tr>
+                      {{#if hasDetail}}
+                        {{!-- Full-width description row (isDescriptionFullWidth), kept for the live toggle. --}}
+                        <tr class="vt-detail-row" data-testid="item-detail-row" data-item-index="{{itemIndex}}" data-ceres-description-row{{#unless detailRow}} style="display: none;"{{/unless}}>
+                          <td class="vt-col-serial"></td>
+                          <td colspan="{{detailColspan}}">
+                            <div class="vt-item-detail vt-span" data-ceres-description-full-width>
+                              {{#if detailRow}}
+                                <div data-ceres-description-content>
+                                  {{#if description}}<div class="vt-item-desc">{{> MarkdownViewer (prepareMarkdownViewerData description) }}</div>{{/if}}
+                                  {{#if images.length}}{{> CeresImageGallery (prepareImageGallery images variant="thumbnail" alt=name) }}{{/if}}
+                                </div>
+                              {{/if}}
+                            </div>
+                          </td>
+                        </tr>
+                      {{/if}}
+                      {{#if imageRow}}
+                        {{!-- Original images: their own row under the item, across the whole table. --}}
+                        <tr class="vt-image-row" data-testid="item-detail-row" data-item-index="{{itemIndex}}">
+                          <td colspan="{{colspan}}"><div class="vt-span">
+                            {{#each originalImages}}<img class="vt-large-image" data-testid="large-image" src="{{this}}" alt="{{../name}}" referrerpolicy="no-referrer" />{{/each}}
+                          </div></td>
+                        </tr>
+                      {{/if}}
+                    {{/if}}
+                  {{/each}}
+                  {{#if view.print.stretchTable}}
+                    {{!-- Takes the page's spare height in print (stretchItemTable); empty otherwise. --}}
+                    <tr class="vt-filler" aria-hidden="true"><td class="vt-col-serial"></td>{{#each view.table.header}}<td class="{{className}}"></td>{{/each}}</tr>
+                  {{/if}}
+                </tbody>
+                {{#if view.table.footer.show}}
+                  {{!-- The column sums ("Show Totals Row"): the label across Sr. No. and the
+                       description, each summed figure under its own column. --}}
+                  <tbody class="vt-items-total">
+                    <tr class="ceres-subtotal-row vt-total-row{{#if view.totals.hidden}} is-hidden-by-totals{{/if}}" data-testid="items-total">
+                      {{#if view.table.labelSpan}}
+                        <td class="vt-col-serial vt-total-serial" data-col="sr"></td>
+                        <th class="vt-total-label" colspan="{{view.table.labelSpan}}" scope="row"><span class="vt-text">{{view.table.footer.label}}</span></th>
+                      {{else}}
+                        <th class="vt-total-label" scope="row"><span class="vt-text">{{view.table.footer.label}}</span></th>
+                      {{/if}}
+                      {{#each view.table.footer.gridCells}}
+                        <td class="vt-total-value {{className}}" data-col="{{col}}" data-label="{{label}}">{{#if isNum}}<span class="vt-num" data-testid="num">{{value}}</span>{{/if}}</td>
+                      {{/each}}
+                    </tr>
+                  </tbody>
+                {{/if}}
+                {{!--
+                  The totals as the design rows them ("Total Basics", "GST", "Grand Total"): the
+                  label across every column but the last, set on the end edge, the figure in the
+                  last column (more columns when it needs them: helpers.ts fitTotals). The rows are the shared Subtotal widget's (computeSubtotalRows) and
+                  keep its classes and data-ceres-* hooks, so the live hideTotals / hideTaxes
+                  toggles still apply. The amount in words closes the table.
+                --}}
+                <tbody class="vt-totals ceres-subtotal" data-ceres-subtotal data-testid="section" data-section="totals">
+                  {{#each view.totals.main}}
+                    <tr
+                      class="ceres-subtotal-row ceres-subtotal-row-{{emphasis}}{{#if isGrand}} is-grand{{/if}}{{#if view.totals.hidden}}{{#unless survivesHideTotals}} is-hidden-by-totals{{/unless}}{{/if}}{{#if isTaxRow}}{{#if view.totals.hideTaxes}} is-hidden-by-taxes{{/if}}{{/if}}"
+                      data-ceres-subtotal-row="{{key}}"
+                      {{#if isTaxRow}}data-ceres-subtotal-taxes{{/if}}
+                      {{#if survivesHideTotals}}data-ceres-subtotal-keep{{/if}}
+                    >
+                      <th class="ceres-subtotal-label" colspan="{{view.table.labelColspan}}" scope="row">
+                        <span class="vt-text">{{label}}</span>
+                        {{#if note}}<div class="ceres-subtotal-note">{{note}}</div>{{/if}}
+                      </th>
+                      <td class="ceres-subtotal-value">
+                        <div class="vt-fig">
+                          <span class="vt-num"{{#if isNum}} data-testid="num"{{/if}}{{#if isGrand}} data-role="grand-total-row"{{/if}}>{{value}}</span>
+                          {{#if converted}}<span class="ceres-subtotal-converted">{{converted}}</span>{{/if}}
+                          {{#if extra}}<span class="ceres-subtotal-extra">{{extra.value}}</span>{{/if}}
+                          {{#if extra.converted}}<span class="ceres-subtotal-converted">{{extra.converted}}</span>{{/if}}
+                        </div>
+                      </td>
+                    </tr>
+                  {{/each}}
+                  {{#each view.totals.extra}}
+                    <tr class="ceres-subtotal-row vt-extra-row{{#if view.totals.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+                      <th class="ceres-subtotal-label" colspan="{{view.table.labelColspan}}" scope="row"><span class="vt-text">{{label}}</span></th>
+                      <td class="ceres-subtotal-value">
+                        <div class="vt-fig">
+                          <span class="vt-num">{{value}}</span>
+                          {{#if converted}}<span class="ceres-subtotal-converted">{{converted}}</span>{{/if}}
+                        </div>
+                      </td>
+                    </tr>
+                  {{/each}}
+                  {{#each view.totals.due}}
+                    <tr class="ceres-subtotal-row ceres-subtotal-row-{{emphasis}}{{#if view.totals.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+                      <th class="ceres-subtotal-label" colspan="{{view.table.labelColspan}}" scope="row"><span class="vt-text">{{label}}</span></th>
+                      <td class="ceres-subtotal-value">
+                        <div class="vt-fig">
+                          <span class="vt-num"{{#if isNum}} data-testid="num"{{/if}}>{{value}}</span>
+                          {{#if converted}}<span class="ceres-subtotal-converted">{{converted}}</span>{{/if}}
+                        </div>
+                      </td>
+                    </tr>
+                  {{/each}}
+                  {{#if view.words}}
+                    <tr class="vt-words-row ceres-subtotal-words{{#if view.totals.hidden}} is-hidden-by-totals{{/if}}{{#if view.words.hiddenBySetting}} is-hidden-by-words-setting{{/if}}" data-ceres-total-in-words>
+                      <td colspan="{{view.table.colspan}}"><span class="vt-words-label vt-text">{{view.words.label}} :</span> <span class="vt-words-value vt-text">{{view.words.value}}</span></td>
+                    </tr>
+                  {{/if}}
+                </tbody>
+                {{!-- Print only: repeated at the foot of each page's piece of the table, so a piece cut
+                      by a page break (an item taller than the page's room) closes with a rule. --}}
+                <tfoot class="vt-page-close" aria-hidden="true"><tr><td colspan="{{view.table.colspan}}"></td></tr></tfoot>
+              </table>
+            </div>
+          </section>
+
+          {{#if view.compliance.isBelowItems}}
+            <section class="vt-panel vt-compliance" data-testid="section" data-section="compliance">
+              <div class="vt-panel-body vt-compliance-body">
+                <div class="vt-compliance-groups">
+                  <div class="vt-compliance-group" data-role="einvoice">
+                    {{#if view.compliance.showIrn}}
+                      <p class="vt-field vt-irn-row"><span class="vt-field-label">{{view.compliance.irnLabel}}:</span> <span class="vt-irn-value" data-ceres-field="irn">{{view.compliance.irn}}</span></p>
+                    {{/if}}
+                    {{#each view.compliance.irnRows}}
+                      <p class="vt-field"><span class="vt-field-label">{{label}}:</span> <span class="vt-field-value vt-num">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{vtDate value 0}}{{else}}{{value}}{{/if}}</span></p>
+                    {{/each}}
+                  </div>
+                  {{#if view.compliance.eway.length}}
+                    <div class="vt-compliance-group" data-role="eway" data-testid="eway">
+                      {{#each view.compliance.eway}}
+                        <p class="vt-field"><span class="vt-field-label">{{label}}:</span> <span class="vt-field-value vt-num">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{vtDate value 0}}{{else}}{{value}}{{/if}}</span></p>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </div>
+                <div class="vt-qr-list">
+                  <div class="vt-qr{{#unless view.compliance.qr.irn}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img data-ceres-field="qrCode"{{#if view.compliance.qr.irn}} src="{{view.compliance.qr.irn}}"{{/if}} alt="E-Invoice QR Code" /></div>
+                  <div class="vt-qr{{#unless view.compliance.qr.zatca}} is-empty{{/unless}}" data-ceres-field-container="zatcaQrCode"><img data-ceres-field="zatcaQrCode"{{#if view.compliance.qr.zatca}} src="{{view.compliance.qr.zatca}}"{{/if}} alt="ZATCA QR Code" /></div>
+                  <div class="vt-qr{{#unless view.compliance.qr.lhdn}} is-empty{{/unless}}" data-ceres-field-container="lhdnQrCode"><img data-ceres-field="lhdnQrCode"{{#if view.compliance.qr.lhdn}} src="{{view.compliance.qr.lhdn}}"{{/if}} alt="LHDN QR Code" /></div>
+                </div>
+              </div>
+            </section>
+          {{/if}}
+
+          {{!-- Additional Info as the design's "Terms & Conditions" grid: label | value | label | value. --}}
+          {{#if view.additional}}
+            <section class="vt-panel vt-additional" data-testid="section" data-section="additional">
+              <h3 class="vt-panel-title" data-role="title"><span class="vt-text">{{view.additional.title}}</span></h3>
+              <div class="vt-additional-grid">
+              {{#each view.additional.rows}}
+                <div class="vt-grid-row">
+                  {{#each cells}}
+                    {{#if this}}
+                      <div class="vt-cell vt-cell-label" data-role="ai-label"><span class="vt-text">{{label}}</span></div>
+                      <div class="vt-cell vt-cell-value" data-role="ai-value"><span class="vt-text">{{#if isDate}}{{vtDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</span></div>
+                    {{else}}
+                      <div class="vt-cell vt-cell-label" aria-hidden="true"></div>
+                      <div class="vt-cell vt-cell-value" aria-hidden="true"></div>
+                    {{/if}}
+                  {{/each}}
+                </div>
+              {{/each}}
+              </div>
+            </section>
+          {{/if}}
+
+
+          {{!--
+            Notes ("Declaration") | Bank Account Details with the UPI QR, side by side, before the
+            terms. Without notes, the first terms take the Declaration's place beside the bank.
+          --}}
+          {{#if view.showNotesRow}}
+            <section class="vt-notes-row" data-testid="section" data-section="notes-bank">
+              {{#if view.notes}}
+                <div class="vt-panel vt-notes" data-section="notes">
+                  <h3 class="vt-panel-title" data-role="title"><span class="vt-text">{{view.notes.title}}</span></h3>
+                  <div class="vt-panel-body vt-note-body">{{> MarkdownViewer (prepareMarkdownViewerData view.notes.body) }}</div>
+                </div>
+              {{else if view.termsInGroup}}
+                <div class="vt-panel vt-notes" data-section="terms">
+                  <h3 class="vt-panel-title" data-role="title"><span class="vt-text">{{view.termsInGroup.title}}</span></h3>
+                  <ol class="vt-panel-body vt-bullets vt-numbered">
+                    {{#each view.termsInGroup.items}}<li><span class="vt-text">{{this}}</span></li>{{/each}}
+                  </ol>
+                </div>
+              {{/if}}
+              {{#if view.bank.show}}
+                <div class="vt-panel vt-bank" data-section="bank">
+                  <h3 class="vt-panel-title" data-role="title"><span class="vt-text">{{view.bank.title}}</span></h3>
+                  <div class="vt-panel-body vt-bank-body">
+                    {{#if view.bank.rows.length}}
+                      <div class="vt-bank-rows">
+                        {{#each view.bank.rows}}
+                          <p class="vt-bank-row vt-bank-{{key}}"><span class="vt-bank-label vt-text">{{label}}:</span><span class="vt-bank-value{{#if isNum}} vt-num{{/if}}">{{value}}</span></p>
+                        {{/each}}
+                        {{#if view.bank.upi}}
+                          <p class="vt-bank-row vt-bank-upi"><span class="vt-bank-label vt-text">{{view.bank.upi.label}}:</span><span class="vt-bank-value vt-num">{{view.bank.upi.id}}</span></p>
+                        {{/if}}
+                      </div>
+                    {{else if view.bank.upi}}
+                      <div class="vt-bank-rows">
+                        <p class="vt-bank-row vt-bank-upi"><span class="vt-bank-label vt-text">{{view.bank.upi.label}}:</span><span class="vt-bank-value vt-num">{{view.bank.upi.id}}</span></p>
+                      </div>
+                    {{/if}}
+                    {{#if view.bank.upi.qr}}
+                      <figure class="vt-upi">
+                        <figcaption class="vt-upi-caption"><span class="vt-text">{{view.bank.upi.scanLabel}}</span></figcaption>
+                        <img class="vt-upi-qr" data-testid="upi-qr" src="{{view.bank.upi.qr}}" alt="{{view.bank.upi.label}} {{view.bank.upi.id}}" />
+                        {{#if view.bank.upi.note}}<p class="vt-upi-note">{{view.bank.upi.note}}</p>{{/if}}
+                      </figure>
+                    {{/if}}
+                  </div>
+                </div>
+              {{/if}}
+            </section>
+          {{/if}}
+
+          {{!-- The terms, under the notes | bank group (user request). --}}
+          {{#each view.terms}}
+            <section class="vt-panel" data-testid="section" data-section="terms">
+              <h3 class="vt-panel-title" data-role="title"><span class="vt-text">{{title}}</span></h3>
+              <ol class="vt-panel-body vt-bullets vt-numbered">
+                {{#each items}}<li><span class="vt-text">{{this}}</span></li>{{/each}}
+              </ol>
+            </section>
+          {{/each}}
+
+          {{#if view.attachments}}
+            <section class="vt-panel" data-testid="section" data-section="attachments">
+              <h3 class="vt-panel-title" data-role="title"><span class="vt-text">{{view.attachments.title}}</span></h3>
+              <ol class="vt-panel-body vt-attachments">
+                {{#each view.attachments.files}}<li><a href="{{url}}" target="_blank" rel="noopener noreferrer" title="{{name}}">{{name}}</a></li>{{/each}}
+              </ol>
+            </section>
+          {{/if}}
+
+          {{!-- Summaries last: tax, HSN (refrens.com's order), batch, then the payments. Each renders with its data,
+                hidden while switched off (live toggles). --}}
+          <section class="vt-summary" data-testid="section" data-section="tax-summary" data-ceres-tax-summary{{#if view.taxSummary.hidden}} style="display: none;"{{/if}}>
+            {{!-- The shared tax-summary table's markup, with refrens.com's stored figures and the
+                  words in the document's currency (helpers.ts summaryTable). --}}
+            {{#with (vtTaxSummary @root) as |sum|}}{{#if sum.hasRows}}
+              <div class="ceres-table-section">
+                <table class="ceres-table">
+                  <thead>
+                    <tr>
+                      <th>Tax Rate</th>
+                      {{#if sum.isIgst}}<th colspan="2">{{taxLabel @root "igst"}}</th>{{else}}<th colspan="2">{{taxLabel @root "cgst"}}</th><th colspan="2">{{taxLabel @root "sgst"}}</th>{{/if}}
+                      {{#if sum.hasCess}}<th colspan="2">Cess</th>{{/if}}
+                      <th>Total</th>
+                    </tr>
+                    <tr>
+                      <th></th>
+                      {{#if sum.isIgst}}<th>Rate</th><th>Amount</th>{{else}}<th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th>{{/if}}
+                      {{#if sum.hasCess}}<th>Rate</th><th>Amount</th>{{/if}}
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each sum.taxList}}
+                      <tr>
+                        <td>{{gstRate}}%</td>
+                        {{#if sum.isIgst}}<td>{{igstRate}}%</td><td>{{vtMoney igstAmount}}</td>{{else}}<td>{{cgstRate}}%</td><td>{{vtMoney cgstAmount}}</td><td>{{sgstRate}}%</td><td>{{vtMoney sgstAmount}}</td>{{/if}}
+                        {{#if sum.hasCess}}<td>{{cessRate}}%</td><td>{{vtMoney cessAmount}}</td>{{/if}}
+                        <td>{{vtMoney taxAmount}}</td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td><strong>Total</strong></td>
+                      {{#if sum.isIgst}}<td></td><td><strong>{{vtMoney sum.totalIgstAmount}}</strong></td>{{else}}<td></td><td><strong>{{vtMoney sum.totalCgstAmount}}</strong></td><td></td><td><strong>{{vtMoney sum.totalSgstAmount}}</strong></td>{{/if}}
+                      {{#if sum.hasCess}}<td></td><td><strong>{{vtMoney sum.totalCessAmount}}</strong></td>{{/if}}
+                      <td><strong>{{vtMoney sum.totalTaxAmount}}</strong></td>
+                    </tr>
+                    <tr><td colspan="99" class="ceres-table-words">Total Tax In Words: {{sum.words}}</td></tr>
+                  </tfoot>
+                </table>
+              </div>
+            {{/if}}{{/with}}
+          </section>
+
+          <section class="vt-summary" data-testid="section" data-section="hsn" data-ceres-hsn-summary{{#if view.hsn.hidden}} style="display: none;"{{/if}}>
+            {{#with (vtHsnSummary @root) as |sum|}}{{#if sum.hasRows}}
+              <div class="ceres-table-section">
+                <table class="ceres-table">
+                  <thead>
+                    <tr>
+                      <th>HSN</th>
+                      <th>Taxable Value</th>
+                      {{#if sum.isIgst}}<th colspan="2">{{taxLabel @root "igst"}}</th>{{else}}<th colspan="2">{{taxLabel @root "cgst"}}</th><th colspan="2">{{taxLabel @root "sgst"}}</th>{{/if}}
+                      {{#if sum.hasCess}}<th colspan="2">Cess</th>{{/if}}
+                      <th>Total</th>
+                    </tr>
+                    <tr>
+                      <th></th>
+                      <th></th>
+                      {{#if sum.isIgst}}<th>Rate</th><th>Amount</th>{{else}}<th>Rate</th><th>Amount</th><th>Rate</th><th>Amount</th>{{/if}}
+                      {{#if sum.hasCess}}<th>Rate</th><th>Amount</th>{{/if}}
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each sum.hsnList}}
+                      <tr>
+                        <td>{{hsn}}</td>
+                        <td>{{vtMoney taxableValue}}</td>
+                        {{#if sum.isIgst}}<td>{{igstRate}}%</td><td>{{vtMoney igstAmount}}</td>{{else}}<td>{{cgstRate}}%</td><td>{{vtMoney cgstAmount}}</td><td>{{sgstRate}}%</td><td>{{vtMoney sgstAmount}}</td>{{/if}}
+                        {{#if sum.hasCess}}<td>{{cessRate}}%</td><td>{{vtMoney cessAmount}}</td>{{/if}}
+                        <td>{{vtMoney taxAmount}}</td>
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td><strong>Total</strong></td>
+                      <td><strong>{{vtMoney sum.totalTaxableValue}}</strong></td>
+                      {{#if sum.isIgst}}<td></td><td><strong>{{vtMoney sum.totalIgstAmount}}</strong></td>{{else}}<td></td><td><strong>{{vtMoney sum.totalCgstAmount}}</strong></td><td></td><td><strong>{{vtMoney sum.totalSgstAmount}}</strong></td>{{/if}}
+                      {{#if sum.hasCess}}<td></td><td><strong>{{vtMoney sum.totalCessAmount}}</strong></td>{{/if}}
+                      <td><strong>{{vtMoney sum.totalTaxAmount}}</strong></td>
+                    </tr>
+                    <tr><td colspan="99" class="ceres-table-words">Total Tax In Words: {{sum.words}}</td></tr>
+                  </tfoot>
+                </table>
+              </div>
+            {{/if}}{{/with}}
+          </section>
+
+          {{#if view.batch}}
+            <section class="vt-summary" data-testid="section" data-section="batch-summary" data-ceres-batch-summary{{#if view.batch.hidden}} style="display: none;"{{/if}}>
+              {{#if view.batch.title}}<h3 class="vt-summary-title" data-role="title"><span class="vt-text">{{view.batch.title}}</span></h3>{{/if}}
+              <div class="ceres-table-section">
+                <table class="ceres-table vt-batch-table">
+                  <thead><tr>{{#each view.batch.columns}}<th>{{label}}</th>{{/each}}</tr></thead>
+                  <tbody>
+                    {{#each view.batch.rows}}
+                      <tr>{{#each this}}<td{{#if isNum}} class="vt-num" data-testid="num"{{/if}}>{{value}}</td>{{/each}}</tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          {{/if}}
+
+          {{#if view.payments.show}}
+            <section class="vt-summary vt-payments" data-testid="section" data-section="payments" data-ceres-payment-table{{#if view.payments.hidden}} style="display: none;"{{/if}}>
+              {{#if view.payments.title}}<h3 class="vt-summary-title" data-role="title"><span class="vt-text">{{view.payments.title}}</span></h3>{{/if}}
+              <div class="ceres-table-section">
+                <table class="ceres-table vt-payments-table">
+                  <thead><tr>{{#each view.payments.columns}}<th>{{this}}</th>{{/each}}</tr></thead>
+                  <tbody>
+                    {{#each view.payments.rows}}
+                      <tr data-testid="payment">
+                        {{#each this}}
+                          <td class="{{#if isText}}is-text{{else}}vt-num{{/if}}">{{#if isDate}}{{vtShortDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}{{#if converted}}<span class="vt-payment-converted">{{converted}}</span>{{/if}}</td>
+                        {{/each}}
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                  {{#if view.payments.total}}
+                    <tfoot><tr data-testid="payments-total">{{#each view.payments.total}}<td class="vt-num">{{value}}</td>{{/each}}</tr></tfoot>
+                  {{/if}}
+                </table>
+              </div>
+            </section>
+          {{/if}}
+
+          {{!-- The signature and "Authorised Signatory", on the end edge, after every section but
+                the contact line; only when the document has one. --}}
+          {{#if view.signature.show}}
+            <section class="vt-signature" data-testid="signature">
+              <div class="vt-signature-mark">
+                {{#if view.signature.image}}
+                  {{> CeresImage src=view.signature.image alt=view.signature.label class="vt-signature-image"}}
+                {{else if view.signature.awaitingDigital}}
+                  <p class="vt-signature-banner">Awaiting Digital Signature</p>
+                {{else if view.signature.signedDigital}}
+                  <p class="vt-signature-banner">
+                    Digitally signed{{#if view.signature.signerName}} by {{view.signature.signerName}}{{/if}}
+                    {{#if view.signature.verifyUrl}}<a href="{{view.signature.verifyUrl}}" target="_blank" rel="noopener noreferrer">Verify</a>{{/if}}
+                  </p>
+                {{/if}}
+              </div>
+              {{#if view.signature.label}}<p class="vt-signature-label"><span class="vt-text">{{view.signature.label}}</span></p>{{/if}}
+            </section>
+          {{/if}}
+
+          {{!-- The document's Contact Details, worded as refrens.com closes a document: last (user request). --}}
+          {{#if view.contact}}
+            <section class="vt-contact" data-testid="section" data-section="contact">
+              <p><span class="vt-text">{{view.contact.lead}}</span>
+                {{#if view.contact.email}}<span class="vt-text">{{view.contact.emailLabel}}</span> <strong class="vt-email">{{view.contact.email}}</strong>{{/if}}{{#if view.contact.phone}}{{#if view.contact.email}}, {{/if}}<span class="vt-text">{{view.contact.phoneLabel}}</span> <strong class="vt-num">{{formatPhoneNumber view.contact.phone}}</strong>{{/if}}
+              </p>
+            </section>
+          {{/if}}
+
+          {{> RefrensBranding @root.invoice}}
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {{#unless view.hideFooter}}
+    <div class="{{#if view.footerEveryPage}}no-dibella {{/if}}invoice-letterhead-footer vt-letterhead-footer{{#if view.footerEveryPage}} vt-footer-fixed{{/if}}{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" data-ceres-page-footer data-ceres-page-policy="{{#if view.footerEveryPage}}all{{else}}last{{/if}}">
+      {{#if @root.invoice.letterHeadFooter}}
+        <img src="{{@root.invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+      {{else}}
+        <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+      {{/if}}
+    </div>
+  {{/unless}}
+</div>
+{{/with}}

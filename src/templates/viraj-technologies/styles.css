@@ -1,0 +1,2297 @@
+@import "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap";
+@import "https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic&text=%E2%83%81&display=block";
+
+/*
+ * The Saudi Riyal sign (U+20C1, which the shared formatCurrency prints for SAR) is in no text
+ * font yet: Refrens' own face draws it (lstatic.refrens.com/public/fonts/saudiriyal.css), for
+ * that one character only, ahead of every font the document uses. Where the page's CSP
+ * blocks that host (font-src 'self' fonts.gstatic.com off lstatic), Google's Noto Naskh
+ * Arabic, loaded for that one character (text=⃁), draws it instead.
+ */
+@font-face {
+  font-family: vt-saudi-riyal;
+  src: url("https://lstatic.refrens.com/public/fonts/regular/saudi_riyal.woff2")
+      format("woff2"),
+    url("https://lstatic.refrens.com/public/fonts/regular/saudi_riyal.woff")
+      format("woff");
+  unicode-range: U+20C1;
+  font-display: block;
+}
+
+/*
+ * Viraj Technologies template — Figma Document-Templates, node 18920:1491 ("VIRAJ
+ * TECHNOLOGIES").
+ *
+ * Design canvas 1000 px: 24 px page padding and 16 px between sections. Every box is ruled
+ * in neutral-400 (#95949f) with 6 px inside its cells; titles and table headings sit on the
+ * light fill (#f5f7fa, following the document's theme colour when one is set: helpers.ts sets
+ * --vt-theme; the host's live --primary-color wins). Text in neutral-900 (#22272f). Inter, or
+ * the business's Heading / Body fonts (--title-font / --subtitle-font) when set.
+ *
+ * Every rule is scoped to .vt-doc; the page box and margins belong to the browser or the PDF
+ * service (no @page: it would break Lydia's Pageless PDF). Text sizes follow the document's
+ * text scale (--vt-text-scale). The title is the one place the design sets capitals.
+ */
+
+.vt-doc {
+  --vt-ink: #22272f; /* neutral-900: text */
+  --vt-rule: #95949f; /* neutral-400: every rule */
+  --vt-fill: color-mix(
+    in srgb,
+    var(--primary-color, var(--vt-theme, #1e3a8a)) 4%,
+    #f8f9fa
+  ); /* ≈ #f5f7fa on the default */
+
+  --vt-muted: color-mix(in srgb, var(--vt-ink) 68%, #fff); /* item codes, notes, secondary lines */
+  --vt-rule-width: 1px;
+  --vt-pad: 6px; /* above and below the text in every cell and panel (user request) */
+  --vt-pad-x: 6px; /* either side of it: 8 px cost long descriptions a line, and a page */
+  --vt-section-gap: 12px; /* between sections, on screen and on paper (user, 2026-10-21) */
+
+  /*
+   * Weights, one step per level of the hierarchy: the title, the grand total, section and table
+   * headings, party names and the totals rows of tables 600 (no 700 anywhere, user 2026-10-21);
+   * labels and item names 500; values and running text 400.
+   */
+  --vt-weight-strong: 600;
+  --vt-weight-heading: 600;
+  --vt-weight-label: 500;
+
+  /*
+   * --vt-script-font is the Noto face for the document's Language/Script setting (set inline
+   * by the template, loaded from Google Fonts); it fills in the glyphs the main face lacks.
+   */
+  --vt-font: "vt-saudi-riyal", var(--subtitle-font, "Inter"),
+    var(--vt-script-font, "Inter"), "Noto Naskh Arabic", sans-serif;
+  --vt-title-font: "vt-saudi-riyal", var(--title-font, "Inter"),
+    var(--vt-script-font, "Inter"), "Noto Naskh Arabic", sans-serif;
+
+  /* Type scale: 13 px for all text (user request), headings and cells alike; 24 px title. */
+  --vt-font-size-s: 13px;
+  --vt-font-size-base: 13px;
+  --vt-font-size-xl: 24px;
+
+  /* 24 px around the page on screen; the letterhead and footer run to the edges. */
+  --vt-gutter: 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--vt-section-gap);
+  width: min(100vw, 1000px);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--vt-gutter);
+  background: #fff;
+  color: var(--vt-ink);
+  font-family: var(--vt-font);
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  font-weight: 400;
+  line-height: 1.5385; /* 20 px at 13 px */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.vt-doc,
+.vt-doc *,
+.vt-doc *::before,
+.vt-doc *::after {
+  box-sizing: border-box;
+}
+
+/* Flex children default to min-width:auto, which would let a wide table stretch the page. */
+.vt-doc > *,
+.vt-page-body > * {
+  min-width: 0;
+}
+
+/* The print frame (template.hbs) is transparent on screen. */
+.vt-page-frame,
+.vt-page-frame > tbody,
+.vt-page-frame > tbody > tr,
+.vt-page-frame-cell,
+.vt-page-body {
+  display: contents;
+}
+
+/* The repeating letterhead and footer copies belong to print only. */
+.vt-page-frame-header,
+.vt-page-frame-footer {
+  display: none;
+}
+
+.vt-doc p,
+.vt-doc h1,
+.vt-doc h2,
+.vt-doc h3,
+.vt-doc ol,
+.vt-doc ul,
+.vt-doc figure {
+  margin: 0;
+}
+
+/*
+ * The business's Heading Font (Refrens' Change Color & Font, --title-font) sets every heading
+ * and label: the title, the section and table headings (set where they are styled) and the
+ * labels below; the Body Font (--subtitle-font) sets the values and running text.
+ */
+.vt-doc
+  :is(
+    .vt-billing-label,
+    .vt-cell-label,
+    .vt-field-label,
+    .vt-bank-label,
+    .vt-upi-caption,
+    .vt-total-label,
+    .ceres-subtotal-label,
+    .vt-words-label,
+    .vt-signature-label
+  ) {
+  font-family: var(--vt-title-font);
+}
+
+/* Figures, codes, dates, IDs and phone numbers never wrap. */
+.vt-num {
+  white-space: nowrap;
+}
+
+/* An email stays on one line while it fits and breaks only when its column is too narrow. */
+.vt-email {
+  overflow-wrap: anywhere;
+}
+
+/* One unbroken word (a GSTIN, an email) carries on from its label and breaks at the edge. */
+.vt-break:not(.vt-num) {
+  word-break: break-all;
+}
+
+/* ------------------------------------------------------------ letterhead */
+
+.vt-doc .invoice-letterhead,
+.vt-doc .invoice-letterhead-footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.vt-doc .invoice-letterhead img,
+.vt-doc .invoice-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.vt-doc .invoice-letterhead.is-empty,
+.vt-doc .invoice-letterhead-footer.is-empty {
+  display: none;
+}
+
+.vt-doc .vt-letterhead,
+.vt-doc .vt-letterhead-footer {
+  width: auto;
+  margin-inline: calc(-1 * var(--vt-gutter));
+}
+
+/* With a letterhead, 4 px above and below it (user, 2026-10-21), on screen and on paper; the
+   other sections keep the section gap. In print a letterhead repeating on every page comes
+   from the frame's <thead> (its 4 px is set there). */
+.vt-doc:has(.vt-letterhead:not(.is-empty)) > .vt-title-block {
+  margin-bottom: calc(4px - var(--vt-section-gap));
+}
+
+.vt-doc .vt-page-body > .vt-letterhead:not(.is-empty) {
+  margin-bottom: calc(4px - var(--vt-section-gap));
+}
+
+/* The title opens the page (the letterhead sits below it): 24 px above it on screen. */
+.vt-doc {
+  padding-top: var(--vt-gutter);
+}
+
+.vt-doc:has(> .vt-letterhead-footer.is-empty),
+.vt-doc.is-footer-hidden {
+  padding-bottom: var(--vt-gutter);
+}
+
+/* ------------------------------------------------------------ title */
+
+/* QUOTATION, centred above the header, in the design's spaced capitals. */
+.vt-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.vt-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.vt-title {
+  font-family: var(--vt-title-font);
+  font-size: calc(var(--vt-font-size-xl) * var(--vt-text-scale, 1));
+  font-weight: var(--vt-weight-strong);
+  line-height: 1.25;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+.vt-subtitle,
+.vt-copy {
+  color: var(--vt-muted);
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+}
+
+.vt-status {
+  flex: none;
+}
+
+/* ------------------------------------------------------------ ruled cells */
+
+/* A label or value cell of the ruled grids: 6 px all round; medium
+   labels. */
+.vt-cell {
+  min-width: 0;
+  padding: var(--vt-pad) var(--vt-pad-x);
+  overflow-wrap: break-word;
+}
+
+.vt-cell-label {
+  font-weight: var(--vt-weight-label);
+}
+
+/* ------------------------------------------------------------ buyer | document details */
+
+/*
+ * The buyer's box takes the room; the document details hug their labels and values (at least
+ * the design's 136 px a column, at most half the row: a long text value wraps). Both share one height: the buyer's last row and the details'
+ * rows take what the taller of the two leaves. Their touching sides read as one rule.
+ */
+.vt-billing-row {
+  display: flex;
+  align-items: stretch;
+}
+
+/* The buyer's box takes the room the document details leave. */
+.vt-billing {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  container: vt-billing / inline-size;
+  border: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+/* When the details beside are the taller, the room left goes under the name and address, so
+   the field rows below keep their own height instead of each stretching. */
+.vt-billing-party {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--vt-pad) var(--vt-pad-x);
+}
+
+.vt-billing-label {
+  font-weight: var(--vt-weight-label);
+  white-space: nowrap;
+}
+
+/* Bold text, the summaries' Total rows and bold in descriptions and notes alike, at 600 rather
+   than the browser's 700 (user 2026-10-21). */
+.vt-doc :is(strong, b),
+.vt-doc .toastui-editor-contents :is(strong, b) {
+  font-weight: var(--vt-weight-heading);
+}
+
+.vt-billing-name strong {
+  font-weight: var(--vt-weight-heading);
+}
+
+/* "Address :" with the address lines in a column after it, 13 px. */
+.vt-billing-address {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.vt-billing-address-lines {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+  line-height: 1.5385; /* 20 px at 13 px */
+}
+
+/*
+ * The buyer's fields: two to a row, label | value | label | value, filled from the left. The
+ * columns belong to the whole grid and every row takes them (subgrid), so the rules run
+ * straight down the box. A label column is as wide as its longest label (user, 2026-10-21),
+ * at most 136 px, a longer label wrapping between words; the value columns take the rest, each
+ * as its widest value needs first (an email keeps to one line where it can), what is left
+ * shared evenly. A number (GSTIN, phone) never wraps, so its column is never narrower than
+ * it; text and emails wrap where they must.
+ * The rows share what height the details beside leave.
+ */
+.vt-billing-grid {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: fit-content(136px) auto fit-content(136px) auto;
+}
+
+/*
+ * A row with one field (an odd count's last) draws no empty pair beside it: its value runs
+ * across the rest of the row (user request), in the buyer's grid and the Terms & Conditions
+ * grid alike.
+ */
+:is(.vt-billing-fields, .vt-grid-row) > .vt-cell[aria-hidden="true"] {
+  display: none;
+}
+
+:is(.vt-billing-fields, .vt-grid-row):has(> .vt-cell[aria-hidden="true"])
+  > .vt-cell-value {
+  grid-column: 2 / -1;
+}
+
+/* A long unbroken value (a URL, a code) breaks where it must; figures still never wrap. A
+   label wraps only between words, never inside one ("GSTI N:"). */
+.vt-billing-fields .vt-cell-value {
+  overflow-wrap: anywhere;
+}
+
+.vt-billing-fields .vt-cell-label {
+  overflow-wrap: normal;
+}
+
+/* An email keeps to one line: its column widens for it, the others giving way. */
+.vt-billing-fields .vt-cell-value:has(.vt-email),
+.vt-billing-fields .vt-email {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.vt-billing-fields,
+.vt-grid-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+}
+
+.vt-billing-fields {
+  border-top: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+.vt-billing-fields > .vt-cell + .vt-cell,
+.vt-grid-row > .vt-cell + .vt-cell {
+  border-inline-start: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+.vt-details {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  max-width: 50%;
+  border: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+/* Rows share the box's height between them when the buyer's box is the taller. */
+.vt-details-grid {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(136px, auto) minmax(136px, auto);
+  align-content: stretch;
+}
+
+.vt-billing + .vt-details {
+  margin-inline-start: calc(-1 * var(--vt-rule-width));
+}
+
+.vt-billing-row.is-details-only .vt-details {
+  flex: 1 1 auto;
+}
+
+.vt-details-row {
+  display: contents;
+}
+
+.vt-details-row + .vt-details-row > .vt-cell,
+.vt-details .vt-doc-qr {
+  border-top: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+.vt-details .vt-cell-value {
+  border-inline-start: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+/* The document QR closes the details, across both columns. */
+.vt-details .vt-doc-qr {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: center;
+  padding: var(--vt-pad) var(--vt-pad-x);
+}
+
+.vt-qr img {
+  display: block;
+  width: 96px;
+  height: 96px;
+}
+
+.vt-qr.is-empty,
+.vt-details .vt-doc-qr.is-empty {
+  display: none;
+}
+
+/* ------------------------------------------------------------ panels */
+
+/*
+ * A ruled box with its title on the fill (Shipped From, Shipped To, Transport, the compliance
+ * details, Terms & Conditions, Declaration, Bank Account Details, attachments).
+ */
+.vt-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+.vt-panel-title {
+  padding: var(--vt-pad) var(--vt-pad-x);
+  border-bottom: var(--vt-rule-width) solid var(--vt-rule);
+  background: var(--vt-fill);
+  font-family: var(--vt-title-font);
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  font-weight: var(--vt-weight-heading);
+  line-height: 1.5385;
+}
+
+.vt-panel-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--vt-pad) var(--vt-pad-x);
+}
+
+.vt-party-name {
+  font-weight: var(--vt-weight-heading);
+}
+
+.vt-field-label {
+  font-weight: var(--vt-weight-label);
+}
+
+.vt-supply {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Panels side by side share their touching sides. */
+.vt-panel-row,
+.vt-notes-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.vt-panel-row > .vt-panel {
+  flex: 1 1 0;
+}
+
+.vt-panel-row > .vt-panel + .vt-panel,
+.vt-notes-row > .vt-panel + .vt-panel {
+  margin-inline-start: calc(-1 * var(--vt-rule-width));
+}
+
+/* Additional Info ("Terms & Conditions"): label | value | label | value, ruled cells, one set
+   of columns for every row (each row is a subgrid of it), so the rules line up. Sized like the
+   buyer's fields (user, 2026-10-21): a label column as wide as its longest label, at most
+   136 px, wrapping between words; the value columns take the rest, each as its widest value
+   needs first, what is left shared evenly; a long unbroken value breaks where it must. */
+.vt-additional-grid {
+  display: grid;
+  grid-template-columns: fit-content(136px) auto fit-content(136px) auto;
+}
+
+.vt-additional .vt-cell-label {
+  overflow-wrap: normal;
+}
+
+.vt-additional .vt-cell-value {
+  overflow-wrap: anywhere;
+}
+
+.vt-grid-row + .vt-grid-row {
+  border-top: var(--vt-rule-width) solid var(--vt-rule);
+}
+
+.vt-additional .vt-cell-label {
+  font-weight: var(--vt-weight-label);
+}
+
+/* Terms, attachments and the notes' lists: points 8 px apart. */
+.vt-bullets,
+.vt-attachments {
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 26px;
+}
+
+.vt-bullets li::marker {
+  color: var(--vt-ink);
+}
+
+/* The terms are numbered, "1." "2." …, as refrens.com prints them (user request). */
+.vt-numbered {
+  list-style: decimal;
+}
+
+.vt-attachments li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vt-attachments a {
+  color: inherit;
+}
+
+/* Compliance: E-Invoice | E-Way Bill lines, the QR codes on the end edge. */
+.vt-compliance {
+  display: none;
+}
+
+/* Shown once there is something to show: an IRN, a code, a QR (the host may post them live). */
+.vt-compliance:has(.vt-irn-value:not(:empty)),
+.vt-compliance:has(.vt-compliance-group .vt-num),
+.vt-compliance:has(.vt-qr:not(.is-empty)) {
+  display: flex;
+}
+
+.vt-compliance-body {
+  flex-direction: row;
+  gap: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.vt-compliance-groups {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  min-width: 0;
+}
+
+.vt-compliance-group {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vt-compliance-group[data-role="einvoice"]:not(
+    :has(.vt-irn-value:not(:empty), .vt-num)
+  ) {
+  display: none;
+}
+
+.vt-irn-value {
+  overflow-wrap: anywhere;
+}
+
+.vt-qr-list {
+  display: flex;
+  flex: none;
+  gap: 12px;
+}
+
+/* ------------------------------------------------------------ notes | bank */
+
+/* Declaration takes the room; Bank Account Details keeps the design's 284 px, wider only for
+   longer labels or values (at most 45 % of the row). */
+.vt-notes {
+  flex: 1 1 0;
+}
+
+.vt-bank {
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 284px;
+  max-width: 45%;
+}
+
+.vt-notes-row > .vt-bank:only-child {
+  flex: 1 1 auto;
+}
+
+/* The notes' text at 80 % of the ink, as the design greys the points; markers in the ink. */
+.vt-note-body {
+  gap: 8px;
+  color: color-mix(in srgb, var(--vt-ink) 80%, #fff);
+}
+
+.vt-bank-body {
+  gap: 8px;
+}
+
+/* "A/C Name:" in a column at least the design's 90 px (as wide as the longest label), the
+   values after it, 6 px between rows and 8 px between the columns. */
+.vt-bank-rows {
+  display: grid;
+  grid-template-columns: minmax(90px, max-content) minmax(0, 1fr);
+  gap: 6px 8px;
+}
+
+.vt-bank-row {
+  display: contents;
+}
+
+.vt-bank-label {
+  font-weight: var(--vt-weight-label);
+  white-space: nowrap;
+}
+
+.vt-bank-value {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.vt-bank-value.vt-num {
+  min-width: max-content;
+}
+
+/* A rule across the box, then "Scan To Pay Via UPI" over the 120 px QR. */
+.vt-upi {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* The rule sits in the space above the UPI, one panel padding up: where the UPI moves to the
+   next page on its own, that space is dropped at the break and the rule lies on the split
+   box's top rule, so no second line shows (user, 2026-10-21). */
+.vt-bank-rows + .vt-upi {
+  position: relative;
+  margin-top: 8px;
+  padding-top: 4px;
+}
+
+.vt-bank-rows + .vt-upi::before {
+  position: absolute;
+  top: calc(-1 * var(--vt-pad));
+  inset-inline: 0;
+  border-top: var(--vt-rule-width) solid var(--vt-rule);
+  content: "";
+}
+
+.vt-upi-caption {
+  font-weight: var(--vt-weight-label);
+  white-space: nowrap;
+}
+
+.vt-upi-qr {
+  display: block;
+  width: 120px;
+  height: 120px;
+  border-radius: 4px;
+}
+
+/* The UPI daily-limit note under the QR, as refrens.com prints it. */
+.vt-upi-note {
+  max-width: 240px;
+  color: color-mix(in srgb, var(--vt-ink) 70%, #fff);
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+}
+
+/* ------------------------------------------------------------ items */
+
+.vt-items-scroll {
+  overflow-x: auto;
+}
+
+/*
+ * The design's table: ruled all round, every cell ruled, 6 px inside; headings 13 px bold on
+ * the fill, cells 13 px; figures centred under their headings, the description from the
+ * start edge.
+ */
+.vt-items {
+  --vt-col-floor: 40px;
+
+  width: 100%;
+  border: var(--vt-rule-width) solid var(--vt-rule);
+  border-collapse: collapse;
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  line-height: 1.5385;
+}
+
+.vt-items th,
+.vt-items td {
+  padding: var(--vt-pad) var(--vt-pad-x);
+  border: var(--vt-rule-width) solid var(--vt-rule);
+  letter-spacing: -0.25px;
+  text-align: center;
+  vertical-align: top;
+}
+
+.vt-items thead th {
+  background: var(--vt-fill);
+  font-family: var(--vt-title-font);
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+  font-weight: var(--vt-weight-heading);
+  line-height: 1.5385;
+  overflow-wrap: normal;
+}
+
+.vt-items .vt-col-serial {
+  white-space: nowrap;
+}
+
+/* Every heading centred, the description's included, as the design sets them. */
+.vt-items thead th.vt-col-name {
+  text-align: center;
+}
+
+/*
+ * A table of up to eight columns spreads as the design does (user request): the description
+ * takes about 30 % of the width, the other columns share the rest by their headings and
+ * figures, so a long heading ("Discount Price Each in Rs.") keeps to two lines rather than
+ * squeezing into a narrow column. A wider table has no room for that: its columns hug their
+ * headings and figures (width 1 %) and the description takes the rest. Each column keeps a
+ * floor (72 px / 40 px) and the description a readable 140 px on screen; a page too narrow
+ * for that scrolls the table.
+ */
+.vt-items.is-roomy thead th.vt-col-name {
+  width: 30%;
+}
+
+.vt-items:not(.is-roomy) thead th:not(.vt-col-name, .vt-col-serial) {
+  width: 1%;
+}
+
+.vt-items.is-roomy {
+  --vt-col-floor: 72px;
+}
+
+/* A table wider than the design's eight columns sets its cells a step tighter: 6 px all round. */
+.vt-items:not(.is-roomy) {
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+}
+
+.vt-items:not(.is-roomy) :is(th, td) {
+  padding: var(--vt-pad);
+}
+
+/* Rows that run across the table never size its columns. */
+.vt-items .vt-span {
+  width: 0;
+  min-width: 100%;
+}
+
+.vt-items .vt-desc-min,
+.vt-items .vt-col-min {
+  display: block;
+  height: 0;
+}
+
+.vt-items .vt-desc-min {
+  width: 140px;
+}
+
+.vt-items .vt-col-min {
+  width: var(--vt-col-floor);
+}
+
+.vt-items .vt-col-name,
+.vt-items .vt-group-row td,
+.vt-items .vt-name-row td,
+.vt-items .vt-detail-row td,
+.vt-items .vt-image-row td {
+  text-align: start;
+}
+
+.vt-items .is-word {
+  white-space: nowrap;
+}
+
+/* The item's name leads its cell; its codes and description read under it, the codes greyed. */
+.vt-item-name {
+  display: block;
+  font-weight: var(--vt-weight-label);
+}
+
+.vt-item-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  color: var(--vt-muted);
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+}
+
+.vt-item-detail {
+  margin-top: 4px;
+}
+
+.vt-detail-row .vt-item-detail {
+  margin-top: 0;
+}
+
+.vt-group-row td,
+.vt-group-total-row td {
+  font-weight: var(--vt-weight-heading);
+}
+
+.vt-item-thumbnail {
+  float: inline-end;
+  margin-inline-start: 8px;
+}
+
+.vt-item-thumbnail img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}
+
+.vt-large-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* The column sums ("Show Totals Row"): semibold, the label on the end edge. */
+.vt-items .vt-total-row > * {
+  font-weight: var(--vt-weight-heading);
+  vertical-align: middle;
+}
+
+/* The Total row's label from the start of the Item column, after its own Sr. No. cell. */
+.vt-items .vt-total-label {
+  text-align: start;
+}
+
+/*
+ * The totals as the design rows them: the label across every column but the last, on the end
+ * edge ("Total Basics", "GST", "Grand Total"), its figure in the last column. Labels medium and
+ * figures regular, so the grand total, bold on the fill, is the one that stands out.
+ */
+.vt-items .vt-totals th,
+.vt-items .vt-totals td {
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.vt-items .vt-totals .ceres-subtotal-label {
+  font-weight: var(--vt-weight-label);
+}
+
+.vt-items .vt-totals .is-grand > * {
+  background: var(--vt-fill);
+  font-weight: var(--vt-weight-strong);
+}
+
+.vt-items .vt-totals .ceres-subtotal-label {
+  text-align: end;
+}
+
+/* A figure has no width of its own, so it never widens the last column; one that does not fit
+   takes more columns to its left (helpers.ts fitTotals), its rule on an item column's edge. */
+.vt-items .vt-totals .vt-fig {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 0;
+  min-width: 100%;
+}
+
+.vt-items .vt-totals .vt-fig > * {
+  white-space: nowrap;
+}
+
+.vt-items .vt-totals .ceres-subtotal-note,
+.vt-items .vt-totals .ceres-subtotal-converted,
+.vt-items .vt-totals .ceres-subtotal-extra {
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+  font-weight: 400;
+}
+
+/* Amount In Words across the table: the bold label, then the words. */
+.vt-items .vt-words-row > td {
+  text-align: start;
+}
+
+.vt-words-label {
+  margin-inline-end: 8px;
+  font-weight: var(--vt-weight-label);
+  white-space: nowrap;
+}
+
+.vt-words-value {
+  font-weight: 400;
+}
+
+/* The stretch row (print only): empty, the column rules running through it. */
+.vt-items .vt-filler {
+  display: none;
+}
+
+/* ------------------------------------------------------------ summaries (shared widgets) */
+
+.vt-summary .ceres-table-section {
+  margin: 0;
+  overflow-x: auto;
+}
+
+/* A summary's title sits on the fill in a ruled bar over its table, as every panel's does. */
+.vt-summary .ceres-table-heading,
+.vt-summary-title {
+  margin: 0;
+  padding: var(--vt-pad) var(--vt-pad-x);
+  border: var(--vt-rule-width) solid var(--vt-rule);
+  border-bottom: 0;
+  background: var(--vt-fill);
+  color: var(--vt-ink);
+  font-family: var(--vt-title-font);
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  font-weight: var(--vt-weight-heading);
+  line-height: 1.5385;
+  letter-spacing: 0;
+}
+
+/* The summaries ruled like the items: every cell ruled, headings on the fill, equal columns
+   (helpers.ts equalizeSummaries), text centred, the first column from the start edge. */
+.vt-summary .ceres-table {
+  width: 100%;
+  border: var(--vt-rule-width) solid var(--vt-rule);
+  border-collapse: collapse;
+  color: var(--vt-ink);
+  font-family: var(--vt-font);
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  line-height: 1.5385;
+}
+
+.vt-summary .ceres-table th,
+.vt-summary .ceres-table td {
+  padding: var(--vt-pad) var(--vt-pad-x);
+  border: var(--vt-rule-width) solid var(--vt-rule);
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.vt-summary .ceres-table td.vt-num {
+  white-space: nowrap;
+}
+
+.vt-summary .ceres-table :is(th, td):first-child {
+  text-align: start;
+}
+
+.vt-summary .ceres-table thead th {
+  background: var(--vt-fill);
+  color: var(--vt-ink);
+  font-family: var(--vt-title-font);
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+  font-weight: var(--vt-weight-heading);
+  letter-spacing: 0;
+}
+
+.vt-summary .ceres-table tbody tr:nth-child(even) {
+  background: none;
+}
+
+.vt-summary .ceres-table tfoot td {
+  font-weight: var(--vt-weight-heading);
+}
+
+.vt-summary .ceres-table .ceres-table-words {
+  background: #fff;
+  color: var(--vt-ink);
+  font-weight: 400;
+  white-space: normal;
+}
+
+/* The batch summary's columns hug their content, the item name taking the rest. */
+.vt-summary .vt-batch-table :is(th, td):not(:first-child) {
+  width: 1%;
+}
+
+.vt-summary .vt-batch-table :is(th, td):not(:first-child, .vt-num) {
+  overflow-wrap: normal;
+}
+
+.vt-summary:not(:has(.ceres-table)) {
+  display: none;
+}
+
+.vt-doc[dir="rtl"] .vt-summary .ceres-table .ceres-table-words {
+  text-align: right !important;
+}
+
+/* Payments: the first column from the start edge like every other table's; the amount in the
+   business's currency under it, greyed. */
+.vt-payment-converted {
+  display: block;
+  color: var(--vt-muted);
+}
+
+.vt-payments .ceres-table td.is-text {
+  overflow-wrap: normal;
+}
+
+/* ------------------------------------------------------------ contact */
+
+/* The document's contact line, centred, the email and phone in semibold. */
+.vt-contact {
+  text-align: center;
+}
+
+.vt-contact {
+  color: var(--vt-muted);
+}
+
+.vt-contact strong {
+  color: var(--vt-ink);
+  font-weight: var(--vt-weight-label);
+}
+
+/* ------------------------------------------------------------ signature */
+
+/* "For <business>", the signature, "Authorized Signatory": on the end edge, 16 px apart. */
+.vt-signature {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-end;
+  text-align: end;
+}
+
+.vt-signature-label {
+  font-weight: var(--vt-weight-heading);
+}
+
+/* A wide signature in a 200 × 80 box, a square or upright one in 120 × 120 (is-square). */
+.vt-signature-mark img {
+  display: block;
+  width: 200px;
+  max-width: 100%;
+  height: 80px;
+  object-fit: contain;
+  object-position: right center;
+}
+
+.vt-signature-mark img.is-square {
+  width: 120px;
+  height: 120px;
+}
+
+.vt-doc[dir="rtl"] .vt-signature-mark img {
+  object-position: left center;
+}
+
+.vt-signature-banner {
+  font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
+}
+
+/* ------------------------------------------------------------ markdown (notes, descriptions) */
+
+/*
+ * The markdown viewer brings its own stylesheet, loaded after the template's; these selectors
+ * outrank it, so descriptions and notes read the same whichever loads first.
+ */
+.vt-doc .vt-item-desc .toastui-editor-contents,
+.vt-doc .vt-note-body .toastui-editor-contents {
+  max-width: 100%;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.vt-doc .vt-item-desc .toastui-editor-contents *:not(table),
+.vt-doc .vt-note-body .toastui-editor-contents *:not(table) {
+  line-height: inherit;
+}
+
+.vt-doc
+  .vt-item-desc
+  .toastui-editor-contents
+  :is(p, ul, ol, li, h1, h2, h3, h4, h5, h6),
+.vt-doc
+  .vt-note-body
+  .toastui-editor-contents
+  :is(p, ul, ol, li, h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/*
+ * Blocks follow one another 4 px apart, as list points do (user request: no extra space).
+ * Text saved with a blank line after every line makes each line a paragraph of its own, and
+ * a wider gap there read as double spacing; the viewer's own paragraph margins never apply.
+ */
+.vt-doc
+  .vt-item-desc
+  .toastui-editor-contents
+  > *
+  + :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, pre, table, div),
+.vt-doc
+  .vt-note-body
+  .toastui-editor-contents
+  > *
+  + :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, pre, table, div) {
+  margin-top: 4px !important;
+}
+
+.vt-doc
+  .vt-item-desc
+  .toastui-editor-contents
+  :is(p, ul, ol, h1, h2, h3, h4, h5, h6),
+.vt-doc
+  .vt-note-body
+  .toastui-editor-contents
+  :is(p, ul, ol, h1, h2, h3, h4, h5, h6) {
+  margin-bottom: 0 !important;
+}
+
+.vt-doc .vt-item-desc .toastui-editor-contents li + li,
+.vt-doc .vt-note-body .toastui-editor-contents li + li {
+  margin-top: 4px;
+}
+
+.vt-doc .vt-item-desc .toastui-editor-contents :is(th, td),
+.vt-doc .vt-note-body .toastui-editor-contents :is(th, td) {
+  padding: 6px;
+  border-color: var(--vt-ink);
+  text-align: start;
+}
+
+.vt-doc .vt-item-desc .toastui-editor-contents th {
+  background: var(--vt-fill);
+  color: var(--vt-ink);
+  font-weight: var(--vt-weight-heading);
+}
+
+/*
+ * A table in the notes or an item's description (the editor's table) reads like the buyer's
+ * field grid (user request): full width, every cell ruled in the grid's grey with 6 px
+ * inside, labels (odd columns) medium and values regular in the ink, the first row no
+ * heading of its own. Empty columns, rows and tables are dropped before it is drawn
+ * (helpers.ts withoutEmptyColumns).
+ */
+.vt-doc :is(.vt-note-body, .vt-item-desc) .toastui-editor-contents table {
+  width: 100%;
+  margin: 4px 0 0;
+  border: var(--vt-rule-width) solid var(--vt-rule);
+  border-collapse: collapse;
+  color: var(--vt-ink);
+  table-layout: auto;
+}
+
+.vt-doc :is(.vt-note-body, .vt-item-desc) .toastui-editor-contents :is(th, td) {
+  /* A cell's text wraps where it must, so the table never runs past its panel (beside the
+     bank on a narrow or zoomed page). */
+  overflow-wrap: anywhere;
+  padding: var(--vt-pad) var(--vt-pad-x);
+  border: var(--vt-rule-width) solid var(--vt-rule);
+  background: none;
+  color: var(--vt-ink);
+  font-weight: 400;
+  text-align: start;
+  vertical-align: top;
+}
+
+.vt-doc
+  :is(.vt-note-body, .vt-item-desc)
+  .toastui-editor-contents
+  tr
+  > :nth-child(odd) {
+  font-weight: var(--vt-weight-label);
+}
+
+/*
+ * Notes that are only a table meet the panel's own rules: the table fills the panel, its outer
+ * sides hidden, so no second rule shows inside the box.
+ */
+.vt-doc
+  .vt-note-body:has(
+    > .markdown-viewer-widget > .toastui-editor-contents > table:only-child
+  ) {
+  padding: 0;
+}
+
+.vt-doc .vt-note-body .toastui-editor-contents > table:only-child {
+  height: 100%;
+  margin: 0;
+  border-style: hidden;
+}
+
+/*
+ * Phones (user request): a notes table of label | value pairs reads one field to a row,
+ * label | value, in the buyer box's 136 px label column; a pair empty on both sides is
+ * dropped. Screen only: paper keeps the table as written.
+ */
+@media screen {
+  @container vt-doc (width < 600px) {
+    .vt-doc .vt-note-body .toastui-editor-contents table:has(tr > :nth-child(4)) {
+      display: grid;
+      grid-template-columns: 136px minmax(0, 1fr);
+      height: auto;
+    }
+
+    .vt-doc
+      .vt-note-body
+      .toastui-editor-contents
+      table:has(tr > :nth-child(4))
+      :is(thead, tbody, tr) {
+      display: contents;
+    }
+
+    .vt-doc
+      .vt-note-body
+      .toastui-editor-contents
+      table:has(tr > :nth-child(4))
+      :is(th, td) {
+      border: 0;
+      border-top: var(--vt-rule-width) solid var(--vt-rule);
+    }
+
+    .vt-doc
+      .vt-note-body
+      .toastui-editor-contents
+      table:has(tr > :nth-child(4))
+      tr
+      > :nth-child(odd) {
+      border-inline-end: var(--vt-rule-width) solid var(--vt-rule);
+    }
+
+    .vt-doc
+      .vt-note-body
+      .toastui-editor-contents
+      table:has(tr > :nth-child(4))
+      > :first-child
+      > tr:first-child
+      > :nth-child(-n + 2) {
+      border-top: 0;
+    }
+
+    .vt-doc
+      .vt-note-body
+      .toastui-editor-contents
+      table:has(tr > :nth-child(4))
+      tr
+      > :nth-child(odd):empty:has(+ :empty),
+    .vt-doc
+      .vt-note-body
+      .toastui-editor-contents
+      table:has(tr > :nth-child(4))
+      tr
+      > :nth-child(odd):empty
+      + :empty {
+      display: none;
+    }
+  }
+}
+
+/* Beside a taller bank box the table runs down to the panel's foot, its rules with it. */
+.vt-doc .vt-note-body:has(> .markdown-viewer-widget > .toastui-editor-contents > table:only-child)
+  > .markdown-viewer-widget {
+  flex: 1 1 auto;
+}
+
+.vt-doc
+  .vt-note-body
+  > .markdown-viewer-widget
+  > .toastui-editor-contents:has(> table:only-child) {
+  height: 100%;
+}
+
+/* In print the table keeps its own height: a 100 % height is fixed before the page breaks, so
+   rows moved past a break ran out of the box's foot on the next page (zoom 1.1). */
+@media print {
+  .vt-doc
+    .vt-note-body
+    > .markdown-viewer-widget
+    > .toastui-editor-contents:has(> table:only-child),
+  .vt-doc .vt-note-body .toastui-editor-contents > table:only-child {
+    height: auto;
+  }
+
+  /* A grid row cut by a page break: Chrome sizes the subgrid row before it keeps a cell's
+     last lines together, so a cell pushed by orphans/widows ran over the row below (browser
+     print, wide margins). One line may stand alone at a page edge instead. */
+  .vt-doc :is(.vt-grid-row, .vt-billing-fields) > .vt-cell {
+    orphans: 1;
+    widows: 1;
+  }
+}
+
+/* The buyer grid's row height: 20 px lines, no paragraph margins inside a cell. */
+.vt-doc
+  :is(.vt-note-body, .vt-item-desc)
+  .toastui-editor-contents
+  table
+  :is(th, td),
+.vt-doc
+  :is(.vt-note-body, .vt-item-desc)
+  .toastui-editor-contents
+  table
+  :is(th, td)
+  * {
+  height: auto;
+  margin: 0 !important;
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  line-height: 1.5385 !important;
+}
+
+/*
+ * An empty list item (the editor leaves one after the last point) has no height, and its
+ * marker, positioned on its own, would print below the cell over the next row ("3." on the
+ * TOTAL row, user report): it is not shown.
+ */
+.vt-doc .vt-item-desc .toastui-editor-contents li:empty,
+.vt-doc .vt-note-body .toastui-editor-contents li:empty {
+  display: none;
+}
+
+/* List markers in the text's own colour: the viewer greys both. */
+.vt-doc .vt-item-desc .toastui-editor-contents :is(ul, ol) > li::before,
+.vt-doc .vt-note-body .toastui-editor-contents :is(ul, ol) > li::before {
+  color: currentcolor;
+}
+
+.vt-doc .vt-item-desc .toastui-editor-contents ul > li::before,
+.vt-doc .vt-note-body .toastui-editor-contents ul > li::before {
+  background-color: currentcolor;
+}
+
+/* The Declaration's points 8 px apart, as the design spaces them. */
+.vt-doc .vt-note-body .toastui-editor-contents li + li {
+  margin-top: 8px;
+}
+
+/* ------------------------------------------------------------ right-to-left */
+
+/*
+ * Change Script with right-to-left on: the layout mirrors (logical properties throughout),
+ * and every piece of the business's text is its own bidi island (plaintext on an inline box),
+ * so its punctuation stays in place while the column keeps its RTL alignment.
+ */
+.vt-doc[dir="rtl"]
+  :is(
+    .vt-text,
+    .vt-field-label,
+    .vt-field-value,
+    .vt-item-name,
+    .vt-item-code,
+    .vt-bank-value
+  ),
+.vt-doc[dir="rtl"] .vt-items td:not(.vt-col-name),
+.vt-doc[dir="rtl"] .vt-payments td {
+  unicode-bidi: plaintext;
+}
+
+.vt-doc[dir="rtl"]
+  :is(.vt-item-desc, .vt-note-body)
+  .toastui-editor-contents
+  :is(p, li) {
+  unicode-bidi: plaintext;
+  text-align: right;
+}
+
+/* ------------------------------------------------------------ narrow pages */
+
+/*
+ * Narrow pages answer to the layout's own width (a container query): a phone, an A5 page and
+ * A4 at a large print size all fall under it. The container is .vt-doc on screen and the page
+ * body in print, so the footer fixed to each printed page is never inside it.
+ */
+.vt-doc {
+  container: vt-doc / inline-size;
+}
+
+@media screen and (width <= 720px) {
+  .vt-doc {
+    --vt-gutter: 16px;
+  }
+}
+
+/*
+ * A buyer's box squeezed by long document details: under 380 px its fields fold to
+ * label | value, a field to a row.
+ */
+
+/* In a narrow buyer's box an email breaks where it must rather than run past the box. */
+@container vt-billing (width < 460px) {
+  .vt-billing-fields .vt-cell-value:has(.vt-email),
+  .vt-billing-fields .vt-email {
+    overflow-wrap: anywhere;
+  }
+}
+
+@container vt-billing (width < 380px) {
+  .vt-billing-grid {
+    grid-template-columns: fit-content(136px) minmax(min-content, 1fr);
+  }
+
+  .vt-billing-fields > .vt-cell:nth-child(3) {
+    border-inline-start: 0;
+  }
+
+  .vt-billing-fields > .vt-cell:nth-child(n + 3) {
+    border-top: var(--vt-rule-width) solid var(--vt-rule);
+  }
+
+  .vt-billing-fields > .vt-cell:nth-child(n + 3):empty {
+    display: none;
+  }
+}
+
+/*
+ * Under 600 px (a phone, A5 portrait) the four-column grids fold to label | value, a field to a
+ * row; A4 and wider keep two fields to a row, filled from the left (user request).
+ */
+@container vt-doc (width < 600px) {
+  /* Stacked, the buyer's, the details' and the Terms & Conditions labels share one 136 px
+     column, so every box's rule falls in the same place. */
+  .vt-billing-grid,
+  .vt-additional-grid {
+    grid-template-columns: 136px minmax(min-content, 1fr);
+  }
+
+  .vt-billing-fields > .vt-cell:nth-child(3),
+  .vt-grid-row > .vt-cell:nth-child(3) {
+    border-inline-start: 0;
+  }
+
+  .vt-billing-fields > .vt-cell:nth-child(n + 3),
+  .vt-grid-row > .vt-cell:nth-child(n + 3) {
+    border-top: var(--vt-rule-width) solid var(--vt-rule);
+  }
+
+  .vt-billing-fields > .vt-cell:nth-child(n + 3):empty,
+  .vt-grid-row > .vt-cell:nth-child(n + 3):empty {
+    display: none;
+  }
+}
+
+/* Under 600 px the side-by-side boxes stack. */
+@container vt-doc (width < 600px) {
+  .vt-billing-row,
+  .vt-panel-row,
+  .vt-notes-row {
+    flex-direction: column;
+  }
+
+  .vt-billing + .vt-details,
+  .vt-panel-row > .vt-panel + .vt-panel,
+  .vt-notes-row > .vt-panel + .vt-panel {
+    margin-inline-start: 0;
+    margin-top: calc(-1 * var(--vt-rule-width));
+  }
+
+  .vt-details {
+    max-width: none;
+  }
+
+  .vt-details-grid {
+    grid-template-columns: 136px minmax(0, 1fr);
+  }
+
+  /* Stacked, Bank Account Details fills the row like the box above it (screen and print). */
+  .vt-bank {
+    flex-basis: auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+/* ------------------------------------------------------------------ print / PDF */
+
+/*
+ * Print at true size (design-to-template §4a): 13 px body text prints at 13 px. The page fills
+ * the printable width with no gutter of its own (margins belong to Lydia, the browser or the
+ * PDF service); the renderer's print size setting (zoomSize) scales a printout.
+ */
+@media print {
+  .vt-doc {
+    /* Every text size prints as on screen, the title too (user, 2026-10-21: print 1:1). */
+    --vt-gutter: 0px;
+    --vt-section-gap: 12px;
+
+    width: 100%;
+
+    /* Never wider than the paper's printable width (helpers.ts mapPrint): Refrens' PDF
+       service lays the page out in a window wider than the paper before it prints. */
+    max-width: var(--vt-print-width, none);
+
+    /* Centred: a browser's own print keeps 1 cm margins, so a document set to wider ones
+       (xMargins 2) sits in the middle of the page rather than against its left edge. */
+    margin: 0 auto;
+
+    /* Chrome's PDF clips the last pixel at the page area's edges: a box ruled at the full
+       width lost its right rule. A pixel inside each edge keeps both rules whole. */
+    padding-inline: 1px;
+  }
+
+  .vt-status.no-print {
+    display: none;
+  }
+
+  /* A letterhead repeating on every page prints from the frame's <thead>; the copy under the
+     title stays on screen only. */
+  .vt-doc .vt-letterhead.is-print-repeated {
+    display: none;
+  }
+
+  .vt-doc {
+    padding-top: 0;
+  }
+
+  /* On paper the table fits the page; Description gives up its screen floor. */
+  .vt-items .vt-desc-min {
+    display: none;
+  }
+
+  /* A4 leaves about 718 px: the screen's 72 px column floor would squeeze the description to a
+     sliver on an eight-column table, so paper keeps a 48 px floor. */
+  .vt-items.is-roomy {
+    --vt-col-floor: 48px;
+  }
+
+  /*
+   * A table whose columns cannot fit the page with 6 px cell padding (helpers.ts decides from
+   * the minimum widths and the paper format) prints with 4 px side padding in every cell.
+   */
+  .vt-items.is-print-compact :is(th, td) {
+    padding-inline: 4px;
+  }
+
+  /* A page too narrow for the table (A5, a large print size) drops the columns' floors, so
+     the figures hug their headings and amounts and the description keeps the room left. */
+  .vt-items.is-print-compact .vt-col-min {
+    width: 0;
+  }
+
+  .vt-items.is-print-compact td.is-word {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .vt-items.is-print-compact td.is-word .vt-num {
+    white-space: normal;
+  }
+
+  /*
+   * Measured in print (helpers.ts fitPrintTable): a table still wider than its page takes the
+   * tight padding and scales its text by --vt-print-fit, never under 10 px.
+   */
+  .vt-items.is-print-fit :is(th, td) {
+    padding-inline: 4px;
+  }
+
+  /* The columns' floors shrink with the text, or a wide table's empty columns alone keep it
+     wider than the page and its last column (the amounts, the totals' figures) is cut off. */
+  .vt-items.is-print-fit .vt-col-min {
+    width: calc(var(--vt-col-floor) * var(--vt-print-fit, 1));
+  }
+
+  .vt-items.is-print-fit .vt-desc-min {
+    width: calc(140px * var(--vt-print-fit, 1));
+  }
+
+  .vt-items.is-print-fit {
+    --vt-print-text: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+
+    font-size: max(10px, calc(var(--vt-print-text) * var(--vt-print-fit, 1)));
+  }
+
+  .vt-items.is-print-fit thead th,
+  .vt-items.is-print-fit .vt-item-codes,
+  .vt-items.is-print-fit .vt-words-value {
+    font-size: max(
+      10px,
+      calc(
+        var(--vt-font-size-s) * var(--vt-text-scale, 1) * var(--vt-print-fit, 1)
+      )
+    );
+  }
+
+  .vt-items-scroll,
+  .vt-summary {
+    overflow: clip;
+  }
+
+  /* Column headings repeat on every page a table spans; its totals print once, at the end. */
+  .vt-items thead,
+  .vt-summary .ceres-table thead {
+    display: table-header-group;
+  }
+
+  .vt-summary .ceres-table tfoot {
+    display: table-row-group;
+  }
+
+  .vt-items tr,
+  .vt-summary .ceres-table tr {
+    break-inside: avoid;
+  }
+
+  /* A table in a description or note breaks between its rows, its headings repeated at the top
+     of every page it spans (user, 2026-10-19). */
+  .vt-doc :is(.vt-item-desc, .vt-note-body) .toastui-editor-contents thead {
+    display: table-header-group;
+  }
+
+  .vt-doc :is(.vt-item-desc, .vt-note-body) .toastui-editor-contents tr {
+    break-inside: avoid;
+  }
+
+  /* A row taller than a third of a page breaks rather than leaving its page blank (helpers.ts
+     markTallRows). */
+
+  /* An item and its full-width description stay on one page. */
+  .vt-items .vt-item-row:has(+ .vt-detail-row:not([style*="none"])) {
+    break-after: avoid;
+  }
+
+  .vt-items tr.is-tall {
+    break-inside: auto;
+  }
+
+  /* An item taller than a page's room as a whole may break between its rows (markTallRows);
+     !important over the item's keep-together rules, whatever their selectors' weight. */
+  .vt-items tr.is-loose {
+    break-before: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Each line item prints whole: its name, description and image rows move to the next page
+     together (user rule, 2026-10-19). */
+  .vt-items .vt-item-row.has-name-row,
+  .vt-items .vt-detail-row,
+  .vt-items .vt-image-row {
+    break-before: avoid;
+  }
+
+  /* A row cut by a page break (an item taller than what is left of the page) closes with a
+     rule at the page's foot, and every page's piece of the table with it (user rule,
+     2026-10-20): the cells' own borders end open there. The items wrapper draws that rule on
+     each page's piece (box-decoration-break: clone); on the last piece the table's own
+     bottom rule lies over it. */
+  .vt-items-scroll {
+    border-bottom: var(--vt-rule-width) solid var(--vt-rule);
+    /* stylelint-disable-next-line property-no-vendor-prefix -- Chrome before 130 needs it */
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  .vt-items-scroll > :last-child {
+    margin-bottom: calc(-1 * var(--vt-rule-width));
+  }
+
+  /* Stretch on, a document longer than a page (user, 2026-10-19): where a whole item moves to
+     the next page, the column rules run on to the page's foot and a rule closes each page's
+     piece of the table (helpers.ts columnRules), drawn by the items wrapper; on the last
+     piece the table's own bottom rule lies over it. The row groups are opaque, so the rules
+     show only below the page's last row. */
+  .vt-doc.is-stretch .vt-items-scroll {
+    --vt-column-rule-width: 1px;
+
+    border-bottom: var(--vt-column-rule-width) solid
+      var(--vt-column-rule-color, var(--vt-rule));
+    background: var(--vt-column-rules, none);
+    box-decoration-break: clone;
+  }
+
+  .vt-doc.is-stretch .vt-items-scroll > :last-child {
+    margin-bottom: calc(-1 * var(--vt-column-rule-width));
+  }
+
+  :where(.vt-doc.is-stretch .vt-items) > :where(thead, tbody, tfoot) {
+    background-color: var(--primary-background, #fff);
+  }
+
+  .vt-doc.is-stretch .vt-items .vt-filler {
+    display: table-row;
+  }
+
+  .vt-doc.is-stretch .vt-items .vt-filler > td {
+    height: var(--vt-filler-height, 0);
+    padding-block: 0;
+    border-top: 0;
+  }
+
+  /* A group's name row stays with the group's first item, never alone at a page's foot. */
+  .vt-items .vt-group-row {
+    break-after: avoid;
+  }
+
+  /* An item's original images fill the table's width in print as on screen (user request),
+     in proportion, never taller than what a page leaves between the letterhead and the
+     footer (55 % of it), so a tall image prints whole and centred rather than pushing a
+     blank page before it. */
+  .vt-large-image {
+    width: 100%;
+    height: auto;
+    max-height: min(55vh, 600px); /* px cap: on a Pageless PDF's one tall page vh is the whole document */
+    object-fit: contain;
+  }
+
+  .vt-items .vt-items-total,
+  .vt-items .vt-totals {
+    break-inside: avoid;
+  }
+
+  /*
+   * Sections run on across a page break rather than leaving the rest of a page blank (user
+   * request): terms, notes, bank, attachments, shipping, the summaries and payments split
+   * where the page ends. A box cut by the break is closed by a rule at the foot of the page
+   * and opens with one at the top of the next. The title, the buyer and details, the contact
+   * line, the signature and the footer stay whole; a heading stays with its content.
+   */
+  .vt-title-block,
+  .vt-billing-row,
+  .vt-contact,
+  .vt-signature,
+  .vt-doc > .vt-letterhead-footer {
+    break-inside: avoid;
+  }
+
+  /* The contact line never starts a page alone: it goes over with the signature before it. */
+  .vt-doc .vt-contact {
+    break-before: avoid;
+  }
+
+  .vt-panel,
+  .vt-billing,
+  .vt-details {
+    box-decoration-break: clone;
+  }
+
+  /* A panel's top rule is an inset shadow, not a border: a box with a top border keeps its
+     start on the page when its title moves on, leaving an empty ruled stub behind. */
+  .vt-panel {
+    border-top: 0;
+    box-shadow: inset 0 var(--vt-rule-width) 0 var(--vt-rule);
+  }
+
+  .vt-panel-title,
+  .vt-summary-title {
+    break-after: avoid-page;
+  }
+
+  /*
+   * Inside the print frame's cell Chrome ignores break-after, so a panel's title could be left
+   * alone at a page's foot. It reaches, unseen, 40 px (two lines) into what follows and is
+   * never split: when those lines do not fit, the title goes to the next page with them. Its
+   * fill and rule are painted over its own part only.
+   */
+  .vt-doc .vt-panel-title {
+    --vt-keep: 40px;
+
+    padding-bottom: calc(var(--vt-pad) + var(--vt-keep));
+    margin-bottom: calc(-1 * var(--vt-keep));
+    border-bottom: 0;
+
+    /* Two layers of exact size, not colour stops (a 1 px stop vanished at some print scales):
+       the rule, 1 px tall, on the title's own foot; the fill above it, under the panel's top
+       rule (an inset shadow, see .vt-panel). */
+    background: linear-gradient(var(--vt-rule), var(--vt-rule)) left 0 bottom
+        var(--vt-keep) / 100% var(--vt-rule-width) no-repeat,
+      linear-gradient(var(--vt-fill), var(--vt-fill)) left 0 top
+        var(--vt-rule-width) / 100%
+        calc(100% - var(--vt-keep) - 2 * var(--vt-rule-width)) no-repeat;
+    break-inside: avoid;
+  }
+
+  /*
+   * Footer on every page (pdfOptions.footerOnLastPage off): the real footer is fixed to the
+   * foot of each printed page and the frame's repeating <tfoot> holds an invisible copy of it.
+   * Last page only: it follows the content, and helpers.ts sets it on the page's bottom edge.
+   */
+  .vt-page-frame {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .vt-page-frame > tbody {
+    display: table-row-group;
+  }
+
+  .vt-page-frame-header {
+    display: table-header-group;
+  }
+
+  .vt-page-frame-header .vt-letterhead:not(.is-empty) {
+    margin-bottom: 4px;
+  }
+
+  /*
+   * Chrome stops repeating a table header taller than about a quarter of the page, so on a
+   * short page (landscape, A5) a full-width letterhead would print on the first page only. The
+   * repeated copy fills the page width (a small image is scaled up, as on screen) and keeps its
+   * proportions within a fifth of the page height, centred.
+   */
+  .vt-page-frame-header .vt-letterhead img {
+    width: 100%;
+    height: auto;
+    max-height: 20vh;
+    object-fit: contain;
+  }
+
+  .vt-page-frame-footer {
+    display: table-footer-group;
+  }
+
+  .vt-page-frame > * > tr {
+    display: table-row;
+  }
+
+  .vt-page-frame > * > tr > td {
+    display: table-cell;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  /* The page body is the narrow-page container in print (see the container queries). */
+  .vt-doc {
+    container-type: normal;
+  }
+
+  .vt-page-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--vt-section-gap);
+    container: vt-doc / inline-size;
+  }
+
+  .vt-footer-spacer {
+    padding-top: 20px;
+    visibility: hidden;
+  }
+
+  .vt-doc .vt-footer-spacer.is-empty {
+    display: none;
+  }
+
+  .vt-letterhead-footer.vt-footer-fixed {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  /*
+   * Chrome stops repeating a table footer taller than about a quarter of the page, and the
+   * fixed footer then prints over the content (a landscape page: a full-width footer is a
+   * third of it). Both copies fill the page width and keep their proportions within the same
+   * height, the spacer's 20 px included, centred; on a portrait page a footer is well under it
+   * and stays full width.
+   */
+  .vt-page-frame-footer .vt-letterhead-footer img,
+  .vt-letterhead-footer.vt-footer-fixed img {
+    width: 100%;
+    height: auto;
+    max-height: calc(22vh - 20px);
+    object-fit: contain;
+  }
+
+  /*
+   * The PDF service draws an every-page letterhead and footer in its own page margins (from
+   * data-ceres-page-header / -footer, policy "all"), so those copies hide there; a first-page
+   * letterhead and a last-page footer stay in the document.
+   */
+  body[class~="isDibella"]
+    .vt-doc
+    .no-dibella:is(.invoice-letterhead, .invoice-letterhead-footer) {
+    display: none;
+  }
+}
+
+/*
+ * A box split by a page break closes at the foot of the page and opens again at the top of the
+ * next: its border, corners and padding are drawn on each piece (user, 2026-10-19). The item
+ * table closes each page's piece with its repeating closing row (template.hbs), never shown on
+ * screen; a row split by the break has no rule of its own there (user, 2026-10-21).
+ */
+.vt-items > tfoot.vt-page-close {
+  display: none;
+}
+
+@media print {
+  .vt-doc .vt-items > tfoot.vt-page-close {
+    display: table-footer-group;
+  }
+
+  .vt-doc .vt-items > tfoot.vt-page-close td {
+    height: 0;
+    padding: 0;
+    border: 0;
+    border-top: var(--vt-rule-width) solid var(--vt-rule);
+  }
+
+  :is(.vt-panel, .vt-panel-body, .vt-billing, .vt-billing-fields, .vt-details) {
+    box-decoration-break: clone;
+  }
+
+  /* "Scan to pay" stays with its QR. */
+  .vt-upi {
+    break-inside: avoid;
+  }
+}
+
+/*
+ * In print the totals sit in a table of their own under the items (helpers.ts splitTotals), so a
+ * page holding only them repeats no item headings. It overlaps the item table by one rule, so
+ * the two meet on a single line.
+ */
+@media print {
+  .vt-items[data-vt-totals-split] {
+    margin-top: calc(-1 * 1px);
+  }
+
+  /* One solid ground under the totals: painted cell by cell, the hairline seams between their
+     empty cells let the stretch column rules (columnRules) show through. */
+  .vt-items[data-vt-totals-split] {
+    background-color: var(--primary-background, #fff);
+  }
+}
+
+/* ------------------------------------------------------------ phones and tablets */
+
+/*
+ * On a phone or tablet screen the item table no longer scrolls sideways (user request,
+ * 2026-10-20, after Refrens' own invoice pages). fitItemsToScreen (helpers.ts) chooses: on a
+ * screen up to 640 px each item reads as a card (is-cards): its number and name across the top,
+ * its codes and description under them, then each column's figure on a line of its own beside
+ * the column's heading, the last one (the amount) bold. Narrower than an A4 page (794 px) the
+ * table stays as on paper while it fits; one that would scroll keeps its headings in a row with each item's
+ * name and description across the full width above its figures (is-grid), or reads as cards
+ * when it has more than eight figure columns. The totals read label | figure. Print keeps the
+ * table as it is.
+ */
+@media screen {
+  .vt-doc .vt-items-scroll:has(> .vt-items:is(.is-cards, .is-grid)) {
+    overflow-x: visible;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid),
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > :is(thead, tbody),
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr,
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr > :is(th, td) {
+    display: block;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr > :is(th, td) {
+    border: 0;
+    text-align: start;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr + tr,
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > tbody + tbody > tr:first-child,
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > thead + tbody > tr:first-child {
+    border-top: var(--vt-rule-width) solid var(--vt-rule);
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-col-min, .vt-desc-min),
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-filler {
+    display: none;
+  }
+
+  /* An item card: number and name, codes and description, then a line per figure. */
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > thead {
+    display: none;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) > tbody > tr {
+    padding: var(--vt-pad) var(--vt-pad-x);
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-name-row, .vt-total-row) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 8px;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-name-row, .vt-total-row) > :is(th, td) {
+    grid-column: 1 / -1;
+    padding: 0;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-name-row) > .vt-col-serial {
+    grid-column: 1;
+    font-weight: var(--vt-weight-label);
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-name-row) > .vt-col-serial .vt-num::after {
+    content: ".";
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-name-row) > :is(.vt-col-name, .vt-col-serial + td) {
+    grid-column: 2;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-total-row) > td[data-label] {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: end;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-total-row) > td[data-label]::before {
+    content: attr(data-label);
+    color: var(--vt-muted);
+    font-weight: var(--vt-weight-label);
+    text-align: start;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-total-row) > td[data-label]:empty {
+    display: none;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-total-row) > td[data-label]:last-child {
+    font-weight: var(--vt-weight-heading);
+  }
+
+  /* The name on a line of its own above the figures (Item Name Full Width), the
+     description and the large images under them: the same card, no rule between. */
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-name-row + .vt-item-row,
+  .vt-doc .vt-items:is(.is-cards, .is-grid) :is(.vt-item-row, .vt-detail-row) + :is(.vt-detail-row, .vt-image-row) {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-detail-row > .vt-col-serial,
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-total-row > .vt-col-serial {
+    display: none;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-group-row {
+    background: var(--vt-fill);
+    font-weight: var(--vt-weight-heading);
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-total-label {
+    font-weight: var(--vt-weight-heading);
+  }
+
+  /* The totals: label | figure. */
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-totals > tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-totals > tr > :is(th, td) {
+    padding: 0;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-totals .ceres-subtotal-value {
+    flex: none;
+    text-align: end;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-totals .vt-fig {
+    width: auto;
+    min-width: 0;
+    align-items: flex-end;
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-totals > tr > td:empty {
+    display: none;
+  }
+
+  /* The grand total's fill across its whole line. */
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-totals > tr.is-grand {
+    background: var(--vt-fill);
+  }
+
+  .vt-doc .vt-items:is(.is-cards, .is-grid) .vt-totals > tr.is-grand > :is(th, td) {
+    background: none;
+  }
+
+  /* Phones: a long account number wraps inside the full-width bank panel. */
+  @container vt-doc (width < 600px) {
+    .vt-doc .vt-bank-value {
+      overflow-wrap: anywhere;
+    }
+  }
+
+  /* is-grid: the headings in a row, each item's name and description across the full width
+     above its figures. */
+  .vt-doc .vt-items.is-grid > thead {
+    display: block;
+    background: var(--vt-fill);
+    font-weight: var(--vt-weight-heading);
+  }
+
+  .vt-doc .vt-items.is-grid > thead > tr,
+  .vt-doc .vt-items.is-grid :is(.vt-item-row, .vt-name-row, .vt-total-row) {
+    display: grid;
+    grid-template-columns: var(--vt-serial-width, 43px) repeat(var(--vt-figures, 1), minmax(0, 1fr));
+    gap: 0;
+    padding: 0;
+  }
+
+  .vt-doc .vt-items.is-grid > :is(thead, tbody) > tr > :is(th, td) {
+    grid-column: auto;
+    padding: var(--vt-pad) var(--vt-pad-x);
+    text-align: center;
+  }
+
+  /* The cells keep their padding: the cards' padding 0 (same weight, earlier) put the name and
+     description against the right rule and the figures on the row's bottom rule. */
+  .vt-doc .vt-items.is-grid :is(.vt-item-row, .vt-name-row, .vt-total-row) > :is(th, td) {
+    padding: var(--vt-pad) var(--vt-pad-x);
+  }
+
+  .vt-doc .vt-items.is-grid > thead > tr > .vt-col-name {
+    display: none;
+  }
+
+  .vt-doc .vt-items.is-grid :is(tr) > :is(.vt-col-serial) {
+    grid-column: 1;
+  }
+
+  .vt-doc .vt-items.is-grid :is(.vt-item-row, .vt-name-row, .vt-total-row) > :is(.vt-col-name, .vt-total-label, .vt-col-serial + td) {
+    grid-column: 2 / -1;
+    text-align: start;
+  }
+
+  /* The first figure under the first heading; the rest follow in order. */
+  .vt-doc .vt-items.is-grid tr > :nth-child(1 of :not(.vt-col-serial, .vt-col-name, .vt-total-label)) {
+    grid-column-start: 2;
+  }
+
+  /* Each figure in its own column: the cards' full-width figure rows (same weight, earlier)
+     would stack them one under another. */
+  .vt-doc .vt-items.is-grid :is(.vt-item-row, .vt-total-row) > td[data-label] {
+    display: block;
+    grid-column: auto;
+    text-align: center;
+  }
+
+  .vt-doc
+    .vt-items.is-grid
+    :is(.vt-item-row, .vt-total-row)
+    > td[data-label]:nth-child(1 of :not(.vt-col-serial, .vt-col-name, .vt-total-label)) {
+    grid-column-start: 2;
+  }
+
+  .vt-doc .vt-items.is-grid :is(.vt-item-row, .vt-total-row) > td[data-label]::before {
+    content: none;
+  }
+
+  .vt-doc .vt-items.is-grid :is(.vt-item-row, .vt-total-row) > td[data-label]:empty {
+    display: block;
+  }
+
+  /* The items total: "Total" in the number column, its figures on the same line. */
+  .vt-doc .vt-items.is-grid .vt-total-row > .vt-col-serial {
+    display: none;
+  }
+
+  .vt-doc .vt-items.is-grid .vt-total-row > th.vt-total-label {
+    grid-column: 1;
+    padding-inline-end: 0;
+  }
+
+  .vt-doc .vt-items.is-grid :is(.vt-detail-row, .vt-image-row, .vt-group-row) > td {
+    padding: var(--vt-pad) var(--vt-pad-x) var(--vt-pad) calc(var(--vt-serial-width, 43px) + var(--vt-pad-x));
+  }
+
+  .vt-doc .vt-items.is-grid > tbody > tr:is(.vt-detail-row, .vt-image-row, .vt-group-row) {
+    padding: 0;
+  }
+
+  .vt-doc .vt-items.is-grid .vt-totals > tr {
+    padding: var(--vt-pad) var(--vt-pad-x);
+  }
+
+  .vt-doc .vt-items.is-grid .vt-totals > tr > :is(th, td) {
+    padding: 0;
+  }
+
+  /* Each heading centred over its figures, as on paper. */
+  .vt-doc .vt-items.is-grid > thead > tr > th:not(.vt-col-name, .vt-col-serial) {
+    width: auto;
+    text-align: center;
+  }
+
+  /*
+   * Phones: the summaries (Tax, HSN, Batch, Payments) read as cards, as in the Modern
+   * Manufacturing template (user, 2026-10-20): a card per row, each value beside its column's
+   * heading (labelSummaryCells), the Total row titled by its first cell and its figures
+   * semibold, empty cells left off, the amount in words under them.
+   */
+  @media (width <= 640px) {
+    .vt-doc .vt-summary .ceres-table thead {
+      display: none;
+    }
+
+    .vt-doc .vt-summary .ceres-table,
+    .vt-doc .vt-summary .ceres-table :is(tbody, tfoot, tr) {
+      display: block;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .vt-doc .vt-summary .ceres-table tr {
+      padding: var(--vt-pad) var(--vt-pad-x);
+    }
+
+    .vt-doc .vt-summary .ceres-table tr + tr,
+    .vt-doc .vt-summary .ceres-table tbody + tfoot > tr:first-child {
+      border-top: var(--vt-rule-width) solid var(--vt-rule);
+    }
+
+    .vt-doc .vt-summary .ceres-table :is(th, td),
+    .vt-doc .vt-summary .ceres-table :is(th, td):first-child {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      width: 100% !important; /* over the equal column shares (equalizeSummaries) */
+      padding: 2px 0;
+      border: 0;
+      background: none;
+      text-align: end;
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+
+    .vt-doc .vt-summary .ceres-table td[data-label]::before {
+      flex: 0 1 auto;
+      max-width: 50%;
+      color: var(--vt-muted);
+      font-weight: var(--vt-weight-label);
+      content: attr(data-label);
+      text-align: start;
+    }
+
+    .vt-doc .vt-summary .ceres-table td:not([data-label]),
+    .vt-doc .vt-summary .ceres-table .ceres-table-words {
+      display: block;
+      text-align: start;
+    }
+
+    .vt-doc .vt-summary .ceres-table tfoot td:not([data-label], .ceres-table-words) {
+      font-weight: var(--vt-weight-heading);
+    }
+
+    .vt-doc .vt-summary .ceres-table td[data-vt-empty] {
+      display: none;
+    }
+  }
+}
