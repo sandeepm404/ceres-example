@@ -1,0 +1,1706 @@
+{
+  "_id": "6adb01ec5a700100121b986f",
+  "invoiceTitle": "Invoice",
+  "billType": "INVOICE",
+  "status": "UNPAID",
+  "discount": {
+    "discountMethod": "EQUAL",
+    "discountType": "PERCENTAGE"
+  },
+  "earlyPayDiscount": {
+    "enabled": false,
+    "applied": false,
+    "discountType": "PERCENTAGE"
+  },
+  "leadCollaborators": [],
+  "isRemoved": false,
+  "isArchived": false,
+  "isHardRemoved": false,
+  "business": {
+    "name": "G S TRADERS",
+    "alias": "G S TRADERS",
+    "urlKey": "g-s-traders-bodn4y",
+    "timeZone": "Asia/Kolkata",
+    "isPrivate": true,
+    "_id": "6ada48701575ae001237152e"
+  },
+  "client": "6ada48da4d1bb90021039207",
+  "vendor": null,
+  "locale": "en-IN",
+  "reminders": {
+    "replyTo": {
+      "phone": "+918799058523"
+    },
+    "to": {
+      "phone": "",
+      "name": "DFO EAST DIVISION MANDLA"
+    },
+    "selfEmail": false,
+    "views": [],
+    "whatsappMessages": []
+  },
+  "vendorReminder": {
+    "to": {
+      "name": "Mitul Mehta",
+      "email": "mitul.m@refrens.com",
+      "phone": "+918799058523"
+    },
+    "selfEmail": false,
+    "views": [],
+    "whatsappMessages": []
+  },
+  "source": "DASHBOARD",
+  "hideTotalInWords": true,
+  "platformCreated": "web",
+  "attachments": [],
+  "paymentOptions": {
+    "accountTransfer": true
+  },
+  "recurringInvoice": {
+    "frequency": "None",
+    "endDate": null,
+    "anchorDay": null,
+    "monthEndPolicy": "CLAMP",
+    "status": "DRAFT",
+    "_id": "6adb01ec5a700100121b9870",
+    "endType": "END_AFTER_N_INVOICES"
+  },
+  "partialConvert": false,
+  "isSourceConverted": false,
+  "linkedDocuments": [],
+  "linkedInvoices": [],
+  "linkedProformaInvoices": [],
+  "linkedPurchaseOrders": [],
+  "linkedSalesOrders": [],
+  "tdsReportCollected": false,
+  "invoiceAccepted": "WAITING",
+  "acceptedByBusinesses": [],
+  "isExpenditure": false,
+  "isQuickExpenditure": false,
+  "requestedInvoice": false,
+  "isBulkExpenditure": false,
+  "batchDocument": false,
+  "isSharedDocument": false,
+  "isColumnsModified": true,
+  "customLabels": {
+    "_id": "6ada50a5c908b0002d7616b7",
+    "invoiceNumber": "Invoice No",
+    "invoiceDate": "Invoice Date",
+    "dueDate": "Due Date",
+    "purchaseOrderNumber": "PO Number",
+    "quotationNumber": "Quotation No.",
+    "terms": "Terms and Conditions",
+    "notes": "Additional Notes",
+    "billedBy": "Billed By",
+    "billedTo": "Billed To",
+    "expenseNumber": "Expense No",
+    "shippedTo": "Shipped To",
+    "shippedFrom": "Shipped From",
+    "transport": "Transport Details",
+    "attachment": "Attachments",
+    "signature": "Authorised Signatory",
+    "taxName": "GST",
+    "total": "Total",
+    "subTotal": "Sub Total",
+    "totalInWords": "Total (in words)",
+    "totalInWordsValue": "one thousand forty five rupees only",
+    "transportName": "Transport",
+    "challanDate": "Challan Date",
+    "challanNumber": "Challan Number",
+    "transportExtraInfo": "Extra Information",
+    "contact": "For any enquiry, reach out via",
+    "contactEmail": "email at",
+    "contactPhone": "call on",
+    "dueAmount": "Due Amount",
+    "paymentRecord": "Payment Record",
+    "invoiceDetails": "Invoice Details",
+    "paidAmount": "Paid Amount"
+  },
+  "hideTotals": false,
+  "showTotalsForPdf": true,
+  "showTotalsRow": false,
+  "utgst": false,
+  "taxType": "INDIA",
+  "reverseCharge": false,
+  "einvoiceGeneratedStatus": "NOT_GENERATED",
+  "hideTaxes": false,
+  "showInSuggestion": false,
+  "hasPgPayments": false,
+  "tags": [],
+  "voucherEntries": [
+    "1883ec49-f534-4f22-a015-051c418a4aaf"
+  ],
+  "signatureMethod": "NONE",
+  "appliedFormatVersion": null,
+  "billedBy": {
+    "country": "IN",
+    "name": "G S TRADERS",
+    "gstin": "23ABDFG7528F1ZK",
+    "panNumber": "ABDFG7528F",
+    "street": "00, MAHARAJPUR, ANGAN TIRAHA, Mandla",
+    "city": "Mandla",
+    "state": "Madhya Pradesh",
+    "gstState": "23",
+    "pincode": "481661",
+    "vatNumber": "",
+    "vatLabel": "VAT Number",
+    "additionalIds": [],
+    "emailShowInInvoice": false,
+    "phoneShowInInvoice": false
+  },
+  "placeOfSupply": "23",
+  "supplyType": "B2C",
+  "advanceOptions": {
+    "isBatchRequired": true,
+    "manageInventory": "UPDATE",
+    "taxSummaryView": "NONE"
+  },
+  "igst": false,
+  "taxName": "GST",
+  "transportDetails": null,
+  "shippedFrom": null,
+  "shippedTo": null,
+  "signature": null,
+  "terms": [],
+  "extraTotalFields": [],
+  "additionalCharges": [],
+  "currency": "INR",
+  "invoiceType": "INVOICE",
+  "columns": [
+    {
+      "dataType": "text",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba151",
+      "key": "name",
+      "label": "Item"
+    },
+    {
+      "dataType": "number",
+      "system": false,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba152",
+      "key": "w2impv8lkwa",
+      "label": "Quantity"
+    },
+    {
+      "dataType": "number",
+      "system": false,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba153",
+      "key": "o78otpgwm3r",
+      "label": "Void (in %)"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba154",
+      "key": "classification",
+      "label": "Code"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba155",
+      "key": "gstRate",
+      "label": "GST Rate"
+    },
+    {
+      "dataType": "formula",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba156",
+      "key": "quantity",
+      "label": "Net Quantity",
+      "fx": "={{w2impv8lkwa}}-({{w2impv8lkwa}}*{{o78otpgwm3r}}*1/100)",
+      "fxVersion": "key"
+    },
+    {
+      "dataType": "currency",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba157",
+      "key": "rate",
+      "label": "Rate"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba158",
+      "key": "discount",
+      "label": "Discount"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba159",
+      "key": "amount",
+      "label": "Amount",
+      "formula": "(Quantity * Rate)"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": true,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba15a",
+      "key": "hsn",
+      "label": "HSN/SAC"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba15b",
+      "key": "igst",
+      "label": "IGST",
+      "formula": "(Amount * GST) / 100)"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba15c",
+      "key": "cgst",
+      "label": "CGST",
+      "formula": "(Amount * (GST/2) / 100)"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba15d",
+      "key": "sgst",
+      "label": "SGST",
+      "formula": "(Amount * (GST/2) / 100)"
+    },
+    {
+      "dataType": "number",
+      "system": true,
+      "isHidden": false,
+      "private": false,
+      "summarise": false,
+      "fxReturnType": "number",
+      "isCessColumn": false,
+      "_id": "6adb02db5a700100121ba15e",
+      "key": "total",
+      "label": "Total",
+      "formula": "(Amount + Tax)"
+    }
+  ],
+  "items": [
+    {
+      "discount": {
+        "discountType": "PERCENTAGE",
+        "amount": 0
+      },
+      "group": false,
+      "hidden": false,
+      "images": [],
+      "originalImages": [],
+      "isStockManaged": true,
+      "updateStock": false,
+      "trackingMethod": "NONE",
+      "useBatchPrice": false,
+      "itc": null,
+      "unit": null,
+      "showSku": true,
+      "_id": "6adb01ec5a700100121b987f",
+      "name": "Test ",
+      "description": "",
+      "hsn": null,
+      "classification": "",
+      "quantity": 95,
+      "rate": 10,
+      "gstRate": 10,
+      "subTotal": 950,
+      "amount": 950,
+      "igst": 95,
+      "cgst": 47.5,
+      "sgst": 47.5,
+      "total": 1045,
+      "custom": {
+        "w2impv8lkwa": 100,
+        "o78otpgwm3r": 5
+      },
+      "ledgerId": "5682eb72-eb36-44f4-bed0-84e80da5bd2d",
+      "ledgerName": "Invoice Credit Account",
+      "totalRoundOff": 0,
+      "amountRoundOff": 0,
+      "params": {
+        "isPackage": false,
+        "packageItems": []
+      },
+      "itemType": "product",
+      "sku": "3tqp6ttn8n",
+      "allocations": null,
+      "inventory": "6adb01ec5a700100121b988b",
+      "inventoryTxn": "6adb01ec5a700100121b988e"
+    }
+  ],
+  "billedTo": {
+    "_id": "6ada48da4d1bb90021039207",
+    "name": "DFO EAST DIVISION MANDLA",
+    "country": "IN",
+    "vatLabel": "VAT Number",
+    "panNumber": null,
+    "additionalIds": [],
+    "uniqueKey": "1792690353783",
+    "taxPayerType": "B2C",
+    "clientType": "INDIVIDUAL",
+    "clientCurrency": "INR",
+    "contactPerson": null
+  },
+  "customFooters": [],
+  "customHeaders": [],
+  "voucherBook": "8880414a-4732-42c2-8826-281a1a645ee4",
+  "invoiceDate": "2026-10-22T18:30:01.000Z",
+  "invoiceNumber": "201",
+  "template": {
+    "bodyFont": null,
+    "customTemplateId": null,
+    "name": "enterprise",
+    "primaryBackground": null,
+    "primaryColor": null,
+    "secondaryBackground": null,
+    "secondaryColor": null,
+    "titleFont": null
+  },
+  "cesses": [],
+  "bankAccount": {
+    "accountNo": "8184213216",
+    "ifsc": "IDIB000M539",
+    "name": "G S TRADERS",
+    "accountType": "CURRENT",
+    "bank": "INDIAN BANK",
+    "phone": "+917000765624",
+    "country": "IN",
+    "currency": "INR",
+    "customFields": [],
+    "_id": "6ada549761eaef00208e897d"
+  },
+  "appliedFormat": null,
+  "invoiceDateUserInput": "23/10/2026",
+  "owner": {
+    "_id": "6ada48701575ae001237152e",
+    "billedTo": {
+      "phoneShowInInvoice": false,
+      "emailShowInInvoice": false,
+      "vatLabel": "VAT Number",
+      "clientType": "INDIVIDUAL",
+      "phone": "+918959025151",
+      "vatNumber": "",
+      "name": "G S TRADERS",
+      "gstin": "23ABDFG7528F1ZK",
+      "gstState": "23",
+      "country": "IN",
+      "additionalIds": [],
+      "customFieldsOld": [],
+      "street": "00, MAHARAJPUR, ANGAN TIRAHA, Mandla",
+      "city": "Mandla",
+      "pincode": "481661",
+      "state": "Madhya Pradesh"
+    },
+    "social": {
+      "customFields": []
+    },
+    "preferences": {
+      "upgradVendor": false,
+      "bulkExpenditure": false,
+      "bulkUploadEmail": false,
+      "partialConvertAllowed": false,
+      "letterHeadTemplate": false,
+      "irn": false,
+      "premiumn": true,
+      "onlinePayment": false,
+      "bulkUploadOverrideColumns": false,
+      "feedNavigation": "NONE",
+      "feedbackOptInModal": false
+    },
+    "onboarding": {
+      "profileShared": false
+    },
+    "isBarred": {
+      "value": false
+    },
+    "invoiceMeta": {
+      "lastFiveInvoiceAmountTotal": 1956798.2,
+      "processedInvoiceCount": 2,
+      "monthlyInvoiceCount": 2,
+      "lastFiveInvoiceItems": [
+        {
+          "discount": {
+            "discountType": "PERCENTAGE",
+            "amount": 0
+          },
+          "group": false,
+          "hidden": false,
+          "images": [],
+          "originalImages": [],
+          "isStockManaged": true,
+          "updateStock": false,
+          "trackingMethod": "NONE",
+          "useBatchPrice": false,
+          "itc": "INELIGIBLE_OTHERS",
+          "unit": "7cvjp4zjz5u",
+          "showSku": false,
+          "_id": "6ada5519c908b0002d7667c2",
+          "quantity": 89,
+          "rate": 980,
+          "subTotal": 87220,
+          "amount": 87220,
+          "gstRate": 5,
+          "igst": 4361,
+          "cgst": 2180.5,
+          "sgst": 2180.5,
+          "total": 91581,
+          "custom": {
+            "f96fh8afklg": 100,
+            "t8conqj5e7": 11,
+            "fy0x1day1w": 89
+          },
+          "classification": "",
+          "hsn": null,
+          "name": "GITTI 20MM",
+          "isAdditionalCharge": false,
+          "itemType": "product",
+          "sku": "8f9cludhnu",
+          "params": {
+            "isPackage": false,
+            "packageItems": []
+          },
+          "totalRoundOff": 0,
+          "amountRoundOff": 0,
+          "allocations": null,
+          "inventory": "6ada5519c908b0002d7667d2",
+          "inventoryTxn": "6ada5519c908b0002d7667d5"
+        },
+        {
+          "discount": {
+            "discountType": "PERCENTAGE",
+            "amount": 0
+          },
+          "group": false,
+          "hidden": false,
+          "images": [],
+          "originalImages": [],
+          "isStockManaged": true,
+          "updateStock": false,
+          "trackingMethod": "NONE",
+          "useBatchPrice": false,
+          "itc": null,
+          "unit": "CFT",
+          "showSku": true,
+          "_id": "6ada50a4c908b0002d761670",
+          "name": "trial",
+          "description": "",
+          "hsn": null,
+          "classification": "",
+          "quantity": 1695.652,
+          "rate": 1000,
+          "gstRate": 10,
+          "subTotal": 1695652,
+          "amount": 1695652,
+          "igst": 169565.2,
+          "cgst": 84782.6,
+          "sgst": 84782.6,
+          "total": 1865217.2,
+          "ledgerId": "",
+          "ledgerName": "",
+          "totalRoundOff": 0,
+          "amountRoundOff": 0,
+          "params": {
+            "isPackage": false,
+            "packageItems": []
+          },
+          "itemType": "product",
+          "sku": "so422li6yz",
+          "allocations": null,
+          "inventory": "6ada50a4c908b0002d76167c",
+          "inventoryTxn": "6ada50a4c908b0002d76167f"
+        }
+      ],
+      "lastDocument": {
+        "createdAt": "2026-10-23T06:42:52.463Z",
+        "documentType": "INVOICE"
+      }
+    },
+    "badgeStats": {
+      "profileBadgesCount": 0,
+      "portfolioBadgesCount": 0
+    },
+    "isAllowedProxy": false,
+    "source": "DASHBOARD",
+    "isPrivate": true,
+    "isRemoved": false,
+    "businessType": "Others",
+    "businessIdType": "OTHER",
+    "commissionType": "FIXED_AMOUNT",
+    "categories": [],
+    "isPageIndexed": false,
+    "country": "IN",
+    "profileType": "BIZSUGGEST",
+    "crawlState": "CREATE",
+    "users": [
+      "6a0da85d7de5f4002dbf259b",
+      "669df844996d5d0020cc8027",
+      "6005a52f5365267cca7d91c1"
+    ],
+    "apps": [],
+    "featuredClients": [],
+    "totalClients": 1,
+    "premium": {
+      "paymentActivated": false,
+      "recurringProvider": null,
+      "_id": "6ada48701575ae001237152d",
+      "enabled": true,
+      "activated": true,
+      "onTrial": true,
+      "trialActivated": true,
+      "endDate": null,
+      "period": null,
+      "trialActivatedAt": "2026-10-22T18:06:29.000Z"
+    },
+    "_schemaVersion": 3,
+    "_systemMeta": {
+      "indexedFieldsEnabled": true,
+      "onboardingChecklistEligible": true,
+      "utm": {
+        "source": "google",
+        "medium": "google_cpc",
+        "campaign": "invoice_performance",
+        "term": "none",
+        "content": "none",
+        "id": "none",
+        "original": "none"
+      },
+      "httpReferrer": "https://www.google.com/",
+      "landingPage": "https://www.refrens.com/free-online-invoice-generator?utm_source=google&utm_medium=google_cpc&utm_campaign=invoice_performance&gad_source=1&gad_campaignid=21117435824&gbraid=0AAAAACiMcdh2lTQen9YUAz_wdxL4urbrX&gclid=CjwKCAjwt7XQBhBkEiwAtStpp4X_B6q-21XOTw-m_gmAWRL6CYJS_WcpFT0oJgw4wJZC95shVZw7NhoCeXoQAvD_BwE",
+      "landingPagePath": "free-online-invoice-generator",
+      "landingPageQuery": "utm_source=google&utm_medium=google_cpc&utm_campaign=invoice_performance&gad_source=1&gad_campaignid=21117435824&gbraid=0AAAAACiMcdh2lTQen9YUAz_wdxL4urbrX&gclid=CjwKCAjwt7XQBhBkEiwAtStpp4X_B6q-21XOTw-m_gmAWRL6CYJS_WcpFT0oJgw4wJZC95shVZw7NhoCeXoQAvD_BwE",
+      "landingPageUrl": "https://www.refrens.com/free-online-invoice-generator",
+      "r": "none",
+      "newBusinessDocLimits": true,
+      "gstLeadGeneratedOnBizCreate": true,
+      "firstUserAddedLead": true,
+      "firstUserAddedLeadAt": "2026-10-22T17:58:13.595Z",
+      "cohort": {
+        "document_serial_1": {
+          "createdAt": "2026-10-22T18:06:28.605Z",
+          "_id": "6ada50a4c908b0002d761662"
+        },
+        "document_serial_2": {
+          "createdAt": "2026-10-22T18:25:29.210Z",
+          "_id": "6ada5519c908b0002d7667b1"
+        },
+        "document_serial_3": {
+          "createdAt": "2026-10-23T06:42:52.463Z",
+          "_id": "6adb01ec5a700100121b986f"
+        }
+      },
+      "autoTrialSource": "DASHBOARD",
+      "updatedInvoiceMetaOn": "2026-10-22T18:32:28.032Z"
+    },
+    "isRankQualified": false,
+    "healthCold": false,
+    "usingRefrensFor": [
+      "GST Compliance"
+    ],
+    "platformCreated": "web",
+    "appInterimCount": 0,
+    "ancestors": [],
+    "gstin": "23ABDFG7528F1ZK",
+    "currency": "INR",
+    "name": "G S TRADERS",
+    "statisticColumns": [
+      {
+        "autoUpdate": true,
+        "isHidden": false,
+        "editable": true,
+        "_id": "6ada48701575ae001237152f",
+        "key": "clients",
+        "label": "Clients",
+        "value": 0
+      },
+      {
+        "autoUpdate": false,
+        "isHidden": false,
+        "editable": true,
+        "_id": "6ada48701575ae0012371530",
+        "key": "teamMembers",
+        "label": "Team Members",
+        "value": 5
+      },
+      {
+        "autoUpdate": true,
+        "isHidden": false,
+        "editable": true,
+        "_id": "6ada48701575ae0012371531",
+        "key": "projects",
+        "label": "Projects",
+        "value": 0
+      },
+      {
+        "autoUpdate": true,
+        "isHidden": false,
+        "editable": true,
+        "_id": "6ada48701575ae0012371532",
+        "key": "yearsInBusiness",
+        "label": "Years In Business",
+        "value": 0
+      },
+      {
+        "autoUpdate": true,
+        "isHidden": false,
+        "editable": false,
+        "_id": "6ada48701575ae0012371533",
+        "key": "rating",
+        "label": "Average Rating",
+        "value": 0
+      }
+    ],
+    "urlKey": "g-s-traders-bodn4y",
+    "locations": [
+      {
+        "address": {
+          "hideStreetAddress": false,
+          "country": "IN"
+        },
+        "_id": "6ada48701575ae0012371534",
+        "phoneContacts": [],
+        "serviceAreas": []
+      }
+    ],
+    "timeZone": "Asia/Kolkata",
+    "panNumber": "ABDFG7528F",
+    "locale": "en-IN",
+    "hiringLabels": [],
+    "keyPeople": [],
+    "userUpdateHistory": [
+      {
+        "_id": "6ada4eb5cc5357001986f36c",
+        "userId": "669df844996d5d0020cc8027",
+        "actorId": "6a0da85d7de5f4002dbf259b",
+        "action": "ADD",
+        "date": "2026-10-22T17:58:13.077Z"
+      },
+      {
+        "_id": "6adb0bbf5a700100121c1a01",
+        "userId": "6005a52f5365267cca7d91c1",
+        "actorId": "669df844996d5d0020cc8027",
+        "action": "ADD",
+        "date": "2026-10-23T07:24:47.775Z"
+      }
+    ],
+    "userRoles": [],
+    "collaborators": [],
+    "programs": [],
+    "suggestedServices": [],
+    "lineitems": [],
+    "customBlocks": [],
+    "ratings": [],
+    "lastSession": "2026-10-23T08:07:42.075Z",
+    "humanUpdatedAt": "2026-10-23T07:24:47.727Z",
+    "visibleContentUpdatedAt": "2026-10-23T07:24:47.727Z",
+    "createdAt": "2026-10-22T17:31:28.084Z",
+    "updatedAt": "2026-10-23T08:07:42.102Z",
+    "__v": 0,
+    "lastSessionUser": "669df844996d5d0020cc8027",
+    "alias": "G S TRADERS",
+    "featuresUnlocked": {
+      "invoiceDashboard": true,
+      "autoTrialAnimation": true,
+      "autoTrialModal": true
+    },
+    "accounting": {
+      "ALL": {
+        "ANNIVERSARY": [
+          {
+            "_id": "6ada50a5c908b0002d7616b9",
+            "triggers": {
+              "emailAlert": 7,
+              "premiumSaasLead": 7
+            },
+            "alerts": {
+              "lead_created": false,
+              "exhausted_email": false,
+              "endangered_email": false
+            },
+            "anniversaryWiseMaxQuota": 10,
+            "anniversaryWiseExhaustedQuota": 3,
+            "lastAnniversaryDate": "2026-10-22T17:31:28.084Z",
+            "nextAnniversaryDate": "2027-10-22T17:31:28.084Z",
+            "params": {
+              "meta": {
+                "foreignCountry": false,
+                "gst": true,
+                "quotaReduced": true,
+                "quotaReductionDate": "2026-10-22T18:06:29.425Z"
+              }
+            }
+          }
+        ],
+        "DASHBOARD": 3,
+        "PREMIUM": 3,
+        "TOTAL": 3,
+        "TRIAL": 3
+      },
+      "INVOICE": {
+        "DASHBOARD": 3,
+        "TOTAL": 3
+      }
+    },
+    "upcomingAnniversaryDate": "2027-10-22T17:31:28.084Z",
+    "configuration": {
+      "isZatcaBusiness": false,
+      "tax": {
+        "taxName": "GST",
+        "taxType": "INDIA",
+        "allowTds": true,
+        "allowSectionWiseTds": false,
+        "ecommEnabled": false,
+        "ecommPublicDisplay": true,
+        "compulsoryHsn": false
+      },
+      "showSignedIrnQr": false,
+      "hideHashInDocumentNumber": true,
+      "irnPosition": "IN_INVOICE_DETAILS",
+      "units": [
+        {
+          "isArchived": false,
+          "isRemoved": false,
+          "system": false,
+          "_id": "6ada49aa6e814f001948c22f",
+          "code": "CMT",
+          "desc": "CUBIC METER",
+          "key": "7cvjp4zjz5u"
+        },
+        {
+          "key": "MGS",
+          "code": "MGS",
+          "desc": "MILLIGRAMS",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "GMS",
+          "code": "GMS",
+          "desc": "GRAMMES",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "KGS",
+          "code": "KGS",
+          "desc": "KILOGRAMS",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "QTL",
+          "code": "QTL",
+          "desc": "QUINTAL",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "TON",
+          "code": "TON",
+          "desc": "TONNES",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "OZS",
+          "code": "OZS",
+          "desc": "OUNCES",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "LBS",
+          "code": "LBS",
+          "desc": "Pounds",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "CRT",
+          "code": "CRT",
+          "desc": "CARATS",
+          "category": "Mass",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "MMS",
+          "code": "MMS",
+          "desc": "MILLIMETERS",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "CMS",
+          "code": "CMS",
+          "desc": "CENTIMETERS",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "MTR",
+          "code": "MTR",
+          "desc": "METERS",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "KME",
+          "code": "KME",
+          "desc": "KILOMETRE",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "INC",
+          "code": "INC",
+          "desc": "INCHES",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "FTS",
+          "code": "FTS",
+          "desc": "FEET",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "YDS",
+          "code": "YDS",
+          "desc": "YARDS",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "MIL",
+          "code": "MIL",
+          "desc": "MILES",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "MLT",
+          "code": "MLT",
+          "desc": "MILILITRE",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "LTR",
+          "code": "LTR",
+          "desc": "LITRES",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "KLR",
+          "code": "KLR",
+          "desc": "KILOLITRE",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "CCM",
+          "code": "CCM",
+          "desc": "CUBIC CENTIMETERS",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "CBM",
+          "code": "CBM",
+          "desc": "CUBIC METERS",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "CFT",
+          "code": "CFT",
+          "desc": "CUBIC FEET",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "CIN",
+          "code": "CIN",
+          "desc": "CUBIC INCHES",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "UGS",
+          "code": "UGS",
+          "desc": "US GALLONS",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BBL",
+          "code": "BBL",
+          "desc": "BARRELS",
+          "category": "Volume",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "SQM",
+          "code": "SQM",
+          "desc": "SQUARE METERS",
+          "category": "Area",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "SQF",
+          "code": "SQF",
+          "desc": "SQUARE FEET",
+          "category": "Area",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "SQY",
+          "code": "SQY",
+          "desc": "SQUARE YARDS",
+          "category": "Area",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "SEC",
+          "code": "SEC",
+          "desc": "SECONDS",
+          "category": "Time",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "MIN",
+          "code": "MIN",
+          "desc": "MINUTES",
+          "category": "Time",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "HRS",
+          "code": "HRS",
+          "desc": "HOURS",
+          "category": "Time",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "DAY",
+          "code": "DAY",
+          "desc": "DAYS",
+          "category": "Time",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "WEK",
+          "code": "WEK",
+          "desc": "WEEKS",
+          "category": "Time",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true
+        },
+        {
+          "key": "NOS",
+          "code": "NOS",
+          "desc": "NUMBERS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "PCS",
+          "code": "PCS",
+          "desc": "PIECES",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "UNT",
+          "code": "UNT",
+          "desc": "UNITS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "PRS",
+          "code": "PRS",
+          "desc": "PAIRS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "DOZ",
+          "code": "DOZ",
+          "desc": "DOZENS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "GRS",
+          "code": "GRS",
+          "desc": "GROSS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "TGM",
+          "code": "TGM",
+          "desc": "TEN GROSS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "GGK",
+          "code": "GGK",
+          "desc": "GREAT GROSS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "THD",
+          "code": "THD",
+          "desc": "THOUSANDS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BAG",
+          "code": "BAG",
+          "desc": "BAGS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BAL",
+          "code": "BAL",
+          "desc": "BALE",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BDL",
+          "code": "BDL",
+          "desc": "BUNDLES",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BKL",
+          "code": "BKL",
+          "desc": "BUCKLES",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BOX",
+          "code": "BOX",
+          "desc": "BOX",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BTL",
+          "code": "BTL",
+          "desc": "BOTTLES",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BUN",
+          "code": "BUN",
+          "desc": "BUNCHES",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "CAN",
+          "code": "CAN",
+          "desc": "CANS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "CTN",
+          "code": "CTN",
+          "desc": "CARTONS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "DRM",
+          "code": "DRM",
+          "desc": "DRUMS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "PAC",
+          "code": "PAC",
+          "desc": "PACKS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "ROL",
+          "code": "ROL",
+          "desc": "ROLLS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "TBS",
+          "code": "TBS",
+          "desc": "TABLETS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "TUB",
+          "code": "TUB",
+          "desc": "TUBES",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "SET",
+          "code": "SET",
+          "desc": "SETS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "OTH",
+          "code": "OTH",
+          "desc": "OTHERS",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "GYD",
+          "code": "GYD",
+          "desc": "GROSS YARDS",
+          "category": "Length",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "BOU",
+          "code": "BOU",
+          "desc": "BILLION OF UNITS",
+          "category": "Count",
+          "isArchived": false,
+          "isRemoved": false,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "MLS",
+          "code": "MLS",
+          "desc": "MILLI LITRES",
+          "isArchived": true,
+          "isRemoved": true,
+          "system": true,
+          "isGstUnit": true
+        },
+        {
+          "key": "MTS",
+          "code": "MTS",
+          "desc": "METRIC TON",
+          "isArchived": true,
+          "isRemoved": true,
+          "system": true,
+          "isGstUnit": true
+        }
+      ],
+      "customFields": [],
+      "ecomm": [],
+      "cesses": [],
+      "dueInDays": 15,
+      "enableQrCode": false,
+      "showQrCode": {
+        "invoice": false,
+        "proforma": false,
+        "creditNote": false,
+        "debitNote": false,
+        "purchaseOrder": false,
+        "salesOrder": false,
+        "deliveryChallan": false,
+        "quotation": false,
+        "expenditure": false
+      },
+      "qrCodeFields": {
+        "invoiceNumber": false,
+        "invoiceDate": false,
+        "dueDate": false,
+        "billedTo": false,
+        "amount": false,
+        "taxAmount": false,
+        "total": false,
+        "status": false,
+        "taxNumber": false
+      },
+      "inventoryOptions": {
+        "pricingStrategy": "lastUsedPrice",
+        "autoExpandPackageItems": false,
+        "manageWarehouses": false,
+        "strictInventoryControl": true,
+        "defaultItemType": "product",
+        "showItemTypeInDocuments": true,
+        "batchOptionalFlag": "blockignore",
+        "hideExhaustedBatches": false,
+        "defaultReorderPoint": 10,
+        "defaultOverstockPoint": 100,
+        "sameFlowPricingStrategy": "lastUsedPrice",
+        "crossFlowPricingStrategy": "lastUsedPrice",
+        "applyAutomaticPriceMapping": false,
+        "isUomEnabled": true
+      },
+      "documentAcceptConfig": {
+        "invoice": false,
+        "proforma": false,
+        "creditNote": false,
+        "debitNote": false,
+        "purchaseOrder": false,
+        "salesOrder": false,
+        "deliveryChallan": false,
+        "quotation": false,
+        "expenditure": false
+      },
+      "enableDocumentAccept": false,
+      "einvoice": {
+        "irnNumber": true,
+        "irnAcknowledgementNumber": false,
+        "irnAcknowledgementDate": false,
+        "irnCancelledDate": false
+      },
+      "eway": {
+        "billNumber": true,
+        "billDate": true,
+        "billValidTillDate": true,
+        "billCancelledDate": false
+      },
+      "experimental": {
+        "scrollableLineItems": true,
+        "enableJs": true,
+        "stretchInvoiceTable": false,
+        "hideCurrencyCode": false,
+        "performanceBlurOptimization": false,
+        "alternatePdfDownload": false,
+        "enableDocumentExcelDownload": false,
+        "applyNumberFormatToDiscounts": false,
+        "itemFieldColumns": false,
+        "_id": "6ada48701575ae0012371536",
+        "createdAt": "2026-10-22T17:31:28.107Z",
+        "updatedAt": "2026-10-22T17:31:28.107Z"
+      },
+      "autoGenerateQuotationLead": {
+        "enabled": true
+      },
+      "decodeEinvoiceQR": false,
+      "_schemaVersion": 2,
+      "business": "6ada48701575ae001237152e",
+      "_id": "6ada48701575ae0012371537"
+    }
+  },
+  "stockSummaryConfig": {
+    "isEnabled": false,
+    "_id": "6adb01ec5a700100121b9881",
+    "batchSummaryColumns": [
+      {
+        "isHidden": false,
+        "private": false,
+        "showSku": true,
+        "showBatchCode": false,
+        "system": true,
+        "_id": "6adb01ec5a700100121b9882",
+        "key": "itemName",
+        "label": "Item Name"
+      },
+      {
+        "isHidden": false,
+        "private": false,
+        "showSku": false,
+        "showBatchCode": true,
+        "system": true,
+        "_id": "6adb01ec5a700100121b9883",
+        "key": "batchName",
+        "label": "Batch Name"
+      },
+      {
+        "isHidden": false,
+        "private": false,
+        "showSku": false,
+        "showBatchCode": false,
+        "system": true,
+        "_id": "6adb01ec5a700100121b9884",
+        "key": "quantity",
+        "label": "Qty"
+      },
+      {
+        "isHidden": false,
+        "private": false,
+        "showSku": false,
+        "showBatchCode": false,
+        "system": true,
+        "_id": "6adb01ec5a700100121b9885",
+        "key": "warehouse",
+        "label": "Warehouse"
+      },
+      {
+        "isHidden": false,
+        "private": false,
+        "showSku": false,
+        "showBatchCode": false,
+        "system": true,
+        "_id": "6adb01ec5a700100121b9886",
+        "key": "manufacturerName",
+        "label": "Mfg Name"
+      },
+      {
+        "isHidden": false,
+        "private": false,
+        "showSku": false,
+        "showBatchCode": false,
+        "system": true,
+        "_id": "6adb01ec5a700100121b9887",
+        "key": "manufacturingDate",
+        "label": "Mfg Date"
+      },
+      {
+        "isHidden": false,
+        "private": false,
+        "showSku": false,
+        "showBatchCode": false,
+        "system": true,
+        "_id": "6adb01ec5a700100121b9888",
+        "key": "expiryDate",
+        "label": "Expiry Date"
+      }
+    ]
+  },
+  "pdfUpdatedAt": "2026-10-23T06:46:51.604Z",
+  "author": "6ada48701575ae001237152e",
+  "creator": {
+    "name": "Mitul Mehta",
+    "avatar": "https://s3.ap-south-1.amazonaws.com/refrens.images/669df844996d5d0020cc8027/66c882453e36cd0012e06903/ref1724416629187.png",
+    "email": "mitul.m@refrens.com",
+    "_id": "669df844996d5d0020cc8027"
+  },
+  "payments": [],
+  "creditClaims": [],
+  "shareId": "EbFoqpRILrJrOG3Q6H",
+  "resyncHistory": [],
+  "rejectedByBusinesses": [],
+  "acceptedByBusinessesData": [],
+  "documentAcceptanceRecord": [],
+  "invoiceId": "6adb01ec5a700100121b986f",
+  "complianceDocuments": [],
+  "activities": [],
+  "createdAt": "2026-10-23T06:42:52.463Z",
+  "updatedAt": "2026-10-23T07:57:43.040Z",
+  "__v": 0,
+  "balance": {
+    "paid": 0,
+    "tds": 0,
+    "transactionCharge": 0,
+    "credit": 0,
+    "refund": 0,
+    "due": 1045
+  },
+  "beforeDiscountPay": {
+    "full": 1045,
+    "tds10": 95,
+    "tds2": 19
+  },
+  "creditDiscount": 0,
+  "toPay": {
+    "full": 1045,
+    "tds10": 95,
+    "tds2": 19
+  },
+  "totalConversions": {
+    "INR": {
+      "total": 1045,
+      "paid": 0,
+      "tds": 0,
+      "transactionCharge": 0,
+      "due": 1045
+    },
+    "USD": {
+      "total": 1045,
+      "paid": 0,
+      "tds": 0,
+      "transactionCharge": 0,
+      "due": 1045
+    }
+  },
+  "totals": {
+    "total": 1045,
+    "amount": 950,
+    "subTotal": 950,
+    "igst": 95,
+    "cgst": 47.5,
+    "sgst": 47.5,
+    "amountRoundOff": 0,
+    "totalRoundOff": 0,
+    "cessTotal": {},
+    "rcmTax": 0,
+    "discount": 0
+  },
+  "gstrCategory": "7A",
+  "bookKeepingSyncStatus": {
+    "errorMessage": null,
+    "isSynced": true,
+    "syncSource": "DOCUMENT"
+  },
+  "contact": {},
+  "signedPDF": null,
+  "pendingApprovalPayments": [],
+  "activeCreditConsumed": [],
+  "pendingApprovalClaims": [],
+  "allPayments": [],
+  "transactions": [],
+  "BusinessCurrency": {
+    "total": 1045,
+    "paid": 0,
+    "due": 1045
+  },
+  "finalTotal": {
+    "total": 1045,
+    "amount": 950,
+    "subTotal": 950,
+    "igst": 95,
+    "cgst": 47.5,
+    "sgst": 47.5,
+    "amountRoundOff": 0,
+    "totalRoundOff": 0,
+    "cessTotal": {},
+    "rcmTax": 0,
+    "discount": 0
+  },
+  "showBranding": false,
+  "share": {
+    "link": "https://www.refrens.net/app/invoices/6adb01ec5a700100121b986f?_at=EbFoqpRILrJrOG3Q6H",
+    "name": "Invoice #201 - G S TRADERS - DFO EAST DIVISION MANDLA",
+    "fileName": "invoice-201-g-s-traders-dfo-east-division-mandla",
+    "pdf": "https://og.refrens.net/pdf/eyJwcmludExpbmsiOiJodHRwczovL2x5ZGlhLW5leHRjNDNjNzY1Yi5henVyZXdlYnNpdGVzLm5ldC9hcHAvaW52b2ljZXMvNmFkYjAxZWM1YTcwMDEwMDEyMWI5ODZmP19hdD1FYkZvcXBSSUxySnJPRzNRNkgiLCJwZGZPcHRpb25QYXJhbXMiOnsic2lnbmF0dXJlIjpmYWxzZSwiZG9jTnVtYmVyTGFiZWwiOiJJbnZvaWNlIE5vIiwiZG9jTnVtYmVyIjoiMjAxIiwiZG9jRGF0ZUxhYmVsIjoiSW52b2ljZSBEYXRlIiwiZG9jRGF0ZSI6IjIzIE9jdCAyMDI2IiwiZG9jVG9MYWJlbCI6IkJpbGxlZCBUbyIsImRvY1RvIjoiREZPIEVBU1QgRElWSVNJT04gTUFORExBIn0sInBkZlVwZGF0ZWRBdCI6IjIwMjYtMTAtMjNUMDY6NDY6NTEuNjA0WiIsInNob3dCcmFuZGluZyI6ZmFsc2UsImJyYW5kaW5nVXJsIjoiaHR0cHM6Ly93d3cucmVmcmVucy5jb20vZnJlZS1vbmxpbmUtaW52b2ljZS1nZW5lcmF0b3I_dXRtX3NvdXJjZT1QREYmdXRtX21lZGl1bT1pbnZvaWNlc2hhcmUmdXRtX2NhbXBhaWduPXJlZnJlbnNicmFuZGluZyIsIndpdGhKcyI6dHJ1ZX0/3799f297103b16b818824afbc7daec7bfb155f23146d52ae399a07a4f2730475/v2/invoice-201-g-s-traders-dfo-east-division-mandla.pdf",
+    "printLabels": [
+      {
+        "label": "Duplicate",
+        "pdf": "https://og.refrens.net/pdf/eyJwcmludExpbmsiOiJodHRwczovL2x5ZGlhLW5leHRjNDNjNzY1Yi5henVyZXdlYnNpdGVzLm5ldC9hcHAvaW52b2ljZXMvNmFkYjAxZWM1YTcwMDEwMDEyMWI5ODZmP19hdD1FYkZvcXBSSUxySnJPRzNRNkgmY29weT1SSFZ3YkdsallYUmwiLCJwZGZPcHRpb25QYXJhbXMiOnsic2lnbmF0dXJlIjpmYWxzZSwiZG9jTnVtYmVyTGFiZWwiOiJJbnZvaWNlIE5vIiwiZG9jTnVtYmVyIjoiMjAxIiwiZG9jRGF0ZUxhYmVsIjoiSW52b2ljZSBEYXRlIiwiZG9jRGF0ZSI6IjIzIE9jdCAyMDI2IiwiZG9jVG9MYWJlbCI6IkJpbGxlZCBUbyIsImRvY1RvIjoiREZPIEVBU1QgRElWSVNJT04gTUFORExBIn0sInBkZlVwZGF0ZWRBdCI6IjIwMjYtMTAtMjNUMDY6NDY6NTEuNjA0WiIsInNob3dCcmFuZGluZyI6ZmFsc2UsImJyYW5kaW5nVXJsIjoiaHR0cHM6Ly93d3cucmVmcmVucy5jb20vZnJlZS1vbmxpbmUtaW52b2ljZS1nZW5lcmF0b3I_dXRtX3NvdXJjZT1QREYmdXRtX21lZGl1bT1pbnZvaWNlc2hhcmUmdXRtX2NhbXBhaWduPXJlZnJlbnNicmFuZGluZyIsIndpdGhKcyI6dHJ1ZX0/1637fa3f80d257710c8c249ba46f748eca6cb59b0355fd6085c32eb6f5e959cd/v2/invoice-201-g-s-traders-dfo-east-division-mandla.pdf"
+      },
+      {
+        "label": "Triplicate",
+        "pdf": "https://og.refrens.net/pdf/eyJwcmludExpbmsiOiJodHRwczovL2x5ZGlhLW5leHRjNDNjNzY1Yi5henVyZXdlYnNpdGVzLm5ldC9hcHAvaW52b2ljZXMvNmFkYjAxZWM1YTcwMDEwMDEyMWI5ODZmP19hdD1FYkZvcXBSSUxySnJPRzNRNkgmY29weT1WSEpwY0d4cFkyRjBaUSUzRCUzRCIsInBkZk9wdGlvblBhcmFtcyI6eyJzaWduYXR1cmUiOmZhbHNlLCJkb2NOdW1iZXJMYWJlbCI6Ikludm9pY2UgTm8iLCJkb2NOdW1iZXIiOiIyMDEiLCJkb2NEYXRlTGFiZWwiOiJJbnZvaWNlIERhdGUiLCJkb2NEYXRlIjoiMjMgT2N0IDIwMjYiLCJkb2NUb0xhYmVsIjoiQmlsbGVkIFRvIiwiZG9jVG8iOiJERk8gRUFTVCBESVZJU0lPTiBNQU5ETEEifSwicGRmVXBkYXRlZEF0IjoiMjAyNi0xMC0yM1QwNjo0Njo1MS42MDRaIiwic2hvd0JyYW5kaW5nIjpmYWxzZSwiYnJhbmRpbmdVcmwiOiJodHRwczovL3d3dy5yZWZyZW5zLmNvbS9mcmVlLW9ubGluZS1pbnZvaWNlLWdlbmVyYXRvcj91dG1fc291cmNlPVBERiZ1dG1fbWVkaXVtPWludm9pY2VzaGFyZSZ1dG1fY2FtcGFpZ249cmVmcmVuc2JyYW5kaW5nIiwid2l0aEpzIjp0cnVlfQ/f17bd2ea964d343a607173f71118253ebe550364baf88445d0665668227b69b0/v2/invoice-201-g-s-traders-dfo-east-division-mandla.pdf"
+      }
+    ]
+  },
+  "onlinePaymentsEnabled": false,
+  "domesticPaymentDisabled": true
+}

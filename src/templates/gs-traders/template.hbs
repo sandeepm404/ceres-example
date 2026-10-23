@@ -1,0 +1,496 @@
+{{!--
+  gs-traders — Tally-style tax invoice: one ruled frame holding the title, the
+  parties beside the detail boxes, the item table with its totals, the amount in
+  words, the summary tables, and bank details beside the signature.
+
+  Item table: a fixed Tally set (Sr No., Description of Goods, Quantity, Rate,
+  Amount) read straight off each item, at the account's request — the account's
+  column settings do not change it. The description prints the account's gross /
+  void / net breakdown when the item carries it (helpers.ts itemRows).
+
+  Detail boxes: all ten always print, so the grid holds its shape. A box with a
+  contract field reads it (PO number, challan, transporter) under the account's
+  customLabels wording; the rest read a document custom field of the same name
+  (helpers.ts boxValue) and otherwise stay empty.
+
+  Label text comes from the payload where a key exists (customLabels, the totals
+  model). Fixed words, which no payload key carries: the Tally box names, the
+  item headers, GSTIN/UIN, State Name, Code, Mob, URD, VOID, NET, Round off
+  Total, Amount Chargeable (in words), E. & O.E,
+  "for", the bank-line fallbacks (helpers.ts bankLines), and the detail-strip row
+  names.
+
+  The root is { invoice, advanceOptions, pdfOptions, mapped, derived } because this
+  template installs normalizeInvoiceTemplateState as its data mapper.
+--}}
+<div class="gstr-shell">
+  <div class="gstr-page">
+    {{!-- ═══ The frame: one table, so printing repeats its head and foot ═══
+          Chrome repeats <thead> and <tfoot> on every printed page — but only
+          while each stays under about a quarter of the page, so the thead
+          holds just a top rule and the item column headings, and the document
+          header (title, parties, detail boxes, detail strip) is the block
+          above the table, printed once. The foot holds bank, UPI and the
+          signature. Everything else prints once: the items, the totals, the
+          amount in words, the summary tables, terms and notes.
+
+          Item columns: Sr No., Description, a narrow unheaded label column for
+          the tax and total rows, Quantity, Rate, Amount. Figures print plain
+          ("29640.00"). Taxes and charges sit at the foot of the item body;
+          then Total (before round off) and Round off Total.
+
+          Foot rows carry the Subtotal widget's row classes and data
+          attributes, so the hideTotals / hideTaxes settings act on them as on
+          the widget. The table itself is not [data-ceres-subtotal]: hiding the
+          totals must never hide the items. --}}
+    <div class="gstr-frame">
+    <div class="gstr-doc-head">
+      {{!-- ═══ Title, with the document QR codes on the right ═══ --}}
+      <header class="gstr-title-row">
+        <div class="gstr-title-text">
+          {{#if invoice.invoiceTitle}}<h1 class="gstr-title">{{invoice.invoiceTitle}}</h1>{{/if}}
+          {{#if invoice.invoiceSubTitle}}<p class="gstr-subtitle">{{invoice.invoiceSubTitle}}</p>{{/if}}
+        </div>
+        {{!-- The QR containers stay in the DOM so Lydia can patch them live
+              (data-ceres-field). A cancelled IRN drops its QR. --}}
+        <div class="gstr-qrs">
+          <div data-ceres-field-container="zatcaQrCode" class="gstr-qr{{#unless (or invoice.zatcaQrCode invoice.zatcaQr)}} is-empty{{/unless}}">
+            <img data-ceres-field="zatcaQrCode" src="{{#if invoice.zatcaQrCode}}{{qrSrc invoice.zatcaQrCode}}{{else}}{{qrSrc invoice.zatcaQr}}{{/if}}" alt="ZATCA QR" />
+          </div>
+          <div data-ceres-field-container="qrCode" class="gstr-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
+            <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
+          </div>
+          {{#if invoice.lhdnQrCode}}
+          <div class="gstr-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
+          {{/if}}
+          {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.zatcaQr invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
+          <div class="gstr-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
+          {{/unless}}{{/if}}
+        </div>
+      </header>
+
+      {{!-- ═══ Parties beside the detail boxes ═══
+            Seller spans the first three box rows (five when there is no
+            consignee), consignee the next two, buyer the rest. --}}
+      <div class="gstr-section">
+      <table class="gstr-head">
+        <colgroup><col class="gstr-head-party" /><col /><col /></colgroup>
+        <tbody>
+          <tr>
+            <td class="gstr-party" data-party="billedBy" rowspan="{{#if mapped.visibility.shippedTo}}3{{else}}5{{/if}}">
+              {{#with invoice.billedBy as |party|}}
+              {{#if @root.invoice.logo}}
+              <div class="gstr-logo">{{> CeresImage src=@root.invoice.logo alt=party.name class="gstr-logo-img"}}</div>
+              {{/if}}
+              <p class="gstr-party-name">{{party.name}}</p>
+              {{#each (partyAddressLines party)}}<p>{{this}}</p>{{/each}}
+              {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
+              <p>Mob: {{formatPhoneNumber party.phone}}</p>
+              {{/unless}}{{/if}}
+              {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
+              <p>Email: {{party.email}}</p>
+              {{/unless}}{{/if}}
+              {{#if party.gstin}}{{#unless (eq @root.invoice.owner.configuration.experimental.fieldVisibility.gst.showInDocument false)}}
+              <p>GSTIN/UIN : {{party.gstin}}</p>
+              {{/unless}}{{/if}}
+              {{#if party.panNumber}}{{#unless (eq @root.invoice.owner.configuration.experimental.fieldVisibility.pan.showInDocument false)}}
+              <p>PAN : {{party.panNumber}}</p>
+              {{/unless}}{{/if}}
+              {{#with (partyState party) as |state|}}
+              <p>State Name: {{state.name}}{{#if state.code}}, Code : {{state.code}}{{/if}}</p>
+              {{/with}}
+              {{#each (partyFields party)}}<p>{{label}}: {{value}}</p>{{/each}}
+              {{/with}}
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">{{invoice.customLabels.invoiceNumber}}</span>
+              <span class="gstr-box-value">{{invoice.invoiceNumber}}</span>
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">{{invoice.customLabels.invoiceDate}}</span>
+              <span class="gstr-box-value">{{formateShortDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="gstr-box">
+              <span class="gstr-box-label">{{#if invoice.customLabels.challanNumber}}{{invoice.customLabels.challanNumber}}{{else}}Delivery Note{{/if}}</span>
+              <span class="gstr-box-value">{{#if invoice.transportDetails.challanNumber}}{{invoice.transportDetails.challanNumber}}{{else}}{{boxValue invoice "deliveryNote"}}{{/if}}</span>
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">Mode/Terms of Payment</span>
+              <span class="gstr-box-value">{{boxValue invoice "paymentTerms"}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="gstr-box">
+              <span class="gstr-box-label">Reference No. &amp; Date</span>
+              <span class="gstr-box-value">{{boxValue invoice "reference"}}</span>
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">Other References</span>
+              <span class="gstr-box-value">{{boxValue invoice "otherReferences"}}</span>
+            </td>
+          </tr>
+          <tr>
+            {{#if mapped.visibility.shippedTo}}
+            <td class="gstr-party" data-party="shippedTo" rowspan="2">
+              {{#with invoice.shippedTo as |party|}}
+              {{#if @root.invoice.customLabels.shippedTo}}<p class="gstr-party-heading">{{@root.invoice.customLabels.shippedTo}}</p>{{/if}}
+              <p class="gstr-party-name">{{party.name}}</p>
+              {{#each (partyAddressLines party)}}<p>{{this}}</p>{{/each}}
+              <p>GSTIN/UIN : {{#if party.gstin}}{{party.gstin}}{{else}}URD{{/if}}</p>
+              {{#with (partyState party) as |state|}}
+              <p>State Name: {{state.name}}{{#if state.code}}, Code : {{state.code}}{{/if}}</p>
+              {{/with}}
+              {{#each (partyFields party)}}<p>{{label}}: {{value}}</p>{{/each}}
+              {{/with}}
+            </td>
+            {{/if}}
+            <td class="gstr-box">
+              <span class="gstr-box-label">{{#if invoice.customLabels.purchaseOrderNumber}}{{invoice.customLabels.purchaseOrderNumber}}{{else}}Buyer's Order No.{{/if}}</span>
+              <span class="gstr-box-value">{{#if invoice.purchaseOrderNumber}}{{invoice.purchaseOrderNumber}}{{/if}}</span>
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">Dated</span>
+              <span class="gstr-box-value">{{boxValue invoice "orderDate"}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="gstr-box">
+              <span class="gstr-box-label">Dispatch Doc No.</span>
+              <span class="gstr-box-value">{{boxValue invoice "dispatchDocNo"}}</span>
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">{{#if invoice.customLabels.challanDate}}{{invoice.customLabels.challanDate}}{{else}}Delivery Note Date{{/if}}</span>
+              <span class="gstr-box-value">{{#if invoice.transportDetails.challanDate}}{{formateShortDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}{{else}}{{boxValue invoice "deliveryNoteDate"}}{{/if}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="gstr-party" data-party="billedTo" rowspan="2">
+              {{#with invoice.billedTo as |party|}}
+              {{#if @root.invoice.customLabels.billedTo}}<p class="gstr-party-heading">{{@root.invoice.customLabels.billedTo}}</p>{{/if}}
+              <p class="gstr-party-name">{{party.name}}</p>
+              {{#each (partyAddressLines party)}}<p>{{this}}</p>{{/each}}
+              {{#if party.contactPerson.name}}
+              <p>{{#if @root.invoice.customLabels.contactPersonLabel}}{{@root.invoice.customLabels.contactPersonLabel}}: {{/if}}{{party.contactPerson.name}}</p>
+              {{/if}}
+              {{#if party.phone}}{{#unless (eq party.phoneShowInInvoice false)}}
+              <p>Mob: {{formatPhoneNumber party.phone}}</p>
+              {{/unless}}{{/if}}
+              {{#if party.email}}{{#unless (eq party.emailShowInInvoice false)}}
+              <p>Email: {{party.email}}</p>
+              {{/unless}}{{/if}}
+              <p>GSTIN/UIN : {{#if party.gstin}}{{party.gstin}}{{else}}URD{{/if}}</p>
+              {{#if party.panNumber}}<p>PAN : {{party.panNumber}}</p>{{/if}}
+              {{#with (partyState party) as |state|}}
+              <p>State Name: {{state.name}}{{#if state.code}}, Code : {{state.code}}{{/if}}</p>
+              {{/with}}
+              {{#each (partyFields party)}}<p>{{label}}: {{value}}</p>{{/each}}
+              {{/with}}
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">{{#if invoice.customLabels.transportName}}{{invoice.customLabels.transportName}}{{else}}Dispatched through{{/if}}</span>
+              <span class="gstr-box-value">{{#if invoice.transportDetails.transporter.name}}{{invoice.transportDetails.transporter.name}}{{else}}{{#if invoice.transportDetails.transporterName}}{{invoice.transportDetails.transporterName}}{{else}}{{#if invoice.transportDetails.transport}}{{invoice.transportDetails.transport}}{{else}}{{boxValue invoice "dispatchedThrough"}}{{/if}}{{/if}}{{/if}}</span>
+            </td>
+            <td class="gstr-box">
+              <span class="gstr-box-label">Destination</span>
+              <span class="gstr-box-value">{{boxValue invoice "destination"}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="gstr-box" colspan="2">
+              <span class="gstr-box-label">Terms of Delivery</span>
+              <span class="gstr-box-value">{{boxValue invoice "termsOfDelivery"}}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+
+      {{!-- ═══ Detail strip: everything else the document carries. Hidden by CSS
+            when it holds no row (styles.css, :has). ═══ --}}
+      <dl class="gstr-details">
+        {{#if invoice.dueDate}}
+        <div class="gstr-detail"><dt>{{invoice.customLabels.dueDate}}</dt><dd>{{formateShortDateWithOffset invoice.dueDate invoice.ownerOffset}}</dd></div>
+        {{/if}}
+        {{#unless advanceOptions.hideCountryOfSupply}}{{#if invoice.placeOfSupply}}
+        <div class="gstr-detail"><dt>Place of Supply</dt><dd>{{placeOfSupply invoice.placeOfSupply}}</dd></div>
+        {{/if}}{{/unless}}
+        {{#if (or invoice.reverseCharge advanceOptions.reverseCharge)}}
+        <div class="gstr-detail"><dt>Reverse Charge</dt><dd>Yes</dd></div>
+        {{/if}}
+        {{#if advanceOptions.showCreatorInInvoice}}{{#if invoice.creator.name}}
+        <div class="gstr-detail"><dt>Created By</dt><dd>{{invoice.creator.name}}</dd></div>
+        {{/if}}{{/if}}
+        {{#with invoice.transportDetails as |transport|}}
+        {{#if transport.transportMode}}<div class="gstr-detail"><dt>Mode of Transport</dt><dd>{{transport.transportMode}}</dd></div>{{/if}}
+        {{#if transport.vehicleNumber}}<div class="gstr-detail"><dt>Vehicle No.</dt><dd>{{transport.vehicleNumber}}</dd></div>{{/if}}
+        {{#if transport.distance}}<div class="gstr-detail"><dt>Distance</dt><dd>{{transport.distance}}</dd></div>{{/if}}
+        {{#if transport.extraInformation}}<div class="gstr-detail"><dt>{{#if @root.invoice.customLabels.transportExtraInfo}}{{@root.invoice.customLabels.transportExtraInfo}}{{else}}Extra Information{{/if}}</dt><dd>{{transport.extraInformation}}</dd></div>{{/if}}
+        {{/with}}
+        {{#each (otherCustomFields invoice)}}
+        <div class="gstr-detail"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+        {{/each}}
+        {{#each invoice.customHeaders}}{{#if value}}
+        <div class="gstr-detail"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+        {{/if}}{{/each}}
+        {{!-- e-invoice / e-way bill. A cancelled IRN keeps its number but drops
+              the acknowledgement rows. --}}
+        {{#if invoice.irn.Irn}}
+        <div class="gstr-detail gstr-detail-wide"><dt>IRN</dt><dd class="gstr-break">{{invoice.irn.Irn}}</dd></div>
+        {{#unless mapped.irn.isCancelled}}
+        {{#if invoice.irn.AckNo}}<div class="gstr-detail"><dt>Ack No.</dt><dd>{{invoice.irn.AckNo}}</dd></div>{{/if}}
+        {{#if invoice.irn.AckDt}}<div class="gstr-detail"><dt>Ack Date</dt><dd>{{formatDateInTimeZone invoice.irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</dd></div>{{/if}}
+        {{/unless}}
+        {{/if}}
+        {{#if invoice.irn.EwbNo}}
+        <div class="gstr-detail"><dt>E-Way Bill No.</dt><dd>{{invoice.irn.EwbNo}}</dd></div>
+        {{#if invoice.irn.EwbDt}}<div class="gstr-detail"><dt>E-Way Bill Date</dt><dd>{{formatDateInTimeZone invoice.irn.EwbDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</dd></div>{{/if}}
+        {{/if}}
+      </dl>
+    </div>
+    <table class="gstr-items">
+      <thead>
+        <tr class="gstr-page-rule" aria-hidden="true"><th colspan="6"></th></tr>
+          <tr>
+            <th class="gstr-col-sr">Sr No.</th>
+            <th class="gstr-col-desc" colspan="2">Description of Goods</th>
+            <th class="gstr-col-qty">Quantity</th>
+            <th class="gstr-col-rate">Rate</th>
+            <th class="gstr-col-amount">Amount</th>
+          </tr>
+      </thead>
+      <tbody>
+        {{#with (computeSubtotalRows invoice
+                  columns=mapped.columns
+                  businessCurrency=invoice.businessCurrency
+                  businessLocale=invoice.businessLocale) as |totals|}}
+        {{#with (itemFoot totals @root.invoice) as |foot|}}
+          {{#each (itemRows @root.invoice)}}
+          {{#if (eq kind "item")}}
+          <tr class="gstr-item">
+            <td class="gstr-col-sr">{{sr}}</td>
+            <td class="gstr-col-desc">
+              {{#if breakdown}}
+              <div class="gstr-breakdown">
+                <span>{{name}}</span><span>-</span><span>{{breakdown.gross}}{{#if unit}} {{unit}}{{/if}}</span><span></span>
+                <span class="gstr-void">{{breakdown.voidPct}}% VOID</span><span class="gstr-void">-</span><span class="gstr-void">- {{breakdown.voidQty}}{{#if unit}} {{unit}}{{/if}}</span><span class="gstr-void"></span>
+                <span>NET</span><span>-</span><span>{{breakdown.net}}{{#if unit}} {{unit}}{{/if}}</span><span></span>
+              </div>
+              {{else}}
+              <p class="gstr-item-name">{{name}}</p>
+              {{/if}}
+              {{#if hsn}}<p class="gstr-item-hsn">HSN/SAC: {{hsn}}</p>{{/if}}
+              {{#if description}}<div class="gstr-item-description">{{> MarkdownViewer (prepareMarkdownViewerData description)}}</div>{{/if}}
+            </td>
+            <td class="gstr-col-label"></td>
+            <td class="gstr-col-qty"><b>{{quantity}}</b>{{#if unit}}<span class="gstr-unit">{{unit}}</span>{{/if}}</td>
+            <td class="gstr-col-rate">{{plainAmount rate @root.invoice}}{{#if unit}}<span class="gstr-unit">per {{unit}}</span>{{/if}}</td>
+            <td class="gstr-col-amount"><b>{{plainAmount amount @root.invoice}}</b></td>
+          </tr>
+          {{/if}}
+          {{#if (eq kind "group")}}
+          <tr class="gstr-group">
+            <td class="gstr-col-sr"></td>
+            <td class="gstr-col-desc"><b>{{name}}</b></td>
+            <td class="gstr-col-label"></td><td class="gstr-col-qty"></td><td class="gstr-col-rate"></td><td class="gstr-col-amount"></td>
+          </tr>
+          {{/if}}
+          {{#if (eq kind "groupTotal")}}
+          <tr class="gstr-group-total">
+            <td class="gstr-col-sr"></td>
+            <td class="gstr-col-desc">{{name}}</td>
+            <td class="gstr-col-label"></td><td class="gstr-col-qty"></td><td class="gstr-col-rate"></td>
+            <td class="gstr-col-amount"><b>{{plainAmount amount @root.invoice}}</b></td>
+          </tr>
+          {{/if}}
+          {{/each}}
+          {{!-- Blank filler: the reference's empty body. A fixed height on
+                screen; in print it takes the page's spare height. The column
+                rules run through it. --}}
+          <tr class="gstr-filler"><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          {{#each foot.body}}
+          <tr
+            class="ceres-subtotal-row gstr-foot-row{{#if isTaxRow}} gstr-foot-tax{{/if}}{{#if foot.hidden}}{{#unless survivesHideTotals}} is-hidden-by-totals{{/unless}}{{/if}}{{#if isTaxRow}}{{#if foot.hideTaxes}} is-hidden-by-taxes{{/if}}{{/if}}"
+            data-ceres-subtotal-row="{{key}}"
+            {{#if isTaxRow}}data-ceres-subtotal-taxes{{/if}}
+            {{#if survivesHideTotals}}data-ceres-subtotal-keep{{/if}}
+          >
+            <td class="gstr-col-sr"></td>
+            <td class="gstr-col-desc"></td>
+            <th class="gstr-col-label">{{label}}</th>
+            <td class="gstr-col-qty"></td>
+            <td class="gstr-col-rate"></td>
+            <td class="gstr-col-amount">{{value}}</td>
+          </tr>
+          {{/each}}
+          <tr class="ceres-subtotal-row gstr-total{{#if foot.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="total">
+            <td class="gstr-col-sr"></td>
+            <td class="gstr-col-desc"></td>
+            <th class="gstr-col-label gstr-ruled">{{foot.totalLabel}}</th>
+            <td class="gstr-ruled" colspan="2"></td>
+            <td class="gstr-col-amount gstr-ruled">{{foot.total}}</td>
+          </tr>
+          <tr class="ceres-subtotal-row gstr-total gstr-total-rounded{{#if foot.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="roundedTotal">
+            <td class="gstr-col-sr"></td>
+            <td class="gstr-col-desc"></td>
+            <th class="gstr-total-label" colspan="3">Round off Total</th>
+            <td class="gstr-col-amount">{{foot.roundedTotal}}</td>
+          </tr>
+          {{#each foot.extra}}
+          <tr class="ceres-subtotal-row gstr-total gstr-total-rounded{{#if foot.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+            <td class="gstr-col-sr"></td>
+            <td class="gstr-col-desc"></td>
+            <th class="gstr-total-label" colspan="3">{{label}}</th>
+            <td class="gstr-col-amount">{{value}}</td>
+          </tr>
+          {{/each}}
+          {{#each foot.due}}
+          <tr class="ceres-subtotal-row gstr-total gstr-total-rounded{{#if foot.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+            <td class="gstr-col-sr"></td>
+            <td class="gstr-col-desc"></td>
+            <th class="gstr-total-label" colspan="3">{{label}}</th>
+            <td class="gstr-col-amount">{{value}}</td>
+          </tr>
+          {{/each}}
+        {{/with}}
+        <tr class="gstr-band">
+          <td class="gstr-wide" colspan="6">
+            <div class="gstr-words-row">
+              {{#if totals.totalInWords}}
+              <div
+                class="ceres-subtotal-words gstr-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+                data-ceres-total-in-words
+              >
+                <span class="gstr-words-label">Amount Chargeable (in words)</span>
+                <span class="gstr-words-value">{{totals.totalInWords.value}}</span>
+              </div>
+              {{/if}}
+              <span class="gstr-eoe">E. &amp; O.E</span>
+            </div>
+          </td>
+        </tr>
+        {{/with}}
+      {{#if mapped.visibility.showHsnSummary}}
+      <tr class="gstr-band"><td class="gstr-wide gstr-summary" colspan="6"><div data-ceres-hsn-summary>
+        {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+      </div></td></tr>
+      {{/if}}
+      {{#if mapped.visibility.showTaxTable}}
+      <tr class="gstr-band"><td class="gstr-wide gstr-summary" colspan="6"><div data-ceres-tax-summary>
+        {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+      </div></td></tr>
+      {{/if}}
+        {{#if (or invoice.terms.length invoice.notes)}}
+        <tr class="gstr-band">
+          <td class="gstr-wide" colspan="6">
+            <div class="gstr-notes">
+              {{#each invoice.terms}}
+              {{#if terms.length}}
+              <section class="gstr-note">
+                {{#if label}}<p class="gstr-note-heading">{{label}}</p>{{else}}{{#if @root.invoice.customLabels.terms}}<p class="gstr-note-heading">{{@root.invoice.customLabels.terms}}</p>{{/if}}{{/if}}
+                <ol class="gstr-terms">
+                  {{#each terms}}<li>{{this}}</li>{{/each}}
+                </ol>
+              </section>
+              {{/if}}
+              {{/each}}
+
+              {{#if invoice.notes}}
+              <section class="gstr-note">
+                {{#if invoice.customLabels.notes}}<p class="gstr-note-heading">{{invoice.customLabels.notes}}</p>{{/if}}
+                {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+              </section>
+              {{/if}}
+            </div>
+          </td>
+        </tr>
+        {{/if}}
+      </tbody>
+      <tfoot>
+        <tr class="gstr-band">
+          <td class="gstr-wide" colspan="6">
+            <div class="gstr-foot">
+              <div class="gstr-foot-left">
+              {{#if mapped.visibility.showBankUpiSection}}
+              <div class="gstr-pay">
+                {{#if mapped.visibility.showBankAccount}}
+                <dl class="gstr-bank">
+                  {{#each (bankLines invoice.bankAccount invoice.customLabels)}}
+                  <div class="gstr-bank-line"><dt>{{label}}</dt><dd>- {{value}}</dd></div>
+                  {{/each}}
+                </dl>
+                {{/if}}
+                {{#if mapped.visibility.showUpi}}
+                <div class="gstr-upi">
+                  {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="gstr-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
+                  <p>UPI - {{mapped.upi.id}}</p>
+                </div>
+                {{/if}}
+              </div>
+              {{/if}}
+              </div>
+
+            <div class="gstr-sign">
+              <p class="gstr-sign-for">for {{invoice.billedBy.name}}</p>
+              {{!-- A plain image, or the digital-signature flow's two states. --}}
+              {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+              {{#if invoice.signature}}
+              <div class="gstr-sign-image">{{> CeresImage src=invoice.signature alt="" class="gstr-sign-img"}}</div>
+              {{/if}}
+              {{else}}
+              {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+              <div class="gstr-sign-digital">
+                {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+                {{#if invoice.share.pdf}}<a href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+              </div>
+              {{else}}
+              <div class="gstr-sign-placeholder" data-ceres-signature-placeholder></div>
+              {{/if}}
+              {{/unless}}
+              {{#if invoice.customLabels.signature}}<p class="gstr-sign-label">{{invoice.customLabels.signature}}</p>{{/if}}
+            </div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+
+    {{!-- ═══ After the frame: payments, attachments, footer fields, contact ═══ --}}
+    {{#if mapped.visibility.showPaymentsTable}}
+    <div class="gstr-block" data-ceres-payment-table>
+      {{> PaymentTable (computePaymentColumns invoice.allPayments businessCurrency=invoice.businessCurrency currency=invoice.currency)
+          ownerOffset=invoice.ownerOffset
+          heading=invoice.customLabels.paymentRecord
+      }}
+    </div>
+    {{/if}}
+
+    {{#if invoice.attachments.length}}
+    <section class="gstr-block">
+      {{#if invoice.customLabels.attachment}}<p class="gstr-note-heading">{{invoice.customLabels.attachment}}</p>{{/if}}
+      <ul class="gstr-attachments">
+        {{#each invoice.attachments}}<li><a href="{{this}}" target="_blank" rel="noopener noreferrer">{{this}}</a></li>{{/each}}
+      </ul>
+    </section>
+    {{/if}}
+
+    {{#if (or invoice.customFooters.length invoice.footers.length)}}
+    <dl class="gstr-block gstr-footer-fields">
+      {{#each invoice.customFooters}}{{#if value}}<div class="gstr-detail"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+      {{#each invoice.footers}}{{#if value}}<div class="gstr-detail"><dt>{{label}}</dt><dd>{{value}}</dd></div>{{/if}}{{/each}}
+    </dl>
+    {{/if}}
+
+    {{#if mapped.visibility.contactStrip}}
+    <p class="gstr-contact">
+      {{invoice.customLabels.contact}}
+      {{~#if invoice.contact.email}} {{invoice.customLabels.contactEmail}} <b>{{invoice.contact.email}}</b>{{/if~}}
+      {{~#if invoice.contact.phone}}{{#if invoice.contact.email}},{{/if}} {{invoice.customLabels.contactPhone}} <b>{{formatPhoneNumber invoice.contact.phone}}</b>{{/if~}}
+    </p>
+    {{/if}}
+
+    {{> RefrensBranding invoice}}
+  </div>
+</div>
