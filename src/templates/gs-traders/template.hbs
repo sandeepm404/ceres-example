@@ -25,7 +25,26 @@
 --}}
 <div class="gstr-shell">
   <div class="gstr-page">
+    {{!-- ═══ The frame: one table, so printing repeats its head and foot ═══
+          Chrome repeats <thead> and <tfoot> on every printed page — but only
+          while each stays under about a quarter of the page, so the thead
+          holds just a top rule and the item column headings, and the document
+          header (title, parties, detail boxes, detail strip) is the block
+          above the table, printed once. The foot holds bank, UPI and the
+          signature. Everything else prints once: the items, the totals, the
+          amount in words, the summary tables, terms and notes.
+
+          Item columns: Sr No., Description, a narrow unheaded label column for
+          the tax and total rows, Quantity, Rate, Amount. Figures print plain
+          ("29640.00"). Taxes and charges sit at the foot of the item body;
+          then Total (before round off) and Round off Total.
+
+          Foot rows carry the Subtotal widget's row classes and data
+          attributes, so the hideTotals / hideTaxes settings act on them as on
+          the widget. The table itself is not [data-ceres-subtotal]: hiding the
+          totals must never hide the items. --}}
     <div class="gstr-frame">
+    <div class="gstr-doc-head">
       {{!-- ═══ Title, with the document QR codes on the right ═══ --}}
       <header class="gstr-title-row">
         <div class="gstr-title-text">
@@ -229,25 +248,10 @@
         {{#if invoice.irn.EwbDt}}<div class="gstr-detail"><dt>E-Way Bill Date</dt><dd>{{formatDateInTimeZone invoice.irn.EwbDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}</dd></div>{{/if}}
         {{/if}}
       </dl>
-
-      {{#with (computeSubtotalRows invoice
-                columns=mapped.columns
-                businessCurrency=invoice.businessCurrency
-                businessLocale=invoice.businessLocale) as |totals|}}
-      {{#with (itemFoot totals @root.invoice) as |foot|}}
-      {{!-- ═══ Item table, laid out as the Tally reference ═══
-            Six columns: Sr No., Description, a narrow unheaded label column for
-            the tax and total rows, Quantity, Rate, Amount. Figures print plain
-            ("29640.00"). Taxes and charges sit at the foot of the item body;
-            then Total (before round off) and Round off Total.
-
-            Foot rows carry the Subtotal widget's row classes and data
-            attributes, so the hideTotals / hideTaxes settings act on them as on
-            the widget. The table itself is not [data-ceres-subtotal]: hiding
-            the totals must never hide the items. --}}
-      <div class="gstr-section gstr-items-wrap">
-      <table class="gstr-items">
-        <thead>
+    </div>
+    <table class="gstr-items">
+      <thead>
+        <tr class="gstr-page-rule" aria-hidden="true"><th colspan="6"></th></tr>
           <tr>
             <th class="gstr-col-sr">Sr No.</th>
             <th class="gstr-col-desc" colspan="2">Description of Goods</th>
@@ -255,8 +259,13 @@
             <th class="gstr-col-rate">Rate</th>
             <th class="gstr-col-amount">Amount</th>
           </tr>
-        </thead>
-        <tbody>
+      </thead>
+      <tbody>
+        {{#with (computeSubtotalRows invoice
+                  columns=mapped.columns
+                  businessCurrency=invoice.businessCurrency
+                  businessLocale=invoice.businessLocale) as |totals|}}
+        {{#with (itemFoot totals @root.invoice) as |foot|}}
           {{#each (itemRows @root.invoice)}}
           {{#if (eq kind "item")}}
           <tr class="gstr-item">
@@ -315,8 +324,6 @@
             <td class="gstr-col-amount">{{value}}</td>
           </tr>
           {{/each}}
-        </tbody>
-        <tfoot>
           <tr class="ceres-subtotal-row gstr-total{{#if foot.hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="total">
             <td class="gstr-col-sr"></td>
             <td class="gstr-col-desc"></td>
@@ -346,98 +353,108 @@
             <td class="gstr-col-amount">{{value}}</td>
           </tr>
           {{/each}}
-        </tfoot>
-      </table>
-      </div>
-      {{/with}}
-
-      {{!-- ═══ Amount in words · E. & O.E ═══ --}}
-      <div class="gstr-words-row">
-        {{#if totals.totalInWords}}
-        <div
-          class="ceres-subtotal-words gstr-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
-          data-ceres-total-in-words
-        >
-          <span class="gstr-words-label">Amount Chargeable (in words)</span>
-          <span class="gstr-words-value">{{totals.totalInWords.value}}</span>
-        </div>
-        {{/if}}
-        <span class="gstr-eoe">E. &amp; O.E</span>
-      </div>
-      {{/with}}
-
-      {{!-- ═══ Summary tables — each behind the account's own setting ═══ --}}
+        {{/with}}
+        <tr class="gstr-band">
+          <td class="gstr-wide" colspan="6">
+            <div class="gstr-words-row">
+              {{#if totals.totalInWords}}
+              <div
+                class="ceres-subtotal-words gstr-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+                data-ceres-total-in-words
+              >
+                <span class="gstr-words-label">Amount Chargeable (in words)</span>
+                <span class="gstr-words-value">{{totals.totalInWords.value}}</span>
+              </div>
+              {{/if}}
+              <span class="gstr-eoe">E. &amp; O.E</span>
+            </div>
+          </td>
+        </tr>
+        {{/with}}
       {{#if mapped.visibility.showHsnSummary}}
-      <div class="gstr-summary" data-ceres-hsn-summary>
+      <tr class="gstr-band"><td class="gstr-wide gstr-summary" colspan="6"><div data-ceres-hsn-summary>
         {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
-      </div>
+      </div></td></tr>
       {{/if}}
       {{#if mapped.visibility.showTaxTable}}
-      <div class="gstr-summary" data-ceres-tax-summary>
+      <tr class="gstr-band"><td class="gstr-wide gstr-summary" colspan="6"><div data-ceres-tax-summary>
         {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
-      </div>
+      </div></td></tr>
       {{/if}}
-
-      {{!-- ═══ Bank, UPI, terms and notes · signature ═══ --}}
-      <div class="gstr-foot">
-        <div class="gstr-foot-left">
-          {{#if mapped.visibility.showBankUpiSection}}
-          <div class="gstr-pay">
-            {{#if mapped.visibility.showBankAccount}}
-            <dl class="gstr-bank">
-              {{#each (bankLines invoice.bankAccount invoice.customLabels)}}
-              <div class="gstr-bank-line"><dt>{{label}}</dt><dd>- {{value}}</dd></div>
+        {{#if (or invoice.terms.length invoice.notes)}}
+        <tr class="gstr-band">
+          <td class="gstr-wide" colspan="6">
+            <div class="gstr-notes">
+              {{#each invoice.terms}}
+              {{#if terms.length}}
+              <section class="gstr-note">
+                {{#if label}}<p class="gstr-note-heading">{{label}}</p>{{else}}{{#if @root.invoice.customLabels.terms}}<p class="gstr-note-heading">{{@root.invoice.customLabels.terms}}</p>{{/if}}{{/if}}
+                <ol class="gstr-terms">
+                  {{#each terms}}<li>{{this}}</li>{{/each}}
+                </ol>
+              </section>
+              {{/if}}
               {{/each}}
-            </dl>
-            {{/if}}
-            {{#if mapped.visibility.showUpi}}
-            <div class="gstr-upi">
-              {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="gstr-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
-              <p>UPI - {{mapped.upi.id}}</p>
+
+              {{#if invoice.notes}}
+              <section class="gstr-note">
+                {{#if invoice.customLabels.notes}}<p class="gstr-note-heading">{{invoice.customLabels.notes}}</p>{{/if}}
+                {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+              </section>
+              {{/if}}
             </div>
-            {{/if}}
-          </div>
-          {{/if}}
+          </td>
+        </tr>
+        {{/if}}
+      </tbody>
+      <tfoot>
+        <tr class="gstr-band">
+          <td class="gstr-wide" colspan="6">
+            <div class="gstr-foot">
+              <div class="gstr-foot-left">
+              {{#if mapped.visibility.showBankUpiSection}}
+              <div class="gstr-pay">
+                {{#if mapped.visibility.showBankAccount}}
+                <dl class="gstr-bank">
+                  {{#each (bankLines invoice.bankAccount invoice.customLabels)}}
+                  <div class="gstr-bank-line"><dt>{{label}}</dt><dd>- {{value}}</dd></div>
+                  {{/each}}
+                </dl>
+                {{/if}}
+                {{#if mapped.visibility.showUpi}}
+                <div class="gstr-upi">
+                  {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="gstr-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
+                  <p>UPI - {{mapped.upi.id}}</p>
+                </div>
+                {{/if}}
+              </div>
+              {{/if}}
+              </div>
 
-          {{#each invoice.terms}}
-          {{#if terms.length}}
-          <section class="gstr-note">
-            {{#if label}}<p class="gstr-note-heading">{{label}}</p>{{else}}{{#if @root.invoice.customLabels.terms}}<p class="gstr-note-heading">{{@root.invoice.customLabels.terms}}</p>{{/if}}{{/if}}
-            <ol class="gstr-terms">
-              {{#each terms}}<li>{{this}}</li>{{/each}}
-            </ol>
-          </section>
-          {{/if}}
-          {{/each}}
-
-          {{#if invoice.notes}}
-          <section class="gstr-note">
-            {{#if invoice.customLabels.notes}}<p class="gstr-note-heading">{{invoice.customLabels.notes}}</p>{{/if}}
-            {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
-          </section>
-          {{/if}}
-        </div>
-
-        <div class="gstr-sign">
-          <p class="gstr-sign-for">for {{invoice.billedBy.name}}</p>
-          {{!-- A plain image, or the digital-signature flow's two states. --}}
-          {{#unless (eq invoice.signatureMethod "DIGITAL")}}
-          {{#if invoice.signature}}
-          <div class="gstr-sign-image">{{> CeresImage src=invoice.signature alt="" class="gstr-sign-img"}}</div>
-          {{/if}}
-          {{else}}
-          {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
-          <div class="gstr-sign-digital">
-            {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
-            {{#if invoice.share.pdf}}<a href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
-          </div>
-          {{else}}
-          <div class="gstr-sign-placeholder" data-ceres-signature-placeholder></div>
-          {{/if}}
-          {{/unless}}
-          {{#if invoice.customLabels.signature}}<p class="gstr-sign-label">{{invoice.customLabels.signature}}</p>{{/if}}
-        </div>
-      </div>
+            <div class="gstr-sign">
+              <p class="gstr-sign-for">for {{invoice.billedBy.name}}</p>
+              {{!-- A plain image, or the digital-signature flow's two states. --}}
+              {{#unless (eq invoice.signatureMethod "DIGITAL")}}
+              {{#if invoice.signature}}
+              <div class="gstr-sign-image">{{> CeresImage src=invoice.signature alt="" class="gstr-sign-img"}}</div>
+              {{/if}}
+              {{else}}
+              {{#if (eq invoice.documentSignatureRequest.status "SIGNED")}}
+              <div class="gstr-sign-digital">
+                {{#with invoice.documentSignatureRequest.signers.[0].signerName as |signer|}}<p>{{signer}}</p>{{/with}}
+                {{#if invoice.share.pdf}}<a href="{{invoice.share.pdf}}" target="_blank" rel="noopener noreferrer">{{invoice.share.pdf}}</a>{{/if}}
+              </div>
+              {{else}}
+              <div class="gstr-sign-placeholder" data-ceres-signature-placeholder></div>
+              {{/if}}
+              {{/unless}}
+              {{#if invoice.customLabels.signature}}<p class="gstr-sign-label">{{invoice.customLabels.signature}}</p>{{/if}}
+            </div>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
     </div>
 
     {{!-- ═══ After the frame: payments, attachments, footer fields, contact ═══ --}}

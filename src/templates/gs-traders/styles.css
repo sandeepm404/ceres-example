@@ -1,11 +1,11 @@
 @import "https://fonts.googleapis.com/css2?family=Carlito:ital,wght@0,400;0,700;1,400&display=swap";
 
 /*
- * gs-traders — Tally-style tax invoice. One black-ruled frame; every section
- * inside it is separated by a single rule. Tables use `border-style: hidden`
- * so their outer cell borders give way to the frame's own — which hides a
- * table's own top border too, so each table sits in a .gstr-section that
- * carries the rule instead.
+ * gs-traders — Tally-style tax invoice. The frame is one table (.gstr-items):
+ * Chrome repeats its <thead> (document header, column headings) and <tfoot>
+ * (bank and signature) on every printed page. Its own cells are addressed as
+ * `.gstr-items > * > tr > *` so nothing reaches the tables nested in it, which
+ * keep `border-style: hidden` and give way to the frame's rules.
  */
 
 .gstr-shell {
@@ -60,13 +60,40 @@
 
 /* ── The frame ─────────────────────────────────────────────────────────────── */
 
+/* Full-width cells of the frame: the words line, the summary tables, terms
+   and notes, the bank and signature foot. Each is ruled
+   above; the foot below too, closing every printed page. */
+.gstr-items > * > tr > .gstr-wide {
+  padding: 0;
+  text-align: left;
+  font-weight: 400;
+  vertical-align: top;
+}
+
+.gstr-items > * > .gstr-band > .gstr-wide {
+  border-top: 1px solid var(--gstr-rule);
+}
+
+.gstr-items > tfoot > .gstr-band > .gstr-wide {
+  border-bottom: 1px solid var(--gstr-rule);
+}
+
+/* The header block and the frame table, flush against each other. */
 .gstr-frame {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--gstr-rule);
 }
 
-.gstr-frame > * + * {
+/* The document header above the frame table, ruled on three sides; the
+   table's own top rule closes it. */
+.gstr-doc-head {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gstr-rule);
+  border-bottom: 0;
+}
+
+.gstr-doc-head > * + * {
   border-top: 1px solid var(--gstr-rule);
 }
 
@@ -193,15 +220,27 @@
 
 /* ── Item table ────────────────────────────────────────────────────────────── */
 
-.gstr-items th,
-.gstr-items td {
+/* Separate borders, so the outer rules sit inside the table's box rather
+   than half outside it, and nothing doubles: every cell rules its left, the
+   last cell of a row its right too. */
+.gstr-shell .gstr-items {
+  border-collapse: separate;
+  border-spacing: 0;
+  border-style: none;
+}
+
+.gstr-items > * > tr > th,
+.gstr-items > * > tr > td {
   padding: 0 4px;
   vertical-align: top;
   border-left: 1px solid var(--gstr-rule);
+}
+
+.gstr-items > * > tr > :last-child {
   border-right: 1px solid var(--gstr-rule);
 }
 
-.gstr-items thead th {
+.gstr-items > thead > tr > th {
   border-bottom: 1px solid var(--gstr-rule);
   font-weight: 400;
   text-align: center;
@@ -245,8 +284,8 @@
   font-weight: 700;
 }
 
-.gstr-items thead .gstr-col-sr,
-.gstr-items thead .gstr-col-amount {
+.gstr-items > thead > tr > .gstr-col-sr,
+.gstr-items > thead > tr > .gstr-col-amount {
   text-align: center;
   font-weight: 400;
 }
@@ -319,6 +358,19 @@
 
 .gstr-foot-tax > .gstr-col-label {
   text-transform: lowercase;
+}
+
+/* A zero-height first row in <thead>: repeated on every printed page, it
+   rules the top of each page's piece of the frame. */
+.gstr-items > thead > tr.gstr-page-rule > * {
+  height: 0;
+  padding: 0;
+  border: 0;
+  line-height: 0;
+}
+
+.gstr-items > thead > tr.gstr-page-rule > * {
+  border-bottom: 1px solid var(--gstr-rule);
 }
 
 /* Total rules only its label, figure and the merged quantity/rate cell;
@@ -526,11 +578,15 @@
     --gstr-font-size-lg: 15px;
     --gstr-font-size-xl: 18px;
 
+    /* The host lays the page out a fraction wider than the printable width,
+       which clips the frame's right rule; the viewport is the page. */
+    width: auto;
+    max-width: 100vw;
+    margin: 0;
+
     /* At least one printed page tall, so the item table can stretch the
        frame down to it (print-page-fit skill). Side margins and page size
        are the PDF service's. */
-    width: auto;
-    max-width: none;
     display: flex;
     flex-direction: column;
     min-height: min(100vh, 296mm);
@@ -539,18 +595,7 @@
   }
 
   .gstr-page,
-  .gstr-frame {
-    flex: 1 0 auto;
-  }
-
-  .gstr-page,
   .gstr-frame,
-  .gstr-items-wrap {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .gstr-items-wrap,
   .gstr-items {
     flex: 1 0 auto;
   }
@@ -565,11 +610,15 @@
     height: auto;
   }
 
-  .gstr-items thead {
+  .gstr-items > thead {
     display: table-header-group;
   }
 
-  .gstr-items tr,
+  .gstr-items > tfoot {
+    display: table-footer-group;
+  }
+
+  .gstr-items > * > tr,
   .gstr-words-row,
   .gstr-summary,
   .gstr-foot {

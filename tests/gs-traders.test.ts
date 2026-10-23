@@ -601,20 +601,22 @@ describe("gs-traders reference document", () => {
   });
 
   it("prints Total before round off, then the Round off Total", () => {
-    const foot = text(render().split("<tfoot>")[1].split("</tfoot>")[0]);
-    expect(foot).toBe("Total 1045.00 Round off Total 1045.00");
+    const totals = (html: string): string =>
+      `${within(html, 'data-ceres-subtotal-row="total"', "</tr>")} ${within(
+        html,
+        'data-ceres-subtotal-row="roundedTotal"',
+        "</tr>"
+      )}`;
+    expect(totals(render())).toBe("Total 1045.00 Round off Total 1045.00");
     const payload = basePayload();
     payload.finalTotal = {
       ...payload.finalTotal,
       total: 1045,
       totalRoundOff: 0.4,
     };
-    const rounded = text(
-      template(normalizeInvoiceTemplateState(payload))
-        .split("<tfoot>")[1]
-        .split("</tfoot>")[0]
+    expect(totals(template(normalizeInvoiceTemplateState(payload)))).toBe(
+      "Total 1044.60 Round off Total 1045.00"
     );
-    expect(rounded).toBe("Total 1044.60 Round off Total 1045.00");
   });
 
   it("heads the words line Amount Chargeable (in words)", () => {
@@ -649,6 +651,45 @@ describe("gs-traders reference document", () => {
   it("prints the place of supply in the detail strip", () => {
     const strip = within(render(), 'class="gstr-details"', "</dl>");
     expect(strip).toBe("Place of Supply Madhya Pradesh (23)");
+  });
+});
+
+describe("gs-traders printed pages", () => {
+  let html = "";
+  let frame = "";
+  beforeAll(() => {
+    html = render();
+    [, frame] = html.split('<table class="gstr-items">');
+  });
+
+  it("prints the document header once, above the frame table", () => {
+    expect(html.indexOf('class="gstr-doc-head"')).toBeLessThan(
+      html.indexOf('<table class="gstr-items">')
+    );
+    expect(frame).not.toContain("gstr-doc-head");
+  });
+
+  it("repeats only a top rule and the column headings as the table head", () => {
+    expect(text(frame.split("<thead>")[1].split("</thead>")[0])).toBe(
+      "Sr No. Description of Goods Quantity Rate Amount"
+    );
+    expect(frame.split("<thead>")[1]).toMatch(/^\s*<tr class="gstr-page-rule"/);
+  });
+
+  it("repeats bank and signature as the table foot, and nothing else", () => {
+    expect(text(frame.split("<tfoot>")[1].split("</tfoot>")[0])).toBe(
+      "BANK - INDIAN BANK A/C NAME - G S TRADERS A/C NO. - 8184213216 IFSC - IDIB000M539 for G S TRADERS Authorised Signatory"
+    );
+  });
+
+  it("keeps totals, words, summaries and notes in the body, printed once", () => {
+    const body = frame.split("</thead>")[1].split("<tfoot>")[0];
+    expect(body).toContain('data-ceres-subtotal-row="roundedTotal"');
+    expect(body).toContain("data-ceres-total-in-words");
+    const withNotes = render({ notes: "Thanks", terms: [] })
+      .split("</thead>")[1]
+      .split("<tfoot>")[0];
+    expect(text(withNotes)).toContain("Additional Notes Thanks");
   });
 });
 
@@ -780,7 +821,7 @@ describe("gs-traders rows the reference does not show", () => {
     const body = text(
       template(normalizeInvoiceTemplateState(payload))
         .split("<tbody>")[2]
-        .split("</tbody>")[0]
+        .split('<tr class="ceres-subtotal-row gstr-total')[0]
     );
     expect(body).toBe(
       "Section A 1 Loading 2.00 500.00 1000.00 Section A total 1000.00 CGST 47.50 SGST 47.50"
