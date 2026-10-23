@@ -268,123 +268,15 @@
       </div>
       {{/if}}
 
-      {{!-- ═══ Line Items Table ═══ --}}
-      <div class="fk-table-wrap">
-        <table class="fk-item-table">
-          {{!-- The table is `table-layout: fixed`, which takes its column widths
-          from the first row only — and there the item heading is a single
-          `colspan="2"` cell, so the browser splits that space evenly
-          between the description and the photo and ignores any width set
-          on `.fk-img-cell`. These
-          <col>s size the columns directly. The
-          set has to track the <th> set below (and `itemColspan`) exactly;
-            the description
-            <col> is deliberately unsized so it absorbs all
-            the leftover width. --}}
-            <colgroup>
-              {{!-- Widths are measured from this document's own values in
-              `itemColumns`, so a column is as wide as the figures it has to
-              print and the description keeps the rest. --}}
-              {{#each (itemColumns)}}
-              <col class="{{colClass}}" style="width: {{widthPct}}%" />{{/each}}
-            </colgroup>
-            <thead>
-              <tr>
-                {{!-- Column order comes from `invoice.columns` as the API returns
-                it. The photo has no declared column of its own: it is part
-                of the item, so it is pinned next to the name and the two
-                share one heading via colspan — which is why the photo entry
-                itself emits no <th>. --}}
-                  {{#each (itemColumns)}}
-                  {{#if (eq kind "sno")}}
-                <th class="fk-col-sno"></th>{{/if}}
-                {{#if (eq kind "name")}}<th colspan="{{#if (hasPhotoColumn)}}2{{else}}1{{/if}}"
-                  class="fk-col-desc-photo">{{label}}</th>{{/if}}
-                {{#if (eq kind "model")}}<th class="fk-col-model">{{label}}</th>{{/if}}
-                {{#if (eq kind "hsn")}}<th class="fk-col-hsn">{{label}}</th>{{/if}}
-                {{#unless (or (eq kind "sno") (eq kind "name") (eq kind "photo") (eq kind "model") (eq kind "hsn"))}}
-                <th class="{{colClass}} text-center">{{label}}</th>
-                {{/unless}}
-                {{/each}}
-              </tr>
-            </thead>
-            <tbody>
-              {{#each invoice.items}}
-              <tr>
-                {{!-- One cell per declared column, in the same order as the header
-                above. Inside this loop `..` is the line item and `../..` is
-                the render root. --}}
-                {{#each (itemColumns)}}
-                {{#if (eq kind "sno")}}
-                <td class="text-center fk-sno-cell">{{increment @../index}}</td>
-                {{/if}}
-                {{#if (eq kind "name")}}
-                <td class="fk-desc-cell">
-                  <p class="fk-item-name">{{../name}}</p>
-                  {{#if ../../advanceOptions.showSkuInInvoice}}{{#if ../sku}}<div class="fk-item-sku">SKU: {{../sku}}
-                  </div>{{/if}}{{/if}}
-                  {{#if ../../derived.showInlineHsn}}{{#if ../hsn}}<div class="fk-item-sku">HSN/SAC: {{../hsn}}</div>
-                  {{/if}}{{/if}}
-                  {{#unless ../../mapped.visibility.showDescriptionFullWidth}}
-                  {{#if ../description}}
-                  <div class="fk-item-desc">
-                    {{> MarkdownViewer (prepareMarkdownViewerData (trimTrailingBlankLines ../description)) }}
-                  </div>
-                  {{/if}}
-                  {{/unless}}
-                </td>
-                {{/if}}
-                {{#if (eq kind "photo")}}
-                <td class="fk-img-cell">
-                  {{#each (itemImages ..)}}
-                  {{#if (eq @index 0)}}
-                  <img src="{{this}}" alt="{{../../name}}" class="fk-product-img" />
-                  {{/if}}
-                  {{/each}}
-                </td>
-                {{/if}}
-                {{#if (eq kind "model")}}
-                <td class="text-center fk-model-cell">{{../sku}}</td>
-                {{/if}}
-                {{#if (eq kind "hsn")}}<td class="text-center fk-hsn-cell">{{../hsn}}</td>{{/if}}
-                {{#if (eq kind "rate")}}<td class="text-center fk-price-cell">{{formatCurrency ../rate ../../invoice}}
-                </td>{{/if}}
-                {{#if (eq kind "qty")}}<td class="text-center fk-qty-cell">{{formatQtyCell ../this ../../invoice
-                  ../../advanceOptions}}</td>{{/if}}
-                {{#if (eq kind "discount")}}<td class="text-center fk-disc-cell">{{formatItemDiscount ../this
-                  ../../invoice}}</td>{{/if}}
-                {{#if (eq kind "igst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../igst ../../invoice}}
-                </td>{{/if}}
-                {{#if (eq kind "cgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../cgst ../../invoice}}
-                </td>{{/if}}
-                {{#if (eq kind "sgst")}}<td class="text-center fk-tax-cell">{{formatCurrency ../sgst ../../invoice}}
-                </td>{{/if}}
-                {{#if (eq kind "amount")}}<td class="text-center fk-total-cell">{{formatCurrency ../amount
-                  ../../invoice}}</td>{{/if}}
-                {{#if (eq kind "total")}}<td class="text-center fk-total-cell">{{formatLineTotal ../this
-                  ../../invoice ../../mapped.visibility}}</td>{{/if}}
-                {{#if (eq kind "custom")}}
-                {{!-- Numeric values never wrap: a figure broken across two lines
-                reads as two numbers. Text values still wrap. --}}
-                {{#with (customColumnCell ../this this ../../invoice)}}
-                <td class="text-center fk-custom-cell{{#if isNumber}} fk-nowrap{{/if}}">{{text}}{{#if (eq ../key
-                  "gstRate")}}%{{/if}}</td>
-                {{/with}}
-                {{/if}}
-                {{/each}}
-              </tr>
-              {{#if ../mapped.visibility.showDescriptionFullWidth}}
-              {{#if description}}
-              <tr class="fk-desc-fullwidth-row">
-                <td colspan="{{itemColspan}}" class="fk-desc-fullwidth-cell">
-                  {{> MarkdownViewer (prepareMarkdownViewerData (trimTrailingBlankLines description)) }}
-                </td>
-              </tr>
-              {{/if}}
-              {{/if}}
-              {{/each}}
-            </tbody>
-        </table>
+      {{!-- ═══ Line items: the shared widget; columns, labels and order are
+            the account's. `fitkingLineItems` (helpers.ts) adds the photo
+            column, puts the description in the item cell and measures the
+            column widths, which print as the <style> below. ═══ --}}
+      <div class="fk-items">
+        {{#with (fitkingLineItems mapped invoice)}}
+        <style>{{fitkingColumnCss}}</style>
+        {{> LineItemsTable this}}
+        {{/with}}
       </div>
 
       {{!-- ═══ Bottom Section: Terms (left) + Totals (right) ═══ --}}

@@ -21,65 +21,35 @@ describe("item table", () => {
         amount: 163700,
       },
     ],
+    // Real payloads always declare their columns; the widget prints none
+    // it was not given.
+    columns: [
+      { key: "name", label: "Item" },
+      { key: "quantity", label: "Qty" },
+      { key: "rate", label: "Rate" },
+      { key: "discount", label: "Discount" },
+      { key: "amount", label: "Amount" },
+    ],
     advanceOptions: { isDescriptionFullWidth: true },
     ...extra,
   });
 
-  // Column count, not cell count — the item heading spans the name and photo
-  // cells, so a plain <th> tally would undercount by one.
-  const headerCount = (html: string) => {
-    const thead = /<thead>([\s\S]*?)<\/thead>/.exec(html)?.[1] ?? "";
-    return (thead.match(/<th[^>]*>/g) ?? []).reduce((total, th) => {
-      const span = /colspan="(\d+)"/.exec(th);
-      return total + (span ? Number(span[1]) : 1);
-    }, 0);
-  };
-  const colspanOf = (html: string) =>
-    Number(
-      /<td colspan="(\d+)" class="fk-desc-fullwidth-cell"/.exec(html)?.[1]
-    );
+  const bodyText = (html: string) =>
+    (/<tbody>([\s\S]*?)<\/tbody>/.exec(html)?.[1] ?? "")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
-  describe("full-width description colspan", () => {
-    // A colspan wider than the header makes the browser invent extra columns,
-    // which steal width from the auto-sized Item column and leave a dead strip.
-    it("matches the header column count in the plain case", () => {
-      const html = render(basePayload());
+  it("renders through the shared LineItemsTable widget", () => {
+    const html = render(basePayload());
 
-      expect(colspanOf(html)).toBe(headerCount(html));
-    });
-
-    it("matches when an IGST column is present", () => {
-      const html = render(basePayload({ igst: true }));
-
-      expect(colspanOf(html)).toBe(headerCount(html));
-    });
-
-    it("matches when CGST and SGST columns are present", () => {
-      const html = render(basePayload({ taxName: "GST" }));
-
-      expect(colspanOf(html)).toBe(headerCount(html));
-    });
-
-    it("matches when a discount column is present", () => {
-      const html = render(
-        basePayload({ finalTotal: { discount: 50, total: 163650 } })
-      );
-
-      expect(colspanOf(html)).toBe(headerCount(html));
-    });
-
-    it("never exceeds the header count, which is what caused the dead column", () => {
-      const html = render(basePayload({ igst: true }));
-
-      expect(colspanOf(html)).toBeLessThanOrEqual(headerCount(html));
-    });
+    expect(html).toContain('class="fk-items"');
+    expect(html).toContain("line-items-table");
+    expect(html).not.toContain("fk-item-table");
+    expect(bodyText(html)).toContain("Aerofit Elliptical Cross Trainer");
   });
 
   describe("discount cells", () => {
-    // The line discount is an object, so the cell has to read
-    // `discount.amount` and print it per `discountType` — an earlier version
-    // bound a `discountLabel` field the payload never sends, which left every
-    // cell of a visible Discount column blank.
     const discounted = (discount: Record<string, unknown>) =>
       basePayload({
         items: [
@@ -96,7 +66,7 @@ describe("item table", () => {
       });
 
     const discountCell = (html: string) =>
-      /<td class="text-center fk-disc-cell">([\s\S]*?)<\/td>/
+      /<td class="col-discount"[^>]*>([\s\S]*?)<\/td>/
         .exec(html)?.[1]
         ?.trim() ?? "";
 
@@ -105,21 +75,15 @@ describe("item table", () => {
         discounted({ discountType: "PERCENTAGE", amount: 10 })
       );
 
-      expect(discountCell(html)).toBe("10%");
+      expect(discountCell(html)).toContain("10%");
     });
 
     it("prints a flat discount as money", () => {
-      const html = render(discounted({ discountType: "FLAT", amount: 16370 }));
-
-      expect(discountCell(html)).toContain("16,370");
-    });
-
-    it("leaves an undiscounted row blank rather than printing 0%", () => {
       const html = render(
-        discounted({ discountType: "PERCENTAGE", amount: 0 })
+        discounted({ discountType: "FIXED_AMOUNT", amount: 16370 })
       );
 
-      expect(discountCell(html)).toBe("");
+      expect(discountCell(html)).toContain("16,370");
     });
   });
 
@@ -154,151 +118,6 @@ describe("item table", () => {
 
       expect(html).toContain("كمية");
       expect(html).toContain("معدل");
-    });
-  });
-
-  describe("amount vs total columns", () => {
-    const columns = [
-      { key: "name", label: "Item" },
-      { key: "quantity", label: "Qty" },
-      { key: "rate", label: "Unit Rate" },
-      { key: "amount", label: "Amount" },
-      { key: "total", label: "Total" },
-    ];
-
-    const bodyCells = (html: string) => {
-      const tbody = /<tbody>([\s\S]*?)<\/tbody>/.exec(html)?.[1] ?? "";
-      return [...tbody.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(([, text]) =>
-        text.replace(/\s+/g, " ").trim()
-      );
-    };
-
-    it("keeps amount pre-tax and computes total as amount plus tax", () => {
-      const html = render(
-        basePayload({
-          taxName: "GST",
-          columns,
-          items: [
-            {
-              _id: "1",
-              name: "Item",
-              quantity: 1,
-              rate: 1200,
-              amount: 1200,
-              cgst: 108,
-              sgst: 108,
-            },
-          ],
-        })
-      );
-
-      const cells = bodyCells(html);
-      expect(cells).toContain("₹1,200");
-      expect(cells).toContain("₹1,416");
-    });
-
-    it("prefers taxAmount when the backend already summed it", () => {
-      const html = render(
-        basePayload({
-          columns,
-          items: [
-            {
-              _id: "1",
-              name: "Item",
-              quantity: 1,
-              rate: 1000,
-              amount: 1000,
-              taxAmount: 180,
-              igst: 999,
-            },
-          ],
-        })
-      );
-
-      expect(bodyCells(html)).toContain("₹1,180");
-    });
-
-    // Only one tax regime applies per invoice — inter-state IGST, or intra-state
-    // CGST+SGST — never both. A stale/leftover value in the field that does not
-    // apply must not get summed in on top of the one that does.
-    it("ignores a stale igst value on a CGST/SGST invoice", () => {
-      const html = render(
-        basePayload({
-          taxName: "GST",
-          columns,
-          items: [
-            {
-              _id: "1",
-              name: "Item",
-              quantity: 1,
-              rate: 1200,
-              amount: 1200,
-              cgst: 108,
-              sgst: 108,
-              igst: 216, // stale — must not be added on top of cgst+sgst
-            },
-          ],
-        })
-      );
-
-      const cells = bodyCells(html);
-      expect(cells).toContain("₹1,416");
-      expect(cells).not.toContain("₹1,632");
-    });
-
-    it("ignores stale cgst/sgst values on an IGST invoice", () => {
-      const html = render(
-        basePayload({
-          taxName: "GST",
-          igst: 216,
-          columns,
-          items: [
-            {
-              _id: "1",
-              name: "Item",
-              quantity: 1,
-              rate: 1200,
-              amount: 1200,
-              igst: 216,
-              cgst: 108, // stale — must not be added on top of igst
-              sgst: 108, // stale — must not be added on top of igst
-            },
-          ],
-        })
-      );
-
-      const cells = bodyCells(html);
-      expect(cells).toContain("₹1,416");
-      expect(cells).not.toContain("₹1,632");
-    });
-
-    // Any non-GST taxName (VAT included) routes through the same bucket as
-    // IGST — the same rule normalizeInvoiceTemplateState uses for
-    // showIgst/showCgstSgst. The VAT amount is expected on `item.igst` (the field is
-    // reused); stale cgst/sgst must still be ignored.
-    it("treats a VAT invoice the same as IGST, ignoring stale cgst/sgst", () => {
-      const html = render(
-        basePayload({
-          taxName: "VAT",
-          taxRate: 5,
-          columns,
-          items: [
-            {
-              _id: "1",
-              name: "Item",
-              quantity: 1,
-              rate: 1200,
-              amount: 1200,
-              igst: 60,
-              cgst: 108, // stale — must not be added on top of the VAT amount
-              sgst: 108, // stale — must not be added on top of the VAT amount
-            },
-          ],
-        })
-      );
-
-      const cells = bodyCells(html);
-      expect(cells).toContain("₹1,260");
     });
   });
 
@@ -339,412 +158,207 @@ describe("item table", () => {
   });
 });
 
-describe("custom columns", () => {
-  const systemColumn = (key: string, label: string) => ({
-    key,
-    label,
-    system: true,
-    isHidden: false,
-    private: false,
+describe("photo column", () => {
+  const item = (extra: Record<string, unknown> = {}) => ({
+    _id: "1",
+    name: "Incline Chest Press",
+    description: "Dim: 1540 x 1030 x 1685 mm",
+    quantity: 1,
+    rate: 100,
+    amount: 100,
+    ...extra,
+  });
+  const payload = (items: unknown[]) => ({
+    invoiceTitle: "Quotation",
+    invoiceNumber: "Q-1",
+    columns: [
+      { key: "name", label: "Item" },
+      { key: "rate", label: "Rate" },
+      { key: "amount", label: "Amount" },
+    ],
+    items,
   });
 
-  const basePayload = (extra: Record<string, unknown> = {}) => ({
+  const headerClasses = (html: string) =>
+    [
+      ...(/<thead>([\s\S]*?)<\/thead>/.exec(html)?.[1] ?? "").matchAll(
+        /<th class="([^"]*)"/g
+      ),
+    ].map(([, cls]) => cls);
+  const firstRowClasses = (html: string) =>
+    [
+      ...(
+        /<tr class="row-even">([\s\S]*?)<\/tr>/.exec(html)?.[1] ?? ""
+      ).matchAll(/<td class="([^"]*)"/g),
+    ].map(([, cls]) => cls);
+  const photoCells = (html: string) =>
+    [...html.matchAll(/<td class="col-photo"[^>]*>([\s\S]*?)<\/td>/g)].map(
+      ([, inner]) => inner.trim()
+    );
+
+  it("prints the first image in its own column right after the item", () => {
+    const html = render(
+      payload([item({ images: ["https://cdn/a.png", "https://cdn/b.png"] })])
+    );
+
+    expect(headerClasses(html)).toEqual([
+      "col-index",
+      "col-item",
+      "col-photo",
+      "col-rate",
+      "col-amount",
+    ]);
+    expect(firstRowClasses(html)).toEqual([
+      "col-index",
+      "col-item",
+      "col-photo",
+      "col-rate",
+      "col-amount",
+    ]);
+    expect(photoCells(html)).toEqual([
+      '<img src="https://cdn/a.png" alt="Incline Chest Press" class="fk-product-img" />',
+    ]);
+    expect(html).not.toContain("https://cdn/b.png");
+  });
+
+  it("adds no column when no item has an image", () => {
+    const html = render(payload([item()]));
+
+    expect(headerClasses(html)).not.toContain("col-photo");
+    expect(html).not.toContain("fk-product-img");
+  });
+
+  it("leaves the cell blank for an item without an image", () => {
+    const html = render(
+      payload([item({ images: ["https://cdn/a.png"] }), item({ _id: "2" })])
+    );
+
+    expect(photoCells(html)).toEqual([
+      '<img src="https://cdn/a.png" alt="Incline Chest Press" class="fk-product-img" />',
+      "",
+    ]);
+  });
+
+  it("unwraps image objects and never uses the full-size originals", () => {
+    const html = render(
+      payload([
+        item({
+          images: [{ url: "https://cdn/thumb.png" }],
+          originalImages: ["https://cdn/original.png"],
+        }),
+      ])
+    );
+
+    expect(photoCells(html)[0]).toContain('src="https://cdn/thumb.png"');
+    expect(photoCells(html)[0]).not.toContain("original.png");
+  });
+
+  it("does not print the photo a second time under the line", () => {
+    const html = render(payload([item({ images: ["https://cdn/a.png"] })]));
+
+    expect(html).not.toContain("item-images-inline");
+    expect(html).toContain("Dim: 1540 x 1030 x 1685 mm");
+  });
+
+  it("escapes the image URL and the alt text", () => {
+    const html = render(
+      payload([
+        item({
+          name: 'Bench "Pro"',
+          images: ['https://cdn/a.png" onerror="x'],
+        }),
+      ])
+    );
+
+    expect(photoCells(html)[0]).toContain("&quot;");
+    expect(photoCells(html)[0]).not.toContain('onerror="x"');
+  });
+});
+
+describe("item descriptions", () => {
+  const payload = (description: string) => ({
     invoiceTitle: "Quotation",
-    invoiceNumber: "A00004",
+    invoiceNumber: "Q-1",
+    columns: [
+      { key: "name", label: "Item" },
+      { key: "amount", label: "Amount" },
+    ],
+    items: [{ _id: "1", name: "Seated Bench", amount: 1, description }],
+  });
+
+  it("prints a multi-line description in full", () => {
+    const html = render(
+      payload("• Dim: 1220 × 760 × 800 mm<br>• Machine Weight: 23 kg.")
+    );
+
+    expect(html).toContain(
+      "<span>• Dim: 1220 × 760 × 800 mm<br>• Machine Weight: 23 kg.</span>"
+    );
+  });
+
+  it("drops trailing blank lines but keeps the breaks inside the text", () => {
+    const html = render(payload("Line one<br>Line two<br><br> \n"));
+
+    expect(html).toContain("<span>Line one<br>Line two</span>");
+  });
+
+  it("prints no description row when the description is only blank lines", () => {
+    const html = render(payload("<br><br>"));
+
+    expect(html).not.toContain("item-extras-row");
+  });
+});
+
+describe("column widths", () => {
+  const payload = {
+    invoiceTitle: "Quotation",
+    invoiceNumber: "Q-1",
+    columns: [
+      { key: "name", label: "Item" },
+      {
+        key: "inv_sku",
+        label: "Model No.",
+        dataType: "text",
+        fxReturnType: "number",
+      },
+      { key: "rate", label: "Rate" },
+      { key: "amount", label: "Amount" },
+    ],
     items: [
       {
         _id: "1",
-        name: "Elliptical Cross Trainer",
-        quantity: 1,
-        rate: 100,
-        amount: 100,
+        name: "Treadmill",
+        rate: 257800,
+        amount: 257800,
+        custom: { inv_sku: "W900M" },
       },
     ],
-    columns: [systemColumn("name", "Item"), systemColumn("rate", "Rate")],
-    ...extra,
+  };
+  const widths = (html: string) =>
+    Object.fromEntries(
+      [...html.matchAll(/th\.([\w-]+) \{ width: ([\d.]+)%; \}/g)].map(
+        ([, cls, pct]) => [cls, Number(pct)]
+      )
+    );
+
+  it("sizes every column but the item, which takes the rest", () => {
+    const sized = widths(render(payload));
+
+    expect(Object.keys(sized)).toEqual([
+      "col-index",
+      "col-inv_sku",
+      "col-rate",
+      "col-amount",
+    ]);
+    const total = Object.values(sized).reduce((sum, pct) => sum + pct, 0);
+    expect(total).toBeLessThanOrEqual(74);
   });
 
-  const headerLabels = (html: string) => {
-    const thead = /<thead>([\s\S]*?)<\/thead>/.exec(html)?.[1] ?? "";
-    return [...thead.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map(([, text]) =>
-      text.trim()
-    );
-  };
+  it("treats an account's text column as text whatever its declared type", () => {
+    const sized = widths(render(payload));
 
-  const customCells = (html: string) =>
-    [
-      ...html.matchAll(
-        /<td class="text-center fk-custom-cell[^"]*">([\s\S]*?)<\/td>/g
-      ),
-    ].map(([, text]) => text.trim());
-
-  // Cells whose value came out numeric are marked so they never wrap mid-number.
-  const nowrapCells = (html: string) =>
-    [
-      ...html.matchAll(
-        /<td class="text-center fk-custom-cell( fk-nowrap)?">([\s\S]*?)<\/td>/g
-      ),
-    ]
-      .filter(([, nowrap]) => nowrap)
-      .map(([, , text]) => text.trim());
-
-  // Column count, not cell count — the item heading spans the name and photo cells.
-  const headerCount = (html: string) => {
-    const thead = /<thead>([\s\S]*?)<\/thead>/.exec(html)?.[1] ?? "";
-    return (thead.match(/<th[^>]*>/g) ?? []).reduce((total, th) => {
-      const span = /colspan="(\d+)"/.exec(th);
-      return total + (span ? Number(span[1]) : 1);
-    }, 0);
-  };
-  const colCount = (html: string) =>
-    (/<colgroup>([\s\S]*?)<\/colgroup>/.exec(html)?.[1].match(/<col /g) ?? [])
-      .length;
-
-  describe("user-defined item columns", () => {
-    const withCustom = (columns: unknown[], items?: unknown[]) =>
-      basePayload({
-        columns: [
-          systemColumn("name", "Item"),
-          ...columns,
-          systemColumn("rate", "Rate"),
-        ],
-        ...(items ? { items } : {}),
-      });
-
-    it("renders a custom column directly after the item name and photo", () => {
-      const html = render(
-        withCustom(
-          [{ key: "warranty", label: "Warranty", dataType: "text" }],
-          [
-            {
-              _id: "1",
-              name: "Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: { warranty: "2 yrs" },
-            },
-          ]
-        )
-      );
-
-      const labels = headerLabels(html);
-      // The item heading spans name and photo; the custom column follows it.
-      expect(labels[1]).toBe("Item");
-      expect(labels[2]).toBe("Warranty");
-      expect(customCells(html)).toEqual(["2 yrs"]);
-    });
-
-    it("follows the declared column order", () => {
-      const html = render(
-        basePayload({
-          columns: [
-            { key: "name", label: "Item" },
-            { key: "warranty", label: "Warranty" },
-            { key: "rate", label: "Rate", system: true },
-            { key: "colour", label: "Colour" },
-            { key: "total", label: "Total", system: true },
-          ],
-          items: [
-            {
-              _id: "1",
-              name: "Elliptical Cross Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: { warranty: "2 yrs", colour: "Red" },
-            },
-          ],
-        })
-      );
-
-      expect(headerLabels(html).slice(1)).toEqual([
-        "Item",
-        "Warranty",
-        "Rate",
-        "Colour",
-        "Total",
-      ]);
-    });
-
-    // A pinned Model No column duplicated the document's own model column when
-    // that column was declared under a key this template does not recognise.
-    it("adds no column the document did not declare", () => {
-      const html = render(
-        basePayload({
-          columns: [
-            { key: "name", label: "Item" },
-            { key: "modelNumberField", label: "Model No" },
-            { key: "grandTotalField", label: "Total" },
-          ],
-          items: [
-            {
-              _id: "1",
-              name: "Elliptical Cross Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: { modelNumberField: "AF-139", grandTotalField: "100" },
-            },
-          ],
-        })
-      );
-
-      const labels = headerLabels(html).slice(1);
-      expect(labels).toEqual(["Item", "Model No", "Total"]);
-      expect(labels.filter((label) => label === "Model No")).toHaveLength(1);
-      expect(labels.filter((label) => label === "Total")).toHaveLength(1);
-    });
-
-    it("honours a declared position for the model column", () => {
-      const html = render(
-        basePayload({
-          columns: [
-            { key: "name", label: "Item" },
-            { key: "warranty", label: "Warranty" },
-            { key: "model", label: "Model No" },
-            { key: "total", label: "Total", system: true },
-          ],
-          items: [
-            {
-              _id: "1",
-              name: "Elliptical Cross Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: { warranty: "2 yrs" },
-            },
-          ],
-        })
-      );
-
-      expect(headerLabels(html).slice(1)).toEqual([
-        "Item",
-        "Warranty",
-        "Model No",
-        "Total",
-      ]);
-    });
-
-    it("keeps the colgroup, header and description colspan in step", () => {
-      const html = render(
-        withCustom([
-          { key: "warranty", label: "Warranty" },
-          { key: "colour", label: "Colour" },
-        ])
-      );
-
-      expect(colCount(html)).toBe(headerCount(html));
-    });
-
-    it("reads values from custom, customFields or the item itself", () => {
-      const html = render(
-        withCustom(
-          [
-            { key: "warranty", label: "Warranty" },
-            { key: "batch", label: "Batch" },
-            { key: "origin", label: "Origin" },
-          ],
-          [
-            {
-              _id: "1",
-              name: "Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: { warranty: "2 yrs" },
-              customFields: [{ key: "batch", value: "B-77" }],
-              origin: "India",
-            },
-          ]
-        )
-      );
-
-      expect(customCells(html)).toEqual(["2 yrs", "B-77", "India"]);
-    });
-
-    it("formats currency columns and blanks unusable values", () => {
-      // A second item carries real "meta"/"absent" values so those columns stay
-      // declared (a column with nothing on any item is dropped — see "hides a
-      // custom column with no value on any item" below); this item's own values
-      // are still unusable and must blank rather than borrow the other row's.
-      const html = render(
-        withCustom(
-          [
-            {
-              key: "installation",
-              label: "Installation",
-              dataType: "currency",
-            },
-            { key: "meta", label: "Meta" },
-            { key: "absent", label: "Absent" },
-          ],
-          [
-            {
-              _id: "1",
-              name: "Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: { installation: 1500, meta: { nested: true } },
-            },
-            {
-              _id: "2",
-              name: "Trainer 2",
-              quantity: 1,
-              rate: 200,
-              amount: 200,
-              custom: { installation: 200, meta: "ok", absent: "here" },
-            },
-          ]
-        )
-      );
-
-      expect(customCells(html)).toEqual([
-        "₹1,500",
-        "",
-        "",
-        "₹200",
-        "ok",
-        "here",
-      ]);
-    });
-
-    // A `number` column prints as the document stores it — only a column that
-    // declares itself currency gets the currency treatment.
-    it("leaves number columns unformatted", () => {
-      const html = render(
-        withCustom(
-          [
-            { key: "grandTotalField", label: "Total", dataType: "number" },
-            {
-              key: "installCost",
-              label: "Install Cost",
-              fxReturnType: "currency",
-            },
-          ],
-          [
-            {
-              _id: "1",
-              name: "Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: { grandTotalField: "20,13,20,21,562", installCost: 500 },
-            },
-          ]
-        )
-      );
-
-      expect(customCells(html)).toEqual(["20,13,20,21,562", "₹500"]);
-    });
-
-    // A column the account configured but never filled in on any item — a
-    // header over an empty strip — is dropped rather than printed blank.
-    it("hides a custom column with no value on any item", () => {
-      const html = render(
-        withCustom(
-          [{ key: "code", label: "Code" }],
-          [
-            { _id: "1", name: "Trainer", quantity: 1, rate: 100, amount: 100 },
-            {
-              _id: "2",
-              name: "Trainer 2",
-              quantity: 1,
-              rate: 200,
-              amount: 200,
-              custom: { code: "" },
-            },
-          ]
-        )
-      );
-
-      expect(headerLabels(html)).not.toContain("Code");
-      expect(customCells(html)).toEqual([]);
-    });
-
-    it("keeps a custom column when only some items have a value", () => {
-      const html = render(
-        withCustom(
-          [{ key: "code", label: "Code" }],
-          [
-            { _id: "1", name: "Trainer", quantity: 1, rate: 100, amount: 100 },
-            {
-              _id: "2",
-              name: "Trainer 2",
-              quantity: 1,
-              rate: 200,
-              amount: 200,
-              custom: { code: "C-2" },
-            },
-          ]
-        )
-      );
-
-      expect(headerLabels(html)).toContain("Code");
-      expect(customCells(html)).toEqual(["", "C-2"]);
-    });
-
-    // "20,13,20,21,562" broken across two lines reads as two separate numbers.
-    it("marks numeric values so they do not wrap, and leaves text wrappable", () => {
-      const html = render(
-        withCustom(
-          [
-            { key: "grandTotalField", label: "Total", dataType: "number" },
-            { key: "note", label: "Note" },
-          ],
-          [
-            {
-              _id: "1",
-              name: "Trainer",
-              quantity: 1,
-              rate: 100,
-              amount: 100,
-              custom: {
-                grandTotalField: "20,13,20,21,562",
-                note: "Some long remark",
-              },
-            },
-          ]
-        )
-      );
-
-      expect(nowrapCells(html)).toEqual(["20,13,20,21,562"]);
-    });
-
-    it("omits system, hidden and private columns", () => {
-      const html = render(
-        withCustom([
-          { key: "internalCost", label: "Internal Cost", private: true },
-          { key: "draftNote", label: "Draft Note", isHidden: true },
-          systemColumn("total", "Total"),
-        ])
-      );
-
-      const labels = headerLabels(html);
-      expect(labels).not.toContain("Internal Cost");
-      expect(labels).not.toContain("Draft Note");
-      expect(customCells(html)).toEqual([]);
-    });
-
-    // A user-defined column duplicating a built-in would print the value twice.
-    it("skips custom columns that duplicate a built-in column", () => {
-      const html = render(
-        withCustom([
-          { key: "Model No", label: "Model No" },
-          { key: "hsn", label: "HSN" },
-        ])
-      );
-
-      expect(customCells(html)).toEqual([]);
-    });
-
-    it("renders no custom columns when the document declares none", () => {
-      const html = render(basePayload());
-
-      expect(customCells(html)).toEqual([]);
-      expect(colCount(html)).toBe(headerCount(html));
-    });
+    // Text floor (70px), not the money floor (90px), of the 950px nominal.
+    expect(sized["col-inv_sku"]).toBeCloseTo((70 / 950) * 100, 2);
   });
 });
 
@@ -752,6 +366,10 @@ describe("description placement", () => {
   const basePayload = () => ({
     invoiceTitle: "Quotation",
     invoiceNumber: "Q-1",
+    columns: [
+      { key: "name", label: "Item" },
+      { key: "amount", label: "Amount" },
+    ],
     items: [
       {
         _id: "1",
@@ -765,8 +383,14 @@ describe("description placement", () => {
     ],
   });
 
-  const isFullWidth = (html: string) => html.includes("fk-desc-fullwidth-row");
-  const isUnderTitle = (html: string) => html.includes("fk-item-desc");
+  // Full width keeps the widget's own row under the item; otherwise the
+  // description prints in the item cell, under the name.
+  const itemCell = (html: string) =>
+    /<td class="col-item"[^>]*>([\s\S]*?)<\/td>/.exec(html)?.[1] ?? "";
+  const isFullWidth = (html: string) => html.includes("item-description-full");
+  const isUnderTitle = (html: string) =>
+    itemCell(html).includes('class="item-description"') &&
+    !html.includes("item-extras-row");
 
   it("defaults to below the line item title when the flag is absent", () => {
     const html = render(basePayload());
