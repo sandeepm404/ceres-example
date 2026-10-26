@@ -207,8 +207,7 @@
   padding-top: var(--vt-gutter);
 }
 
-.vt-doc:has(> .vt-letterhead-footer.is-empty),
-.vt-doc.is-footer-hidden {
+.vt-doc:has(> .vt-letterhead-footer.is-empty) {
   padding-bottom: var(--vt-gutter);
 }
 
