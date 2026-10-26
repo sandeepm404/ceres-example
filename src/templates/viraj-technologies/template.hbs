@@ -11,8 +11,10 @@
   Shipped To / Transport panels; E-Invoice / E-Way Bill (or below the items, irnPosition); the
   items with the totals rows under them; the Additional Info grid (titled "Terms &
   Conditions" in the design); notes ("Declaration") | bank account details and UPI; terms;
-  attachments; the summaries: tax, HSN, batch and payments; the signature; then the
-  document's contact line, last.
+  attachments; the summaries: tax, HSN, batch and payments; the signature; the document's
+  contact line; then the brands strip with the company seal. The company header (under the
+  letterhead) and the brands strip are Viraj's own images (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), never the
+  letterhead / footer.
   data-testid / data-section / data-col are test hooks; data-ceres-* are the host's live
   update targets.
 --}}
@@ -86,6 +88,15 @@
             {{else}}
               <img alt="Letterhead" data-ceres-height="letterhead" />
             {{/if}}
+          </div>
+
+          {{!--
+            The company header (Viraj's own artwork, ruled above and below in the image): part of
+            the template, under the title and the letterhead, on the first page only. Not tied to
+            the letterhead or footer settings.
+          --}}
+          <div class="vt-brand-header" data-testid="section" data-section="brand-header">
+            <img src="{{view.brand.header}}" alt="Viraj Technologies" width="2000" height="272" />
           </div>
 
           {{!-- The buyer's box | the document details, side by side. --}}
@@ -668,6 +679,17 @@
               </p>
             </section>
           {{/if}}
+
+          {{!--
+            The brands strip with the company seal (Viraj's own artwork) closes the document, with
+            "For Viraj Technologies" over the seal and a rule under it; not the letterhead footer.
+          --}}
+          <section class="vt-brands" data-testid="section" data-section="brands">
+            <p class="vt-brands-for"><span class="vt-text">For Viraj Technologies</span></p>
+            <div class="vt-brands-art">
+              <img src="{{view.brand.brands}}" alt="Viraj Technologies: brands and company seal" width="2000" height="343" />
+            </div>
+          </section>
 
           {{> RefrensBranding @root.invoice}}
           </div>
