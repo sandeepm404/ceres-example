@@ -1099,9 +1099,9 @@
 
 /* ------------------------------------------------------------ company header, brands strip */
 
-/* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), not the letterhead or footer: each fills the content
-   width at its own aspect ratio, never cropped or stretched (2000 / 3000 px originals stay sharp
-   on paper). The header carries its own rules, the strip its own "For" line and signatory rule. */
+/* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), not the
+   letterhead or footer: each fills the content width at its own aspect ratio, never cropped or
+   stretched (2000 / 1984 px originals stay sharp on paper). The header carries its own rules. */
 .vt-brand-header img,
 .vt-brands img {
   display: block;
