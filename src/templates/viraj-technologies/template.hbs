@@ -13,8 +13,8 @@
   Conditions" in the design); notes ("Declaration") | bank account details and UPI; terms;
   attachments; the summaries: tax, HSN, batch and payments; the signature; the document's
   contact line; then the brands strip with the company seal. The company header (under the
-  letterhead) and the brands strip are Viraj's own images (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), never the
-  letterhead / footer.
+  letterhead) and the brands strip are Viraj's own images (helpers.ts VIRAJ_HEADER_IMAGE /
+  VIRAJ_BRANDS_IMAGE), never the letterhead / footer.
   data-testid / data-section / data-col are test hooks; data-ceres-* are the host's live
   update targets.
 --}}
@@ -65,7 +65,7 @@
       <tfoot class="vt-page-frame-footer">
         <tr>
           <td>
-            <div class="no-dibella invoice-letterhead-footer vt-letterhead-footer vt-footer-spacer{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" aria-hidden="true">
+            <div class="{{#if view.serviceFooter}}no-dibella {{/if}}invoice-letterhead-footer vt-letterhead-footer vt-footer-spacer{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" aria-hidden="true">
               {{#if @root.invoice.letterHeadFooter}}<img src="{{@root.invoice.letterHeadFooter}}" alt="" />{{else}}<img alt="" />{{/if}}
             </div>
           </td>
@@ -681,14 +681,11 @@
           {{/if}}
 
           {{!--
-            The brands strip with the company seal (Viraj's own artwork) closes the document, with
-            "For Viraj Technologies" over the seal and a rule under it; not the letterhead footer.
+            The brands strip with the company seal, "For Viraj Technologies" and the signatory line
+            (all in Viraj's own artwork) closes the document; not the letterhead footer.
           --}}
           <section class="vt-brands" data-testid="section" data-section="brands">
-            <p class="vt-brands-for"><span class="vt-text">For Viraj Technologies</span></p>
-            <div class="vt-brands-art">
-              <img src="{{view.brand.brands}}" alt="Viraj Technologies: brands and company seal" width="2000" height="343" />
-            </div>
+            <img src="{{view.brand.brands}}" alt="Viraj Technologies: brands and company seal" width="3000" height="600" />
           </section>
 
           {{> RefrensBranding @root.invoice}}
@@ -698,7 +695,7 @@
     </tbody>
   </table>
 
-  <div class="{{#if view.footerEveryPage}}no-dibella {{/if}}invoice-letterhead-footer vt-letterhead-footer{{#if view.footerEveryPage}} vt-footer-fixed{{/if}}{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" data-ceres-page-footer data-ceres-page-policy="{{#if view.footerEveryPage}}all{{else}}last{{/if}}">
+  <div class="{{#if view.serviceFooter}}no-dibella {{/if}}invoice-letterhead-footer vt-letterhead-footer{{#if view.footerEveryPage}} vt-footer-fixed{{/if}}{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" data-ceres-page-footer data-ceres-page-policy="{{#if view.footerEveryPage}}all{{else}}last{{/if}}">
     {{#if @root.invoice.letterHeadFooter}}
       <img src="{{@root.invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}

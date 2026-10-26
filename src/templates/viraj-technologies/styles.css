@@ -144,8 +144,7 @@
     .vt-total-label,
     .ceres-subtotal-label,
     .vt-words-label,
-    .vt-signature-label,
-    .vt-brands-for
+    .vt-signature-label
   ) {
   font-family: var(--vt-title-font);
 }
@@ -1101,35 +1100,14 @@
 /* ------------------------------------------------------------ company header, brands strip */
 
 /* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), not the letterhead or footer: each fills the content
-   width at its own aspect ratio, never cropped or stretched (2000 px originals stay sharp on
-   paper). The header carries its own rules. */
+   width at its own aspect ratio, never cropped or stretched (2000 / 3000 px originals stay sharp
+   on paper). The header carries its own rules, the strip its own "For" line and signatory rule. */
 .vt-brand-header img,
-.vt-brands-art img {
+.vt-brands img {
   display: block;
   width: 100%;
   max-width: none;
   height: auto;
-}
-
-/* "For Viraj Technologies" over the seal, on the seal's (right) edge whatever the script. */
-.vt-brands-for {
-  font-weight: var(--vt-weight-label);
-  text-align: right;
-}
-
-.vt-brands-art {
-  position: relative;
-}
-
-/* The signatory rule under the seal: placed in the image's own proportions, so it stays under
-   the seal at every width. */
-.vt-brands-art::after {
-  position: absolute;
-  top: 87.5%;
-  right: 0;
-  left: 85.5%;
-  border-top: var(--vt-rule-width) solid var(--vt-ink);
-  content: "";
 }
 
 /* ------------------------------------------------------------ markdown (notes, descriptions) */
