@@ -4034,7 +4034,6 @@ const PAPER_HEIGHT_MM: Record<string, number> = {
 export const mapPrint = (state: UnknownRecord, tableFixedWidth = 0) => {
   const pdfOptions = asRecord(state.pdfOptions);
   const invoice = asRecord(state.invoice);
-  const template = asRecord(invoice.template);
   const format = text(pdfOptions.format).toLowerCase();
   const landscape = optionalFlag(pdfOptions.landscape) === true;
   const paperMm = landscape
@@ -4091,12 +4090,6 @@ export const mapPrint = (state: UnknownRecord, tableFixedWidth = 0) => {
       asRecord(asRecord(asRecord(invoice.owner).configuration).experimental)
         .stretchInvoiceTable === true &&
       optionalFlag(pdfOptions.fullHeightTable) === true,
-    // "Hide footer": the letterhead footer is not drawn at all.
-    hideFooter: [
-      pdfOptions.hideFooter,
-      template.hideFooter,
-      invoice.hideFooter,
-    ].some((value) => optionalFlag(value) === true),
   };
 };
 
@@ -4753,7 +4746,6 @@ export const buildVirajView = (root: unknown) => {
     footerEveryPage: !visibility.footerOnLastPage,
     letterheadEveryPage: !visibility.letterHeadOnFirstPage,
     pageless: options.pageless,
-    hideFooter: print.hideFooter,
     print,
     script: mapScript(state),
   };
