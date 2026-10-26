@@ -4034,6 +4034,7 @@ const PAPER_HEIGHT_MM: Record<string, number> = {
 export const mapPrint = (state: UnknownRecord, tableFixedWidth = 0) => {
   const pdfOptions = asRecord(state.pdfOptions);
   const invoice = asRecord(state.invoice);
+  const template = asRecord(invoice.template);
   const format = text(pdfOptions.format).toLowerCase();
   const landscape = optionalFlag(pdfOptions.landscape) === true;
   const paperMm = landscape
@@ -4090,6 +4091,16 @@ export const mapPrint = (state: UnknownRecord, tableFixedWidth = 0) => {
       asRecord(asRecord(asRecord(invoice.owner).configuration).experimental)
         .stretchInvoiceTable === true &&
       optionalFlag(pdfOptions.fullHeightTable) === true,
+    /*
+     * "Hide footer" drops the PDF service's own footer (its "electronically generated" line),
+     * and with it the every-page letterhead footer the service would draw. The letterhead footer
+     * stays: the template then draws it in the PDF itself.
+     */
+    hideFooter: [
+      pdfOptions.hideFooter,
+      template.hideFooter,
+      invoice.hideFooter,
+    ].some((value) => optionalFlag(value) === true),
   };
 };
 
@@ -4744,6 +4755,8 @@ export const buildVirajView = (root: unknown) => {
     attachments: notes.attachments,
     payments: mapPayments(state),
     footerEveryPage: !visibility.footerOnLastPage,
+    // The PDF service draws the every-page footer, unless "Hide footer" turns its footer off.
+    serviceFooter: !visibility.footerOnLastPage && !print.hideFooter,
     letterheadEveryPage: !visibility.letterHeadOnFirstPage,
     pageless: options.pageless,
     print,
