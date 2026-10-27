@@ -156,7 +156,7 @@
 
 /* An email stays on one line while it fits and breaks only when its column is too narrow. */
 .vt-email {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* One unbroken word (a GSTIN, an email) carries on from its label and breaks at the edge. */
@@ -358,7 +358,7 @@
 /* A long unbroken value (a URL, a code) breaks where it must; figures still never wrap. A
    label wraps only between words, never inside one ("GSTI N:"). */
 .vt-billing-fields .vt-cell-value {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .vt-billing-fields .vt-cell-label {
@@ -520,7 +520,7 @@
 }
 
 .vt-additional .vt-cell-value {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .vt-grid-row + .vt-grid-row {
@@ -600,7 +600,7 @@
 }
 
 .vt-irn-value {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .vt-qr-list {
@@ -1097,6 +1097,83 @@
   font-size: calc(var(--vt-font-size-s) * var(--vt-text-scale, 1));
 }
 
+/* ------------------------------------------------------------ company header, brands strip */
+
+/* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), not the
+   letterhead or footer. The brands strip fills the content width at its own aspect ratio,
+   never cropped or stretched (vector, sharp on paper). */
+.vt-brands img {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  background: #fff;
+}
+
+/* The company header: rules above and below, the logo on the left, the address, contact and
+   tax lines as text, so they stay sharp. Laid out as the client's letterhead (reference PDF,
+   user 27 Oct): it scales with the page width like the brands strip and is as tall as it
+   (276/1968 of the width): the logo 36% wide, the lines from 16 px after it to the end edge,
+   one line each. */
+.vt-brand-header {
+  display: grid;
+  grid-template-columns: 36% minmax(0, 1fr);
+  align-items: center;
+  column-gap: 16px;
+  padding-block: 2cqw;
+  border-block: 1px solid #95949f;
+  background: #fff;
+}
+
+.vt-brand-header .vt-brand-logo {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: auto;
+}
+
+/* 4 lines × 1.48cqw × 1.69 + 4cqw of padding = the strip's 14cqw. */
+.vt-brand-lines {
+  min-width: 0;
+  font-size: 1.48cqw;
+  line-height: 1.69;
+  white-space: nowrap;
+}
+
+.vt-brand-lines p {
+  margin: 0;
+}
+
+/* Each item (an address part, a number, an address, a tax number) stays on one line. */
+.vt-brand-lines span {
+  white-space: nowrap;
+}
+
+/* Narrow screens (phones), where the scaled lines would be too small to read: the logo above
+   the lines, in the document's text size, wrapping between items. Printed pages (714 px and
+   wider) keep the letterhead layout. */
+@container vt-doc (width < 700px) {
+  .vt-brand-header {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px;
+    padding-block: 12px;
+  }
+
+  .vt-brand-header .vt-brand-logo {
+    width: min(100%, 360px);
+  }
+
+  .vt-brand-lines {
+    font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+    line-height: 1.6;
+    white-space: normal;
+  }
+}
+
+.vt-brand-lines .is-tax {
+  font-weight: 600;
+}
+
 /* ------------------------------------------------------------ markdown (notes, descriptions) */
 
 /*
@@ -1197,7 +1274,7 @@
 .vt-doc :is(.vt-note-body, .vt-item-desc) .toastui-editor-contents :is(th, td) {
   /* A cell's text wraps where it must, so the table never runs past its panel (beside the
      bank on a narrow or zoomed page). */
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   padding: var(--vt-pad) var(--vt-pad-x);
   border: var(--vt-rule-width) solid var(--vt-rule);
   background: none;
@@ -1431,7 +1508,7 @@
 @container vt-billing (width < 460px) {
   .vt-billing-fields .vt-cell-value:has(.vt-email),
   .vt-billing-fields .vt-email {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 }
 
@@ -1582,7 +1659,7 @@
 
   .vt-items.is-print-compact td.is-word {
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .vt-items.is-print-compact td.is-word .vt-num {
@@ -1758,9 +1835,11 @@
    * line, the signature and the footer stay whole; a heading stays with its content.
    */
   .vt-title-block,
+  .vt-brand-header,
   .vt-billing-row,
   .vt-contact,
   .vt-signature,
+  .vt-brands,
   .vt-doc > .vt-letterhead-footer {
     break-inside: avoid;
   }
@@ -2124,7 +2203,7 @@
   /* Phones: a long account number wraps inside the full-width bank panel. */
   @container vt-doc (width < 600px) {
     .vt-doc .vt-bank-value {
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
     }
   }
 
