@@ -1112,13 +1112,14 @@
 
 /* The company header: rules above and below, the logo on the left, the address, contact and
    tax lines as text in the document's own text size (with the text scale), so they read as
-   part of the document and stay sharp; a line too long for its column wraps between items. */
+   part of the document and stay sharp; a line too long for its column wraps between items.
+   The logo takes 40%, as large as the brands strip's logos (user request). */
 .vt-brand-header {
   display: grid;
-  grid-template-columns: 30% minmax(0, 1fr);
+  grid-template-columns: 40% minmax(0, 1fr);
   align-items: center;
-  column-gap: 16px;
-  padding-block: 8px;
+  column-gap: 24px;
+  padding-block: 12px;
   border-block: 1px solid #95949f;
   background: #fff;
 }
@@ -1154,7 +1155,7 @@
   }
 
   .vt-brand-header .vt-brand-logo {
-    width: min(100%, 280px);
+    width: min(100%, 360px);
   }
 }
 
