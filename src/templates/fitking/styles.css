@@ -238,7 +238,7 @@
 
 .fk-info-kv-custom .fk-kv-val {
   flex: 1 1 auto;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* Details Column — var(--fk-font-size-base) */
@@ -314,250 +314,141 @@
   font-size: var(--fk-font-size-base);
 }
 
-/* ===== ITEMS TABLE — var(--fk-font-size-base) ===== */
-.fk-table-wrap {
+/* ===== ITEMS TABLE — the shared LineItemsTable widget =====
+   Columns, labels, order and description/image placement come from the
+   account through the widget; this only dresses it in fitking's dark header
+   and ruled grid. The side borders join the main box frame. */
+.fk-items {
   width: 100%;
   border-left: 1px solid var(--fk-border);
   border-right: 1px solid var(--fk-border);
 }
 
-.fk-item-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fk-font-size-base);
+/* Fixed layout: column widths are measured per document by
+   `fitkingLineItems` (helpers.ts) and arrive as a <style> block in front of
+   the table. The item column is left unsized and takes the rest. */
+.fk-items .line-items-table {
   table-layout: fixed;
   overflow-wrap: break-word;
-}
-
-.fk-item-table thead th {
-  background-color: var(--fk-dark-header);
-  color: #fff;
-  border: 1px solid var(--fk-border);
-  padding: 8px 6px;
-  font-weight: 600;
   font-size: var(--fk-font-size-base);
-  vertical-align: middle;
 }
 
-.fk-item-table tbody td {
-  border: 1px solid var(--fk-border-light);
+.fk-items .line-items-table > thead > tr > th,
+.fk-items .line-items-table > tbody > tr > td {
   padding: 8px;
-  vertical-align: middle !important;
-  font-size: var(--fk-font-size-base);
-}
-
-/* Remove outer borders of the table to prevent double borders with the main frame */
-.fk-item-table thead tr:first-child th {
-  border-top: none;
-}
-
-.fk-item-table thead th:first-child,
-.fk-item-table tbody td:first-child {
-  border-left: none;
-}
-
-.fk-item-table thead th:last-child,
-.fk-item-table tbody td:last-child {
-  border-right: none;
-}
-
-.fk-item-table tbody tr:last-child td {
-  border-bottom: 1px solid var(--fk-border);
-}
-
-/* Column Widths
-   Not declared here. The column set comes from the payload, so a width per
-   column name can only ever be a guess at what that column will hold — the
-   `itemColumns` helper measures each column against the values this document
-   actually prints and emits a percentage on the <col>. These classes carry the
-   alignment and wrapping that goes with each kind, nothing more.
-   Percentages also survive the smaller print font, which is why there are no
-   width overrides left in the print block. */
-.fk-col-sno {
+  border: 1px solid var(--fk-border-light);
+  vertical-align: middle;
   text-align: center;
 }
 
-/* Spans the name and photo cells, so the label centres over both of them. */
-.fk-col-desc-photo {
-  text-align: center;
-}
-
-.fk-col-model {
-  text-align: center;
-}
-
-/* Currency columns never wrap: a figure broken across two lines reads as two
-   numbers. Their measured width is what keeps them from spilling. Quantity is
-   a number too — it wraps to a `fk-qty-unit` line underneath instead, but the
-   figure itself must stay on one line the same way. */
-.fk-col-price,
-.fk-col-total,
-.fk-col-disc,
-.fk-col-tax,
-.fk-col-qty {
-  white-space: nowrap;
-}
-
-.fk-col-hsn {
-  text-align: center;
-}
-
-/* Side padding on the numeric columns: narrower than the table default so
-   width goes to the item description, but never so narrow that a right-aligned
-   figure sits flush against the border — `itemColumns` sizes each column
-   assuming this exact padding (see CELL_CHROME_PX in helpers.ts), so the two
-   have to change together. */
-.fk-item-table thead th.fk-col-sno,
-.fk-item-table thead th.fk-col-price,
-.fk-item-table thead th.fk-col-qty,
-.fk-item-table thead th.fk-col-hsn,
-.fk-item-table thead th.fk-col-disc,
-.fk-item-table thead th.fk-col-tax,
-.fk-item-table thead th.fk-col-total,
-.fk-item-table tbody td.fk-sno-cell,
-.fk-item-table tbody td.fk-price-cell,
-.fk-item-table tbody td.fk-qty-cell,
-.fk-item-table tbody td.fk-hsn-cell,
-.fk-item-table tbody td.fk-disc-cell,
-.fk-item-table tbody td.fk-tax-cell,
-.fk-item-table tbody td.fk-total-cell {
+/* Headings and figures take 6px at the sides: width goes to the item, but a
+   figure never sits flush against its border. */
+.fk-items .line-items-table > thead > tr > th,
+.fk-items .line-items-table > tbody > tr > td:not(.col-item, .item-extras-cell, .col-photo) {
   padding-left: 6px;
   padding-right: 6px;
 }
 
-.fk-hsn-cell,
-.fk-disc-cell,
-.fk-tax-cell {
-  font-size: var(--fk-font-size-base);
-  white-space: nowrap !important;
-}
-
-.fk-sno-cell {
-  text-align: center;
-  font-size: var(--fk-font-size-base);
-}
-
-.fk-desc-cell {
-  /* Let browser auto-fill remaining space */
-}
-
-.fk-item-name {
+.fk-items .line-items-table > thead > tr > th {
+  background-color: var(--fk-dark-header);
+  color: #fff;
+  border-color: var(--fk-border);
+  border-top: none;
   font-weight: 600;
-  font-size: var(--fk-font-size-base);
-  color: #000;
-  margin-bottom: 4px;
 }
 
-.fk-item-desc {
-  font-size: var(--fk-font-size-base);
+/* The outer edges belong to `.fk-items`, so the table drops its own. */
+.fk-items .line-items-table > * > tr > :first-child {
+  border-left: none;
+}
+
+.fk-items .line-items-table > * > tr > :last-child {
+  border-right: none;
+}
+
+.fk-items .line-items-table > tbody > tr:last-child > td {
+  border-bottom: 1px solid var(--fk-border);
+}
+
+.fk-items .line-items-table > tbody > tr.row-even {
+  background: transparent;
+}
+
+/* Figures never wrap: a number broken across two lines reads as two. */
+.fk-items .line-items-table > tbody > tr > td:not(.col-item, .item-extras-cell) {
+  white-space: nowrap;
+}
+
+.fk-items .line-items-table > tbody > tr > td.col-item,
+.fk-items .line-items-table > tbody > tr > td.item-extras-cell {
+  text-align: left;
+}
+
+.fk-items .line-items-table .item-name {
+  font-weight: 600;
+  color: #000;
+}
+
+.fk-items .line-items-table .item-sku,
+.fk-items .line-items-table .item-merged-note {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fk-font-size-sm);
+  color: var(--fk-text-muted);
+}
+
+/* Photo column (`fitkingLineItems` in helpers.ts). Its heading is blank and
+   joins the item heading, so the two read as one Item column. */
+.fk-items .line-items-table > thead > tr > th.col-item {
+  border-right: none;
+}
+
+.fk-items .line-items-table > thead > tr > th.col-photo {
+  border-left: none;
+}
+
+.fk-items .line-items-table > tbody > tr > td.col-photo {
+  padding: 4px;
+}
+
+.fk-product-img {
+  display: block;
+  max-width: 100%;
+  max-height: 144px;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+/* An item's description/image row belongs to the item above it. */
+.fk-items .line-items-table > tbody > tr:has(+ .item-extras-row) > td {
+  border-bottom: none;
+}
+
+.fk-items .line-items-table .item-extras-cell {
   color: #333;
   line-height: 1.5;
 }
 
-.fk-item-desc p {
-  font-size: inherit;
-  color: inherit;
+.fk-items .line-items-table .item-description p {
   margin: 0;
-  line-height: inherit;
 }
 
-.fk-item-desc ul {
-  margin: 4px 0 0 var(--fk-font-size-lg);
-  padding: 0;
-}
-
-.fk-item-desc li {
-  margin-bottom: 3px;
-}
-
-/* Product Image Cell. The column width is set on `.fk-col-photo`, not here —
-   the photo column is a flat 144px and the image scales to fit inside it. */
-.fk-img-cell {
-  text-align: center;
-  vertical-align: middle !important;
-  padding: 4px !important;
-}
-
-.fk-product-img {
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 144px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto;
-}
-
-.fk-product-img+.fk-product-img {
+/* A description that is not full width prints in the item cell, under the
+   name (`fitkingLineItems` in helpers.ts). */
+.fk-items .line-items-table > tbody > tr > td.col-item .item-description {
   margin-top: 6px;
-}
-
-/* SKU ID — var(--fk-font-size-sm) */
-.fk-item-sku {
-  font-size: var(--fk-font-size-sm);
-  color: var(--fk-text-muted);
-  margin-top: 2px;
-}
-
-.fk-desc-fullwidth-cell {
-  background-color: #fafafa;
-  border-top: 1px dashed var(--fk-border-light) !important;
-  font-size: var(--fk-font-size-base);
   color: #333;
-  padding: 6px 12px !important;
+  line-height: 1.5;
 }
 
-.fk-model-cell {
-  font-size: var(--fk-font-size-base);
-  color: #333;
-}
-
-.fk-custom-cell {
-  font-size: var(--fk-font-size-base);
-  color: #333;
-  word-break: break-word;
-}
-
-/* Numeric values: breaking "20,13,20,21,562" across two lines reads as two
-   separate numbers, so these keep to one line even if they overrun. */
-.fk-custom-cell.fk-nowrap {
-  white-space: nowrap;
-  word-break: normal;
-}
-
-.fk-price-cell {
-  font-size: var(--fk-font-size-base);
-  white-space: nowrap !important;
-}
-
-.fk-qty-cell {
-  font-size: var(--fk-font-size-base);
-  white-space: nowrap !important;
-  text-align: center !important;
-}
-
-.fk-qty-num {
-  font-size: var(--fk-font-size-base);
-  color: #222;
-}
-
-.fk-qty-unit {
-  font-size: var(--fk-font-size-sm);
-  color: var(--fk-text-muted);
-  margin-top: 2px;
-}
-
-.fk-total-cell {
-  font-size: var(--fk-font-size-base);
-  white-space: nowrap !important;
+.fk-items .line-items-table > tbody > tr.row-summary,
+.fk-items .line-items-table > tbody > tr.row-group-subtotal {
+  background: #f0f0f0;
+  font-weight: 600;
 }
 
 .text-right {
   text-align: right !important;
-}
-
-.text-center {
-  text-align: center !important;
 }
 
 /* ===== BOTTOM SECTION — var(--fk-font-size-base) ===== */
@@ -913,18 +804,6 @@
     --fk-font-size-xl: 14px;
   }
 
-  .fk-img-cell {
-    padding: 4px !important;
-  }
-
-  .fk-product-img {
-    width: auto;
-    height: auto;
-    max-width: 100%;
-    max-height: 90px;
-    margin: 0 auto;
-  }
-
   .fk-shell {
     width: 100%;
     margin: 0;
@@ -940,15 +819,15 @@
     box-shadow: none;
   }
 
-  .fk-item-table {
-    break-inside: auto;
+  .fk-product-img {
+    max-height: 90px;
   }
 
-  .fk-item-table thead {
+  .fk-items .line-items-table > thead {
     display: table-header-group;
   }
 
-  .fk-item-table tbody tr {
+  .fk-items .line-items-table > tbody > tr {
     break-inside: avoid;
   }
 
