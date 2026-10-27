@@ -264,7 +264,7 @@
    past 60%), the Arabic-side value the rest, so neither pushes the labels. */
 .vt-party .vt-rows {
   --vt-cols: 84px fit-content(60%) minmax(0, 1fr) 90px;
-  --vt-row-height: 14px;
+  --vt-row-height: 14.25px;
 }
 
 
