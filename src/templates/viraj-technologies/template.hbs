@@ -91,12 +91,19 @@
           </div>
 
           {{!--
-            The company header (Viraj's own artwork, ruled above and below in the image): part of
-            the template, under the title and the letterhead, on the first page only. Not tied to
-            the letterhead or footer settings.
+            The company header (Viraj's own artwork: the logo image, the address, contact and tax
+            lines as text so they print sharp; ruled above and below): part of the template,
+            under the title and the letterhead, on the first page only. Not tied to the
+            letterhead or footer settings.
           --}}
           <div class="vt-brand-header" data-testid="section" data-section="brand-header">
-            <img src="{{view.brand.header}}" alt="Viraj Technologies" width="2000" height="260" />
+            <img class="vt-brand-logo" src="{{view.brand.header}}" alt="Viraj Technologies" width="744" height="123" />
+            <div class="vt-brand-lines">
+              <p>400 Sudama Nagar, 60 Feet Road, Indore, Mahdya Pradesh, 452009</p>
+              <p>+91-07314000800, 6264901872, 6264901875, 6264901880, 9993888999</p>
+              <p>sales@virajtechnologies.co.in, ashwin@virajtechnologies.co.in, www.virajtechnologies.in</p>
+              <p class="is-tax">GSTIN No.:- 23BBPPS0680F2ZI, PAN No.:-BBPPS0680F, UAM No.:- MP23A0038200</p>
+            </div>
           </div>
 
           {{!-- The buyer's box | the document details, side by side. --}}

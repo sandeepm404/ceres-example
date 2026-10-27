@@ -1100,14 +1100,52 @@
 /* ------------------------------------------------------------ company header, brands strip */
 
 /* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), not the
-   letterhead or footer: each fills the content width at its own aspect ratio, never cropped or
-   stretched (2000 / 1968 px originals stay sharp on paper). The header carries its own rules. */
-.vt-brand-header img,
+   letterhead or footer. The brands strip fills the content width at its own aspect ratio,
+   never cropped or stretched (the 1968 px original stays sharp on paper). */
 .vt-brands img {
   display: block;
   width: 100%;
   max-width: none;
   height: auto;
+}
+
+/* The header is laid out as its 2000 × 260 px artwork, scaled to the content width (cqw of
+   the header itself, so screen and print keep the same proportions): rules above and below,
+   the logo on the left, the address, contact and tax lines as text (sharp at any size). */
+.vt-brand-header {
+  display: grid;
+  grid-template-columns: 39.15% 1fr;
+  align-items: center;
+  box-sizing: border-box;
+  height: calc(13cqw + 2px);
+  border-block: 1px solid #95949f;
+  background: #fff;
+  container-type: inline-size;
+}
+
+.vt-brand-header .vt-brand-logo {
+  display: block;
+  width: 37.2cqw;
+  max-width: none;
+  height: auto;
+  margin-inline-start: 0.5cqw;
+}
+
+.vt-brand-lines {
+  min-width: 0;
+  color: #1a1a1a;
+  font-size: 1.36cqw;
+  line-height: 1.912;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.vt-brand-lines p {
+  margin: 0;
+}
+
+.vt-brand-lines .is-tax {
+  font-weight: 600;
 }
 
 /* ------------------------------------------------------------ markdown (notes, descriptions) */
