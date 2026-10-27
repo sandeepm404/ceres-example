@@ -156,7 +156,7 @@
 
 /* An email stays on one line while it fits and breaks only when its column is too narrow. */
 .vt-email {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* One unbroken word (a GSTIN, an email) carries on from its label and breaks at the edge. */
@@ -358,7 +358,7 @@
 /* A long unbroken value (a URL, a code) breaks where it must; figures still never wrap. A
    label wraps only between words, never inside one ("GSTI N:"). */
 .vt-billing-fields .vt-cell-value {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .vt-billing-fields .vt-cell-label {
@@ -520,7 +520,7 @@
 }
 
 .vt-additional .vt-cell-value {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .vt-grid-row + .vt-grid-row {
@@ -600,7 +600,7 @@
 }
 
 .vt-irn-value {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .vt-qr-list {
@@ -1110,39 +1110,52 @@
   background: #fff;
 }
 
-/* The header is laid out as its 2000 × 260 px artwork, scaled to the content width (cqw of
-   the header itself, so screen and print keep the same proportions): rules above and below,
-   the logo on the left, the address, contact and tax lines as text (sharp at any size). */
+/* The company header: rules above and below, the logo on the left, the address, contact and
+   tax lines as text in the document's own text size (with the text scale), so they read as
+   part of the document and stay sharp; a line too long for its column wraps between items. */
 .vt-brand-header {
   display: grid;
-  grid-template-columns: 39.15% 1fr;
+  grid-template-columns: 30% minmax(0, 1fr);
   align-items: center;
-  box-sizing: border-box;
-  height: calc(13cqw + 2px);
+  column-gap: 16px;
+  padding-block: 8px;
   border-block: 1px solid #95949f;
   background: #fff;
-  container-type: inline-size;
 }
 
 .vt-brand-header .vt-brand-logo {
   display: block;
-  width: 37.2cqw;
+  width: 100%;
   max-width: none;
   height: auto;
-  margin-inline-start: 0.5cqw;
 }
 
 .vt-brand-lines {
   min-width: 0;
-  color: #1a1a1a;
-  font-size: 1.36cqw;
-  line-height: 1.912;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  line-height: 1.5;
+  overflow-wrap: break-word;
 }
 
 .vt-brand-lines p {
   margin: 0;
+}
+
+/* Each item (an address part, a number, an address, a tax number) stays on one line. */
+.vt-brand-lines span {
+  white-space: nowrap;
+}
+
+/* Narrow pages: the logo above the lines. */
+@container vt-doc (width < 600px) {
+  .vt-brand-header {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  .vt-brand-header .vt-brand-logo {
+    width: min(100%, 280px);
+  }
 }
 
 .vt-brand-lines .is-tax {
@@ -1249,7 +1262,7 @@
 .vt-doc :is(.vt-note-body, .vt-item-desc) .toastui-editor-contents :is(th, td) {
   /* A cell's text wraps where it must, so the table never runs past its panel (beside the
      bank on a narrow or zoomed page). */
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   padding: var(--vt-pad) var(--vt-pad-x);
   border: var(--vt-rule-width) solid var(--vt-rule);
   background: none;
@@ -1483,7 +1496,7 @@
 @container vt-billing (width < 460px) {
   .vt-billing-fields .vt-cell-value:has(.vt-email),
   .vt-billing-fields .vt-email {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 }
 
@@ -1634,7 +1647,7 @@
 
   .vt-items.is-print-compact td.is-word {
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .vt-items.is-print-compact td.is-word .vt-num {
@@ -2178,7 +2191,7 @@
   /* Phones: a long account number wraps inside the full-width bank panel. */
   @container vt-doc (width < 600px) {
     .vt-doc .vt-bank-value {
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
     }
   }
 
