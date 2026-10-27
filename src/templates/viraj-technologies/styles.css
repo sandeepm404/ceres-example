@@ -1111,16 +1111,16 @@
 }
 
 /* The company header: rules above and below, the logo on the left, the address, contact and
-   tax lines as text in the document's own text size (with the text scale), so they read as
-   part of the document and stay sharp; a line too long for its column wraps between items.
-   The logo takes up to 40%, as large as the brands strip's logos (user request); the lines
-   never wrap (user, 27 Oct): they keep their full width and the logo gives way. */
+   tax lines as text, so they stay sharp. Laid out as the client's letterhead (reference PDF,
+   user 27 Oct): it scales with the page width like the brands strip and is as tall as it
+   (276/1968 of the width): the logo 36% wide, the lines from 16 px after it to the end edge,
+   one line each. */
 .vt-brand-header {
   display: grid;
-  grid-template-columns: minmax(0, 40%) minmax(max-content, 1fr);
+  grid-template-columns: 36% minmax(0, 1fr);
   align-items: center;
   column-gap: 16px;
-  padding-block: 12px; /* at most 130 px tall, five lines included (user, 27 Oct) */
+  padding-block: 2cqw;
   border-block: 1px solid #95949f;
   background: #fff;
 }
@@ -1132,11 +1132,12 @@
   height: auto;
 }
 
+/* 4 lines × 1.48cqw × 1.69 + 4cqw of padding = the strip's 14cqw. */
 .vt-brand-lines {
   min-width: 0;
-  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
-  line-height: 1.6;
-  overflow-wrap: break-word;
+  font-size: 1.48cqw;
+  line-height: 1.69;
+  white-space: nowrap;
 }
 
 .vt-brand-lines p {
@@ -1148,16 +1149,24 @@
   white-space: nowrap;
 }
 
-/* Narrow pages, where the unwrapped lines would leave the logo too small (under 200 px): the
-   logo above the lines. A printed page (714 px and wider) keeps them side by side. */
+/* Narrow screens (phones), where the scaled lines would be too small to read: the logo above
+   the lines, in the document's text size, wrapping between items. Printed pages (714 px and
+   wider) keep the letterhead layout. */
 @container vt-doc (width < 700px) {
   .vt-brand-header {
     grid-template-columns: minmax(0, 1fr);
     row-gap: 8px;
+    padding-block: 12px;
   }
 
   .vt-brand-header .vt-brand-logo {
     width: min(100%, 360px);
+  }
+
+  .vt-brand-lines {
+    font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+    line-height: 1.6;
+    white-space: normal;
   }
 }
 
