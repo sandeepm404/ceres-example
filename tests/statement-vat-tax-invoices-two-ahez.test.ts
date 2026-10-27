@@ -16,6 +16,7 @@ import {
   fixedLabel,
   isLanguageNeutral,
   labelRate,
+  partyAddress,
   partyRows,
   registerStatementVatTaxInvoicesTwoAhezHelpers,
   splitBilingual,
@@ -189,6 +190,27 @@ describe("bilingual values", () => {
     payload.invoice.billedBy.street = long;
     const html = render(payload);
     expect(html).toContain('class="vt-av is-long" dir="rtl"><bdi dir="auto">');
+  });
+
+  it("composes the shipping address line from its parts, per language", () => {
+    const { shippedTo } = basePayload().invoice;
+    const plain = partyAddress(shippedTo);
+    expect(plain.en).toBe(
+      `${shippedTo.street}, ${shippedTo.city}, ${shippedTo.state}, ${shippedTo.country} - ${shippedTo.pincode}`
+    );
+    expect(plain.ar).toBe("");
+
+    const both = partyAddress({ ...shippedTo, city: `${shippedTo.city} ${AR}` });
+    expect(both.en).toContain(shippedTo.city);
+    expect(both.ar).toContain(AR);
+    expect(both.ar).toContain(shippedTo.pincode);
+
+    expect(partyAddress({ address: `Line ${AR}` })).toMatchObject({ en: "Line", ar: AR });
+  });
+
+  it("prints the composed address in the Shipped To card", () => {
+    const { shippedTo } = basePayload().invoice;
+    expect(text(render())).toContain(`${shippedTo.street}, ${shippedTo.city}`);
   });
 
   it("keeps a two-language item name intact in its cell", () => {

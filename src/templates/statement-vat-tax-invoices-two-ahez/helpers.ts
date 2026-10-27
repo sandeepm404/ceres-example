@@ -246,6 +246,29 @@ const row = (
 const compact = (rows: Array<Row | null>): Row[] =>
   rows.filter((entry): entry is Row => entry !== null);
 
+// The one-line address under a shipping party's name: the party's own
+// `address` when it has one, else composed from its parts in reading order
+// (street, city, state, country - postal code), each part split into its
+// English and Arabic sides so both lines read whole.
+export const partyAddress = (party: any): Bilingual => {
+  if (!party || typeof party !== "object") return { en: "", ar: "" };
+  if (asText(party.address)) return splitBilingual(party.address);
+  const parts = [party.street, party.city, party.state].map(splitBilingual);
+  const country = asText(party.country);
+  const pincode = asText(party.pincode) || asText(party.zipCode);
+  const line = (side: "en" | "ar", countryName: string): string => {
+    const head = [...parts.map((part) => part[side]), countryName]
+      .filter(Boolean)
+      .join(side === "ar" ? "، " : ", ");
+    return [head, pincode].filter(Boolean).join(" - ");
+  };
+  const hasArabic = parts.some((part) => part.ar);
+  return {
+    en: line("en", country),
+    ar: hasArabic ? line("ar", arabicEquivalent("country", country) || country) : "",
+  };
+};
+
 // A party's own labelled extras: custom fields, additional ids and party
 // headers, as the account labelled them. `showInInvoice` is opt-out.
 export const partyExtras = (party: any): Row[] => {
@@ -622,6 +645,7 @@ export function registerStatementVatTaxInvoicesTwoAhezHelpers(HB: any): void {
   HB.registerHelper("arabicAmountInWords", arabicAmountInWords);
   HB.registerHelper("bilingual", splitBilingual);
   HB.registerHelper("bilingualList", splitBilingualList);
+  HB.registerHelper("partyAddress", partyAddress);
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */

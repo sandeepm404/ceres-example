@@ -173,7 +173,7 @@
           <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedFrom"}}</span>
         </div>
         {{#with (bilingual invoice.shippedFrom.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
-        {{#if invoice.shippedFrom.address}}{{#with (bilingual invoice.shippedFrom.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
+        {{#with (partyAddress invoice.shippedFrom) as |a|}}{{#if (or a.en a.ar)}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/if}}{{/with}}
         <div class="vt-rows">
           {{#each (partyRows invoice.shippedFrom invoice.customLabels)}}
           <div class="vt-row">
@@ -193,7 +193,7 @@
           <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedTo"}}</span>
         </div>
         {{#with (bilingual invoice.shippedTo.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
-        {{#if invoice.shippedTo.address}}{{#with (bilingual invoice.shippedTo.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
+        {{#with (partyAddress invoice.shippedTo) as |a|}}{{#if (or a.en a.ar)}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/if}}{{/with}}
         <div class="vt-rows">
           {{#each (partyRows invoice.shippedTo invoice.customLabels)}}
           <div class="vt-row">
