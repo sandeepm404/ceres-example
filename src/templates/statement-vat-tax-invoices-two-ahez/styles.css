@@ -1,0 +1,674 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=block");
+
+/*
+ * statement-vat-tax-invoices-two-ahez — bilingual English + Arabic VAT invoice.
+ * Sizes are the design's own, measured at A4 width. Layout uses logical
+ * properties (inline/block, start/end) so dir="rtl" mirrors the page.
+ */
+
+.vt-shell {
+  --vt-font-size-xs: 10px;
+  --vt-font-size-s: 10px;
+  --vt-font-size-base: 10px;
+  --vt-font-size-m: 12px;
+  --vt-font-size-lg: 15px;
+  --vt-font-size-xl: 20px;
+  --vt-accent: var(--ceres-primary-color, #7e3af2);
+  --vt-text: #18181b;
+  --vt-muted: #6b6b76;
+  --vt-card-bg: #f8f5fe;
+  --vt-line: #e7e7ec;
+  --vt-row-height: 14px;
+
+  font-family: var(--vt-script-font, "Inter"), "Inter", "Noto Sans Arabic",
+    sans-serif;
+  font-size: var(--vt-font-size-base);
+  line-height: 1.6;
+  color: var(--vt-text);
+  background: #fff;
+  font-variant-numeric: lining-nums;
+}
+
+.vt-shell *,
+.vt-shell *::before,
+.vt-shell *::after {
+  box-sizing: border-box;
+}
+
+.vt-shell p,
+.vt-shell h1 {
+  margin: 0;
+}
+
+.vt-shell p,
+.vt-shell li {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.vt-shell [lang="ar"],
+.vt-ar {
+  font-family: var(--vt-script-font, "Noto Sans Arabic"), "Noto Sans Arabic",
+    "Inter", sans-serif;
+}
+
+.vt-page {
+  padding-block: 22px 20px;
+  padding-inline: 19px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────── */
+
+.vt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-block-end: 9px;
+}
+
+.vt-header-main {
+  flex: 0 1 378px;
+  min-inline-size: 0;
+}
+
+.vt-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 12px;
+}
+
+.vt-title {
+  font-size: var(--vt-font-size-xl);
+  font-weight: 600;
+  line-height: 1.3;
+  color: #27272a;
+}
+
+.vt-status .invoice-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.vt-subtitle {
+  margin-block-start: 3px;
+  font-size: 11px;
+  color: #3f3f46;
+}
+
+.vt-meta {
+  margin-block-start: 10px;
+  --vt-cols: 64px minmax(0, 1fr) minmax(0, 1fr) 84px;
+}
+
+.vt-meta .vt-v,
+.vt-meta .vt-av {
+  white-space: nowrap;
+}
+
+.vt-header-side {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.vt-logo-img,
+.vt-logo img {
+  display: block;
+  max-inline-size: 124px;
+  max-block-size: 74px;
+  object-fit: contain;
+}
+
+.vt-qrs {
+  display: flex;
+  gap: 8px;
+}
+
+.vt-qr img {
+  display: block;
+  inline-size: 74px;
+  block-size: 74px;
+}
+
+.vt-qr.is-empty {
+  display: none;
+}
+
+/* ─── Detail rows (label · value · Arabic-side value · Arabic label) ──── */
+
+.vt-rows {
+  --vt-cols: 76px minmax(0, 1fr) minmax(0, 1fr) 74px;
+}
+
+.vt-row {
+  display: grid;
+  grid-template-columns: var(--vt-cols);
+  column-gap: 4px;
+  letter-spacing: -0.1px;
+  align-items: start;
+  min-block-size: var(--vt-row-height);
+  line-height: var(--vt-row-height);
+  overflow-wrap: anywhere;
+}
+
+.vt-row + .vt-row {
+  margin-block-start: 0;
+}
+
+/* A long two-language value: English on the first line, Arabic on the next,
+   each across both value columns, labels on the first line. */
+.vt-row:has(.vt-av.is-long) .vt-v {
+  grid-column: 2 / 4;
+  grid-row: 1;
+}
+
+.vt-row:has(.vt-av.is-long) .vt-av {
+  grid-column: 2 / 4;
+  grid-row: 2;
+}
+
+.vt-row:has(.vt-av.is-long) .vt-l {
+  grid-row: 1;
+}
+
+.vt-row:has(.vt-av.is-long) .vt-al {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.vt-l {
+  color: var(--vt-muted);
+}
+
+.vt-v {
+  color: var(--vt-text);
+  font-weight: 500;
+}
+
+.vt-av {
+  text-align: end;
+  color: var(--vt-text);
+  font-weight: 500;
+}
+
+.vt-al {
+  text-align: end;
+  color: var(--vt-muted);
+}
+
+/* The Arabic cells carry dir="rtl"; inside an RTL page `end` is the left edge,
+   so they pin to the physical right edge of an LTR row and mirror with it. */
+.vt-shell[dir="ltr"] .vt-av,
+.vt-shell[dir="ltr"] .vt-al {
+  text-align: right;
+}
+
+.vt-shell[dir="rtl"] .vt-av,
+.vt-shell[dir="rtl"] .vt-al {
+  text-align: left;
+}
+
+/* ─── Cards ──────────────────────────────────────────────────────────── */
+
+.vt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-block-end: 10px;
+}
+
+.vt-card {
+  background: var(--vt-card-bg);
+  border-radius: 6px;
+  padding-block: 9px 7px;
+  padding-inline: 8px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.vt-card-outline {
+  background: #fcfcfd;
+  border: 1px solid var(--vt-line);
+}
+
+.vt-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  min-block-size: 16px;
+}
+
+.vt-h {
+  font-size: var(--vt-font-size-base);
+  font-weight: 600;
+  color: var(--vt-accent);
+  line-height: 16px;
+}
+
+.vt-card-head .vt-h.vt-ar {
+  font-size: 11px;
+}
+
+.vt-name {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block: 4px 4px;
+  font-size: var(--vt-font-size-m);
+  font-weight: 600;
+  line-height: 16px;
+  color: #27272a;
+}
+
+.vt-address {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+  margin-block-end: 6px;
+  font-size: 10px;
+  line-height: 13px;
+  color: var(--vt-text);
+}
+
+.vt-card .vt-rows {
+  margin-block-start: 4px;
+}
+
+/* Each row is its own grid: the English value takes its own width (wrapping
+   past 60%), the Arabic-side value the rest, so neither pushes the labels. */
+.vt-party .vt-rows {
+  --vt-cols: 84px fit-content(60%) minmax(0, 1fr) 90px;
+  --vt-row-height: 14.25px;
+}
+
+
+/* ─── Line items ─────────────────────────────────────────────────────── */
+
+.vt-items {
+  margin-block: 0 12px;
+}
+
+.vt-items .line-items-table {
+  font-size: var(--vt-font-size-base);
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--vt-line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.vt-items .line-items-table th,
+.vt-items .line-items-table td {
+  border: none;
+  text-align: center;
+  vertical-align: top;
+}
+
+.vt-items .line-items-table thead th {
+  background: var(--vt-accent);
+  color: #fff;
+  font-weight: 600;
+  line-height: 13px;
+  padding: 7px 6px;
+  vertical-align: middle;
+  white-space: pre-line;
+}
+
+.vt-items .line-items-table thead .vt-th-ar {
+  display: block;
+  font-family: var(--vt-script-font, "Noto Sans Arabic"), "Noto Sans Arabic",
+    "Inter", sans-serif;
+}
+
+.vt-items .line-items-table tbody td {
+  padding: 8px 6px 6px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.vt-items .line-items-table tbody tr.row-even {
+  background: transparent;
+}
+
+.vt-items .line-items-table .col-index {
+  width: 44px;
+}
+
+.vt-items .line-items-table thead .col-index {
+  border-start-end-radius: 0;
+}
+
+.vt-items .line-items-table td.col-item,
+.vt-items .line-items-table th.col-item {
+  width: 33%;
+  white-space: normal;
+  text-align: start;
+}
+
+.vt-item {
+  text-align: start;
+}
+
+.vt-item .vt-item-ar {
+  font-family: var(--vt-script-font, "Noto Sans Arabic"), "Noto Sans Arabic",
+    "Inter", sans-serif;
+  text-align: right;
+}
+
+.vt-item span.vt-item-ar {
+  margin-block-start: 4px;
+  font-weight: 600;
+}
+
+.vt-item .item-name {
+  display: block;
+  font-weight: 500;
+}
+
+.vt-item-description,
+.vt-items .item-description {
+  margin-block-start: 2px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: normal;
+}
+
+.vt-items .item-description p {
+  margin: 0;
+}
+
+.vt-items .item-description,
+.vt-items .item-description * {
+  font-size: var(--vt-font-size-base);
+  line-height: 16px;
+}
+
+.vt-items .line-items-table tbody tr.row-summary td {
+  border-block-start: 1px solid var(--vt-line);
+}
+
+.vt-items .line-items-table > tbody > tr.row-filler {
+  display: none;
+}
+
+.vt-items thead {
+  display: table-header-group;
+}
+
+.vt-items tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* ─── Summary ────────────────────────────────────────────────────────── */
+
+.vt-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 286px;
+  gap: 20px;
+  align-items: start;
+}
+
+.vt-summary-start {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vt-bank .vt-rows {
+  --vt-cols: 100px minmax(0, 1fr) minmax(0, 1fr) 100px;
+}
+
+.vt-upi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-block-start: 6px;
+}
+
+.vt-upi-qr {
+  inline-size: 72px;
+  block-size: 72px;
+}
+
+.vt-bi {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+}
+
+.vt-text-card {
+  padding-block: 7px 5px;
+}
+
+.vt-text {
+  margin-block-start: 4px;
+  font-size: var(--vt-font-size-base);
+  line-height: 12px;
+  color: var(--vt-text);
+}
+
+.vt-text *,
+.vt-shell .vt-text .toastui-editor-contents,
+.vt-shell .vt-text .toastui-editor-contents * {
+  font-family: inherit;
+  font-size: var(--vt-font-size-base);
+  line-height: 12px;
+  margin-block: 0;
+  padding: 0;
+  color: inherit;
+}
+
+.vt-shell .vt-items .item-description .toastui-editor-contents,
+.vt-shell .vt-items .item-description .toastui-editor-contents * {
+  font-family: inherit;
+  font-size: var(--vt-font-size-base);
+  line-height: 16px;
+  margin-block: 0;
+  padding: 0;
+  color: inherit;
+}
+
+.vt-text p + p {
+  margin-block-start: 6px;
+}
+
+.vt-text ol,
+.vt-text ul {
+  margin: 0;
+  padding-inline-start: 14px;
+}
+
+.vt-summary-end {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.vt-tot-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: 8px;
+  line-height: 15px;
+  min-block-size: 15px;
+}
+
+.vt-tot-l {
+  color: var(--vt-muted);
+}
+
+.vt-tot-al {
+  color: var(--vt-muted);
+  text-align: right;
+}
+
+.vt-shell[dir="rtl"] .vt-tot-al {
+  text-align: left;
+}
+
+.vt-tot-v {
+  text-align: end;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.vt-converted {
+  display: block;
+  font-size: 10px;
+  color: var(--vt-muted);
+}
+
+.vt-tot-grand {
+  align-items: center;
+  margin-block: 10px 6px;
+  padding-block: 8px;
+  border-block-start: 2px solid #3f3f46;
+  border-block-end: 1px solid #3f3f46;
+  font-size: var(--vt-font-size-lg);
+  line-height: 18px;
+}
+
+.vt-tot-grand .vt-tot-l,
+.vt-tot-grand .vt-tot-al,
+.vt-tot-grand .vt-tot-v {
+  color: #27272a;
+  font-weight: 700;
+}
+
+.vt-tot-grand .vt-tot-al {
+  text-align: start;
+}
+
+.vt-shell[dir="ltr"] .vt-tot-grand .vt-tot-al {
+  text-align: left;
+}
+
+.vt-tot-due .vt-tot-v {
+  font-weight: 700;
+}
+
+.vt-totals .is-hidden-by-totals,
+.vt-totals .is-hidden-by-taxes,
+.vt-totals .is-hidden-by-words-setting,
+.vt-totals .is-hidden-by-precision {
+  display: none;
+}
+
+.vt-words {
+  margin-block-start: 10px;
+}
+
+.vt-words-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--vt-muted);
+  line-height: 16px;
+}
+
+.vt-words-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+  margin-block-start: 5px;
+  font-weight: 500;
+  line-height: 13px;
+}
+
+.vt-creator {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: 8px;
+}
+
+.vt-sign {
+  margin-block-start: 12px;
+  text-align: center;
+}
+
+.vt-sign-for {
+  line-height: 16px;
+}
+
+.vt-sign-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 47px;
+  margin-block: 2px 9px;
+  background: #f4f4f6;
+}
+
+.vt-sign-img,
+.vt-sign-box img {
+  max-block-size: 45px;
+  max-inline-size: 100%;
+  object-fit: contain;
+}
+
+.vt-sign-label {
+  line-height: 16px;
+  color: var(--vt-text);
+}
+
+/* ─── Tail blocks ────────────────────────────────────────────────────── */
+
+.vt-table-block {
+  margin-block-start: 14px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.vt-page > .vt-text-card {
+  margin-block-start: 10px;
+}
+
+.vt-attachments {
+  margin: 6px 0 0;
+  padding-inline-start: 14px;
+}
+
+.vt-footer-fields {
+  margin-block-start: 10px;
+  --vt-cols: 120px 1fr;
+}
+
+.invoice-letterhead.is-empty,
+.invoice-letterhead-footer.is-empty {
+  display: none;
+}
+
+.invoice-letterhead img,
+.invoice-letterhead-footer img {
+  display: block;
+  inline-size: 100%;
+}
+
+@media print {
+  .vt-shell {
+    --vt-font-size-xs: 10px;
+    --vt-font-size-s: 10px;
+    --vt-font-size-base: 10px;
+    --vt-font-size-m: 12px;
+    --vt-font-size-lg: 15px;
+    --vt-font-size-xl: 20px;
+
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .vt-shell * {
+    box-shadow: none !important;
+  }
+
+  /* The page foot needs no padding: the summary may run to the page edge. */
+  .vt-page {
+    padding-block-end: 0;
+  }
+}
