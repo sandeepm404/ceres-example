@@ -1101,12 +1101,13 @@
 
 /* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), not the
    letterhead or footer. The brands strip fills the content width at its own aspect ratio,
-   never cropped or stretched (the 1968 px original stays sharp on paper). */
+   never cropped or stretched (vector, sharp on paper). */
 .vt-brands img {
   display: block;
   width: 100%;
   max-width: none;
   height: auto;
+  background: #fff;
 }
 
 /* The header is laid out as its 2000 × 260 px artwork, scaled to the content width (cqw of
