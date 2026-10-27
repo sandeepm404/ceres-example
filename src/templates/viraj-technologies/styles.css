@@ -1118,8 +1118,8 @@
   display: grid;
   grid-template-columns: 40% minmax(0, 1fr);
   align-items: center;
-  column-gap: 24px;
-  padding-block: 12px;
+  column-gap: 32px;
+  padding-block: 12px; /* at most 130 px tall, five lines included (user, 27 Oct) */
   border-block: 1px solid #95949f;
   background: #fff;
 }
@@ -1134,7 +1134,7 @@
 .vt-brand-lines {
   min-width: 0;
   font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
-  line-height: 1.5;
+  line-height: 1.6;
   overflow-wrap: break-word;
 }
 
