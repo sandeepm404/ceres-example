@@ -16,6 +16,7 @@ import {
   fixedLabel,
   isLanguageNeutral,
   labelRate,
+  labelPair,
   partyAddress,
   partyRows,
   registerStatementVatTaxInvoicesTwoAhezHelpers,
@@ -162,6 +163,22 @@ describe("bilingual values", () => {
       en: "Acme Co",
       ar: AR,
       gap: " ",
+      arFirst: false,
+    });
+    expect(splitBilingual(`${AR} Acme Co`)).toMatchObject({
+      en: "Acme Co",
+      ar: AR,
+      arFirst: true,
+    });
+    expect(splitBilingual(`${AR} | Acme Co`)).toMatchObject({
+      en: "Acme Co",
+      ar: AR,
+      arFirst: true,
+    });
+    // Numbers stay with the words they belong to.
+    expect(splitBilingual(`12 Main St ${AR} - 345`)).toMatchObject({
+      en: "12 Main St",
+      ar: `${AR} - 345`,
     });
     expect(splitBilingual(`12 Main St | 12 ${AR}`)).toMatchObject({
       en: "12 Main St",
@@ -211,6 +228,35 @@ describe("bilingual values", () => {
   it("prints the composed address in the Shipped To card", () => {
     const { shippedTo } = basePayload().invoice;
     expect(text(render())).toContain(`${shippedTo.street}, ${shippedTo.city}`);
+  });
+
+  it("splits a two-language label: user's Arabic wins, else the fixed one", () => {
+    expect(labelPair(`${AR} Total`, "total")).toEqual({ en: "Total", ar: AR });
+    expect(labelPair("Total", "total")).toEqual({
+      en: "Total",
+      ar: fixedLabel("total"),
+    });
+    expect(labelPair(AR, "vatNumber")).toEqual({ en: "", ar: AR });
+    expect(labelPair("", "total")).toEqual({ en: "", ar: fixedLabel("total") });
+  });
+
+  it("prints a two-language custom label once per side", () => {
+    const payload = basePayload();
+    payload.invoice.customLabels.signature = `${AR} Signed By`;
+    payload.invoice.invoiceTitle = `${AR} Bill`;
+    const html = render(payload);
+    const out = text(html);
+    expect(html).toContain('<p class="vt-sign-label">Signed By</p>');
+    expect(html).toContain(`dir="rtl" lang="ar">${AR}</p>`);
+    expect(out).not.toContain(fixedLabel("signature"));
+    expect(out).not.toContain(fixedLabel("taxInvoice"));
+  });
+
+  it("keeps an Arabic-first item name intact in its cell", () => {
+    const payload = basePayload();
+    const name = `${AR} ${payload.invoice.items[0].name}`;
+    payload.invoice.items[0].name = name;
+    expect(text(render(payload))).toContain(name);
   });
 
   it("keeps a two-language item name intact in its cell", () => {

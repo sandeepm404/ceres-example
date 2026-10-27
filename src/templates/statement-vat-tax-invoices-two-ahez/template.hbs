@@ -41,39 +41,41 @@
     <header class="vt-header">
       <div class="vt-header-main">
         <div class="vt-title-row">
-          {{#if invoice.invoiceTitle}}<h1 class="vt-title">{{invoice.invoiceTitle}}</h1>{{/if}}
-          {{#if (eq invoice.billType "INVOICE")}}<span class="vt-title vt-ar" dir="rtl" lang="ar">{{fixedLabel "taxInvoice"}}</span>{{/if}}
+          {{!-- The title as typed, split by language. Its own Arabic part wins;
+                an invoice with none falls back to the fixed Arabic title. --}}
+          {{#if (labelEn invoice.invoiceTitle)}}<h1 class="vt-title">{{labelEn invoice.invoiceTitle}}</h1>{{/if}}
+          {{#if (labelAr invoice.invoiceTitle "")}}<span class="vt-title vt-ar" dir="rtl" lang="ar">{{labelAr invoice.invoiceTitle ""}}</span>{{else}}{{#if (eq invoice.billType "INVOICE")}}<span class="vt-title vt-ar" dir="rtl" lang="ar">{{fixedLabel "taxInvoice"}}</span>{{/if}}{{/if}}
           <span class="vt-status">{{> InvoiceStatus invoice}}</span>
         </div>
-        {{#if invoice.invoiceSubTitle}}<p class="vt-subtitle">{{invoice.invoiceSubTitle}}</p>{{/if}}
+        {{#if invoice.invoiceSubTitle}}<p class="vt-subtitle">{{labelEn invoice.invoiceSubTitle}}{{#if (labelAr invoice.invoiceSubTitle "")}} <span class="vt-ar" dir="rtl" lang="ar">{{labelAr invoice.invoiceSubTitle ""}}</span>{{/if}}</p>{{/if}}
 
         <div class="vt-rows vt-meta">
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.invoiceNumber}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.invoiceNumber}}</span>
             <span class="vt-v">{{invoice.invoiceNumber}}</span>
             <span class="vt-av" dir="rtl"><bdi dir="ltr">{{invoice.invoiceNumber}}</bdi></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "invoiceNumber"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.invoiceNumber "invoiceNumber"}}</span>
           </div>
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.invoiceDate}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.invoiceDate}}</span>
             <span class="vt-v">{{formatFullDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</span>
             <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</bdi></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "invoiceDate"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.invoiceDate "invoiceDate"}}</span>
           </div>
           {{#if invoice.dueDate}}
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.dueDate}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.dueDate}}</span>
             <span class="vt-v">{{formatFullDateWithOffset invoice.dueDate invoice.ownerOffset}}</span>
             <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.dueDate invoice.ownerOffset}}</bdi></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "dueDate"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.dueDate "dueDate"}}</span>
           </div>
           {{/if}}
           {{#if invoice.purchaseOrderNumber}}
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.purchaseOrderNumber}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.purchaseOrderNumber}}</span>
             <span class="vt-v">{{invoice.purchaseOrderNumber}}</span>
             <span class="vt-av" dir="rtl"><bdi dir="ltr">{{invoice.purchaseOrderNumber}}</bdi></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "purchaseOrderNumber"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.purchaseOrderNumber "purchaseOrderNumber"}}</span>
           </div>
           {{/if}}
           {{#each invoice.customFields}}
@@ -126,8 +128,8 @@
     <div class="vt-grid">
       <section class="vt-card vt-party">
         <div class="vt-card-head">
-          <span class="vt-h">{{invoice.customLabels.billedBy}}</span>
-          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "seller"}}</span>
+          <span class="vt-h">{{labelEn invoice.customLabels.billedBy}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.billedBy "seller"}}</span>
         </div>
         {{#with (bilingual invoice.billedBy.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
         {{#if invoice.billedBy.address}}{{#with (bilingual invoice.billedBy.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
@@ -145,8 +147,8 @@
 
       <section class="vt-card vt-party">
         <div class="vt-card-head">
-          <span class="vt-h">{{invoice.customLabels.billedTo}}</span>
-          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "buyer"}}</span>
+          <span class="vt-h">{{labelEn invoice.customLabels.billedTo}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.billedTo "buyer"}}</span>
         </div>
         {{#with (bilingual invoice.billedTo.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
         {{#if invoice.billedTo.address}}{{#with (bilingual invoice.billedTo.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
@@ -169,8 +171,8 @@
       {{#if mapped.visibility.shippedFrom}}
       <section class="vt-card vt-party">
         <div class="vt-card-head">
-          <span class="vt-h">{{invoice.customLabels.shippedFrom}}</span>
-          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedFrom"}}</span>
+          <span class="vt-h">{{labelEn invoice.customLabels.shippedFrom}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.shippedFrom "shippedFrom"}}</span>
         </div>
         {{#with (bilingual invoice.shippedFrom.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
         {{#with (partyAddress invoice.shippedFrom) as |a|}}{{#if (or a.en a.ar)}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/if}}{{/with}}
@@ -189,8 +191,8 @@
       {{#if mapped.visibility.shippedTo}}
       <section class="vt-card vt-party">
         <div class="vt-card-head">
-          <span class="vt-h">{{invoice.customLabels.shippedTo}}</span>
-          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedTo"}}</span>
+          <span class="vt-h">{{labelEn invoice.customLabels.shippedTo}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.shippedTo "shippedTo"}}</span>
         </div>
         {{#with (bilingual invoice.shippedTo.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
         {{#with (partyAddress invoice.shippedTo) as |a|}}{{#if (or a.en a.ar)}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/if}}{{/with}}
@@ -215,16 +217,16 @@
       {{#if mapped.visibility.transport}}
       <section class="vt-card vt-party">
         <div class="vt-card-head">
-          <span class="vt-h">{{invoice.customLabels.transport}}</span>
-          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "transportDetails"}}</span>
+          <span class="vt-h">{{labelEn invoice.customLabels.transport}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.transport "transportDetails"}}</span>
         </div>
         <div class="vt-rows">
           {{#if (or invoice.transportDetails.transporter.name invoice.transportDetails.transporterName)}}
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.transportName}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.transportName}}</span>
             <span class="vt-v">{{#if invoice.transportDetails.transporter.name}}{{invoice.transportDetails.transporter.name}}{{else}}{{invoice.transportDetails.transporterName}}{{/if}}</span>
             <span class="vt-av" dir="rtl"></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "transport"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.transportName "transport"}}</span>
           </div>
           {{/if}}
           {{#if (or invoice.transportDetails.transporter.transporterId invoice.transportDetails.transporterId)}}
@@ -237,18 +239,18 @@
           {{/if}}
           {{#if invoice.transportDetails.challanNumber}}
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.challanNumber}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.challanNumber}}</span>
             <span class="vt-v">{{invoice.transportDetails.challanNumber}}</span>
             <span class="vt-av" dir="rtl"><bdi dir="ltr">{{sideValue invoice.transportDetails.challanNumber}}</bdi></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "challanNumber"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.challanNumber "challanNumber"}}</span>
           </div>
           {{/if}}
           {{#if invoice.transportDetails.challanDate}}
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.challanDate}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.challanDate}}</span>
             <span class="vt-v">{{formatFullDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</span>
             <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</bdi></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "challanDate"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.challanDate "challanDate"}}</span>
           </div>
           {{/if}}
           {{#if invoice.transportDetails.transportMode}}
@@ -285,10 +287,10 @@
           {{/if}}
           {{#if invoice.transportDetails.extraInformation}}
           <div class="vt-row">
-            <span class="vt-l">{{invoice.customLabels.transportExtraInfo}}</span>
+            <span class="vt-l">{{labelEn invoice.customLabels.transportExtraInfo}}</span>
             <span class="vt-v">{{invoice.transportDetails.extraInformation}}</span>
             <span class="vt-av" dir="rtl"><bdi dir="ltr">{{sideValue invoice.transportDetails.extraInformation}}</bdi></span>
-            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "extraInformation"}}</span>
+            <span class="vt-al" dir="rtl" lang="ar">{{labelAr invoice.customLabels.transportExtraInfo "extraInformation"}}</span>
           </div>
           {{/if}}
         </div>
@@ -341,7 +343,7 @@
         <thead>
           <tr>
             <th class="col-index" aria-label="Line number"></th>
-            {{#each columns}}{{#unless isHidden}}<th class="{{className}}">{{label}}</th>{{/unless}}{{/each}}
+            {{#each columns}}{{#unless isHidden}}<th class="{{className}}">{{#if (labelAr label "")}}<span class="vt-th-ar" dir="rtl" lang="ar">{{labelAr label ""}}</span>{{/if}}{{labelEn label}}</th>{{/unless}}{{/each}}
           </tr>
         </thead>
         <tbody>
@@ -358,7 +360,7 @@
                       {{!-- Both halves of the name stay adjacent (with the typed gap) so the
                             cell holds the name exactly as entered; the Arabic half drops
                             to its own line. --}}
-                      {{#with (bilingual ../item.name) as |n|}}<span class="item-name" dir="auto">{{n.en}}</span>{{#if n.ar}}{{n.gap}}<span class="item-name vt-item-ar" dir="rtl" lang="ar">{{n.ar}}</span>{{/if}}{{/with}}
+                      {{#with (bilingual ../item.name) as |n|}}{{#if n.arFirst}}<span class="item-name vt-item-ar" dir="rtl" lang="ar">{{n.ar}}</span>{{#if n.en}}{{n.gap}}<span class="item-name" dir="auto">{{n.en}}</span>{{/if}}{{else}}<span class="item-name" dir="auto">{{n.en}}</span>{{#if n.ar}}{{n.gap}}<span class="item-name vt-item-ar" dir="rtl" lang="ar">{{n.ar}}</span>{{/if}}{{/if}}{{/with}}
                       {{#if ../item.showSku}}<small class="item-sku">SKU: {{../item.sku}}</small>{{/if}}
                       {{#if ../item.mergedAsNote}}
                         {{#each ../item.mergedNotes}}<small class="item-merged-note">{{this}}</small>{{/each}}
@@ -466,8 +468,8 @@
         {{#if terms.length}}
         <section class="vt-card vt-card-outline vt-text-card">
           <div class="vt-card-head">
-            <span class="vt-h">{{#if label}}{{label}}{{else}}{{@root.invoice.customLabels.terms}}{{/if}}</span>
-            <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "terms"}}</span>
+            <span class="vt-h">{{#if label}}{{labelEn label}}{{else}}{{labelEn @root.invoice.customLabels.terms}}{{/if}}</span>
+            <span class="vt-h vt-ar" dir="rtl" lang="ar">{{#if label}}{{labelAr label "terms"}}{{else}}{{labelAr @root.invoice.customLabels.terms "terms"}}{{/if}}</span>
           </div>
           {{#with (bilingualList terms) as |t|}}
           <div class="vt-text vt-bi">
@@ -482,8 +484,8 @@
         {{#if invoice.notes}}
         <section class="vt-card vt-card-outline vt-text-card">
           <div class="vt-card-head">
-            <span class="vt-h">{{invoice.customLabels.notes}}</span>
-            <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "notes"}}</span>
+            <span class="vt-h">{{labelEn invoice.customLabels.notes}}</span>
+            <span class="vt-h vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.notes "notes"}}</span>
           </div>
           {{#with (bilingual invoice.notes) as |n|}}
           <div class="vt-text vt-bi">
@@ -507,22 +509,22 @@
             data-ceres-subtotal-row="{{key}}"
             {{#if isTaxRow}}data-ceres-subtotal-taxes{{/if}}
             {{#if survivesHideTotals}}data-ceres-subtotal-keep{{/if}}>
-            <span class="vt-tot-l">{{label}}{{#if note}} <small>{{note}}</small>{{/if}}</span>
-            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsFixedLabel key}}{{#with (labelRate label) as |rate|}} (<bdi dir="ltr">{{rate}}</bdi>){{/with}}</span>
+            <span class="vt-tot-l">{{labelEn label}}{{#if note}} <small>{{note}}</small>{{/if}}</span>
+            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsLabelAr label key}}{{#if (labelEn label)}}{{#with (labelRate label) as |rate|}} (<bdi dir="ltr">{{rate}}</bdi>){{/with}}{{/if}}</span>
             <span class="vt-tot-v">{{value}}{{#if converted}}<small class="vt-converted">{{converted}}</small>{{/if}}{{#if extra}}<small class="vt-converted">{{extra.value}}</small>{{/if}}</span>
           </div>
           {{/each}}
           {{#each totals.groups.extra}}
           <div class="vt-tot-row{{#if ../hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
-            <span class="vt-tot-l">{{label}}</span>
-            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsFixedLabel key}}</span>
+            <span class="vt-tot-l">{{labelEn label}}</span>
+            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsLabelAr label key}}</span>
             <span class="vt-tot-v">{{value}}</span>
           </div>
           {{/each}}
           {{#each totals.groups.due}}
           <div class="vt-tot-row vt-tot-{{emphasis}}{{#if ../hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
-            <span class="vt-tot-l">{{label}}</span>
-            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsFixedLabel key}}</span>
+            <span class="vt-tot-l">{{labelEn label}}</span>
+            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsLabelAr label key}}</span>
             <span class="vt-tot-v">{{value}}</span>
           </div>
           {{/each}}
@@ -531,8 +533,8 @@
           <div class="vt-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
             data-ceres-total-in-words>
             <div class="vt-words-head">
-              <span>{{totals.totalInWords.label}}</span>
-              <span class="vt-ar" dir="rtl" lang="ar">{{fixedLabel "totalInWords"}}</span>
+              <span>{{labelEn totals.totalInWords.label}}</span>
+              <span class="vt-ar" dir="rtl" lang="ar">{{labelAr totals.totalInWords.label "totalInWords"}}</span>
             </div>
             <div class="vt-words-body">
               <span class="vt-words-value">{{totals.totalInWords.value}}</span>
@@ -553,8 +555,8 @@
           <div class="vt-sign-box">
             {{#if invoice.signature}}{{> CeresImage src=invoice.signature alt="" class="vt-sign-img"}}{{/if}}
           </div>
-          <p class="vt-sign-label vt-ar" dir="rtl" lang="ar">{{fixedLabel "signature"}}</p>
-          {{#if invoice.customLabels.signature}}<p class="vt-sign-label">{{invoice.customLabels.signature}}</p>{{/if}}
+          <p class="vt-sign-label vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.signature "signature"}}</p>
+          {{#if (labelEn invoice.customLabels.signature)}}<p class="vt-sign-label">{{labelEn invoice.customLabels.signature}}</p>{{/if}}
         </div>
       </div>
     </div>
@@ -584,8 +586,8 @@
     {{#if invoice.attachments.length}}
     <section class="vt-card vt-card-outline vt-text-card">
       <div class="vt-card-head">
-        <span class="vt-h">{{invoice.customLabels.attachment}}</span>
-        <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "attachments"}}</span>
+        <span class="vt-h">{{labelEn invoice.customLabels.attachment}}</span>
+        <span class="vt-h vt-ar" dir="rtl" lang="ar">{{labelAr invoice.customLabels.attachment "attachments"}}</span>
       </div>
       <ul class="vt-attachments">
         {{#each invoice.attachments}}<li><a dir="ltr" href="{{this}}" target="_blank" rel="noopener noreferrer">{{attachmentName this}}</a></li>{{/each}}

@@ -321,6 +321,12 @@
   white-space: pre-line;
 }
 
+.vt-items .line-items-table thead .vt-th-ar {
+  display: block;
+  font-family: var(--vt-script-font, "Noto Sans Arabic"), "Noto Sans Arabic",
+    "Inter", sans-serif;
+}
+
 .vt-items .line-items-table tbody td {
   padding: 8px 6px 6px;
   font-weight: 500;

@@ -164,14 +164,40 @@ const LATIN_LETTER = /[A-Za-zÀ-ɏ]/u;
 
 // `gap` is the text that separated the two parts as typed, so a template can
 // print "en" + gap + "ar" and keep the value's own text intact.
-type Bilingual = { en: string; ar: string; gap?: string };
+type Bilingual = { en: string; ar: string; gap?: string; arFirst?: boolean };
 
+// One part, in either order ("Name الاسم" or "الاسم Name"): words are grouped
+// by script. A word with no letters (a number, a dash) joins the run that
+// follows it, or the run before it at the end of the part, so a house number
+// before a street and a postal code after it stay with their words.
 const splitPart = (part: string): Bilingual => {
-  const at = part.search(ARABIC_LETTER);
-  if (at < 0) return { en: part, ar: "" };
-  const head = part.slice(0, at).trimEnd();
-  if (!LATIN_LETTER.test(head)) return { en: "", ar: part };
-  return { en: head.trim(), ar: part.slice(at).trim(), gap: part.slice(head.length, at) };
+  if (!ARABIC_LETTER.test(part)) return { en: part, ar: "" };
+  if (!LATIN_LETTER.test(part)) return { en: "", ar: part };
+  const words = part.split(/(\s+)/u);
+  const script = (word: string): "en" | "ar" | "" =>
+    ARABIC_LETTER.test(word) ? "ar" : LATIN_LETTER.test(word) ? "en" : "";
+  const sides: Array<"en" | "ar" | ""> = words.map(script);
+  // Neutral words take the script of the next lettered word, else the last.
+  let next: "en" | "ar" | "" = "";
+  for (let i = sides.length - 1; i >= 0; i -= 1) {
+    if (sides[i]) next = sides[i];
+    else if (words[i].trim()) sides[i] = next;
+  }
+  let last: "en" | "ar" | "" = "";
+  sides.forEach((side, i) => {
+    if (side) last = side;
+    else if (words[i].trim()) sides[i] = last;
+  });
+  const collect = (wanted: "en" | "ar"): string =>
+    words
+      .filter((word, i) => word.trim() && sides[i] === wanted)
+      .join(" ")
+      .trim();
+  // The gap is whatever separated the two scripts where they first meet.
+  const firstSide = sides.find(Boolean);
+  const switchAt = sides.findIndex((side) => side && side !== firstSide);
+  const gap = switchAt > 0 ? words.slice(0, switchAt).filter((w) => !w.trim()).pop() ?? " " : " ";
+  return { en: collect("en"), ar: collect("ar"), gap, arFirst: firstSide === "ar" };
 };
 
 export const splitBilingual = (value: any): Bilingual => {
@@ -181,7 +207,12 @@ export const splitBilingual = (value: any): Bilingual => {
   const pieces = text.split(separator).map((part) => part.trim()).filter(Boolean);
   if (pieces.length === 1) {
     const single = splitPart(text);
-    return { en: single.en, ar: single.ar, gap: single.gap ?? "" };
+    return {
+      en: single.en,
+      ar: single.ar,
+      gap: single.gap ?? "",
+      arFirst: Boolean(single.arFirst),
+    };
   }
   const parts = pieces.map(splitPart);
   const join = (side: "en" | "ar"): string =>
@@ -189,7 +220,21 @@ export const splitBilingual = (value: any): Bilingual => {
       .map((part) => part[side])
       .filter(Boolean)
       .join("\n");
-  return { en: join("en"), ar: join("ar"), gap: separator.exec(text)?.[0] ?? " " };
+  return {
+    en: join("en"),
+    ar: join("ar"),
+    gap: separator.exec(text)?.[0] ?? " ",
+    arFirst: ARABIC_LETTER.test(pieces[0]) && !LATIN_LETTER.test(pieces[0]),
+  };
+};
+
+// A label the user can edit, beside a fixed Arabic label. The user's own text
+// wins on each side: its English part prints on the English side (blank when
+// it has none, so a cleared label stays hidden), and its Arabic part replaces
+// the fixed Arabic label when it has one.
+export const labelPair = (label: any, fixedKey: any): Bilingual => {
+  const { en, ar } = splitBilingual(label);
+  return { en, ar: ar || fixedLabel(fixedKey) };
 };
 
 // A list of typed strings (one group of terms), split the same way.
@@ -231,10 +276,11 @@ const row = (
   const text = asText(value);
   if (!text) return null;
   const { en, ar } = splitBilingual(text);
+  const typed = splitBilingual(label);
   return {
     key,
-    label,
-    arLabel: fixedKey ? fixedLabel(fixedKey) : "",
+    label: typed.en,
+    arLabel: typed.ar || (fixedKey ? fixedLabel(fixedKey) : ""),
     value: en,
     arValue: ar || sideValue(en) || arabicEquivalent(key, en),
     // Too long to share the row side by side: the English and Arabic parts
@@ -668,6 +714,18 @@ export function registerStatementVatTaxInvoicesTwoAhezHelpers(HB: any): void {
   HB.registerHelper("bilingual", splitBilingual);
   HB.registerHelper("bilingualList", splitBilingualList);
   HB.registerHelper("partyAddress", partyAddress);
+  HB.registerHelper("labelPair", labelPair);
+  HB.registerHelper("labelEn", (label: any) => splitBilingual(label).en);
+  HB.registerHelper(
+    "labelAr",
+    (label: any, fixedKey: any) => labelPair(label, fixedKey).ar
+  );
+  // Totals rows label their Arabic side by row key, not a fixed-label key.
+  HB.registerHelper(
+    "totalsLabelAr",
+    (label: any, key: any) =>
+      splitBilingual(label).ar || totalsFixedLabel(key)
+  );
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
