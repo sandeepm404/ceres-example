@@ -18,6 +18,8 @@ import {
   labelRate,
   partyRows,
   registerStatementVatTaxInvoicesTwoAhezHelpers,
+  splitBilingual,
+  splitBilingualList,
   totalsFixedLabel,
 } from "../src/templates/statement-vat-tax-invoices-two-ahez/helpers";
 import ceresImagePartial from "../src/widgets/image/CeresImage.hbs";
@@ -148,6 +150,56 @@ describe("Arabic total in words", () => {
   it("prints beside the English words on the page", () => {
     const out = text(render());
     expect(out).toContain(arabicAmountInWords(basePayload().invoice));
+  });
+});
+
+describe("bilingual values", () => {
+  const AR = fixedLabel("city");
+
+  it("splits a value typed in both languages", () => {
+    expect(splitBilingual(`Acme Co ${AR}`)).toEqual({
+      en: "Acme Co",
+      ar: AR,
+      gap: " ",
+    });
+    expect(splitBilingual(`12 Main St | 12 ${AR}`)).toMatchObject({
+      en: "12 Main St",
+      ar: `12 ${AR}`,
+    });
+    expect(splitBilingual(`Line one\n${AR}`)).toMatchObject({
+      en: "Line one",
+      ar: AR,
+    });
+  });
+
+  it("keeps one-language values on their own side", () => {
+    expect(splitBilingual("Plain text")).toMatchObject({ en: "Plain text", ar: "" });
+    expect(splitBilingual(AR)).toMatchObject({ en: "", ar: AR });
+    expect(splitBilingual("")).toMatchObject({ en: "", ar: "" });
+  });
+
+  it("keeps a two-language item name intact in its cell", () => {
+    const payload = basePayload();
+    const name = `${payload.invoice.items[0].name} ${AR}`;
+    payload.invoice.items[0].name = name;
+    expect(text(render(payload))).toContain(name);
+  });
+
+  it("splits each term of a group", () => {
+    expect(splitBilingualList([`Pay soon\n${AR}`, "Net 30"])).toEqual({
+      en: ["Pay soon", "Net 30"],
+      ar: [AR],
+    });
+  });
+
+  it("prints the Arabic part of a party name and an item on the Arabic side", () => {
+    const payload = basePayload();
+    const { name } = payload.invoice.billedBy;
+    payload.invoice.billedBy.name = `${name} ${AR}`;
+    payload.invoice.items[0].name = `${payload.invoice.items[0].name} ${AR}`;
+    const html = render(payload);
+    expect(html).toContain(`<span dir="rtl" lang="ar">${AR}</span>`);
+    expect(html).toContain(`class="item-name vt-item-ar" dir="rtl" lang="ar">${AR}`);
   });
 });
 

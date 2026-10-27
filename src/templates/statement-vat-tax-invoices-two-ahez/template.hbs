@@ -129,8 +129,8 @@
           <span class="vt-h">{{invoice.customLabels.billedBy}}</span>
           <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "seller"}}</span>
         </div>
-        <div class="vt-name"><span>{{invoice.billedBy.name}}</span></div>
-        {{#if invoice.billedBy.address}}<p class="vt-address">{{invoice.billedBy.address}}</p>{{/if}}
+        {{#with (bilingual invoice.billedBy.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
+        {{#if invoice.billedBy.address}}{{#with (bilingual invoice.billedBy.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
         <div class="vt-rows">
           {{#each (partyRows invoice.billedBy invoice.customLabels)}}
           <div class="vt-row">
@@ -148,8 +148,8 @@
           <span class="vt-h">{{invoice.customLabels.billedTo}}</span>
           <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "buyer"}}</span>
         </div>
-        <div class="vt-name"><span>{{invoice.billedTo.name}}</span></div>
-        {{#if invoice.billedTo.address}}<p class="vt-address">{{invoice.billedTo.address}}</p>{{/if}}
+        {{#with (bilingual invoice.billedTo.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
+        {{#if invoice.billedTo.address}}{{#with (bilingual invoice.billedTo.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
         <div class="vt-rows">
           {{#each (partyRows invoice.billedTo invoice.customLabels)}}
           <div class="vt-row">
@@ -172,8 +172,8 @@
           <span class="vt-h">{{invoice.customLabels.shippedFrom}}</span>
           <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedFrom"}}</span>
         </div>
-        <div class="vt-name"><span>{{invoice.shippedFrom.name}}</span></div>
-        {{#if invoice.shippedFrom.address}}<p class="vt-address">{{invoice.shippedFrom.address}}</p>{{/if}}
+        {{#with (bilingual invoice.shippedFrom.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
+        {{#if invoice.shippedFrom.address}}{{#with (bilingual invoice.shippedFrom.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
         <div class="vt-rows">
           {{#each (partyRows invoice.shippedFrom invoice.customLabels)}}
           <div class="vt-row">
@@ -192,8 +192,8 @@
           <span class="vt-h">{{invoice.customLabels.shippedTo}}</span>
           <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedTo"}}</span>
         </div>
-        <div class="vt-name"><span>{{invoice.shippedTo.name}}</span></div>
-        {{#if invoice.shippedTo.address}}<p class="vt-address">{{invoice.shippedTo.address}}</p>{{/if}}
+        {{#with (bilingual invoice.shippedTo.name) as |n|}}<div class="vt-name"><span>{{n.en}}</span><span dir="rtl" lang="ar">{{n.ar}}</span></div>{{/with}}
+        {{#if invoice.shippedTo.address}}{{#with (bilingual invoice.shippedTo.address) as |a|}}<div class="vt-address"><p>{{a.en}}</p><p dir="rtl" lang="ar">{{a.ar}}</p></div>{{/with}}{{/if}}
         <div class="vt-rows">
           {{#each (partyRows invoice.shippedTo invoice.customLabels)}}
           <div class="vt-row">
@@ -337,7 +337,7 @@
     <div class="vt-items">
       {{#with mapped}}
       <div class="line-items-table-wrapper{{#if visibility.tableStretchEnabled}} is-stretch{{/if}}">
-      <table class="line-items-table{{#if visibility.textWrapEnabled}} is-wrap-enabled{{/if}}{{#if visibility.usesShortSet}} uses-short-set{{/if}}" dir="rtl">
+      <table class="line-items-table{{#if visibility.textWrapEnabled}} is-wrap-enabled{{/if}}{{#if visibility.usesShortSet}} uses-short-set{{/if}}">
         <thead>
           <tr>
             <th class="col-index" aria-label="Line number"></th>
@@ -354,8 +354,11 @@
                     {{~text~}}
                   {{~else~}}
                     {{#if isItemCell}}
-                      <div class="vt-item" dir="auto">
-                      <span class="item-name">{{../item.name}}</span>
+                      <div class="vt-item">
+                      {{!-- Both halves of the name stay adjacent (with the typed gap) so the
+                            cell holds the name exactly as entered; the Arabic half drops
+                            to its own line. --}}
+                      {{#with (bilingual ../item.name) as |n|}}<span class="item-name" dir="auto">{{n.en}}</span>{{#if n.ar}}{{n.gap}}<span class="item-name vt-item-ar" dir="rtl" lang="ar">{{n.ar}}</span>{{/if}}{{/with}}
                       {{#if ../item.showSku}}<small class="item-sku">SKU: {{../item.sku}}</small>{{/if}}
                       {{#if ../item.mergedAsNote}}
                         {{#each ../item.mergedNotes}}<small class="item-merged-note">{{this}}</small>{{/each}}
@@ -366,9 +369,18 @@
                         {{> CeresImageGallery (prepareImageGallery ../item.thumbnailImages variant="thumbnail" alt=../item.name) }}
                       {{/if}}
                       {{#if (descriptionInItem ../extras)}}
-                        <div class="item-description vt-item-description">
-                          {{> MarkdownViewer (prepareMarkdownViewerData ../extras.description) }}
-                        </div>
+                        {{#with (bilingual ../extras.description) as |d|}}
+                        {{#if d.en}}<div class="item-description vt-item-description" dir="auto">
+                          {{> MarkdownViewer (prepareMarkdownViewerData d.en) }}
+                        </div>{{/if}}
+                        {{/with}}
+                      {{/if}}
+                      {{#if (descriptionInItem ../extras)}}
+                        {{#with (bilingual ../extras.description) as |d|}}
+                        {{#if d.ar}}<div class="item-description vt-item-description vt-item-ar" dir="rtl" lang="ar">
+                          {{> MarkdownViewer (prepareMarkdownViewerData d.ar) }}
+                        </div>{{/if}}
+                        {{/with}}
                       {{/if}}
                       </div>
                     {{else}}
@@ -457,9 +469,12 @@
             <span class="vt-h">{{#if label}}{{label}}{{else}}{{@root.invoice.customLabels.terms}}{{/if}}</span>
             <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "terms"}}</span>
           </div>
-          <div class="vt-text" dir="auto">
-            {{#each terms}}<p>{{this}}</p>{{/each}}
+          {{#with (bilingualList terms) as |t|}}
+          <div class="vt-text vt-bi">
+            <div dir="auto">{{#each t.en}}<p>{{this}}</p>{{/each}}</div>
+            <div dir="rtl" lang="ar">{{#each t.ar}}<p>{{this}}</p>{{/each}}</div>
           </div>
+          {{/with}}
         </section>
         {{/if}}
         {{/each}}
@@ -470,9 +485,12 @@
             <span class="vt-h">{{invoice.customLabels.notes}}</span>
             <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "notes"}}</span>
           </div>
-          <div class="vt-text" dir="auto">
-            {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+          {{#with (bilingual invoice.notes) as |n|}}
+          <div class="vt-text vt-bi">
+            <div dir="auto">{{#if n.en}}{{> MarkdownViewer (prepareMarkdownViewerData n.en) }}{{/if}}</div>
+            <div dir="rtl" lang="ar">{{#if n.ar}}{{> MarkdownViewer (prepareMarkdownViewerData n.ar) }}{{/if}}</div>
           </div>
+          {{/with}}
         </section>
         {{/if}}
       </div>
@@ -528,8 +546,10 @@
         {{!-- Signature: "For <business>" in both languages, the signing box, then the
               signatory label (English from customLabels.signature, hidden when blank). --}}
         <div class="vt-sign">
-          <p class="vt-sign-for vt-ar" dir="rtl" lang="ar">{{fixedLabel "forBusiness"}} <bdi>{{invoice.billedBy.name}}</bdi></p>
-          <p class="vt-sign-for">For {{invoice.billedBy.name}}</p>
+          {{#with (bilingual invoice.billedBy.name) as |n|}}
+          <p class="vt-sign-for vt-ar" dir="rtl" lang="ar">{{fixedLabel "forBusiness"}} <bdi>{{#if n.ar}}{{n.ar}}{{else}}{{n.en}}{{/if}}</bdi></p>
+          <p class="vt-sign-for">For {{#if n.en}}{{n.en}}{{else}}{{n.ar}}{{/if}}</p>
+          {{/with}}
           <div class="vt-sign-box">
             {{#if invoice.signature}}{{> CeresImage src=invoice.signature alt="" class="vt-sign-img"}}{{/if}}
           </div>

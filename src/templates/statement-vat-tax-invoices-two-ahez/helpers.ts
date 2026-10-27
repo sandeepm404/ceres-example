@@ -150,6 +150,56 @@ export const googleFontHref = (family: any): string => {
   )}:wght@400;500;600;700&display=swap`;
 };
 
+// ─── Bilingual values ─────────────────────────────────────────────────────
+// Users type both languages into one field: "Name الاسم", "English | عربي",
+// or an English line followed by an Arabic line. The value is split so the
+// English part prints on the English side and the Arabic part on the Arabic
+// side, each exactly as typed. A value with no Arabic stays whole on the
+// English side; an Arabic-only value goes to the Arabic side.
+
+const ARABIC_LETTER =
+  /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/u;
+const LATIN_LETTER = /[A-Za-zÀ-ɏ]/u;
+
+// `gap` is the text that separated the two parts as typed, so a template can
+// print "en" + gap + "ar" and keep the value's own text intact.
+type Bilingual = { en: string; ar: string; gap?: string };
+
+const splitPart = (part: string): Bilingual => {
+  const at = part.search(ARABIC_LETTER);
+  if (at < 0) return { en: part, ar: "" };
+  const head = part.slice(0, at).trimEnd();
+  if (!LATIN_LETTER.test(head)) return { en: "", ar: part };
+  return { en: head.trim(), ar: part.slice(at).trim(), gap: part.slice(head.length, at) };
+};
+
+export const splitBilingual = (value: any): Bilingual => {
+  const text = asText(value);
+  if (!text || !ARABIC_LETTER.test(text)) return { en: text, ar: "", gap: "" };
+  const separator = /\s*(?:\n+|\s\|\s)\s*/u;
+  const pieces = text.split(separator).map((part) => part.trim()).filter(Boolean);
+  if (pieces.length === 1) {
+    const single = splitPart(text);
+    return { en: single.en, ar: single.ar, gap: single.gap ?? "" };
+  }
+  const parts = pieces.map(splitPart);
+  const join = (side: "en" | "ar"): string =>
+    parts
+      .map((part) => part[side])
+      .filter(Boolean)
+      .join("\n");
+  return { en: join("en"), ar: join("ar"), gap: separator.exec(text)?.[0] ?? " " };
+};
+
+// A list of typed strings (one group of terms), split the same way.
+export const splitBilingualList = (values: any): { en: string[]; ar: string[] } => {
+  const list = asArray(values).map(splitBilingual);
+  return {
+    en: list.map((entry) => entry.en).filter(Boolean),
+    ar: list.map((entry) => entry.ar).filter(Boolean),
+  };
+};
+
 // ─── Rows ─────────────────────────────────────────────────────────────────
 // Every detail row has four cells: the English label, the value, the value's
 // Arabic-side copy and the fixed Arabic label. The payload carries one value
@@ -175,12 +225,13 @@ const row = (
 ): Row | null => {
   const text = asText(value);
   if (!text) return null;
+  const { en, ar } = splitBilingual(text);
   return {
     key,
     label,
     arLabel: fixedKey ? fixedLabel(fixedKey) : "",
-    value: text,
-    arValue: sideValue(text) || arabicEquivalent(key, text),
+    value: en,
+    arValue: ar || sideValue(en) || arabicEquivalent(key, en),
   };
 };
 
@@ -561,6 +612,8 @@ export function registerStatementVatTaxInvoicesTwoAhezHelpers(HB: any): void {
   HB.registerHelper("descriptionInItem", descriptionInItem);
   HB.registerHelper("extrasRow", extrasRow);
   HB.registerHelper("arabicAmountInWords", arabicAmountInWords);
+  HB.registerHelper("bilingual", splitBilingual);
+  HB.registerHelper("bilingualList", splitBilingualList);
 }
 
 /* eslint-enable @typescript-eslint/no-explicit-any */

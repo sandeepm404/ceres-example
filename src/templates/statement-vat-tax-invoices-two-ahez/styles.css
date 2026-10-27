@@ -247,7 +247,9 @@
 }
 
 .vt-address {
-  max-inline-size: 50%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
   margin-block-end: 6px;
   font-size: 10px;
   line-height: 13px;
@@ -262,12 +264,9 @@
    past 60%), the Arabic-side value the rest, so neither pushes the labels. */
 .vt-party .vt-rows {
   --vt-cols: 84px fit-content(60%) minmax(0, 1fr) 90px;
-  --vt-row-height: 14.5px;
+  --vt-row-height: 14px;
 }
 
-.vt-party .vt-av {
-  white-space: nowrap;
-}
 
 /* ─── Line items ─────────────────────────────────────────────────────── */
 
@@ -302,7 +301,7 @@
 }
 
 .vt-items .line-items-table tbody td {
-  padding: 10px 6px 12px;
+  padding: 8px 6px 6px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -327,7 +326,18 @@
 }
 
 .vt-item {
-  text-align: left;
+  text-align: start;
+}
+
+.vt-item .vt-item-ar {
+  font-family: var(--vt-script-font, "Noto Sans Arabic"), "Noto Sans Arabic",
+    "Inter", sans-serif;
+  text-align: right;
+}
+
+.vt-item span.vt-item-ar {
+  margin-block-start: 4px;
+  font-weight: 600;
 }
 
 .vt-item .item-name {
@@ -337,7 +347,7 @@
 
 .vt-item-description,
 .vt-items .item-description {
-  margin-block-start: 6px;
+  margin-block-start: 2px;
   font-weight: 400;
   line-height: 16px;
   white-space: normal;
@@ -382,7 +392,7 @@
 .vt-summary-start {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .vt-bank .vt-rows {
@@ -401,11 +411,20 @@
   block-size: 72px;
 }
 
+.vt-bi {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+}
+
+.vt-text-card {
+  padding-block: 7px 5px;
+}
+
 .vt-text {
-  max-inline-size: 50%;
-  margin-block-start: 6px;
+  margin-block-start: 4px;
   font-size: var(--vt-font-size-base);
-  line-height: 13px;
+  line-height: 12px;
   color: var(--vt-text);
 }
 
@@ -414,7 +433,7 @@
 .vt-shell .vt-text .toastui-editor-contents * {
   font-family: inherit;
   font-size: var(--vt-font-size-base);
-  line-height: 13px;
+  line-height: 12px;
   margin-block: 0;
   padding: 0;
   color: inherit;
