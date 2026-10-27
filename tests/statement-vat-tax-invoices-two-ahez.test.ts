@@ -178,6 +178,19 @@ describe("bilingual values", () => {
     expect(splitBilingual("")).toMatchObject({ en: "", ar: "" });
   });
 
+  it("stacks a long two-language address value and lets Arabic set its direction", () => {
+    const { street } = basePayload().invoice.billedBy;
+    const long = `${street}, ${street} | ${AR} ${AR} ${AR}`;
+    const [row] = partyRows({ street: long }, {});
+    expect(row).toMatchObject({ value: `${street}, ${street}`, long: true });
+    expect(partyRows({ street }, {})[0].long).toBe(false);
+
+    const payload = basePayload();
+    payload.invoice.billedBy.street = long;
+    const html = render(payload);
+    expect(html).toContain('class="vt-av is-long" dir="rtl"><bdi dir="auto">');
+  });
+
   it("keeps a two-language item name intact in its cell", () => {
     const payload = basePayload();
     const name = `${payload.invoice.items[0].name} ${AR}`;

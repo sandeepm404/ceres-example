@@ -13,6 +13,7 @@ type Row = {
   arLabel: string;
   value: string;
   arValue: string;
+  long: boolean;
 };
 
 const asArray = (value: any): any[] => (Array.isArray(value) ? value : []);
@@ -209,6 +210,10 @@ export const splitBilingualList = (values: any): { en: string[]; ar: string[] } 
 
 const LETTERS = /\p{L}/u;
 
+// Characters a value can hold before its two languages no longer fit side by
+// side in a half-width card.
+const LONG_VALUE = 26;
+
 export const isLanguageNeutral = (value: any): boolean => {
   const text = asText(value);
   return Boolean(text) && !LETTERS.test(text.replace(/^[A-Z]{2,4}\d/u, "0"));
@@ -232,6 +237,9 @@ const row = (
     arLabel: fixedKey ? fixedLabel(fixedKey) : "",
     value: en,
     arValue: ar || sideValue(en) || arabicEquivalent(key, en),
+    // Too long to share the row side by side: the English and Arabic parts
+    // stack, each across the full value area.
+    long: en.length > LONG_VALUE || ar.length > LONG_VALUE,
   };
 };
 

@@ -161,6 +161,27 @@
   margin-block-start: 0;
 }
 
+/* A long two-language value: English on the first line, Arabic on the next,
+   each across both value columns, labels on the first line. */
+.vt-row:has(.vt-av.is-long) .vt-v {
+  grid-column: 2 / 4;
+  grid-row: 1;
+}
+
+.vt-row:has(.vt-av.is-long) .vt-av {
+  grid-column: 2 / 4;
+  grid-row: 2;
+}
+
+.vt-row:has(.vt-av.is-long) .vt-l {
+  grid-row: 1;
+}
+
+.vt-row:has(.vt-av.is-long) .vt-al {
+  grid-column: 4;
+  grid-row: 1;
+}
+
 .vt-l {
   color: var(--vt-muted);
 }
