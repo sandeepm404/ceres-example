@@ -280,16 +280,25 @@ describe("rows", () => {
     expect(rows.map((row) => row.key)).toEqual(["email"]);
   });
 
-  it("reads both bank shapes and keeps a value without a label", () => {
+  it("reads both bank shapes and falls back to fixed English labels", () => {
     const rows = bankRows({
       bankAccount: { bankName: "B1", accountHolderName: "H1", accountNo: "9" },
       customLabels: {},
     });
     expect(rows.map((row) => [row.value, row.label])).toEqual([
-      ["B1", ""],
-      ["H1", ""],
-      ["9", ""],
+      ["B1", "Bank Name"],
+      ["H1", "Account Holder Name"],
+      ["9", "Account Number"],
     ]);
+    rows.forEach((row) => expect(row.arLabel).toMatch(ARABIC));
+  });
+
+  it("prefers the account's own bank labels", () => {
+    const { bankAccount } = basePayload().invoice;
+    const rows = bankRows({ bankAccount, customLabels: {} });
+    const label = (key: string) => rows.find((row) => row.key === key)?.label;
+    expect(label("accountNumber")).toBe(bankAccount.customLabels.accountNumber);
+    expect(label("accountType")).toBe("Account Type");
   });
 
   it("moves a description that is not full width into the item cell", () => {

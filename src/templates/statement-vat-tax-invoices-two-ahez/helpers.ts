@@ -336,26 +336,48 @@ export const partyRows = (party: any, customLabels: any): Row[] => {
 // Bank rows in the platform's order. Values come in two shapes (the
 // contract's `bankName`/`accountHolderName` and the `bank`/`name` real
 // payloads send), so both are read. The English label is the account's own
-// (bank or document custom labels); a row without one prints its value alone.
-const BANK_ROWS: Array<{ values: string[]; labels: string[]; fixed: string }> =
-  [
-    { values: ["bank", "bankName"], labels: ["bankName", "bank"], fixed: "bankName" },
-    {
-      values: ["name", "accountHolderName"],
-      labels: ["accountHolderName"],
-      fixed: "accountHolderName",
-    },
-    {
-      values: ["accountNo", "accountNumber"],
-      labels: ["accountNumber", "accountNo"],
-      fixed: "accountNumber",
-    },
-    { values: ["iban"], labels: ["iban"], fixed: "iban" },
-    { values: ["swift", "swiftCode"], labels: ["swiftCode", "swift"], fixed: "swiftCode" },
-    { values: ["ifsc", "ifscCode"], labels: ["ifsc", "ifscCode"], fixed: "ifsc" },
-    { values: ["sortCode"], labels: ["sortCode"], fixed: "sortCode" },
-    { values: ["accountType"], labels: ["accountType"], fixed: "accountType" },
-  ];
+// (bank or document custom labels) when it has one, else the fixed English
+// label (`en`): users cannot type these, so a row is never left unlabelled.
+const BANK_ROWS: Array<{
+  values: string[];
+  labels: string[];
+  fixed: string;
+  en: string;
+}> = [
+  {
+    values: ["bank", "bankName"],
+    labels: ["bankName", "bank"],
+    fixed: "bankName",
+    en: "Bank Name",
+  },
+  {
+    values: ["name", "accountHolderName"],
+    labels: ["accountHolderName"],
+    fixed: "accountHolderName",
+    en: "Account Holder Name",
+  },
+  {
+    values: ["accountNo", "accountNumber"],
+    labels: ["accountNumber", "accountNo"],
+    fixed: "accountNumber",
+    en: "Account Number",
+  },
+  { values: ["iban"], labels: ["iban"], fixed: "iban", en: "IBAN" },
+  {
+    values: ["swift", "swiftCode"],
+    labels: ["swiftCode", "swift"],
+    fixed: "swiftCode",
+    en: "SWIFT Code",
+  },
+  { values: ["ifsc", "ifscCode"], labels: ["ifsc", "ifscCode"], fixed: "ifsc", en: "IFSC" },
+  { values: ["sortCode"], labels: ["sortCode"], fixed: "sortCode", en: "Sort Code" },
+  {
+    values: ["accountType"],
+    labels: ["accountType"],
+    fixed: "accountType",
+    en: "Account Type",
+  },
+];
 
 export const bankRows = (invoice: any): Row[] => {
   const account = invoice?.bankAccount;
@@ -369,7 +391,7 @@ export const bankRows = (invoice: any): Row[] => {
   const rows: Array<Row | null> = BANK_ROWS.map((entry) =>
     row(
       entry.fixed,
-      labelFor(entry.labels),
+      labelFor(entry.labels) || entry.en,
       entry.fixed,
       entry.values.map((key) => asText(account[key])).find(Boolean)
     )
