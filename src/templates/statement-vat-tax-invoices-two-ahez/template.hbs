@@ -1,0 +1,593 @@
+{{!--
+  statement-vat-tax-invoices-two-ahez — a bilingual (English + Arabic) VAT tax invoice.
+
+  Every detail row has four cells: English label · value · the value's Arabic-side
+  copy · Arabic label.
+    English label  ← the payload where the contract has one (customLabels, vatLabel,
+                     columns[].label, field labels) and is hidden when blank; a label
+                     with no payload source is fixed English text.
+    Arabic label   ← the fixed label set in helpers.ts (fixedLabel), never typed here.
+    Arabic side    ← the payload carries one value per field, so it repeats only values
+                     that read the same in both languages (sideValue); worded values
+                     have no Arabic source yet and leave it empty.
+  Column titles are the account's own text only (mapped.columns).
+
+  Direction, script and font come from the document, as in sami-contracting:
+    dir  ← invoice.template.rtl     lang/font ← the business's PDF script and font.
+  Layout rules use logical properties, so the page mirrors under dir="rtl".
+
+  The root is { invoice, advanceOptions, pdfOptions, mapped, derived } because this
+  template installs normalizeInvoiceTemplateState as its data mapper.
+--}}
+<div class="vt-shell"
+  dir="{{documentDir invoice}}"
+  data-script="{{documentScript invoice pdfOptions}}"
+  {{#with (documentLang (documentScript invoice pdfOptions)) as |lang|}}lang="{{lang}}"{{/with}}
+  {{#with (documentFont invoice pdfOptions) as |scriptFont|}}{{#if (googleFontHref scriptFont)}}style="--vt-script-font: '{{scriptFont}}';"{{/if}}{{/with}}>
+  {{#with (documentFont invoice pdfOptions) as |scriptFont|}}
+  {{#if (googleFontHref scriptFont)}}<link rel="stylesheet" href="{{googleFontHref scriptFont}}" />{{/if}}
+  {{/with}}
+
+  <div class="{{#unless pdfOptions.letterHeadOnFirstPage}}no-dibella {{/unless}}invoice-letterhead{{#unless invoice.letterHead}} is-empty{{/unless}}">
+    {{#if invoice.letterHead}}
+    <img src="{{invoice.letterHead}}" alt="" data-ceres-height="letterhead" />
+    {{else}}
+    <img alt="" data-ceres-height="letterhead" />
+    {{/if}}
+  </div>
+
+  <div class="vt-page">
+    {{!-- ═══ Header: title, status, document details · logo and QR codes ═══ --}}
+    <header class="vt-header">
+      <div class="vt-header-main">
+        <div class="vt-title-row">
+          {{#if invoice.invoiceTitle}}<h1 class="vt-title">{{invoice.invoiceTitle}}</h1>{{/if}}
+          {{#if (eq invoice.billType "INVOICE")}}<span class="vt-title vt-ar" dir="rtl" lang="ar">{{fixedLabel "taxInvoice"}}</span>{{/if}}
+          <span class="vt-status">{{> InvoiceStatus invoice}}</span>
+        </div>
+        {{#if invoice.invoiceSubTitle}}<p class="vt-subtitle">{{invoice.invoiceSubTitle}}</p>{{/if}}
+
+        <div class="vt-rows vt-meta">
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.invoiceNumber}}</span>
+            <span class="vt-v">{{invoice.invoiceNumber}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{invoice.invoiceNumber}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "invoiceNumber"}}</span>
+          </div>
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.invoiceDate}}</span>
+            <span class="vt-v">{{formatFullDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.invoiceDate invoice.ownerOffset}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "invoiceDate"}}</span>
+          </div>
+          {{#if invoice.dueDate}}
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.dueDate}}</span>
+            <span class="vt-v">{{formatFullDateWithOffset invoice.dueDate invoice.ownerOffset}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.dueDate invoice.ownerOffset}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "dueDate"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.purchaseOrderNumber}}
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.purchaseOrderNumber}}</span>
+            <span class="vt-v">{{invoice.purchaseOrderNumber}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{invoice.purchaseOrderNumber}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "purchaseOrderNumber"}}</span>
+          </div>
+          {{/if}}
+          {{#each invoice.customFields}}
+          {{#if value}}{{#unless (eq params.showInInvoice false)}}
+          <div class="vt-row">
+            <span class="vt-l">{{#if label}}{{label}}{{else}}{{name}}{{/if}}</span>
+            <span class="vt-v">{{value}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{sideValue value}}</bdi></span>
+            <span class="vt-al"></span>
+          </div>
+          {{/unless}}{{/if}}
+          {{/each}}
+          {{#each invoice.customHeaders}}
+          {{#if value}}
+          <div class="vt-row">
+            <span class="vt-l">{{label}}</span>
+            <span class="vt-v">{{value}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{sideValue value}}</bdi></span>
+            <span class="vt-al"></span>
+          </div>
+          {{/if}}
+          {{/each}}
+        </div>
+      </div>
+
+      <div class="vt-header-side">
+        {{#if invoice.billedBy.logo}}
+        <div class="vt-logo">{{> CeresImage src=invoice.billedBy.logo alt=invoice.billedBy.name class="vt-logo-img"}}</div>
+        {{/if}}
+        {{!-- QRs go through qrSrc, never the image widget. The containers stay in the
+              DOM so Lydia can patch qrCode / zatcaQrCode live; empty ones are hidden. --}}
+        <div class="vt-qrs">
+          <div data-ceres-field-container="zatcaQrCode" class="vt-qr{{#unless invoice.zatcaQrCode}} is-empty{{/unless}}">
+            <img data-ceres-field="zatcaQrCode" src="{{qrSrc invoice.zatcaQrCode}}" alt="ZATCA QR" />
+          </div>
+          <div data-ceres-field-container="qrCode" class="vt-qr{{#if mapped.irn.isCancelled}} is-empty{{else}}{{#unless (or invoice.qrCode invoice.irn.qrCode)}} is-empty{{/unless}}{{/if}}">
+            <img data-ceres-field="qrCode" src="{{#unless mapped.irn.isCancelled}}{{#if invoice.qrCode}}{{qrSrc invoice.qrCode}}{{else}}{{qrSrc invoice.irn.qrCode}}{{/if}}{{/unless}}" alt="E-Invoice QR" />
+          </div>
+          {{#if invoice.lhdnQrCode}}
+          <div class="vt-qr"><img src="{{qrSrc invoice.lhdnQrCode}}" alt="LHDN QR" /></div>
+          {{/if}}
+          {{#if invoice.documentQr}}{{#unless (or invoice.zatcaQrCode invoice.lhdnQrCode invoice.qrCode invoice.irn.qrCode)}}
+          <div class="vt-qr"><img src="{{qrSrc invoice.documentQr}}" alt="Document QR" /></div>
+          {{/unless}}{{/if}}
+        </div>
+      </div>
+    </header>
+
+    {{!-- ═══ Seller · Buyer ═══ --}}
+    <div class="vt-grid">
+      <section class="vt-card vt-party">
+        <div class="vt-card-head">
+          <span class="vt-h">{{invoice.customLabels.billedBy}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "seller"}}</span>
+        </div>
+        <div class="vt-name"><span>{{invoice.billedBy.name}}</span></div>
+        {{#if invoice.billedBy.address}}<p class="vt-address">{{invoice.billedBy.address}}</p>{{/if}}
+        <div class="vt-rows">
+          {{#each (partyRows invoice.billedBy invoice.customLabels)}}
+          <div class="vt-row">
+            <span class="vt-l">{{label}}</span>
+            <span class="vt-v">{{value}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{arValue}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{arLabel}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+
+      <section class="vt-card vt-party">
+        <div class="vt-card-head">
+          <span class="vt-h">{{invoice.customLabels.billedTo}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "buyer"}}</span>
+        </div>
+        <div class="vt-name"><span>{{invoice.billedTo.name}}</span></div>
+        {{#if invoice.billedTo.address}}<p class="vt-address">{{invoice.billedTo.address}}</p>{{/if}}
+        <div class="vt-rows">
+          {{#each (partyRows invoice.billedTo invoice.customLabels)}}
+          <div class="vt-row">
+            <span class="vt-l">{{label}}</span>
+            <span class="vt-v">{{value}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{arValue}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{arLabel}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+    </div>
+
+    {{!-- ═══ Shipped From · Shipped To (each only when the document carries it) ═══ --}}
+    {{#if (or mapped.visibility.shippedFrom mapped.visibility.shippedTo)}}
+    <div class="vt-grid">
+      {{#if mapped.visibility.shippedFrom}}
+      <section class="vt-card vt-party">
+        <div class="vt-card-head">
+          <span class="vt-h">{{invoice.customLabels.shippedFrom}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedFrom"}}</span>
+        </div>
+        <div class="vt-name"><span>{{invoice.shippedFrom.name}}</span></div>
+        {{#if invoice.shippedFrom.address}}<p class="vt-address">{{invoice.shippedFrom.address}}</p>{{/if}}
+        <div class="vt-rows">
+          {{#each (partyRows invoice.shippedFrom invoice.customLabels)}}
+          <div class="vt-row">
+            <span class="vt-l">{{label}}</span>
+            <span class="vt-v">{{value}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{arValue}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{arLabel}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+      {{#if mapped.visibility.shippedTo}}
+      <section class="vt-card vt-party">
+        <div class="vt-card-head">
+          <span class="vt-h">{{invoice.customLabels.shippedTo}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "shippedTo"}}</span>
+        </div>
+        <div class="vt-name"><span>{{invoice.shippedTo.name}}</span></div>
+        {{#if invoice.shippedTo.address}}<p class="vt-address">{{invoice.shippedTo.address}}</p>{{/if}}
+        <div class="vt-rows">
+          {{#each (partyRows invoice.shippedTo invoice.customLabels)}}
+          <div class="vt-row">
+            <span class="vt-l">{{label}}</span>
+            <span class="vt-v">{{value}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{arValue}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{arLabel}}</span>
+          </div>
+          {{/each}}
+        </div>
+      </section>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Transport · E-way bill (each only when the document carries it) ═══ --}}
+    {{#if (or mapped.visibility.transport invoice.irn.EwbNo)}}
+    <div class="vt-grid">
+      {{#if mapped.visibility.transport}}
+      <section class="vt-card vt-party">
+        <div class="vt-card-head">
+          <span class="vt-h">{{invoice.customLabels.transport}}</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "transportDetails"}}</span>
+        </div>
+        <div class="vt-rows">
+          {{#if (or invoice.transportDetails.transporter.name invoice.transportDetails.transporterName)}}
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.transportName}}</span>
+            <span class="vt-v">{{#if invoice.transportDetails.transporter.name}}{{invoice.transportDetails.transporter.name}}{{else}}{{invoice.transportDetails.transporterName}}{{/if}}</span>
+            <span class="vt-av" dir="rtl"></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "transport"}}</span>
+          </div>
+          {{/if}}
+          {{#if (or invoice.transportDetails.transporter.transporterId invoice.transportDetails.transporterId)}}
+          <div class="vt-row">
+            <span class="vt-l">Transporter ID</span>
+            <span class="vt-v">{{#if invoice.transportDetails.transporter.transporterId}}{{invoice.transportDetails.transporter.transporterId}}{{else}}{{invoice.transportDetails.transporterId}}{{/if}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{#if invoice.transportDetails.transporter.transporterId}}{{invoice.transportDetails.transporter.transporterId}}{{else}}{{invoice.transportDetails.transporterId}}{{/if}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "transporterId"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.transportDetails.challanNumber}}
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.challanNumber}}</span>
+            <span class="vt-v">{{invoice.transportDetails.challanNumber}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{sideValue invoice.transportDetails.challanNumber}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "challanNumber"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.transportDetails.challanDate}}
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.challanDate}}</span>
+            <span class="vt-v">{{formatFullDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.transportDetails.challanDate invoice.ownerOffset}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "challanDate"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.transportDetails.transportMode}}
+          <div class="vt-row">
+            <span class="vt-l">Mode</span>
+            <span class="vt-v">{{invoice.transportDetails.transportMode}}</span>
+            <span class="vt-av" dir="rtl"></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "transportMode"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.transportDetails.vehicleNumber}}
+          <div class="vt-row">
+            <span class="vt-l">Vehicle No.</span>
+            <span class="vt-v">{{invoice.transportDetails.vehicleNumber}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{invoice.transportDetails.vehicleNumber}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "vehicleNumber"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.transportDetails.vehicleType}}
+          <div class="vt-row">
+            <span class="vt-l">Vehicle Type</span>
+            <span class="vt-v">{{invoice.transportDetails.vehicleType}}</span>
+            <span class="vt-av" dir="rtl"></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "vehicleType"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.transportDetails.distance}}
+          <div class="vt-row">
+            <span class="vt-l">Distance</span>
+            <span class="vt-v">{{invoice.transportDetails.distance}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{invoice.transportDetails.distance}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "distance"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.transportDetails.extraInformation}}
+          <div class="vt-row">
+            <span class="vt-l">{{invoice.customLabels.transportExtraInfo}}</span>
+            <span class="vt-v">{{invoice.transportDetails.extraInformation}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{sideValue invoice.transportDetails.extraInformation}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "extraInformation"}}</span>
+          </div>
+          {{/if}}
+        </div>
+      </section>
+      {{/if}}
+      {{#if invoice.irn.EwbNo}}
+      <section class="vt-card vt-party">
+        <div class="vt-card-head">
+          <span class="vt-h">E-way Bill Details</span>
+          <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "ewayBillDetails"}}</span>
+        </div>
+        <div class="vt-rows">
+          <div class="vt-row">
+            <span class="vt-l">E-way Bill No.</span>
+            <span class="vt-v">{{invoice.irn.EwbNo}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{invoice.irn.EwbNo}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "ewayBillNumber"}}</span>
+          </div>
+          {{#if invoice.irn.EwbDt}}
+          <div class="vt-row">
+            <span class="vt-l">E-way Bill Date</span>
+            <span class="vt-v">{{formatFullDateWithOffset invoice.irn.EwbDt "+00:00"}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.irn.EwbDt "+00:00"}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "ewayBillDate"}}</span>
+          </div>
+          {{/if}}
+          {{#if invoice.irn.EwbValidTill}}
+          <div class="vt-row">
+            <span class="vt-l">Valid Till</span>
+            <span class="vt-v">{{formatFullDateWithOffset invoice.irn.EwbValidTill "+00:00"}}</span>
+            <span class="vt-av" dir="rtl"><bdi dir="ltr">{{formatFullDateWithOffset invoice.irn.EwbValidTill "+00:00"}}</bdi></span>
+            <span class="vt-al" dir="rtl" lang="ar">{{fixedLabel "ewayBillValidTill"}}</span>
+          </div>
+          {{/if}}
+        </div>
+      </section>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{!-- ═══ Line items — the shared LineItemsTable widget's markup, with one change:
+          a description that is not full width (helpers.ts descriptionInItem) prints
+          in the item cell, under the name. Columns, labels, order and cells are the
+          widget's normalisation. Keep the `~` tildes: a blank cell must hold no
+          whitespace text node. ═══ --}}
+    <div class="vt-items">
+      {{#with mapped}}
+      <div class="line-items-table-wrapper{{#if visibility.tableStretchEnabled}} is-stretch{{/if}}">
+      <table class="line-items-table{{#if visibility.textWrapEnabled}} is-wrap-enabled{{/if}}{{#if visibility.usesShortSet}} uses-short-set{{/if}}" dir="rtl">
+        <thead>
+          <tr>
+            <th class="col-index" aria-label="Line number"></th>
+            {{#each columns}}{{#unless isHidden}}<th class="{{className}}">{{label}}</th>{{/unless}}{{/each}}
+          </tr>
+        </thead>
+        <tbody>
+          {{#each rows}}
+            <tr class="{{rowClass}}"{{#if isFillerRow}} aria-hidden="true"{{/if}}>
+              <td class="col-index">{{lineNumber}}</td>
+              {{#each cells}}
+                <td class="{{className}}" data-label="{{label}}">
+                  {{~#if ../isTotalsRow~}}
+                    {{~text~}}
+                  {{~else~}}
+                    {{#if isItemCell}}
+                      <div class="vt-item" dir="auto">
+                      <span class="item-name">{{../item.name}}</span>
+                      {{#if ../item.showSku}}<small class="item-sku">SKU: {{../item.sku}}</small>{{/if}}
+                      {{#if ../item.mergedAsNote}}
+                        {{#each ../item.mergedNotes}}<small class="item-merged-note">{{this}}</small>{{/each}}
+                      {{else}}
+                        {{#each ../item.mergedNotes}}<span class="item-merged-inline">{{this}}</span>{{/each}}
+                      {{/if}}
+                      {{#if ../item.showThumbnail}}
+                        {{> CeresImageGallery (prepareImageGallery ../item.thumbnailImages variant="thumbnail" alt=../item.name) }}
+                      {{/if}}
+                      {{#if (descriptionInItem ../extras)}}
+                        <div class="item-description vt-item-description">
+                          {{> MarkdownViewer (prepareMarkdownViewerData ../extras.description) }}
+                        </div>
+                      {{/if}}
+                      </div>
+                    {{else}}
+                      {{~text~}}
+                      {{#if secondaryText}}<br><small class="second-currency-amount">{{secondaryText}}</small>{{/if}}
+                    {{~/if~}}
+                  {{~/if~}}
+                </td>
+              {{/each}}
+            </tr>
+            {{#if (extrasRow extras)}}
+              <tr class="item-extras-row {{rowClass}}">
+                <td class="col-index"></td>
+                <td class="item-extras-cell" colspan="{{cells.length}}">
+                  {{#if extras.descriptionFullWidth}}{{#if extras.hasDescription}}
+                    <div class="item-description{{#if extras.descriptionFullWidth}} item-description-full{{/if}}" dir="auto">
+                      {{> MarkdownViewer (prepareMarkdownViewerData extras.description) }}
+                    </div>
+                  {{/if}}{{/if}}
+                  {{#if extras.imagesInline}}
+                    <div class="item-images-inline">
+                      {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
+                    </div>
+                  {{/if}}
+                  {{#if extras.imagesRow}}
+                    <div class="item-images-row">
+                      {{> CeresImageGallery (prepareImageGallery extras.images variant="thumbnail" alt=item.name) }}
+                    </div>
+                  {{/if}}
+                  {{#if extras.hasOriginalImages}}
+                    <div class="item-original-images-row">
+                      {{> CeresImageGallery (prepareImageGallery extras.originalImages variant="original" alt=item.name) }}
+                    </div>
+                  {{/if}}
+                  {{#if extras.hasSerials}}
+                    <div class="item-serials">
+                      <small><b>Serial No:</b> {{extras.serialsLabel}}</small>
+                    </div>
+                  {{/if}}
+                </td>
+              </tr>
+            {{/if}}
+          {{/each}}
+        </tbody>
+      </table>
+      </div>
+      {{/with}}
+    </div>
+
+    {{!-- ═══ Summary: bank, terms, notes (start) · totals, words, signature (end) ═══ --}}
+    <div class="vt-summary">
+      <div class="vt-summary-start">
+        {{#if mapped.visibility.showBankUpiSection}}
+        {{#if (or mapped.visibility.showBankAccount mapped.visibility.showUpi)}}
+        <section class="vt-card vt-card-outline vt-bank">
+          <div class="vt-card-head">
+            <span class="vt-h">{{#with (bankHeading invoice) as |heading|}}{{heading}}{{else}}Bank Details{{/with}}</span>
+            <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "bankDetails"}}</span>
+          </div>
+          {{#if mapped.visibility.showBankAccount}}
+          <div class="vt-rows">
+            {{#each (bankRows invoice)}}
+            <div class="vt-row">
+              <span class="vt-l">{{label}}</span>
+              <span class="vt-v">{{value}}</span>
+              <span class="vt-av" dir="rtl"><bdi dir="ltr">{{arValue}}</bdi></span>
+              <span class="vt-al" dir="rtl" lang="ar">{{arLabel}}</span>
+            </div>
+            {{/each}}
+          </div>
+          {{/if}}
+          {{#if mapped.visibility.showUpi}}
+          <div class="vt-upi">
+            {{#with (qrSrc mapped.qr.upi) as |upiQr|}}<img class="vt-upi-qr" src="{{upiQr}}" alt="UPI QR" />{{/with}}
+            <p dir="ltr">{{mapped.upi.id}}</p>
+          </div>
+          {{/if}}
+        </section>
+        {{/if}}
+        {{/if}}
+
+        {{#each invoice.terms}}
+        {{#if terms.length}}
+        <section class="vt-card vt-card-outline vt-text-card">
+          <div class="vt-card-head">
+            <span class="vt-h">{{#if label}}{{label}}{{else}}{{@root.invoice.customLabels.terms}}{{/if}}</span>
+            <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "terms"}}</span>
+          </div>
+          <div class="vt-text" dir="auto">
+            {{#each terms}}<p>{{this}}</p>{{/each}}
+          </div>
+        </section>
+        {{/if}}
+        {{/each}}
+
+        {{#if invoice.notes}}
+        <section class="vt-card vt-card-outline vt-text-card">
+          <div class="vt-card-head">
+            <span class="vt-h">{{invoice.customLabels.notes}}</span>
+            <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "notes"}}</span>
+          </div>
+          <div class="vt-text" dir="auto">
+            {{> MarkdownViewer (prepareMarkdownViewerData invoice.notes) }}
+          </div>
+        </section>
+        {{/if}}
+      </div>
+
+      <div class="vt-summary-end">
+        {{!-- Totals: the shared Subtotal model's rows (labels, order, visibility and
+              formatting are the widget's), each with its fixed Arabic label beside it.
+              The data attributes and is-hidden-by-* classes keep the host's live
+              toggles (hideTotals, hideTaxes, hideTotalInWords) working. --}}
+        {{#with (computeSubtotalRows invoice columns=mapped.columns) as |totals|}}
+        <div class="vt-totals" data-ceres-subtotal>
+          {{#each totals.groups.main}}
+          <div class="vt-tot-row vt-tot-{{emphasis}}{{#if ../hidden}}{{#unless survivesHideTotals}} is-hidden-by-totals{{/unless}}{{/if}}{{#if isTaxRow}}{{#if ../hideTaxes}} is-hidden-by-taxes{{/if}}{{/if}}"
+            data-ceres-subtotal-row="{{key}}"
+            {{#if isTaxRow}}data-ceres-subtotal-taxes{{/if}}
+            {{#if survivesHideTotals}}data-ceres-subtotal-keep{{/if}}>
+            <span class="vt-tot-l">{{label}}{{#if note}} <small>{{note}}</small>{{/if}}</span>
+            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsFixedLabel key}}{{#with (labelRate label) as |rate|}} (<bdi dir="ltr">{{rate}}</bdi>){{/with}}</span>
+            <span class="vt-tot-v">{{value}}{{#if converted}}<small class="vt-converted">{{converted}}</small>{{/if}}{{#if extra}}<small class="vt-converted">{{extra.value}}</small>{{/if}}</span>
+          </div>
+          {{/each}}
+          {{#each totals.groups.extra}}
+          <div class="vt-tot-row{{#if ../hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+            <span class="vt-tot-l">{{label}}</span>
+            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsFixedLabel key}}</span>
+            <span class="vt-tot-v">{{value}}</span>
+          </div>
+          {{/each}}
+          {{#each totals.groups.due}}
+          <div class="vt-tot-row vt-tot-{{emphasis}}{{#if ../hidden}} is-hidden-by-totals{{/if}}" data-ceres-subtotal-row="{{key}}">
+            <span class="vt-tot-l">{{label}}</span>
+            <span class="vt-tot-al" dir="rtl" lang="ar">{{totalsFixedLabel key}}</span>
+            <span class="vt-tot-v">{{value}}</span>
+          </div>
+          {{/each}}
+
+          {{#if totals.totalInWords}}
+          <div class="vt-words{{#if totals.hidden}} is-hidden-by-totals{{/if}}{{#if totals.hideTotalInWords}} is-hidden-by-words-setting{{/if}}{{#unless totals.wordsFitCurrency}} is-hidden-by-precision{{/unless}}"
+            data-ceres-total-in-words>
+            <div class="vt-words-head">
+              <span>{{totals.totalInWords.label}}</span>
+              <span class="vt-ar" dir="rtl" lang="ar">{{fixedLabel "totalInWords"}}</span>
+            </div>
+            <div class="vt-words-body">
+              <span class="vt-words-value">{{totals.totalInWords.value}}</span>
+              <span class="vt-words-value vt-ar" dir="rtl" lang="ar">{{arabicAmountInWords @root.invoice}}</span>
+            </div>
+          </div>
+          {{/if}}
+        </div>
+        {{/with}}
+
+        {{!-- Signature: "For <business>" in both languages, the signing box, then the
+              signatory label (English from customLabels.signature, hidden when blank). --}}
+        <div class="vt-sign">
+          <p class="vt-sign-for vt-ar" dir="rtl" lang="ar">{{fixedLabel "forBusiness"}} <bdi>{{invoice.billedBy.name}}</bdi></p>
+          <p class="vt-sign-for">For {{invoice.billedBy.name}}</p>
+          <div class="vt-sign-box">
+            {{#if invoice.signature}}{{> CeresImage src=invoice.signature alt="" class="vt-sign-img"}}{{/if}}
+          </div>
+          <p class="vt-sign-label vt-ar" dir="rtl" lang="ar">{{fixedLabel "signature"}}</p>
+          {{#if invoice.customLabels.signature}}<p class="vt-sign-label">{{invoice.customLabels.signature}}</p>{{/if}}
+        </div>
+      </div>
+    </div>
+
+    {{!-- ═══ Summary tables — each behind the account's own setting ═══ --}}
+    {{#if (or (eq advanceOptions.taxSummaryView "TABLE") (eq advanceOptions.taxSummaryView "BOTH"))}}
+    <div class="vt-table-block" data-ceres-tax-summary>
+      {{> TaxSummaryTable (computeTaxSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showHsnSummary}}
+    <div class="vt-table-block" data-ceres-hsn-summary>
+      {{> HsnSummaryTable (computeHsnSummary invoice.items isIgst=(showIgst invoice) isUtgst=(showUtgst invoice)) }}
+    </div>
+    {{/if}}
+
+    {{#if mapped.visibility.showPaymentsTable}}
+    <div class="vt-table-block" data-ceres-payment-table>
+      {{> PaymentTable (computePaymentColumns invoice.allPayments currency=invoice.currency)
+          ownerOffset=invoice.ownerOffset
+          heading=invoice.customLabels.paymentRecord
+      }}
+    </div>
+    {{/if}}
+
+    {{#if invoice.attachments.length}}
+    <section class="vt-card vt-card-outline vt-text-card">
+      <div class="vt-card-head">
+        <span class="vt-h">{{invoice.customLabels.attachment}}</span>
+        <span class="vt-h vt-ar" dir="rtl" lang="ar">{{fixedLabel "attachments"}}</span>
+      </div>
+      <ul class="vt-attachments">
+        {{#each invoice.attachments}}<li><a dir="ltr" href="{{this}}" target="_blank" rel="noopener noreferrer">{{attachmentName this}}</a></li>{{/each}}
+      </ul>
+    </section>
+    {{/if}}
+
+    {{#if (or invoice.customFooters.length invoice.footers.length)}}
+    <div class="vt-rows vt-footer-fields">
+      {{#each invoice.customFooters}}{{#if value}}<div class="vt-row"><span class="vt-l">{{label}}</span><span class="vt-v">{{value}}</span></div>{{/if}}{{/each}}
+      {{#each invoice.footers}}{{#if value}}<div class="vt-row"><span class="vt-l">{{label}}</span><span class="vt-v">{{value}}</span></div>{{/if}}{{/each}}
+    </div>
+    {{/if}}
+
+    {{> RefrensBranding invoice}}
+  </div>
+
+  <div class="{{#unless pdfOptions.footerOnLastPage}}no-dibella {{/unless}}invoice-letterhead-footer{{#unless invoice.letterHeadFooter}} is-empty{{/unless}}">
+    {{#if invoice.letterHeadFooter}}
+    <img src="{{invoice.letterHeadFooter}}" alt="" data-ceres-height="letterhead-footer" />
+    {{else}}
+    <img alt="" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+</div>
