@@ -168,8 +168,7 @@
   padding-top: var(--ax-gutter);
 }
 
-.ax-doc:has(> .ax-letterhead-footer.is-empty),
-.ax-doc.is-footer-hidden {
+.ax-doc:has(> .ax-letterhead-footer.is-empty) {
   padding-bottom: var(--ax-gutter);
 }
 
@@ -291,6 +290,17 @@
   min-height: 48px;
 }
 
+/* A logo that failed to load (helpers.ts marks it) gives up its box. */
+.ax-logo:has(.is-broken) {
+  display: none;
+}
+
+/* Any other image that failed to load keeps its box, so nothing moves, but shows no
+   broken-image mark or alt text. */
+.ax-doc img.is-broken {
+  visibility: hidden;
+}
+
 .ax-logo .ax-logo-image {
   width: 200px;
   max-width: 100%;
@@ -314,7 +324,7 @@
   max-height: 100px;
 }
 
-/* The logo and, right beside it, the document QR, 8 px apart (user request). */
+/* The logo's row at the top of the header. */
 .ax-brand-row {
   display: flex;
   gap: 8px;
@@ -323,10 +333,6 @@
 
 .ax-brand-row .ax-logo {
   min-width: 0;
-}
-
-.ax-doc-qr {
-  flex: none;
 }
 
 .ax-meta {
@@ -339,9 +345,12 @@
   line-height: var(--ax-lh);
 }
 
+/* A figure too wide to sit beside its label (a 29-character quotation number on A4 portrait ran
+   off the page) moves under it, as a long value does; it never wraps itself. */
 .ax-meta-row {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   align-items: flex-start;
 }
 
@@ -356,6 +365,10 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.ax-meta-value.ax-num {
+  min-width: auto;
 }
 
 /* A long value takes a line of its own under its label, across the column (user request). */
@@ -1986,6 +1999,18 @@
 
   .ax-card:not(.ax-bank-card, .ax-compliance, .ax-widget-table) > * + * {
     margin-top: 8px;
+  }
+
+  /* A card's heading stays with its first lines: where they do not fit at the page's foot, the
+     card starts on the next page. Chrome 122 (Refrens' PDF service) otherwise left the card's
+     top edge and an empty icon box alone at the foot (Remarks, quotation IQ-R2/…, 28 Oct). */
+  .ax-card-head {
+    break-inside: avoid;
+    break-after: avoid;
+  }
+
+  .ax-card-head + * {
+    break-before: avoid;
   }
 
   /* Cards side by side end at their own content: stretched to a partner that runs onto the

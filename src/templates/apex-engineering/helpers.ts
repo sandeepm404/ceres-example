@@ -1948,21 +1948,6 @@ export const mapTransport = (state: UnknownRecord) => {
     : null;
 };
 
-/* Document type → its key in owner.configuration.showQrCode. */
-const QR_DOCUMENT_KEYS: Record<string, string> = {
-  INVOICE: "invoice",
-  QUOTATION: "quotation",
-  PROFORMA: "proforma",
-  PROFORMAINVOICE: "proforma",
-  PURCHASE: "expenditure",
-  EXPENDITURE: "expenditure",
-  PURCHASEORDER: "purchaseOrder",
-  SALESORDER: "salesOrder",
-  DELIVERYCHALLAN: "deliveryChallan",
-  CREDITNOTE: "creditNote",
-  DEBITNOTE: "debitNote",
-};
-
 export const mapCompliance = (state: UnknownRecord) => {
   const invoice = asRecord(state.invoice);
   const labels = asRecord(invoice.customLabels);
@@ -1970,17 +1955,7 @@ export const mapCompliance = (state: UnknownRecord) => {
   const { einvoice } = complianceSettings(invoice);
   const isCancelled = asRecord(asRecord(state.mapped).irn).isCancelled === true;
   const irnQr = firstText(invoice.qrCode, irn.qrCode);
-  // The document QR shows unless the business switched QR codes off, in general
-  // (enableQrCode) or for this kind of document (showQrCode.<type>).
   const configuration = ownerConfiguration(invoice);
-  const qrKey =
-    QR_DOCUMENT_KEYS[text(invoice.billType).toUpperCase()] ||
-    text(invoice.billType).toLowerCase();
-  const documentQr =
-    isOff(configuration.enableQrCode) ||
-    isOff(asRecord(configuration.showQrCode)[qrKey])
-      ? ""
-      : text(invoice.documentQr);
 
   const rows: LabelValue[] = [
     {
@@ -2028,9 +2003,7 @@ export const mapCompliance = (state: UnknownRecord) => {
       irn: isCancelled ? "" : irnQr,
       zatca: text(invoice.zatcaQrCode),
       lhdn: text(invoice.lhdnQrCode),
-      // One QR only (standing decision): the e-invoice QR while the IRN is active, otherwise
-      // the document QR. documentQr arrives as text (a JSON summary of the document): draw it.
-      document: irnQr && !isCancelled ? "" : qrImage(documentQr),
+      // No document QR in this template (user request, 2026-10-31), whatever the QR settings.
     },
   };
 };
@@ -3980,7 +3953,6 @@ export const mapPrint = (
 ) => {
   const pdfOptions = asRecord(state.pdfOptions);
   const invoice = asRecord(state.invoice);
-  const template = asRecord(invoice.template);
   const format = text(pdfOptions.format).toLowerCase();
   const landscape = optionalFlag(pdfOptions.landscape) === true;
   const paperMm = landscape
@@ -4052,12 +4024,6 @@ export const mapPrint = (
       asRecord(asRecord(asRecord(invoice.owner).configuration).experimental)
         .stretchInvoiceTable === true &&
       optionalFlag(pdfOptions.fullHeightTable) === true,
-    // "Hide footer": the letterhead footer is not drawn at all.
-    hideFooter: [
-      pdfOptions.hideFooter,
-      template.hideFooter,
-      invoice.hideFooter,
-    ].some((value) => optionalFlag(value) === true),
   };
 };
 
@@ -4320,9 +4286,7 @@ export const buildApexView = (root: unknown) => {
       : null,
     theme: settings.theme,
     meta,
-    documentQr: compliance.qr.document,
-    // The logo and the document QR share the header's top row (user request).
-    hasBrandRow: Boolean(logo) || Boolean(compliance.qr.document),
+    hasBrandRow: Boolean(logo),
     compliance,
     hasCompliance,
 
@@ -4393,7 +4357,6 @@ export const buildApexView = (root: unknown) => {
     // it on the first page only (pdfOptions.letterHeadOnFirstPage).
     letterheadEveryPage: !visibility.letterHeadOnFirstPage && !options.pageless,
     pageless: options.pageless,
-    hideFooter: print.hideFooter,
     print,
     script: mapScript(state),
   };
@@ -4454,6 +4417,19 @@ export const registerApexLogo = (): void => {
         target.classList.contains("ax-logo-image")
       ) {
         markLogoShape(target);
+      }
+    },
+    true
+  );
+  // An image that fails to load (an expired or private link) prints nothing: no broken-image
+  // mark and no alt text (the business name printed where the logo was). As the Ecommerce
+  // template does.
+  document.addEventListener(
+    "error",
+    (event) => {
+      const { target } = event;
+      if (target instanceof HTMLImageElement && target.closest(".ax-doc")) {
+        target.classList.add("is-broken");
       }
     },
     true
