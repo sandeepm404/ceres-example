@@ -688,11 +688,16 @@
           {{/if}}
 
           {{!--
-            The brands strip with the company seal, "For Viraj Technologies" and the signatory line
-            (all in Viraj's own artwork) closes the document; not the letterhead footer.
+            The brands strip (Viraj's own artwork) closes the document; not the letterhead footer.
+            Beside it, the signed company seal under "For Viraj Technologies", with the signatory
+            line across its foot (live text and a CSS rule, so both stay sharp).
           --}}
           <section class="vt-brands" data-testid="section" data-section="brands">
-            <img src="{{view.brand.brands}}" alt="Viraj Technologies: brands and company seal" width="1968" height="276" />
+            <img class="vt-brands-logos" src="{{view.brand.brands}}" alt="Viraj Technologies: brands" width="4506" height="766" />
+            <div class="vt-brands-sign">
+              <p class="vt-brands-for">For Viraj Technologies</p>
+              <div class="vt-brands-seal"><img src="{{view.brand.seal}}" alt="Viraj Technologies company seal" width="900" height="885" /></div>
+            </div>
           </section>
 
           {{> RefrensBranding @root.invoice}}

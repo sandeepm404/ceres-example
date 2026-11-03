@@ -1099,15 +1099,78 @@
 
 /* ------------------------------------------------------------ company header, brands strip */
 
-/* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE), not the
-   letterhead or footer. The brands strip fills the content width at its own aspect ratio,
-   never cropped or stretched (vector, sharp on paper). */
+/* Viraj's own artwork (helpers.ts VIRAJ_HEADER_IMAGE / VIRAJ_BRANDS_IMAGE / VIRAJ_SEAL_IMAGE),
+   not the letterhead or footer. The brands fill the width left of the seal column at their own
+   aspect ratio, never cropped or stretched (vector, sharp on paper). The seal column (client's
+   mock-up, 2 Nov) is 19cqw: "For Viraj Technologies", then the seal centred under it, 9cqw tall
+   (68% of the brands' 78cqw × 76.6/450.6), its foot on theirs; the signatory line as wide as
+   the caption, 14% up the seal, drawn over it. */
+.vt-brands {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 19cqw;
+  column-gap: 3cqw;
+  align-items: end;
+}
+
 .vt-brands img {
   display: block;
-  width: 100%;
   max-width: none;
-  height: auto;
   background: #fff;
+}
+
+.vt-brands .vt-brands-logos {
+  width: 100%;
+  height: auto;
+}
+
+.vt-brands-sign {
+  justify-self: center;
+  width: max-content;
+}
+
+.vt-doc .vt-brands-for {
+  margin: 0 0 2px;
+  color: var(--vt-ink);
+  font-size: calc(var(--vt-font-size-base) * var(--vt-text-scale, 1));
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.vt-brands-seal {
+  position: relative;
+  height: 9cqw;
+}
+
+.vt-brands-seal img {
+  width: auto;
+  height: 100%;
+  margin-inline: auto;
+}
+
+.vt-brands-seal::after {
+  position: absolute;
+  z-index: 1;
+  inset-inline: 0;
+  bottom: 14%;
+  border-top: 1px solid var(--vt-ink);
+  content: "";
+}
+
+/* A narrow page: the seal column goes under the brands, at the end edge, at a fixed size. */
+@container vt-doc (width < 600px) {
+  .vt-brands {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 8px;
+  }
+
+  .vt-brands-sign {
+    justify-self: end;
+  }
+
+  .vt-brands-seal {
+    height: 56px;
+  }
 }
 
 /* The company header: rules above and below, the logo on the left, the address, contact and
