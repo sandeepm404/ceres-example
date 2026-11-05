@@ -159,9 +159,10 @@ describe("frigo-pro-eood helpers", () => {
     expect(payments).toEqual([{ amount: 100 }]);
   });
 
-  it("writes the payment text as <receipt no.>/<payment date>", () => {
+  it("writes the payment text as <receipt no.>/<receipt date>", () => {
     expect(PAYMENT_LINE_TEXT).toBe("Авансово плащане срещу проформа");
     // The shape of a payment settled from a payment receipt (Фактура 0045).
+    // The receipt's own date wins over the payment's.
     expect(
       paymentLineText(
         { ownerOffset: "+03:00" },
@@ -173,7 +174,20 @@ describe("frigo-pro-eood helpers", () => {
             _id: "6ae402751835950012201b38",
             billType: "PAYMENTRECORD",
             paymentReceiptNumber: "1006",
+            paymentReceiptDate: "2025-10-02T08:00:00.000Z",
           },
+        }
+      )
+    ).toBe("Авансово плащане срещу проформа 1006/02.10.2025");
+  });
+
+  it("falls back to the payment date when the receipt has no date", () => {
+    expect(
+      paymentLineText(
+        { ownerOffset: "+03:00" },
+        {
+          paymentDate: "2025-10-06T08:00:00.000Z",
+          linkedPaymentRecord: { paymentReceiptNumber: "1006" },
         }
       )
     ).toBe("Авансово плащане срещу проформа 1006/06.10.2025");
