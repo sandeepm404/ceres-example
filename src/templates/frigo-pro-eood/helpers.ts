@@ -379,15 +379,19 @@ export const recordedPayments = (invoice: any): any[] =>
     return Number.isFinite(amount) && amount !== 0;
   });
 
-// <receipt no.>/<date>: the number of the payment receipt the payment was
-// settled from (payment.linkedPaymentRecord.paymentReceiptNumber, e.g.
-// "1006") and the payment date. A payment not made from a receipt prints the
-// date alone. The Ref ID typed on the payment (payment.refId) and the
-// invoice's own number are never printed.
+// <receipt no.>/<receipt date>: the payment receipt the payment was settled
+// from (payment.linkedPaymentRecord.paymentReceiptNumber, e.g. "1006", and
+// its paymentReceiptDate). A payment not made from a receipt has neither, and
+// prints its own payment date alone. The Ref ID typed on the payment
+// (payment.refId) and the invoice's own number are never printed.
 export const paymentLineText = (invoice: any, payment: any): string => {
-  const number = asText(payment?.linkedPaymentRecord?.paymentReceiptNumber);
+  const receipt = payment?.linkedPaymentRecord;
+  const number = asText(receipt?.paymentReceiptNumber);
   const date = dottedDate(
-    payment?.paymentDate ?? payment?.date ?? payment?.createdAt,
+    receipt?.paymentReceiptDate ??
+      payment?.paymentDate ??
+      payment?.date ??
+      payment?.createdAt,
     invoice?.ownerOffset
   );
   const reference = [number, date].filter(Boolean).join("/");
