@@ -304,14 +304,14 @@ export const withoutCurrencyMarks = <T>(state: T): T => {
 // end of the item table, the way Bulgarian invoices deduct an advance: a
 // line at the items' VAT rate whose price is the payment net of VAT.
 //
-//   Авансово плащане по ф-ра <ref>/<date>   бр.   -1   20%   1 278.23   -1 278.23   -255.64   -1 533.87
+//   Авансово плащане срещу проформа <receipt no.>/<date>   бр.   -1   20%   1 278.23   -1 278.23   -255.64   -1 533.87
 //                                                       rate   price      amount      VAT       total
 //
 // A payment is VAT-inclusive, so it splits as net = payment ÷ (1 + rate) and
 // VAT = payment − net (paymentSplit). The totals under the table deduct the
 // same figures (settlementFigures), so the table and the totals agree.
 
-export const PAYMENT_LINE_TEXT = "Авансово плащане по ф-ра";
+export const PAYMENT_LINE_TEXT = "Авансово плащане срещу проформа";
 export const PAYMENT_LINE_UNIT = "бр.";
 
 // Columns a payment line fills. Every other column (HSN, discount, a
@@ -379,10 +379,13 @@ export const recordedPayments = (invoice: any): any[] =>
     return Number.isFinite(amount) && amount !== 0;
   });
 
-// <ref> is the Ref ID entered on the payment record (payment.refId). A
-// payment without one prints the date alone — never the invoice's own number.
+// <receipt no.>/<date>: the number of the payment receipt the payment was
+// settled from (payment.linkedPaymentRecord.paymentReceiptNumber, e.g.
+// "1006") and the payment date. A payment not made from a receipt prints the
+// date alone. The Ref ID typed on the payment (payment.refId) and the
+// invoice's own number are never printed.
 export const paymentLineText = (invoice: any, payment: any): string => {
-  const number = asText(payment?.refId);
+  const number = asText(payment?.linkedPaymentRecord?.paymentReceiptNumber);
   const date = dottedDate(
     payment?.paymentDate ?? payment?.date ?? payment?.createdAt,
     invoice?.ownerOffset
