@@ -1,6 +1,7 @@
 import HandlebarsRuntime from "handlebars/runtime";
 import { qrSrc } from "../../src/widgets/qr-code";
 import { registerFitkingTemplateHelpers } from "../../src/templates/fitking/helpers";
+import lineItemsPartial from "../../src/widgets/line-items/LineItemsTable.hbs";
 import subtotalPartial from "../../src/widgets/subtotal/Subtotal.hbs";
 import { computeSubtotalRows } from "../../src/widgets/subtotal/utils";
 
@@ -10,9 +11,9 @@ import { computeSubtotalRows } from "../../src/widgets/subtotal/utils";
  * The template's own helpers come from the real implementation, so tests
  * exercise the shipping logic rather than a stub that agrees with them. Only
  * things owned by other widgets are faked: the date-time helpers and the
- * MarkdownViewer partial, both of which register against `window.Handlebars`
- * and so never load under Jest. `qrSrc` and the Subtotal widget use their real
- * implementations too.
+ * MarkdownViewer and image-gallery partials, which register against
+ * `window.Handlebars` and so never load under Jest. `qrSrc` and the
+ * LineItemsTable and Subtotal widgets use their real implementations too.
  */
 export function registerFitkingHelpers(): void {
   const HB = HandlebarsRuntime;
@@ -27,7 +28,12 @@ export function registerFitkingHelpers(): void {
     markdown: v,
   }));
 
+  HB.registerPartial("CeresImageGallery", () => "");
+  HB.registerHelper("prepareImageGallery", () => ({}));
+
   HB.registerHelper("qrSrc", (v: unknown) => qrSrc(v));
+
+  HB.registerPartial("LineItemsTable", lineItemsPartial);
 
   HB.registerPartial("Subtotal", subtotalPartial);
   HB.registerHelper(
@@ -47,3 +53,5 @@ export function registerFitkingHelpers(): void {
     "formatDateInTimeZone",
   ].forEach((name) => HB.registerHelper(name, (v: unknown) => String(v ?? "")));
 }
+
+export default registerFitkingHelpers;
