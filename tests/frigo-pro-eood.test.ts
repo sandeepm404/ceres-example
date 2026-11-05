@@ -159,18 +159,44 @@ describe("frigo-pro-eood helpers", () => {
     expect(payments).toEqual([{ amount: 100 }]);
   });
 
-  it("writes the payment text as <payment ref ID>/<payment date>", () => {
+  it("writes the payment text as <receipt no.>/<payment date>", () => {
+    expect(PAYMENT_LINE_TEXT).toBe("Авансово плащане срещу проформа");
+    // The shape of a payment settled from a payment receipt (Фактура 0045).
     expect(
       paymentLineText(
-        { invoiceNumber: "0039", ownerOffset: "+03:00" },
-        { refId: "3903", paymentDate: "2025-10-06T08:00:00.000Z" }
+        { ownerOffset: "+03:00" },
+        {
+          refId: "3903",
+          paymentDate: "2025-10-06T08:00:00.000Z",
+          paymentMethod: "PAYMENT_RECEIPT",
+          linkedPaymentRecord: {
+            _id: "6ae402751835950012201b38",
+            billType: "PAYMENTRECORD",
+            paymentReceiptNumber: "1006",
+          },
+        }
       )
-    ).toBe(`${PAYMENT_LINE_TEXT} 3903/06.10.2025`);
-    expect(PAYMENT_LINE_TEXT).toBe("Авансово плащане по ф-ра");
+    ).toBe("Авансово плащане срещу проформа 1006/06.10.2025");
   });
 
-  it("prints the date alone when the payment has no ref ID", () => {
-    ["", "  ", null, undefined].forEach((refId) =>
+  it("prints the date alone when the payment has no receipt number", () => {
+    [
+      undefined,
+      "6ae402751835950012201b38",
+      {},
+      { paymentReceiptNumber: " " },
+    ].forEach((linkedPaymentRecord) =>
+      expect(
+        paymentLineText(
+          { ownerOffset: "+03:00" },
+          { linkedPaymentRecord, paymentDate: "2025-10-06T08:00:00.000Z" }
+        )
+      ).toBe(`${PAYMENT_LINE_TEXT} 06.10.2025`)
+    );
+  });
+
+  it("never prints the payment's ref ID", () => {
+    ["3903", "", "  ", null, undefined].forEach((refId) =>
       expect(
         paymentLineText(
           { invoiceNumber: "0039", ownerOffset: "+03:00" },
@@ -234,7 +260,7 @@ describe("frigo-pro-eood payment lines", () => {
       allPayments: [payment],
     });
     const [row] = paymentRows(state);
-    expect(row.item.name).toBe(`${PAYMENT_LINE_TEXT} 3903/06.10.2025`);
+    expect(row.item.name).toBe(`${PAYMENT_LINE_TEXT} 06.10.2025`);
     expect(cellText(row, "quantity")).toBe("-1");
     expect(cellText(row, "rate")).toMatch(/1,533\.87/);
     expect(cellText(row, "amount")).toMatch(/^-.*1,533\.87$/);
@@ -344,7 +370,16 @@ describe("frigo-pro-eood payment lines", () => {
   it("renders the payment line in the item table", () => {
     const html = render({ invoiceNumber: "3903", allPayments: [payment] });
     expect(html).toContain('class="row-payment"');
-    expect(html).toContain(`${PAYMENT_LINE_TEXT} 3903/06.10.2025`);
+    expect(html).toContain(`${PAYMENT_LINE_TEXT} 06.10.2025`);
+  });
+
+  it("renders the receipt number on a payment made from a receipt", () => {
+    const html = render({
+      allPayments: [
+        { ...payment, linkedPaymentRecord: { paymentReceiptNumber: "1006" } },
+      ],
+    });
+    expect(html).toContain(`${PAYMENT_LINE_TEXT} 1006/06.10.2025`);
   });
 
   it("rounds a payment line's figures to the document's decimals", () => {
