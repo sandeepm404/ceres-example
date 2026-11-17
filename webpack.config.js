@@ -924,7 +924,13 @@ module.exports = {
         use: [{ loader: "babel-loader" }],
         exclude: /node_modules/,
       },
-      { test: /\.css$/, use: [MiniCssExtractPlugin.loader, "css-loader"] },
+      // `import text from "./styles.css?raw"`: the stylesheet's text in the bundle.
+      { test: /\.css$/, resourceQuery: /raw/, type: "asset/source" },
+      {
+        test: /\.css$/,
+        resourceQuery: { not: [/raw/] },
+        use: [MiniCssExtractPlugin.loader, "css-loader"],
+      },
       {
         test: /\.hbs$/,
         loader: "handlebars-loader",
