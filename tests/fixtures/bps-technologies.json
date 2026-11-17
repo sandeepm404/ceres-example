@@ -1,0 +1,376 @@
+{
+  "copy": "",
+  "invoice": {
+    "_id": "fixture-apex",
+    "billType": "QUOTATION",
+    "invoiceType": "INVOICE",
+    "status": "UNPAID",
+    "invoiceTitle": "Equipment Quotation",
+    "invoiceSubTitle": "Supply of VRV System, Equipment, accessories & allied materials.",
+    "invoiceNumber": "QT-R2/A5/880/SR/46/26-27",
+    "invoiceDate": "2026-05-27",
+    "ownerOffset": "+05:30",
+    "currency": "INR",
+    "subUnitLength": 2,
+    "locale": "en-IN",
+    "taxType": "INDIA",
+    "igst": false,
+    "placeOfSupply": "West Bengal (19)",
+    "showTotalsRow": false,
+    "logo": "apex-sample-logo.png",
+    "billedBy": {
+      "name": "Apex Engineering",
+      "street": "12 Sample Road",
+      "city": "Kolkata",
+      "pincode": "700001",
+      "state": "West Bengal",
+      "country": "IN",
+      "gstin": "19ABCDE1234F1Z5",
+      "phone": "033-0000-0000",
+      "email": "info@example.com"
+    },
+    "billedTo": {
+      "name": "SAMPLE CLIENT PVT LTD",
+      "address": "Sample House, 1/1 Sample Street",
+      "city": "Kolkata",
+      "pincode": "700001",
+      "state": "West Bengal",
+      "country": "IN",
+      "gstin": "19AAAAA0000A1Z5",
+      "email": "client@example.com"
+    },
+    "columns": [
+      {
+        "key": "name",
+        "label": "Product Description",
+        "dataType": "text"
+      },
+      {
+        "key": "location",
+        "label": "Location",
+        "dataType": "text"
+      },
+      {
+        "key": "remoteType",
+        "label": "Remote Type",
+        "dataType": "text"
+      },
+      {
+        "key": "model",
+        "label": "Model",
+        "dataType": "text"
+      },
+      {
+        "key": "tr",
+        "label": "TR",
+        "dataType": "text"
+      },
+      {
+        "key": "hsn",
+        "label": "HSN/SAC",
+        "dataType": "text",
+        "isHidden": true
+      },
+      {
+        "key": "quantity",
+        "label": "Qty",
+        "dataType": "number"
+      },
+      {
+        "key": "rate",
+        "label": "Unit Price (₹)",
+        "dataType": "number"
+      },
+      {
+        "key": "amount",
+        "label": "Amount (₹)",
+        "dataType": "number"
+      },
+      {
+        "key": "gstRate",
+        "label": "GST Rate",
+        "dataType": "number",
+        "isHidden": true
+      },
+      {
+        "key": "cgst",
+        "label": "CGST",
+        "dataType": "number",
+        "isHidden": true
+      },
+      {
+        "key": "sgst",
+        "label": "SGST",
+        "dataType": "number",
+        "isHidden": true
+      },
+      {
+        "key": "igst",
+        "label": "IGST",
+        "dataType": "number",
+        "isHidden": true
+      },
+      {
+        "key": "total",
+        "label": "Total",
+        "dataType": "number",
+        "isHidden": true
+      }
+    ],
+    "items": [
+      {
+        "_id": "g0",
+        "name": "OUTDOOR UNITS",
+        "group": true
+      },
+      {
+        "_id": "i1",
+        "name": "42 HP (24+18) Top Discharge (Cooling only) VRV ALPHA",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 760698,
+        "amount": 760698,
+        "subTotal": 760698,
+        "gstRate": 18,
+        "cgst": 61616.54,
+        "sgst": 61616.54,
+        "total": 807861.28,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "RXQ42RY16",
+          "tr": "1"
+        }
+      },
+      {
+        "_id": "g2",
+        "name": "INDOOR UNITS",
+        "group": true
+      },
+      {
+        "_id": "i2",
+        "name": "CORNER CASSETTE (O.W)",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 48500,
+        "amount": 48500,
+        "subTotal": 48500,
+        "gstRate": 18,
+        "cgst": 3928.5,
+        "sgst": 3928.5,
+        "total": 51507.0,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "FXKQ25MAVE",
+          "tr": "1"
+        }
+      },
+      {
+        "_id": "i3",
+        "name": "CORNER CASSETTE (O.W)",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 48500,
+        "amount": 48500,
+        "subTotal": 48500,
+        "gstRate": 18,
+        "cgst": 3928.5,
+        "sgst": 3928.5,
+        "total": 51507.0,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "FXKQ25MAVE",
+          "tr": "1"
+        }
+      },
+      {
+        "_id": "i4",
+        "name": "CORNER CASSETTE (O.W)",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 48500,
+        "amount": 48500,
+        "subTotal": 48500,
+        "gstRate": 18,
+        "cgst": 3928.5,
+        "sgst": 3928.5,
+        "total": 51507.0,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "FXKQ25MAVE",
+          "tr": "1"
+        }
+      },
+      {
+        "_id": "i5",
+        "name": "CORNER CASSETTE (O.W)",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 48500,
+        "amount": 48500,
+        "subTotal": 48500,
+        "gstRate": 18,
+        "cgst": 3928.5,
+        "sgst": 3928.5,
+        "total": 51507.0,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "FXKQ25MAVE",
+          "tr": "1"
+        }
+      },
+      {
+        "_id": "g7",
+        "name": "REFNET JOINT",
+        "group": true
+      },
+      {
+        "_id": "i6",
+        "name": "REFNET JOINT (KHRP26M22T)",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 2450,
+        "amount": 2450,
+        "subTotal": 2450,
+        "gstRate": 18,
+        "cgst": 198.45,
+        "sgst": 198.45,
+        "total": 2601.9,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "KHRP26M22T",
+          "tr": "1"
+        }
+      },
+      {
+        "_id": "i7",
+        "name": "REFNET JOINT (KHRP26M22T)",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 2450,
+        "amount": 2450,
+        "subTotal": 2450,
+        "gstRate": 18,
+        "cgst": 198.45,
+        "sgst": 198.45,
+        "total": 2601.9,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "KHRP26M22T",
+          "tr": "1"
+        }
+      },
+      {
+        "_id": "i8",
+        "name": "REFNET JOINT (KHRP26M22T)",
+        "hsn": "8415",
+        "quantity": 1,
+        "unit": "NOS",
+        "rate": 2450,
+        "amount": 2450,
+        "subTotal": 2450,
+        "gstRate": 18,
+        "cgst": 198.45,
+        "sgst": 198.45,
+        "total": 2601.9,
+        "custom": {
+          "location": "BLOCK - 1",
+          "remoteType": "NA",
+          "model": "KHRP26M22T",
+          "tr": "1"
+        }
+      }
+    ],
+    "subTotal": 962048,
+    "finalTotal": {
+      "subTotal": 962048,
+      "amount": 865843.2,
+      "discount": 96204.8,
+      "discountPercentage": 10,
+      "cgst": 77925.89,
+      "sgst": 77925.89,
+      "igst": 0,
+      "total": 1021694.98
+    },
+    "customLabels": {
+      "invoiceNumber": "Drawing No",
+      "invoiceDate": "Date",
+      "billedTo": "Client Name",
+      "total": "Equipment Cost",
+      "subTotal": "Sub Total"
+    },
+    "customHeaders": [
+      {
+        "label": "DWG. NO",
+        "value": "R1"
+      }
+    ],
+    "terms": [
+      {
+        "label": "Terms and Conditions",
+        "terms": [
+          "Prices include GST. Any change in statutory taxes will be applicable at the time of receiving 100% payment.",
+          "Price validity: 10 days from the date of submission.",
+          "Delivery within 12 – 16 weeks from the date of order.",
+          "Civil, carpentry, masonry or electrical works are not in our scope.",
+          "Store to be provided by client for safety of our materials & equipment.",
+          "Before starting site work, drawing & quotation approval is mandatory.",
+          "Warranty: 12 months from commissioning or 15 months from date of delivery whichever is earlier."
+        ]
+      },
+      {
+        "label": "Payment Terms",
+        "terms": [
+          "90% Advance along with order and before delivery of materials",
+          "10% After successful commissioning of the system."
+        ]
+      }
+    ],
+    "bankAccount": {
+      "bank": "Sample Bank",
+      "accountNo": "000123456789012",
+      "ifsc": "SMPL0000123",
+      "branch": "Sample Market Branch"
+    },
+    "paymentOptions": {
+      "accountTransfer": true,
+      "upi": false
+    },
+    "advanceOptions": {
+      "hsnView": "SPLIT",
+      "unitColumn": "SEPARATE",
+      "showHsnSummary": false,
+      "taxSummaryView": "DEFAULT",
+      "hideGroupSubTotal": true
+    },
+    "contact": {
+      "phone": "033-0000-0000",
+      "email": "info@example.com"
+    },
+    "owner": {
+      "_id": "fixture-owner",
+      "country": "IN",
+      "currency": "INR",
+      "locale": "en-IN",
+      "configuration": {
+        "experimental": {
+          "hideCurrencyCode": true
+        }
+      }
+    },
+    "taxName": "GST"
+  }
+}

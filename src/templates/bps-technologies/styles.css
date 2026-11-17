@@ -1,0 +1,2922 @@
+/* Caladea: metric-compatible with Cambria, the client's quotation font. Noto Serif for the ₹ sign
+   and other symbols Caladea lacks. */
+@import "https://fonts.googleapis.com/css2?family=Caladea:ital,wght@0,400;0,700;1,400&family=Noto+Serif:wght@400;700&display=swap";
+
+/* Cambria's "&" is upright; Caladea's is a script one (user, 2026-11-16). PT Serif carrying only
+   the "&" (text=&) stands first in the default stack, so every "&" is upright and the rest of
+   the text stays Caladea. */
+@import "https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&text=%26&display=swap";
+
+/*
+ * BPS Technologies — the client's (BPS Energy) rooftop-solar quotation, 2026-11-16: the logo
+ * centred, the tagline (subtitle) and the title in blue bold under it; one black-ruled box: the
+ * seller | the document details and the customer in bold; the item table ruled both ways under
+ * a light-blue heading row; totals as ruled lines with centred bold labels; bank details | the
+ * UPI QR with "SCAN & PAY"; payment terms | Authorized Signatory; then the notes, additional
+ * information and attachments unboxed under underlined headings. Serif (Cambria / Caladea).
+ * Built on the Simple / Modern print engine (stretch, page-break fills, split totals, literal
+ * text scale, browser print and PDF service paths).
+ *
+ * Design canvas 1000 px, 20 px page padding. Every rule is scoped to .bp-doc; the page box and
+ * margins belong to the browser or the PDF service (no @page: it would break Lydia's Pageless
+ * PDF). Labels are the business's own text: no rule changes their case. Text sizes follow the
+ * document's text scale (--bp-text-scale); print is 1:1 with the screen.
+ */
+
+.bp-doc {
+  /* stylelint-disable-next-line property-no-vendor-prefix -- no standard property */
+  -webkit-font-smoothing: antialiased;
+  /* stylelint-disable-next-line property-no-vendor-prefix -- no standard property */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* The theme colour (helpers.ts / Lydia's live picker): the title, and a light tint of it fills
+     the table heading rows. The client's blue (#4472c4) by default. */
+  --bp-accent: var(--primary-color, var(--bp-theme, #4472c4));
+  --bp-on-accent: #fff;
+  --bp-accent-text: var(--bp-accent);
+
+  /* Black text and black 1 px rules (the client's quotation). */
+  --bp-ink: #000;
+  --bp-strong: #000;
+
+  /* One grey for secondary text, dark enough to read easily (user, 2026-11-13): the subtitle,
+     an item's codes, converted amounts, notes under totals. */
+  --bp-grey: #4a4a4a;
+  --bp-muted: var(--bp-grey);
+  --bp-caption: #000;
+  --bp-code: var(--bp-grey);
+  --bp-desc: #000;
+  --bp-label: #000;
+  --bp-paper: #fff;
+  --bp-card: var(--bp-paper);
+  --bp-fill: var(--bp-paper);
+  --bp-line: #000;
+  --bp-zebra: var(--bp-paper);
+
+  /* The heading rows' light blue (#c6d9f1 on the default blue): the theme at 30% on white. */
+  --bp-head-tint: color-mix(in srgb, var(--bp-accent) 30%, var(--bp-paper));
+  --bp-tint: var(--bp-paper);
+  --bp-rule: 1px solid var(--bp-line);
+  --bp-lh: 1.45;
+  --bp-font: var(--subtitle-font, "PT Serif", "Caladea"), var(--bp-script-font, "Caladea"), "Noto Serif", serif;
+  --bp-title-font: var(--title-font, "PT Serif", "Caladea"), var(--bp-script-font, "Caladea"), "Noto Serif", serif;
+  --bp-table-font: var(--bp-font);
+  --bp-label-font: var(--bp-font);
+
+  /* Type scale (the client's quotation): 14 px text, 13 px table text, 15 px headings, the
+     totals and the tagline, 22 px title. */
+  --bp-font-size-code: 12px; /* SKU, HSN/SAC, unit under an item */
+  --bp-font-size-xs: 12px;
+  --bp-font-size-sm: 13px;
+  --bp-font-size-s: 14px;
+  --bp-font-size-table: 13px;
+  --bp-font-size-base: 14px;
+  --bp-font-size-caption: 14px;
+  --bp-font-size-section: 15px;
+  --bp-font-size-name: 14px;
+  --bp-font-size-grand: 15px;
+  --bp-font-size-tagline: 20px;
+  --bp-font-size-xl: 22px;
+  --bp-font-size-status: 13px; /* 0.6 of the title, as Refrens' tag */
+  --bp-gutter: 20px;
+  --bp-section-gap: 0px; /* the frame's parts meet on one rule */
+  --bp-pad: 8px; /* inside every ruled cell */
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(100vw, 1000px);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--bp-gutter);
+  background: var(--bp-paper);
+  color: var(--bp-ink);
+  font-family: var(--bp-font);
+  font-size: calc(var(--bp-font-size-base) * var(--bp-text-scale, 1));
+  font-weight: 400;
+  line-height: var(--bp-lh);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.bp-doc,
+.bp-doc *,
+.bp-doc *::before,
+.bp-doc *::after {
+  box-sizing: border-box;
+}
+
+/* Flex children default to min-width:auto, which would let a wide table stretch the page. */
+.bp-doc > *,
+.bp-page-body > * {
+  min-width: 0;
+}
+
+/* The print frame (template.hbs) is transparent on screen. */
+.bp-page-frame,
+.bp-page-frame > tbody,
+.bp-page-frame > tbody > tr,
+.bp-page-frame-cell,
+.bp-page-frame-header,
+.bp-page-frame-header > tr,
+.bp-page-frame-header > tr > td,
+.bp-page-body {
+  display: contents;
+}
+
+.bp-page-frame-footer {
+  display: none;
+}
+
+/* The page margin rows of a browser's own print only (print rules below); the signature note
+   in Refrens' PDF only. */
+.bp-page-frame > * > tr.bp-signature-note,
+.bp-page-frame > * > tr.bp-page-margin,
+.bp-page-frame > * > tr.bp-stamp-room {
+  display: none;
+}
+
+.bp-doc p,
+.bp-doc h1,
+.bp-doc h2,
+.bp-doc h3,
+.bp-doc ol,
+.bp-doc ul,
+.bp-doc figure {
+  margin: 0;
+}
+
+/* Figures, codes, dates, IDs and phone numbers never wrap (user rule): the box holding one
+   widens to fit it instead — columns, cells and table cells alike. */
+.bp-num {
+  white-space: nowrap;
+}
+
+/* An email stays on one line while it fits and breaks only when its box is too narrow. */
+.bp-email {
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ letterhead */
+
+.bp-doc .invoice-letterhead,
+.bp-doc .invoice-letterhead-footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.bp-doc .invoice-letterhead img,
+.bp-doc .invoice-letterhead-footer img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bp-doc .invoice-letterhead.is-empty,
+.bp-doc .invoice-letterhead-footer.is-empty {
+  display: none;
+}
+
+.bp-doc .bp-letterhead,
+.bp-doc .bp-letterhead-footer {
+  width: auto;
+  margin-inline: calc(-1 * var(--bp-gutter));
+}
+
+/* The letterhead sits in the flow or in the print frame's header: either way, none, gutter. */
+.bp-doc:has(.bp-letterhead.is-empty) {
+  padding-top: var(--bp-gutter);
+}
+
+.bp-doc:has(.bp-letterhead-footer.is-empty:not(.bp-footer-spacer)) {
+  padding-bottom: var(--bp-gutter);
+}
+
+/* An image that failed to load prints nothing (helpers.ts registerBpsImages). */
+.bp-doc img.is-broken,
+.bp-logo:has(> .is-broken, .bp-logo-image.is-broken) {
+  display: none;
+}
+
+/* ------------------------------------------------------------ the frame */
+
+/*
+ * Every part of the frame draws its own four rules; the next part sits one rule higher, so two
+ * parts meet on a single line. A part that starts a new page in print keeps its top rule (the
+ * negative margin is dropped at a page break), so every page's piece is closed.
+ */
+.bp-box {
+  border: var(--bp-rule);
+  background: var(--bp-paper);
+}
+
+.bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) {
+  margin-top: -1px;
+}
+
+/* Header (unboxed): the logo, tagline and title centred on the page; the QR at the end in a
+   column as wide as the empty one at the start, so the middle stays centred. */
+.bp-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  gap: 0 12px;
+  align-items: start;
+  padding-bottom: 16px;
+}
+
+.bp-head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  grid-column: 2;
+  min-width: 0;
+  max-width: 720px;
+  text-align: center;
+}
+
+.bp-head-qrs {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.bp-logo {
+  margin-bottom: 4px;
+  line-height: 0;
+}
+
+/* The logo at its own size, up to 260 × 110. */
+.bp-doc .bp-logo .bp-logo-image {
+  display: block;
+  width: auto;
+  max-width: 260px;
+  height: auto;
+  max-height: 110px;
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+}
+
+.bp-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The title in the theme colour, bold (the client's "5kWp ON-GRID … QUOTATION"). */
+.bp-title {
+  color: var(--bp-accent-text);
+  font-family: var(--bp-title-font);
+  font-size: calc(var(--bp-font-size-xl) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* The status tag as Refrens' own templates print it (enterprise PDF of this design, measured
+   2026-11-13; user: tags exactly as Refrens'): the status word as written ("Paid"), bold, white
+   on a solid fill from Ant Design's tag palette (Refrens' app is built on it: success #52c41a),
+   0.6 of the title's size, small round corners. The status widget's kind picks the colour. */
+.bp-status {
+  line-height: 0;
+}
+
+.bp-doc .bp-status .invoice-tag {
+  --bp-status-fill: #52c41a;
+
+  margin: 0;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--bp-status-fill);
+  color: var(--bp-paper);
+  font-size: calc(var(--bp-font-size-status) * var(--bp-text-scale, 1));
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.bp-doc .bp-status .invoice-tag.danger {
+  --bp-status-fill: #f5222d;
+}
+
+.bp-doc .bp-status .invoice-tag.warning {
+  --bp-status-fill: #faad14;
+}
+
+.bp-doc .bp-status .invoice-tag.info {
+  --bp-status-fill: #1890ff;
+}
+
+.bp-doc .bp-status .invoice-tag.devider {
+  --bp-status-fill: #8c8c8c;
+}
+
+.bp-doc .bp-status .invoice-tag.magenta {
+  --bp-status-fill: #eb2f96;
+}
+
+/* The business's tagline over the title, black, larger than the text (fixed in the template:
+   "Telangana's Most Trusted Solar Installer"). */
+.bp-doc .bp-tagline {
+  color: var(--bp-ink);
+  font-size: calc(var(--bp-font-size-tagline) * var(--bp-text-scale, 1));
+  line-height: 1.3;
+}
+
+/* The document's own subtitle, if any, under the title. */
+.bp-doc .bp-subtitle {
+  color: var(--bp-grey);
+  font-size: calc(var(--bp-font-size-s) * var(--bp-text-scale, 1));
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.bp-doc .bp-copy {
+  color: var(--bp-grey);
+  font-size: calc(var(--bp-font-size-s) * var(--bp-text-scale, 1));
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.bp-head-qrs:not(:has(.bp-qr:not(.is-empty))) {
+  visibility: hidden;
+}
+
+/* Rows of equal cells, a rule between cells, so the rows' rules line up. A cell is never
+   narrower than an unbreakable value in it (numbers never wrap). */
+.bp-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(min-content, 1fr));
+}
+
+/* Shipped From | Shipped To (| Transport Details): however many cells print, they share the
+   width evenly, so two cells are halves, not two thirds with an empty third (user 17 Nov). */
+.bp-row-logistics {
+  grid-template-columns: none;
+  grid-auto-columns: minmax(min-content, 1fr);
+  grid-auto-flow: column;
+}
+
+/* The seller | the details and the customer: the seller a little wider (the client's box). */
+.bp-row-parties {
+  grid-template-columns: minmax(min-content, 55fr) minmax(min-content, 45fr);
+}
+
+.bp-cell {
+  min-width: 0;
+  padding: var(--bp-pad);
+}
+
+.bp-cell + .bp-cell {
+  border-inline-start: var(--bp-rule);
+}
+
+.bp-cell.is-empty {
+  display: none;
+}
+
+.bp-party {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* "Shipped From", "Shipped To", "Transport Details": the business's labels, bold, underlined. */
+.bp-caption {
+  margin-bottom: 2px;
+  color: var(--bp-ink);
+  font-family: var(--bp-label-font);
+  font-size: calc(var(--bp-font-size-caption) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Shipped From / Shipped To: plain, no underline, in the weight of the address under them
+   (user, 2026-11-17). */
+.bp-ship .bp-caption {
+  font-weight: 400;
+  text-decoration: none;
+}
+
+/* The seller's name bold and underlined, the address and fields plain under it. */
+.bp-party-name {
+  color: var(--bp-ink);
+  font-family: var(--bp-title-font);
+  font-size: calc(var(--bp-font-size-name) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  line-height: var(--bp-lh);
+  overflow-wrap: anywhere;
+}
+
+.bp-seller-name {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bp-party-address {
+  color: var(--bp-ink);
+  overflow-wrap: break-word;
+  white-space: pre-line;
+}
+
+/* Fields as lines of "Label: value" (the client's box). */
+.bp-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: calc(var(--bp-font-size-s) * var(--bp-text-scale, 1));
+}
+
+.bp-fields > .bp-meta-compliance,
+.bp-fields > .bp-supply,
+.bp-fields > .bp-buyer {
+  display: contents;
+}
+
+.bp-field {
+  overflow-wrap: break-word;
+}
+
+.bp-field-label {
+  color: var(--bp-ink);
+  font-weight: 400;
+}
+
+.bp-field-label::after {
+  content: ": ";
+}
+
+.bp-field-value {
+  min-width: 0;
+  color: var(--bp-ink);
+  font-weight: 400;
+  overflow-wrap: break-word;
+}
+
+.bp-field-value.bp-num {
+  white-space: nowrap;
+}
+
+.bp-field-value.bp-break:not(.bp-num) {
+  overflow-wrap: anywhere;
+}
+
+.bp-irn-value {
+  overflow-wrap: anywhere;
+}
+
+/* The details and the customer: every line bold, a little apart (the client's box). */
+.bp-meta > .bp-fields {
+  gap: 6px;
+}
+
+.bp-meta .bp-field,
+.bp-meta .bp-field-label,
+.bp-meta .bp-field-value {
+  font-weight: 700;
+}
+
+.bp-meta .bp-party-name {
+  font-size: inherit;
+}
+
+.bp-meta .bp-party-address {
+  white-space: normal;
+}
+
+/* A party with no fields leaves no empty list. */
+.bp-fields:not(:has(> *)) {
+  display: none;
+}
+
+/* Every QR is 120 px square; drawn as SVG, the e-invoice's code keeps sharp modules in print. */
+.bp-qr-list {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.bp-qr img {
+  display: block;
+  width: 120px;
+  height: 120px;
+}
+
+.bp-qr.is-empty {
+  display: none;
+}
+
+/* ------------------------------------------------------------ compliance under the items */
+
+/* An E-Invoice block placed under the items (irnPosition BELOW_LINE_ITEMS): a ruled part. */
+.bp-cards > .bp-compliance {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+  align-items: start;
+  padding: var(--bp-pad);
+}
+
+.bp-compliance > .bp-compliance-text {
+  display: contents;
+}
+
+.bp-compliance > .bp-compliance-text > .bp-card-title {
+  grid-column: 1 / -1;
+}
+
+.bp-compliance > .bp-qr-list {
+  grid-column: 2;
+}
+
+.bp-cards:has(> .bp-compliance.is-empty:not(:has(.bp-irn-value:not(:empty), .bp-qr:not(.is-empty)))) {
+  display: none;
+}
+
+/* ------------------------------------------------------------ sections */
+
+.bp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bp-doc :is(strong, b),
+.bp-doc .toastui-editor-contents :is(strong, b) {
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------ items */
+
+.bp-items-section {
+  --bp-separator: 1px;
+  --bp-sep-color: var(--bp-line);
+
+  min-width: 0;
+}
+
+.bp-items-scroll {
+  max-width: 100%;
+  overflow: auto hidden; /* sideways only for a table wider than the page; never up and down */
+}
+
+/* Ruled both ways (design): a rule after every column and under every item; the frame's sides
+   are the first and last cells' outer rules. */
+.bp-items {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--bp-ink);
+  font-family: var(--bp-table-font);
+  font-size: calc(var(--bp-font-size-table) * var(--bp-text-scale, 1));
+  line-height: var(--bp-lh);
+  table-layout: auto;
+}
+
+.bp-items th,
+.bp-items td {
+  padding: 6px;
+  border: 0;
+  text-align: center;
+  vertical-align: top;
+}
+
+.bp-items > :is(thead, tbody) > tr > :is(th, td) {
+  border-inline-end: var(--bp-rule);
+}
+
+.bp-items > :is(thead, tbody) > tr > :is(th, td):first-child {
+  border-inline-start: var(--bp-rule);
+}
+
+/* An item's rows end on a rule (a border, never an inset shadow: PDF seams). */
+.bp-items > tbody > tr > td {
+  border-bottom: var(--bp-separator) solid var(--bp-sep-color);
+}
+
+/* Under a full-width name row the serial cell above spans this row: no start rule here. */
+.bp-items > tbody > tr.has-name-row > td:first-child {
+  border-inline-start: 0;
+}
+
+/* The heading row: bold on the light blue, centred (the client's table). */
+.bp-items > thead > tr > th {
+  padding-block: 4px;
+  border-top: var(--bp-rule);
+  border-bottom: var(--bp-rule);
+  background: var(--bp-head-tint);
+  color: var(--bp-ink);
+  font-family: var(--bp-label-font);
+  font-size: calc(var(--bp-font-size-table) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  vertical-align: middle;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.bp-items .bp-col-serial {
+  white-space: nowrap;
+}
+
+.bp-items td.is-fixed,
+.bp-items td.is-word {
+  white-space: nowrap;
+}
+
+.bp-items td.bp-col-name,
+.bp-items .bp-name-row > td + td {
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+.bp-items .bp-desc-min {
+  display: block;
+  height: 0;
+}
+
+/* The last item's rule is the table's foot (print: the corner footer draws it per page). */
+.bp-items > tbody:last-of-type > tr:last-child:not(.bp-filler) > td {
+  border-bottom: 1px solid var(--bp-close-line, var(--bp-line));
+}
+
+/* A name on a row of its own (Item Name Full Width) reads with the figures under it: no rule
+   between them. A full-width description and the original images are rows of their own under
+   the item's figures, a rule above each (user, 2026-11-13: the line was missing). */
+.bp-items > tbody > tr.bp-name-row > td {
+  border-bottom: 0;
+}
+
+.bp-items .bp-name-row > td {
+  padding-bottom: 0;
+}
+
+.bp-group-row > td {
+  font-weight: 700;
+  text-align: start;
+}
+
+.bp-group-total-row > td {
+  font-weight: 700;
+}
+
+/* The item's name plain (the client's table); the row's amount, its last figure, bold. */
+.bp-item-name {
+  display: block;
+  font-weight: 400;
+}
+
+.bp-items > tbody > tr.bp-item-row > td:last-child {
+  font-weight: 700;
+}
+
+/* SKU, HSN/SAC, unit, batch under the name: lines of plain text (design). */
+.bp-item-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 12px;
+  margin-top: 4px;
+  color: var(--bp-code);
+  font-size: calc(var(--bp-font-size-code) * var(--bp-text-scale, 1));
+  line-height: var(--bp-lh);
+}
+
+/* The thumbnail at the name cell's end (design). */
+.bp-item-thumbnail {
+  float: inline-end;
+  margin-block-end: 4px;
+  margin-inline-start: 8px;
+}
+
+.bp-items .bp-thumbnail {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.bp-items.has-thumbnails td.bp-col-name {
+  min-width: 200px;
+}
+
+.bp-item-detail {
+  clear: both;
+}
+
+.bp-item-desc {
+  padding-top: 4px;
+  color: var(--bp-desc);
+  line-height: var(--bp-lh);
+}
+
+.bp-items .ceres-image-gallery {
+  clear: both;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.bp-items .ceres-image-gallery-thumbnail .ceres-image {
+  width: 64px;
+  height: 64px;
+}
+
+/* Item images print bare: no frame, square corners (the shared image widget draws a grey
+   border and 4 px corners, loaded after this file, so .bp-doc). */
+.bp-doc .bp-items :is(.bp-thumbnail, .ceres-image, .bp-large-image) {
+  border: 0;
+  border-radius: 0;
+}
+
+.bp-detail-row > td,
+.bp-image-row > td {
+  text-align: start;
+}
+
+.bp-large-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bp-large-image + .bp-large-image {
+  margin-top: 8px;
+}
+
+/* The column-sum row ("Total"): bold, ruled like the rows above. */
+.bp-total-row > td {
+  border-inline-end: var(--bp-rule);
+  border-bottom: var(--bp-rule);
+  background: var(--bp-paper);
+  font-weight: 700;
+}
+
+.bp-total-row > td:first-child {
+  border-inline-start: var(--bp-rule);
+}
+
+/* The stretch row (shown by .bp-doc.is-filled, below): empty, the column rules running through. */
+.bp-items .bp-filler {
+  display: none;
+}
+
+/* ------------------------------------------------------------ totals */
+
+/*
+ * The totals across the frame (design): each row a ruled line, its label on the right in bold,
+ * its figure in a cell at the frame's end, the grand total at 14 px. Hidden rows (the widget's
+ * display: none !important) take no room.
+ */
+.bp-totals-table {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--bp-ink);
+  font-size: calc(var(--bp-font-size-s) * var(--bp-text-scale, 1));
+  line-height: var(--bp-lh);
+}
+
+/* Each total a ruled line: its label centred across the frame, bold, its figure in the last
+   cell (the client's "Subsidy …" and "Net Effective Price" lines). */
+.bp-totals-table .bp-totals th,
+.bp-totals-table .bp-totals td {
+  padding: 4px var(--bp-pad);
+  border-bottom: var(--bp-rule);
+  font-size: calc(var(--bp-font-size-s) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.bp-totals-table .bp-totals tr:first-child > * {
+  border-top: var(--bp-rule);
+}
+
+/* The shared widget rules a line over the grand total: here the row above already ends on one. */
+.bp-totals-table .bp-totals tr:not(:first-child) > * {
+  border-top: 0;
+}
+
+.bp-totals-table .bp-totals .ceres-subtotal-label {
+  border-inline-start: var(--bp-rule);
+  text-align: center;
+  overflow-wrap: break-word;
+}
+
+.bp-totals-table .bp-totals .ceres-subtotal-value {
+  width: 1%;
+  min-width: 112px;
+  border-inline: var(--bp-rule);
+  white-space: nowrap;
+  text-align: center;
+}
+
+.bp-totals-table .bp-totals .bp-grand-row > * {
+  padding-block: 6px;
+  font-size: calc(var(--bp-font-size-grand) * var(--bp-text-scale, 1));
+  font-weight: 700;
+}
+
+.bp-totals-table .bp-totals .ceres-subtotal-note,
+.bp-totals-table .bp-totals .ceres-subtotal-converted,
+.bp-totals-table .bp-totals .ceres-subtotal-extra {
+  color: var(--bp-muted);
+  font-size: calc(var(--bp-font-size-xs) * var(--bp-text-scale, 1));
+  font-weight: 400;
+  line-height: var(--bp-lh);
+}
+
+.bp-totals-table .bp-totals .bp-extra-row > td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* A custom total's text value wraps; its figures, if any, do not. */
+.bp-totals-table .bp-totals .bp-extra-row .bp-num:not([data-testid="num"]) {
+  white-space: normal;
+}
+
+/* The words go with the totals: hidden while the grand total is (Lydia's live Hide Totals marks
+   only the totals rows; a render with Hide Totals leaves the words out itself). */
+.bp-doc:has(.bp-grand-row.is-hidden-by-totals) .bp-words {
+  display: none;
+}
+
+/* The amount in words: a ruled line, its label (design). */
+.bp-doc .bp-words {
+  padding: 6px var(--bp-pad);
+  color: var(--bp-ink);
+  overflow-wrap: break-word;
+}
+
+.bp-words-label {
+  font-weight: 400;
+}
+
+.bp-words-value {
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------ bottom */
+
+/* "Bank Details", "Terms and Conditions", "Authorized Signatory" … bold and underlined. */
+.bp-card-title,
+.bp-plain-title,
+.bp-signature-label {
+  color: var(--bp-ink);
+  font-family: var(--bp-label-font);
+  font-size: calc(var(--bp-font-size-caption) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Bank details: label | value in bold, the UPI QR at the end with "SCAN & PAY" under it. */
+.bp-bank {
+  flex-flow: row nowrap;
+  gap: 12px 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--bp-pad) var(--bp-pad) 12px;
+}
+
+.bp-bank-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bp-kv.bp-bank-rows {
+  row-gap: 6px;
+  font-weight: 700;
+}
+
+.bp-bank-rows > .bp-kv-label,
+.bp-bank-rows > .bp-kv-value {
+  font-weight: 700;
+}
+
+/* "Label  :- value" (the client's bank lines). */
+.bp-bank-rows > .bp-kv-value::before {
+  content: ":- ";
+}
+
+.bp-upi {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  width: min-content;
+  min-width: 140px;
+  max-width: 100%;
+  margin-inline-end: 24px;
+  text-align: center;
+}
+
+.bp-upi-caption {
+  color: var(--bp-ink);
+  font-size: calc(var(--bp-font-size-caption) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Every QR is 120 px: document, e-invoice, UPI (user rule, 2026-10-24). */
+.bp-upi-qr {
+  display: block;
+  width: 120px;
+  height: 120px;
+}
+
+.bp-upi-note {
+  color: var(--bp-ink);
+  font-size: calc(var(--bp-font-size-sm) * var(--bp-text-scale, 1));
+  line-height: var(--bp-lh);
+}
+
+/*
+ * Terms | the signature: one table (template.hbs bp-lines), two equal halves. Each terms line is
+ * a row whose cell draws the part's left edge, the rule between the halves and (::after, across
+ * the right half) the right edge; the signature sits in a borderless cell spanning every row; the
+ * footer row draws the bottom rule. A page break falls between rows and the footer row repeats
+ * at each page's foot, so every page's piece closes.
+ */
+.bp-bottom {
+  min-width: 0;
+}
+
+.bp-bottom:not(:has(.bp-line-title, .bp-signature)) {
+  display: none;
+}
+
+.bp-lines {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  color: var(--bp-ink);
+  line-height: var(--bp-lh);
+}
+
+.bp-lines > colgroup > col {
+  width: 50%;
+}
+
+.bp-lines td {
+  padding: 3px var(--bp-pad);
+  vertical-align: top;
+}
+
+.bp-lines .bp-line-cell {
+  position: relative;
+  border-inline: var(--bp-rule);
+}
+
+/* The part's right edge, drawn row by row across the right half: from the cell's padding box,
+   twice its width plus its two borders, less the rule's own pixel. */
+.bp-lines .bp-line-cell::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: calc(200% + 2px);
+  width: 1px;
+  background: var(--bp-line);
+  content: "";
+}
+
+.bp-lines .bp-line-start > td {
+  height: 0;
+  padding: 0;
+  border-top: var(--bp-rule);
+}
+
+/* Room under the last line, and for the signature's height when there are few terms. */
+.bp-lines .bp-line-end > td {
+  height: 12px;
+  padding: 0;
+}
+
+.bp-lines > .bp-lines-foot td {
+  height: 0;
+  padding: 0;
+  border-top: var(--bp-rule);
+}
+
+.bp-lines .bp-bottom-side {
+  padding: 0;
+}
+
+/* The terms' title centred over them (the client's "Payments Terms"). */
+.bp-lines .bp-line-title > td {
+  padding-top: var(--bp-pad);
+  padding-bottom: 6px;
+  text-align: center;
+}
+
+/* Terms numbered 1, 2, … in each group, as Refrens numbers them; the text hangs after it. */
+.bp-lines .bp-terms {
+  counter-reset: bp-term;
+}
+
+.bp-term-row {
+  display: flex;
+  gap: 0.6em;
+  padding-inline-start: 1.5em;
+}
+
+.bp-term-no {
+  flex: none;
+  min-width: 1.1em;
+  text-align: end;
+}
+
+.bp-term-no::before {
+  counter-increment: bp-term;
+  content: counter(bp-term) ".";
+}
+
+.bp-term-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ signature */
+
+/* The right half: "Authorized Signatory" centred at the top, the stamp / signature under it, up
+   to 110 px tall and 220 px wide. */
+.bp-signature {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding: var(--bp-pad);
+  text-align: center;
+}
+
+.bp-signature-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bp-signature-mark .bp-signature-image {
+  display: block;
+  width: auto;
+  max-width: min(220px, 100%);
+  height: auto;
+  max-height: 110px;
+  object-fit: contain;
+}
+
+.bp-signature-banner {
+  padding: 8px;
+  color: var(--bp-muted);
+}
+
+.bp-signature-banner a {
+  color: var(--bp-accent-text);
+}
+
+/* ------------------------------------------------------------ unboxed sections */
+
+/* Notes, Additional Information, Attachments: after the box, each under its underlined heading
+   (the client's "List of components", "Terms & Conditions" pages). */
+.bp-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--bp-ink);
+  line-height: var(--bp-lh);
+}
+
+.bp-plain-title {
+  font-size: calc(var(--bp-font-size-section) * var(--bp-text-scale, 1));
+}
+
+.bp-note-body {
+  color: var(--bp-ink);
+  line-height: var(--bp-lh);
+  overflow-wrap: break-word;
+}
+
+/* Bank, additional information: a label column hugging the longest label, then the value. */
+.bp-kv {
+  display: grid;
+  grid-template-columns: fit-content(50%) minmax(min-content, 1fr);
+  gap: 2px 16px;
+  color: var(--bp-ink);
+  font-size: calc(var(--bp-font-size-s) * var(--bp-text-scale, 1));
+  line-height: var(--bp-lh);
+}
+
+.bp-kv-label {
+  color: var(--bp-ink);
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.bp-kv-value {
+  color: var(--bp-ink);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.bp-kv-value.bp-num {
+  overflow-wrap: normal;
+}
+
+/* A long file name is cut with an ellipsis; it never sets the page's width. */
+.bp-attachments {
+  contain: inline-size;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bp-attachments > li + li {
+  margin-top: 4px;
+}
+
+.bp-attachments > li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bp-attachments a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* A payment in another currency: its business-currency amount under it. */
+.bp-payment-converted {
+  display: block;
+  color: var(--bp-muted);
+}
+
+/* ------------------------------------------------------------ summaries (shared widgets) */
+
+/* HSN, tax, batch and payment summaries: ruled parts of the frame, the title, then the table
+   ruled both ways (as the item table). */
+.bp-widget-table {
+  gap: 0;
+}
+
+/* No title over the summaries (user, 2026-11-13). */
+
+.bp-widget-table .ceres-table-section {
+  margin: 0;
+  overflow: clip;
+}
+
+/* HSN and Tax Summary: every column the same width. */
+.bp-widget-table:is([data-section="hsn"], [data-section="tax-summary"]) .ceres-table.is-even {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.bp-widget-table .ceres-table-heading {
+  display: none; /* the part's own title names the table */
+}
+
+.bp-widget-table .ceres-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--bp-ink);
+  font-family: var(--bp-table-font);
+  font-size: calc(var(--bp-font-size-table) * var(--bp-text-scale, 1));
+  line-height: var(--bp-lh);
+}
+
+/* The summaries draw their own rules, outline included, cell by cell: a piece broken across
+   pages closes on its last row's rule and opens on the repeated headings' (user, 2026-11-13). */
+.bp-widget-table.bp-box {
+  border: 0;
+}
+
+.bp-widget-table .ceres-table th,
+.bp-widget-table .ceres-table td {
+  padding: 2px 6px;
+  border: 0;
+  border-inline-end: var(--bp-rule);
+  border-bottom: var(--bp-rule);
+  background: none;
+  color: var(--bp-ink);
+  white-space: nowrap;
+}
+
+.bp-widget-table .ceres-table :is(th, td):first-child {
+  border-inline-start: var(--bp-rule);
+}
+
+.bp-widget-table .ceres-table > thead > tr:first-child > th {
+  border-top: var(--bp-rule);
+}
+
+/* A summary wider than the page wraps its headings and text cells; figures never wrap. */
+.bp-widget-table .ceres-table thead th,
+.bp-widget-table .bp-stock-table td:not(.bp-num) {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* The summaries' heading rows bold on the light blue, as the item table's. */
+.bp-widget-table .ceres-table thead th {
+  background: var(--bp-head-tint);
+  font-weight: 700;
+  text-align: center;
+}
+
+.bp-widget-table .ceres-table tbody tr:nth-child(even) {
+  background: none;
+}
+
+.bp-widget-table .ceres-table tfoot td {
+  font-weight: 700;
+}
+
+/* The summaries' "Total Tax In Words" line bold (user, 2026-11-13). */
+.bp-widget-table .ceres-table .ceres-table-words {
+  font-size: inherit;
+  font-weight: 600;
+  white-space: normal;
+}
+
+.bp-doc[dir="rtl"] .bp-widget-table .ceres-table :is(th, td):first-child {
+  text-align: right;
+}
+
+.bp-doc[dir="rtl"] .bp-widget-table .ceres-table .ceres-table-words {
+  text-align: right !important;
+}
+
+/* A summary with no rows renders nothing: no empty part. */
+.bp-widget-table:not(:has(.ceres-table)) {
+  display: none;
+}
+
+/* Refrens' closing line from the document's contact details, under the frame. */
+.bp-enquiry {
+  margin-top: 12px;
+  color: var(--bp-ink);
+  text-align: center;
+  line-height: var(--bp-lh);
+}
+
+/* ------------------------------------------------------------ markdown (notes, descriptions) */
+
+/*
+ * The markdown viewer brings its own stylesheet, loaded after the template's; these selectors
+ * outrank it, so descriptions and notes read the same whichever loads first.
+ */
+.bp-doc .bp-item-desc .toastui-editor-contents,
+.bp-doc .bp-note-body .toastui-editor-contents {
+  max-width: 100%;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.bp-doc .bp-item-desc .toastui-editor-contents *:not(table),
+.bp-doc .bp-note-body .toastui-editor-contents *:not(table) {
+  line-height: inherit;
+}
+
+.bp-doc .bp-item-desc .toastui-editor-contents :is(p, ul, ol, li, h1, h2, h3, h4, h5, h6),
+.bp-doc .bp-note-body .toastui-editor-contents :is(p, ul, ol, li, h1, h2, h3, h4, h5, h6) {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.bp-doc
+  .bp-item-desc
+  .toastui-editor-contents
+  > * + :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, pre, table, div),
+.bp-doc
+  .bp-note-body
+  .toastui-editor-contents
+  > * + :is(p, ul, ol, h1, h2, h3, h4, h5, h6, blockquote, pre, table, div) {
+  margin-top: 4px; /* paragraphs close, like list points */
+}
+
+.bp-doc .bp-item-desc .toastui-editor-contents li + li,
+.bp-doc .bp-note-body .toastui-editor-contents li + li {
+  margin-top: 4px;
+}
+
+/*
+ * Tables written into a description or note: ruled both ways in black, square corners, the
+ * heading row bold on the light blue, the cells centred (the client's component and warranty
+ * tables); 4 px 6 px in every cell.
+ */
+.bp-doc .bp-item-desc .toastui-editor-contents table,
+.bp-doc .bp-note-body .toastui-editor-contents table {
+  width: 100%; /* edge to edge (user rule, 2026-10-20) */
+  border: var(--bp-rule);
+  border-collapse: collapse;
+  background: var(--bp-paper);
+}
+
+.bp-doc .bp-item-desc .toastui-editor-contents :is(th, td),
+.bp-doc .bp-note-body .toastui-editor-contents :is(th, td) {
+  height: auto; /* the viewer's 32 px on top of the padding made every row 44 px tall */
+  padding: 4px 6px; /* page 2 holds the items, bank, terms and both note tables */
+  border: var(--bp-rule);
+  background: none;
+  color: var(--bp-ink);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.bp-doc .bp-item-desc .toastui-editor-contents th,
+.bp-doc .bp-note-body .toastui-editor-contents th {
+  background: var(--bp-head-tint);
+  font-weight: 700;
+}
+
+/* Note headings, and lines written all in bold (helpers.ts notesLabels), read as the notes'
+   own title: the same face, size, weight and underline (user, 2026-11-16). */
+.bp-doc .bp-note-body .toastui-editor-contents :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 20px;
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--bp-ink);
+  font-family: var(--bp-label-font);
+  font-size: calc(var(--bp-font-size-section) * var(--bp-text-scale, 1));
+  line-height: 1.4;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-bottom: 0;
+}
+
+/* List markers in the text's own colour (user request): the viewer greys both. */
+.bp-doc .bp-item-desc .toastui-editor-contents :is(ul, ol) > li::before,
+.bp-doc .bp-note-body .toastui-editor-contents :is(ul, ol) > li::before {
+  color: currentcolor;
+}
+
+/* The bullet is a dot painted with a background, not text. */
+.bp-doc .bp-item-desc .toastui-editor-contents ul > li::before,
+.bp-doc .bp-note-body .toastui-editor-contents ul > li::before {
+  background-color: currentcolor;
+}
+
+
+
+/* ------------------------------------------------------------ narrow screens */
+
+/*
+ * Narrow pages. The layout answers to its own width, not the screen's (a container query): a
+ * phone, an A5 page and A4 at a large print size all leave it under the design's widths. The
+ * container is .bp-doc on screen and the page body in print.
+ */
+.bp-doc {
+  container: bp-doc / inline-size;
+}
+
+@media screen and (width <= 720px) {
+  .bp-doc {
+    --bp-gutter: 12px;
+  }
+}
+
+/* Under 600 px: the rows' cells stack, a rule between them; the header's QR goes under the
+   title; the bottom's halves stack. */
+@container bp-doc (width < 600px) {
+  .bp-row,
+  .bp-row-logistics {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-flow: row;
+  }
+
+  .bp-cell + .bp-cell {
+    border-inline-start: 0;
+    border-top: var(--bp-rule);
+  }
+
+  /* The QR goes under the centred title. */
+  .bp-head {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .bp-head-main,
+  .bp-head-qrs {
+    grid-column: 1;
+  }
+
+  .bp-head-side,
+  .bp-head-qrs:not(:has(.bp-qr:not(.is-empty))) {
+    display: none;
+  }
+
+  .bp-head-qrs {
+    justify-self: center;
+    margin-top: 8px;
+  }
+
+  /* The bank rows over the QR. */
+  .bp-bank {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* The bottom parts stack: the bank (or signature) over the lines, ruled at both sides. */
+  .bp-lines,
+  .bp-lines > tbody,
+  .bp-lines > tfoot,
+  .bp-lines tr,
+  .bp-lines td {
+    display: block;
+    width: 100%;
+  }
+
+  .bp-lines > colgroup {
+    display: none;
+  }
+
+  .bp-lines .bp-line-cell::after {
+    content: none;
+  }
+
+  .bp-lines .bp-bottom-side {
+    border-inline: var(--bp-rule);
+  }
+
+  /* Headings wrap; a summary's first column is a date, a code or a rate, and never does. */
+  .bp-widget-table .ceres-table th {
+    white-space: normal;
+  }
+}
+
+/* Printed narrow (A5, or a large text scale): the stacked cells may break between each other,
+   each whole, so a row never takes a page of its own. */
+@media print {
+  @container bp-doc (width < 600px) {
+    .bp-row {
+      break-inside: auto;
+    }
+
+    .bp-row > .bp-cell {
+      break-inside: avoid;
+    }
+  }
+}
+
+/* Under 420 px (a phone): the logo up to 160 px wide. */
+@container bp-doc (width < 420px) {
+  .bp-doc .bp-logo .bp-logo-image {
+    max-width: 160px;
+  }
+
+}
+
+/* ------------------------------------------------------------------ print / PDF */
+
+/*
+ * Print at the screen's size, as the E-commerce template does (user, 2026-11-02, after a day at
+ * Refrens' 75 %: the print preview read too small): 13 px body text prints at 13 px at text
+ * scale 1; 0.8, 0.9, 1.1 and 1.2 print at 80, 90, 110 and 120 % (user, 2026-11-02: Smaller
+ * printed as Normal), by the renderer's html zoom or, at 0.8 and unset, the template's own
+ * (helpers.ts mapPrint ownPrintZoom). The page fills the printable width with
+ * no gutter of its own (margins belong to the browser or the PDF service).
+ */
+@media print {
+  .bp-doc {
+    /* Every text size prints as on screen, headings too (user, 2026-10-21: print 1:1). */
+    --bp-gutter: 0px;
+
+    /*
+     * Nothing shrinks to fit the paper: every text, the tables' included, prints at the print
+     * size (zoomSize, the renderer's html zoom), and a table too wide for the page is cut off at
+     * its edge (.bp-items-scroll clips it); landscape gives it room (user, 2026-11-01).
+     */
+    zoom: var(--bp-print-scale, 1);
+    width: calc(100% / var(--bp-print-scale, 1));
+
+    /* Never wider than the paper's printable width (helpers.ts mapPrint): Refrens' PDF
+       service lays the page out in a window wider than the paper before it prints. */
+    max-width: calc(var(--bp-print-width, 100000px) / var(--bp-print-scale, 1));
+
+    /* Centred: a browser's own print keeps 1 cm margins, so a document set to wider ones
+       (xMargins 2) sits in the middle of the page rather than against its left edge. */
+    margin: 0 auto;
+  }
+
+  /* Refrens' PDF service (body.isDibella) lays the page out in its own window before it
+     prints, narrower than a landscape or A3 page: the document takes the paper's printable
+     width there, so the table is fitted to the paper and not to the window. */
+  [class~="isDibella"] .bp-doc {
+    width: calc(var(--bp-print-width, 100%) / var(--bp-print-scale, 1));
+    max-width: none;
+  }
+
+  /* A browser's own print: the paper's whole width, whichever way its dialog turns it (user,
+     2026-11-03: landscape kept the portrait width, the sides left empty). */
+  body:not([class~="isDibella"]) .bp-doc.is-browser-print {
+    max-width: none;
+  }
+
+  .bp-status.no-print {
+    display: none;
+  }
+
+  /* The columns keep the screen's shares of the table (template.hbs), so the printed table
+     reads as the design at any paper width. */
+
+  .bp-items-scroll,
+  .bp-widget-table {
+    overflow: clip;
+  }
+
+  /* Column headings repeat on every page a table spans; its totals print once, at the end. */
+  .bp-items > thead,
+  .bp-widget-table .ceres-table thead {
+    display: table-header-group;
+  }
+
+  .bp-widget-table .ceres-table tfoot {
+    display: table-row-group;
+  }
+
+  /* Summary-table rows stay whole. Each line item prints whole: its name, description and
+     image rows move to the next page together (user rule, 2026-10-19). */
+  .bp-widget-table .ceres-table tr,
+  .bp-items > tbody > tr {
+    break-inside: avoid;
+  }
+
+  /* A group's heading row goes with its first item: never left alone at a page's foot (user
+     rule: a heading stays with its content, 2026-10-24). */
+  .bp-items .bp-item-row.has-name-row,
+  .bp-items .bp-detail-row,
+  .bp-items .bp-image-row,
+  .bp-items .bp-group-row + tr {
+    break-before: avoid;
+  }
+
+  /* An item's original images never taller than 55 % of a page, in proportion, so an item
+     and its images print together on one page (user, 2026-10-19; as the Viraj template). */
+  .bp-large-image {
+    /* px cap: on a Pageless PDF's one tall page vh is the whole document. --bp-vh is the
+       page's vh while a browser's print is measured beforehand (prepareBrowserPrint). */
+    max-height: min(calc(55 * var(--bp-vh, 1vh)), 600px);
+
+    /* Never wider than its row: at the 600 px cap a wide photo ran 730 px on a 736 px Legal
+       page, past the table's room, and the whole table printed at 98 % to make way for it. */
+    max-width: 100%;
+    object-fit: contain;
+
+    /* Capped, the picture sits at the row's start, not in the middle of its box (user,
+       2026-11-12). */
+    object-position: left top;
+  }
+
+  .bp-doc[dir="rtl"] .bp-large-image {
+    object-position: right top;
+  }
+
+  /* A row cut by a page break (an item taller than what is left of the page) closes with a
+     rule at the page's foot, and every page's piece of the table with it (user rule,
+     2026-10-20): the item table's repeated footer (.bp-items-corners, below) draws that rule
+     and the rounded corners under each page's last row. The items wrapper draws no rule of
+     its own: a newer Chrome's print runs a box broken across pages down to the page's foot,
+     so its rule came out a second line under the table, apart from it (user, 2026-11-12).
+     Chrome 122 (the PDF service) ends the piece at the last row, where the footer is. */
+  .bp-doc.is-stretch .bp-items-scroll {
+    --bp-column-rule-width: 1px;
+  }
+
+  :where(.bp-doc.is-stretch .bp-items) > :where(thead, tbody, tfoot) {
+    background-color: var(--bp-paper);
+  }
+
+
+  /* A table in a description or note breaks between its rows, its headings repeated at the top
+     of every page it spans (user, 2026-10-19). */
+  .bp-doc :is(.bp-item-desc, .bp-note-body) .toastui-editor-contents thead {
+    display: table-header-group;
+  }
+
+  .bp-doc :is(.bp-item-desc, .bp-note-body) .toastui-editor-contents tr {
+    break-inside: avoid;
+  }
+
+
+  /* The totals stay together. */
+  .bp-totals-table {
+    break-inside: avoid;
+  }
+
+  /*
+   * A table split across pages would draw its outline down to the foot of the page; the
+   * cells draw it instead, so each page's table ends right under its last row.
+   */
+  .bp-items {
+    border: 0;
+  }
+
+  /* Short sections never split across pages; a heading stays with its content. The right
+     column (bank and UPI, signature) is as tall as the left one (the rule between them), so it
+     may break: its bank details and signature each stay whole; the left column carries its
+     terms and notes on line by line. */
+  .bp-card,
+  .bp-words,
+  .bp-signature,
+  .bp-doc .bp-letterhead-footer:not(.bp-footer-spacer) {
+    break-inside: avoid;
+  }
+
+  /* The last-page footer never starts a page by itself (a Legal or text-scale-1.2 PDF ended on
+     a page holding only the footer): the content before it goes over with it. */
+  .bp-page-body > .bp-letterhead-footer {
+    break-before: avoid-page;
+  }
+
+  .bp-card-title {
+    break-after: avoid-page;
+  }
+
+  /* The frame's header rows, the totals and the words line print whole; a row of three cells
+     never splits (on a narrow page its stacked cells may, see the container rules). */
+  .bp-head,
+  .bp-row,
+  .bp-words,
+  .bp-row > .bp-cell {
+    break-inside: avoid;
+  }
+
+  /* A table too wide for the page at the design's 12 px cell padding prints with 6 px
+     (helpers.ts printTight): the text keeps its size. */
+  .bp-items.is-print-tight > * > tr > :is(th, td) {
+    padding-inline: 6px;
+  }
+
+  /* The enquiry line never starts a page alone (user rule): the content before it comes along. */
+  .bp-doc .bp-enquiry {
+    break-before: avoid-page;
+  }
+
+  /*
+   * Terms and Conditions, Notes and Attachments carry on line by line across a page break
+   * (user rule), and so does the row that holds them; a list item still keeps its lines.
+   */
+  .bp-card:is(
+      [data-section="terms"],
+      [data-section="notes"],
+      [data-section="additional"],
+      [data-section="attachments"]
+    ) {
+    break-inside: auto;
+  }
+
+  /*
+   * Footer on every page (pdfOptions.footerOnLastPage off): the real footer is fixed to the
+   * foot of each printed page and the frame's repeating <tfoot> holds an invisible copy of it.
+   * Last page only: it follows the content, and helpers.ts sets it on the page's bottom edge.
+   */
+  .bp-page-frame {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .bp-page-frame > tbody {
+    display: table-row-group;
+  }
+
+  .bp-page-frame-header {
+    display: table-header-group;
+  }
+
+  /* The repeated letterhead keeps the 16 px section gap above each page's content. */
+  .bp-page-frame-header .bp-letterhead:not(.is-empty) {
+    margin-bottom: var(--bp-section-gap);
+  }
+
+  /*
+   * Chrome stops repeating a page header (and the footer's spacer) taller than about a quarter
+   * of the page: a full-width letterhead on a landscape page lost its copies after page 1
+   * (measured 2026-10-23, A4 / A5 / Letter landscape). The every-page copies keep within a
+   * fifth of the page height, scaled whole; portrait pages keep them at full width.
+   */
+  .bp-page-frame-header .bp-letterhead img,
+  .bp-letterhead-footer.bp-footer-fixed img,
+  .bp-footer-spacer img {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(20 * var(--bp-vh, 1vh));
+  }
+
+  .bp-page-frame-footer {
+    display: table-footer-group;
+  }
+
+  .bp-page-frame > * > tr {
+    display: table-row;
+  }
+
+  .bp-page-frame > * > tr > td {
+    display: table-cell;
+    padding: 0;
+    vertical-align: top;
+  }
+
+  /*
+   * A browser's own print (Refrens' Print button, Ctrl+P): the page's top and bottom margins are
+   * 0 (helpers.ts applyBrowserPrintPage), which keeps Chrome from printing its date, title, URL
+   * and page-number stamps there (user, 2026-11-02). A row at the top and foot of the page frame,
+   * repeated on each page, gives every page its 1 cm back; an every-page letterhead or footer
+   * image sits on the page's edge instead, as the PDF service stamps it. Never in the PDF
+   * service (its own margins) nor on a Long PDF (one page, no @page rule).
+   */
+  .bp-page-frame > * > tr.bp-page-margin {
+    display: none;
+  }
+
+  body:not([class~="isDibella"]) .bp-doc:not(.is-pageless) .bp-page-frame > * > tr.bp-page-margin {
+    display: table-row;
+  }
+
+  .bp-page-frame > * > tr.bp-page-margin > td {
+    height: calc(1cm / var(--bp-page-zoom, 1));
+  }
+
+  /* The PDF service's stamped letterhead and footer, taller than their margins on a page wider
+     than A4 portrait: that much more room (helpers.ts placeStampRoom, user 2026-11-02). */
+  .bp-page-frame > * > tr.bp-stamp-room {
+    display: none;
+  }
+
+  body[class~="isDibella"] .bp-doc:not(.is-pageless) .bp-page-frame > * > tr.bp-stamp-room {
+    display: table-row;
+  }
+
+  .bp-page-frame > * > tr.bp-stamp-room.is-top > td {
+    height: var(--bp-stamp-top, 0);
+  }
+
+  .bp-page-frame > * > tr.bp-stamp-room.is-bottom > td {
+    height: var(--bp-stamp-bottom, 0);
+  }
+
+  /* The PDF service's own "electronically generated" line, as it prints it on Refrens'
+     templates: centred at the foot of every page, at the template's smallest size, 10 px
+     (helpers.ts ownSignatureNote). */
+  body[class~="isDibella"] .bp-doc:not(.is-pageless) .bp-page-frame > * > tr.bp-signature-note {
+    display: table-row;
+  }
+
+  .bp-page-frame > * > tr.bp-signature-note > td > p {
+    margin: 0;
+    padding-top: 12px;
+    color: var(--bp-ink);
+    font-size: calc(10px * var(--bp-text-scale, 1));
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  /* The stamped letterhead and footer reach into the page area there: the document's white
+     ground and the watermark painted over their edges (user, 2026-11-03). The paper is white;
+     the watermark keeps to the room between them (only where that room is added: A4 portrait
+     keeps its watermark as it was). */
+  body[class~="isDibella"] .bp-doc {
+    background: transparent;
+  }
+
+  /* The watermark setting's scale grows the box around its centre: the box is that much
+     smaller, so the scaled watermark still fits the room. */
+  :root[data-bp-stamp-room] body[class~="isDibella"]::after {
+    --bp-mark-room: calc(100% - var(--bp-stamp-page-top, 0px) - var(--bp-stamp-page-bottom, 0px));
+
+    /* A turned watermark reaches further: |cos| + |sin| of its angle (a square one). */
+    --bp-mark-cos: max(cos(var(--watermark-rotate, 0deg)), -1 * cos(var(--watermark-rotate, 0deg)));
+    --bp-mark-sin: max(sin(var(--watermark-rotate, 0deg)), -1 * sin(var(--watermark-rotate, 0deg)));
+    --bp-mark-turn: calc(var(--bp-mark-cos) + var(--bp-mark-sin));
+    --bp-mark-shrink: max(1, calc(var(--watermark-scale, 1) * var(--bp-mark-turn)));
+    --bp-mark-gap: calc((var(--bp-mark-room) - var(--bp-mark-room) / var(--bp-mark-shrink)) / 2);
+
+    top: calc(var(--bp-stamp-page-top, 0px) + var(--bp-mark-gap));
+    height: calc(var(--bp-mark-room) / var(--bp-mark-shrink));
+  }
+
+  body:not([class~="isDibella"]) .bp-doc:not(.is-pageless) .bp-page-frame-header:has(.bp-letterhead:not(.is-empty)) > tr.bp-page-margin,
+  body:not([class~="isDibella"]) .bp-doc:not(.is-pageless) .bp-page-frame-footer:has(.bp-footer-spacer:not(.is-empty)) > tr.bp-page-margin {
+    display: none;
+  }
+
+  /* The page body is the narrow-page container in print (see the container queries). The
+     letterhead, the template and the footer meet with no gap (user, 2026-11-12: a 16 px strip
+     under the letterhead in print and the PDF). */
+  .bp-doc {
+    container-type: normal;
+    row-gap: 0;
+  }
+
+  /* A browser's print: the frame's 1 cm top margin row is for the pages after the first; on
+     the first it fell under a first-page letterhead (already at the paper's top edge), a 1 cm
+     strip between it and the template. The frame starts under the letterhead instead. */
+  body:not([class~="isDibella"]) .bp-doc:not(.is-pageless) > .bp-letterhead:not(.is-empty) + .bp-page-frame {
+    margin-top: calc(-1cm / var(--bp-page-zoom, 1));
+  }
+
+  /* A plain block in print, its sections spaced by margins: as a flex column, Chrome 122
+     (Refrens' PDF service) moved the whole page body after a first-page letterhead to page 2 at
+     some sizes (text scale 0.9, 2026-11-06), leaving page 1 with the letterhead alone. */
+  .bp-page-body {
+    display: block;
+    container: bp-doc / inline-size;
+  }
+
+  /* Measured once more with the text a touch wider, as Chrome prints it a little wider than it
+     lays it out (helpers.ts stretchItemTable, flowBreakFills): on only while measuring. */
+  .bp-doc.is-flow-measure .bp-page-frame * {
+    letter-spacing: 0.02em;
+  }
+
+  .bp-doc.is-flow-measure .bp-items,
+  .bp-doc.is-flow-measure .bp-items * {
+    letter-spacing: calc(0.02em - 0.25px);
+  }
+
+  /* The enquiry line keeps its 12 px under the frame (the paragraph reset outranks it). */
+  .bp-doc .bp-page-body > .bp-enquiry {
+    margin-top: 12px;
+  }
+
+  .bp-footer-spacer {
+    padding-top: var(--bp-section-gap);
+    visibility: hidden;
+  }
+
+  .bp-doc .bp-footer-spacer.is-empty {
+    display: none;
+  }
+
+  .bp-letterhead-footer.bp-footer-fixed {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  /*
+   * The PDF service draws an every-page letterhead and footer in its own page margins (from
+   * data-ceres-page-header / -footer, policy "all"), so those copies hide there; a first-page
+   * letterhead and a last-page footer stay in the document, as the other templates keep them.
+   */
+  body[class~="isDibella"]
+    .bp-doc
+    .no-dibella:is(.invoice-letterhead, .invoice-letterhead-footer) {
+    display: none;
+  }
+}
+
+/* A Long PDF is not laid out in print media: its stamped letterhead and footer hide there too
+   (user, 2026-11-02: printed twice). */
+body[class~="isDibella"]
+  .bp-doc.is-pageless
+  .no-dibella:is(.invoice-letterhead, .invoice-letterhead-footer) {
+  display: none;
+}
+
+/*
+ * The filler row (helpers.ts stretchItemTable), on screen and in print alike: in print when the
+ * business stretches its tables (.is-stretch), on screen whenever the preview's A4 sheet has
+ * room to fill (user, 2026-10-31). Stretched, the empty row closes the table: the corners move
+ * to it, and the last item's rule goes so the space reads as the table running on, not an empty
+ * box under it (user, 2026-10-26). On screen the Total row stays in the table under it.
+ */
+.bp-doc.is-filled .bp-items .bp-filler {
+  display: table-row;
+}
+
+.bp-doc.is-filled .bp-items > tbody > tr:is(:has(+ .bp-filler), :has(+ tr[style*="none"] + .bp-filler)) > td {
+  --bp-sep: 0 0 transparent;
+
+  border-bottom: 0;
+}
+
+/* Stretched, the space closes the table: its bottom rule is the outline's. */
+.bp-doc.is-filled .bp-items:not(:has(+ [data-bp-totals-split])) > tbody:last-of-type > tr.bp-filler:last-child > td {
+  --bp-sep: 0 0 transparent;
+
+  border-bottom: 1px solid var(--bp-close-line, var(--bp-line));
+}
+
+.bp-doc.is-filled .bp-items .bp-filler > td {
+  height: var(--bp-filler-height, 0);
+  padding-block: 0;
+}
+
+/* Not the table's end: the space carries no rule of its own (the separator is a border now,
+   2026-11-12) — an empty space row drew a 1 px line and took that pixel from a full page, a
+   line of the terms went over, and the last-page footer with it (quotation A00052-D). */
+.bp-doc.is-filled .bp-items .bp-filler:not(:last-child) > td {
+  border-bottom: 0;
+}
+
+/* A group's Sub total under the space: the separator above it, at the space's foot (the row
+   above the space gave its own up, so the page's fit is unchanged; user, 2026-11-13: no line
+   between the last item and the Sub total in the PDF). */
+.bp-doc.is-filled .bp-items .bp-filler:has(+ .bp-group-total-row) > td {
+  border-bottom: var(--bp-separator) solid var(--bp-sep-color);
+}
+
+/* A Sub total under the space (helpers.ts placeFiller) stays with it: the summary rows never
+   stretch, nor move to a page of their own (user, 2026-11-02). */
+@media print {
+  .bp-items .bp-filler + .bp-group-total-row {
+    break-before: avoid;
+  }
+}
+
+/* The space carries on the last item's zebra colour, so it reads as that row running on
+   (user, 2026-10-26). */
+.bp-doc.is-filled .bp-items > tbody > tr.is-stripe + .bp-filler > td,
+.bp-doc.is-filled .bp-items > tbody > tr.is-stripe + tr[style*="none"] + .bp-filler > td {
+  background: var(--bp-zebra);
+}
+
+.bp-doc.is-filled .bp-items > tbody > tr.is-stripe + .bp-filler > td:not(:last-child),
+.bp-doc.is-filled .bp-items > tbody > tr.is-stripe + tr[style*="none"] + .bp-filler > td:not(:last-child) {
+  box-shadow: none; /* white rows: no seam to cover, and a shadow would cut the separator */
+}
+
+/*
+ * A box split by a page break closes at the foot of the page and opens again at the top of the
+ * next: its border, corners and padding are drawn on each piece (user, 2026-10-19).
+ */
+@media print {
+  /* No border copy on a box broken across pages: Chrome 122 then drops the box's side rules
+     altogether. The page frame's rules close and open each piece (bp-page-rule). */
+
+  /* A card that can split (terms, notes, additional info, attachments) lays out as a block:
+     Chrome split a column flex card at its very start, leaving an empty box at the page's
+     foot. The 8 px between its parts moves from the gap to margins. */
+}
+
+/* The page-break corners (below) are print only. */
+.bp-items-corners {
+  display: none;
+}
+
+/*
+ * Corners at a page break (user request, 2026-10-24): every page's piece of the item table is
+ * rounded, as the whole table is. Chrome 122 (Refrens' PDF service) does not round each piece
+ * of a box broken across pages, but it repeats a table's header and footer on every page:
+ * the header's end cells round its top corners, and an empty footer row draws the bottom
+ * corners over the page's last row, the curve in the rule's colour and the paper outside it.
+ * Where the totals follow the items (splitTotals), the items' last row keeps square corners
+ * (helpers.ts marks its edge cells is-joint-left / is-joint-right), as the totals close the
+ * table with their own.
+ */
+@media print {
+  .bp-items > .bp-items-corners {
+    display: table-footer-group;
+  }
+
+  .bp-items > .bp-items-corners td {
+    height: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  /*
+   * The page piece's foot in one shape, over the rows (positioned, it paints after them): the
+   * curves, the side rules' ends and the rule between them, in the outline's colour. Drawn as
+   * a rule over each cell, the last row's own separator, painted later, showed instead (a light
+   * line at each page break, running out past the curves; user, 2026-11-13). Its shadow, spread
+   * outward and kept below its top by the clip, is the paper over the rows' square corners;
+   * drawn as shapes, never a radial-gradient (a PDF stores that as a picture, 2026-11-04).
+   * Where the Total row follows in its own table, that table, positioned after it, covers it
+   * with its own top rule.
+   */
+  .bp-items > .bp-items-corners > tr {
+    position: relative;
+  }
+
+  /* The table's last row draws no bottom rule of its own (the shape above draws it, on the same
+     spot): cell by cell, the rounded end cells and the square ones between them landed a hair
+     apart at a fractional print size, a stepped line under the last column (user, 2026-11-13).
+     Only a table with that shape: the split totals' table keeps its own. */
+  .bp-items:has(> .bp-items-corners) {
+    --bp-close-line: transparent;
+  }
+
+  .bp-items > .bp-items-corners > tr::after {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    box-sizing: border-box;
+    height: 1px;
+    border: 0 solid var(--bp-line);
+    border-width: 0 0 1px;
+    background: none;
+    content: "";
+    pointer-events: none;
+  }
+
+  /* The totals follow: the items' table ends square, a piece hung from the totals' top corners
+     (helpers.ts markJointCorners) drawn over the curve above: the last row's ground with the
+     table's side rule, down to the rule the two tables share. */
+  .bp-items[data-bp-totals-split] {
+    position: relative;
+  }
+
+  .bp-items[data-bp-totals-split]:is(.is-joint-left, .is-joint-right)::before,
+  .bp-items[data-bp-totals-split].is-joint-right::after {
+    position: absolute;
+    z-index: 1;
+    top: -9px;
+    box-sizing: border-box;
+    width: 9px;
+    height: 9px;
+    border: 0 solid var(--bp-line);
+    background: var(--bp-joint-bg, var(--bp-paper));
+    content: none;
+    pointer-events: none;
+  }
+
+  /* Square corners in the Simple design: no corner pieces at the joint. */
+}
+
+/*
+ * In print the totals sit in a table of their own under the items (helpers.ts splitTotals), so a
+ * page holding only them repeats no item headings. It overlaps the item table by one rule, so
+ * the two meet on a single line.
+ */
+@media print {
+  /* Over the item table's bottom rule by exactly its width, drawing it again as their own top
+     edge (helpers.ts markJointCorners measures it): one line where they meet, and a top edge
+     when the totals start a page. Overlapping by a fixed pixel left the rule covered at one print
+     size and doubled at another (user, 2026-11-03). */
+  .bp-items[data-bp-totals-split] {
+    /* Two rules up: its ground covers the page-break corner row's rule, which lands a hair off
+       the same spot on the last piece (a doubled line), and its own rule is the one drawn. */
+    margin-top: calc(-2 * var(--bp-joint-rule, 1px));
+  }
+
+  /* The totals' ground and top edge are the table's, in one piece: painted cell by cell, some
+     PDF viewers drew each cell's edge as a faint vertical line in the Total row (user,
+     2026-11-03). */
+  .bp-items[data-bp-totals-split] {
+    box-shadow: inset 0 var(--bp-joint-rule, 1px) 0 var(--bp-sep-color);
+  }
+
+  .bp-items[data-bp-totals-split] > :is(thead, tbody, tfoot),
+  .bp-items[data-bp-totals-split] > :is(thead, tbody, tfoot) > tr,
+  .bp-items[data-bp-totals-split] > tbody > tr > td {
+    background: none;
+    box-shadow: none;
+  }
+
+  .bp-items td.is-joint-row {
+    --bp-sep: 0 0 transparent;
+
+    border-bottom-color: transparent;
+  }
+
+
+  /* One solid ground under the totals: painted cell by cell, the hairline seams between their
+     empty cells let the stretch column rules (columnRules) show through. */
+
+  /* In the Total row's tint, with the table's rounded foot: the hairline seams between its cells
+     (fractional column widths) showed the paper as vertical lines (user, 2026-11-03). */
+  .bp-items[data-bp-totals-split] {
+    background-color: var(--bp-paper);
+  }
+
+}
+
+/*
+ * A part cut by a page break closes at the page's foot and opens again at the next page's top
+ * (user, 2026-11-13). Chrome 122 (Refrens' PDF service) copies no border onto a box broken across
+ * pages; it does repeat the page frame's header (template.hbs): a rule over the first pixel of
+ * every page's content, falling on a part's own top rule where a page starts with one. The
+ * closing rule at the foot is the planner's (flowCloseFills, below).
+ */
+.bp-page-frame > * > tr.bp-page-rule {
+  display: none;
+}
+
+@media print {
+  .bp-page-frame > * > tr.bp-page-rule {
+    display: table-row;
+  }
+
+  .bp-page-frame > * > tr.bp-page-rule > td {
+    position: relative;
+    height: 0;
+    padding: 0;
+  }
+
+  /* Over the content (a part's white ground hid it). */
+  .bp-page-frame > * > tr.bp-page-rule > td::after {
+    position: absolute;
+    z-index: 3;
+    right: 0;
+    left: 0;
+    height: 1px;
+    background: var(--bp-line);
+    content: "";
+  }
+
+  .bp-page-frame > * > tr.bp-page-rule.is-top > td::after {
+    top: 0;
+  }
+
+  /* The bottom parts break between their rows (template.hbs bp-lines); a title stays with
+     its first line. */
+  .bp-lines > tbody > tr {
+    break-inside: avoid;
+  }
+
+  /* Notes are one row and may run longer than a page (invoice 0030): they break inside, the
+     row's cell keeping its edges on each page. */
+  .bp-lines > tbody > tr.bp-notes {
+    break-inside: auto;
+  }
+
+  .bp-lines .bp-line-title {
+    break-after: avoid;
+  }
+}
+
+/*
+ * Where two parts of the frame meet, print draws one rule: the earlier part's bottom rule. On
+ * screen the next part sits a pixel higher over it; at a fractional print size (Text Scale) that
+ * pixel no longer lands on the rule and the two showed side by side as a thick line (user,
+ * 2026-11-13). In print the next part drops its own top rule instead; one that starts a page
+ * gets its top rule from the page frame (bp-page-rule).
+ */
+@media print {
+  .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) {
+    margin-top: 0;
+  }
+
+  .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-box {
+    border-top-width: 0;
+  }
+
+  .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-items-section .bp-items > thead > tr:first-child > th,
+  .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-totals-table .bp-totals > tr:first-child > *,
+  .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-bottom .bp-line-start > td,
+  .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-widget-table .ceres-table > thead > tr:first-child > th {
+    border-top-width: 0;
+  }
+}
+
+/* ------------------------------------------------------------ phones and tablets */
+
+/*
+ * On a phone or tablet screen the item table reads as on refrens.com's own invoice pages (user
+ * requests, 2026-10-20 and 2026-10-24). fitItemsToScreen (helpers.ts) chooses: on a screen
+ * narrower than 576 px each item reads as a card (is-cards): its number and name across the
+ * top, its codes and description under them, then each column's heading and figure in two
+ * aligned columns (as Bank Details), the last one (the amount) bold. Narrower than an A4 page
+ * (794 px) the headings stay in a row and each item's name and description run across the
+ * table above its figures (is-grid); the columns are shared by every row and sized to their
+ * figures (numbers never wrap), and the table scrolls sideways only when they cannot fit.
+ * Print keeps the table as it is.
+ */
+@media screen {
+  .bp-doc .bp-items-scroll:has(> .bp-items.is-cards) {
+    overflow-x: visible;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid),
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > :is(thead, tbody),
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr,
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr > :is(th, td) {
+    display: block;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr > :is(th, td) {
+    --bp-sep: 0 0 transparent;
+
+    border: 0;
+    text-align: start;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > :is(thead, tbody) > tr + tr,
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > tbody + tbody > tr:first-child,
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > thead + tbody > tr:first-child {
+    border-top: var(--bp-separator) solid var(--bp-sep-color);
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-desc-min,
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-filler {
+    display: none;
+  }
+
+  /* An item card: number and name, codes and description, then a line per figure. */
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > thead {
+    display: none;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > tbody > tr {
+    padding: 8px 12px;
+  }
+
+  /* The zebra tint fills the item's whole band, gaps included. */
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > tbody > tr.is-stripe {
+    background: var(--bp-zebra);
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) > tbody > tr > td {
+    background: none;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-name-row, .bp-total-row) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px 8px;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-name-row, .bp-total-row) > td {
+    grid-column: 1 / -1;
+    padding: 0;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-name-row) > .bp-col-serial {
+    grid-column: 1;
+    font-weight: 600;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-name-row) > :is(.bp-col-name, .bp-col-serial + td) {
+    grid-column: 2;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-total-row) > td[data-label] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    text-align: start;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-total-row) > td[data-label]::before {
+    content: attr(data-label);
+    color: var(--bp-muted);
+    text-align: start;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-total-row) > td[data-label]:empty {
+    display: none;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-total-row) > td[data-label]:last-child {
+    font-weight: 600;
+  }
+
+  /* The name on a line of its own above the figures (Item Name Full Width), the
+     description and the large images under them: the same card, no rule between. */
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-name-row + .bp-item-row,
+  .bp-doc .bp-items:is(.is-cards, .is-grid) :is(.bp-item-row, .bp-detail-row) + :is(.bp-detail-row, .bp-image-row) {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-detail-row > .bp-col-serial,
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-total-row > .bp-col-serial:empty {
+    display: none;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-group-row {
+    font-weight: 600;
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-total-row {
+    background: var(--bp-fill);
+  }
+
+  .bp-doc .bp-items:is(.is-cards, .is-grid) .bp-total-row > .bp-col-name {
+    font-weight: 600;
+  }
+
+  /* is-grid: one grid for the whole table, every row on its columns (subgrid): the serial,
+     then one column per figure, as wide as its widest figure or heading word and sharing what
+     is left; each item's name and description run across the figure columns above them.
+     Anchored on .bp-items-scroll to outrank the card rules above. */
+  .bp-doc .bp-items-scroll:has(> .bp-items.is-grid) {
+    overflow: auto hidden;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid {
+    display: grid;
+    grid-template-columns: var(--bp-serial-width, 32px) repeat(var(--bp-figures, 1), minmax(min-content, 1fr));
+    width: auto;
+    min-width: min-content; /* wider than the screen only when the figures need it */
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid > :is(thead, tbody) {
+    display: contents;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid > :is(thead, tbody) > tr {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    gap: 0;
+    padding: 0;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid > :is(thead, tbody) > :is(.bp-filler, tr[style*="none"]) {
+    display: none;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid > :is(thead, tbody) > tr > :is(th, td) {
+    grid-column: auto;
+    padding: 6px 8px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* The headings' widths are set on each heading for the table's own layout; on the grid each
+     heading takes its column instead, wrapping at its spaces ("GST / Rate") as refrens.com's do. */
+  .bp-doc .bp-items-scroll > .bp-items.is-grid > thead > tr > th {
+    width: auto !important;
+    white-space: normal;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid > thead > tr > .bp-col-name {
+    display: none;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid tr > .bp-col-serial {
+    grid-column: 1;
+  }
+
+  /* What runs across the figures: the item's name, its description and images, group rows.
+     Size containment keeps it from widening the figure columns. */
+  .bp-doc .bp-items-scroll > .bp-items.is-grid :is(.bp-item-row, .bp-name-row, .bp-total-row) > :is(.bp-col-name, .bp-col-serial + td) {
+    grid-column: 2 / -1;
+    contain: inline-size;
+    text-align: start;
+    white-space: normal;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid :is(.bp-detail-row, .bp-image-row, .bp-group-row) > td:not(.bp-col-serial) {
+    grid-column: 2 / -1;
+    contain: inline-size;
+    padding: 6px 8px;
+    text-align: start;
+    white-space: normal;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid > tbody > tr.bp-group-row > td:not(.bp-col-serial) {
+    grid-column: 1 / -1;
+  }
+
+  /* The first figure under the first heading; the rest follow in order. */
+  .bp-doc .bp-items-scroll > .bp-items.is-grid tr > :nth-child(1 of :not(.bp-col-serial, .bp-col-name)) {
+    grid-column-start: 2;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid :is(.bp-item-row, .bp-total-row) > td[data-label] {
+    display: block;
+    text-align: center;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid :is(.bp-item-row, .bp-total-row) > td[data-label]::before {
+    content: none;
+  }
+
+  .bp-doc .bp-items-scroll > .bp-items.is-grid :is(.bp-item-row, .bp-total-row) > td[data-label]:empty,
+  .bp-doc .bp-items-scroll > .bp-items.is-grid .bp-total-row > .bp-col-serial:empty {
+    display: block;
+  }
+}
+
+
+/*
+ * The totals on a phone screen come straight after the items (user request, 2026-10-24): the
+ * right column's boxes join the bottom's own column, the totals first, then the cards, then the
+ * signature. Print keeps the totals beside or under the cards (an A5 page is as narrow).
+ */
+
+
+/*
+ * The summaries on a phone screen (user request, 2026-10-24): fitItemsToScreen (helpers.ts)
+ * marks them is-stacked under 576 px and gives each cell its column's heading. Each row of the
+ * table reads as heading | figure pairs, one per column, one under another, in the table's own
+ * design: the title above it as on a wide screen, each heading cell in the theme colour with
+ * white medium text and the header's light rules (as the table's header row), each figure as
+ * a body cell, the footer's Total across the box in the totals' fill, the words row last.
+ * Rounded corners, no grey rule beside the theme-coloured headings. Print keeps the tables as
+ * they are.
+ */
+@media screen {
+  .bp-doc .bp-widget-table.is-stacked .ceres-table,
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > :is(tbody, tfoot),
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > :is(tbody, tfoot) > tr {
+    display: block;
+    width: 100%;
+  }
+
+  /* The outline on the figures' side and under the box; the headings' side has none. */
+  .bp-doc .bp-widget-table.is-stacked .ceres-table-section > .ceres-table {
+    border: 1px solid var(--bp-line);
+    border-top: 0;
+    border-inline-start: 0;
+  }
+
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > thead {
+    display: none;
+  }
+
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > :is(tbody, tfoot) > tr > td {
+    display: block;
+    padding: 6px 8px;
+    border: 0;
+    border-top: 1px solid var(--bp-line);
+    border-radius: 0;
+    text-align: center;
+  }
+
+  /* Heading | figure, two halves; a long figure widens its half. */
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > :is(tbody, tfoot) > tr > td[data-label] {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 8px;
+    align-items: center;
+    padding: 0 8px 0 0;
+  }
+
+  /* The heading cell as the table's header: the 20 % tint, theme-coloured text, light rules. */
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > :is(tbody, tfoot) > tr > td[data-label]::before {
+    content: attr(data-label);
+    align-self: stretch;
+    margin-top: -1px;
+    padding: 6px 8px;
+    border-top: 1px solid var(--bp-line);
+    color: var(--bp-ink);
+    font-weight: 400;
+    white-space: normal;
+  }
+
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > tbody:first-of-type > tr:first-child > td[data-label]:first-child::before {
+    border-top-color: var(--bp-line);
+  }
+
+  /* The footer's Total across the box, in the totals' fill. */
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > tfoot > tr > td:not([data-label], .ceres-table-words) {
+    font-weight: 600;
+  }
+
+  /* A payment's amount in the business's currency, under the amount. */
+  .bp-doc .bp-widget-table.is-stacked td[data-label] > .bp-payment-converted {
+    grid-column: 2;
+  }
+
+  .bp-doc .bp-widget-table.is-stacked td[data-label]:has(> .bp-payment-converted)::before {
+    grid-row: span 2;
+  }
+
+  .bp-doc .bp-widget-table.is-stacked :is(.bp-stock-table, .bp-payments-table) td:not(.bp-num) {
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .bp-doc .bp-widget-table.is-stacked .ceres-table .ceres-table-words {
+    text-align: start;
+  }
+
+  /* An empty cell (the footer under a rate, a batch with no maker) prints no line. */
+  .bp-doc .bp-widget-table.is-stacked .ceres-table > :is(tbody, tfoot) > tr > td:empty {
+    display: none;
+  }
+}
+
+
+/*
+ * The unboxed sections after the box (notes, additional information, attachments) and the
+ * closing lines: on a page they start, the page frame's top rule (bp-page-rule, for a boxed part
+ * cut by a break) must not print over them, so they sit above it on the paper's white.
+ */
+@media print {
+  /* The header too (unboxed in this design): no rule over the title on page 1 (user, 2026-11-16). */
+  .bp-head,
+  .bp-plain,
+  .bp-doc .bp-enquiry {
+    position: relative;
+    z-index: 4;
+    background: var(--bp-paper);
+
+    /* 2 px of white above too: the rule's anti-aliased edge showed as a faint line. */
+    box-shadow: 0 -2px 0 var(--bp-paper);
+  }
+}
+
+/* Stacked bank details (under 600 px): the UPI QR centred under the rows. */
+@container bp-doc (width < 600px) {
+  .bp-upi {
+    align-self: center;
+    margin-inline-end: 0;
+  }
+}
+
+/* ------------------------------------------------------------ project details (page 1) */
+
+/* The document's custom fields, two "Label: value" pairs a row, under a ruled title. */
+.bp-project {
+  padding: var(--bp-pad);
+}
+
+.bp-project > .bp-card-title {
+  margin-bottom: 6px;
+}
+
+.bp-project-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 24px;
+  font-size: calc(var(--bp-font-size-s) * var(--bp-text-scale, 1));
+}
+
+.bp-project-field {
+  overflow-wrap: break-word;
+}
+
+.bp-project-field > .bp-kv-label::after {
+  content: ": ";
+}
+
+.bp-project-field > .bp-kv-value {
+  font-weight: 700;
+}
+
+@container bp-doc (width < 600px) {
+  .bp-project-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ------------------------------------------------------------ the four pages */
+
+/*
+ * The client's four pages (brief, 2026-11-16): customer and project on page 1, the items and
+ * pricing from page 2, then the fixed pages 3 and 4, each on a new page in print; on screen a
+ * gap marks where a page starts.
+ */
+.bp-page-body > .bp-page-start.bp-page-start {
+  margin-top: 40px;
+}
+
+@media print {
+  .bp-page-body > .bp-page-start.bp-page-start {
+    margin-top: 0;
+    break-before: page;
+  }
+}
+
+/* Arrow-marked points (terms groups after the first). */
+.bp-fixed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: justify;
+}
+
+.bp-fixed-list > li {
+  position: relative;
+  padding-inline-start: 36px;
+  line-height: 1.6;
+  break-inside: avoid;
+}
+
+/* An arrowhead marker, drawn (no font has to carry it). */
+.bp-fixed-list > li::before {
+  position: absolute;
+  top: 0.45em;
+  inset-inline-start: 14px;
+  width: 0.6em;
+  height: 0.6em;
+  background: var(--bp-ink);
+  clip-path: polygon(0 0, 100% 50%, 0 100%, 25% 50%);
+  content: "";
+}
+
+
+/* A heading never ends a page alone: the notes' and fixed pages' headings stay with what
+   follows them (A5 left "Additional Notes / List of components" at a page foot). */
+@media print {
+  .bp-plain-title,
+  .bp-doc .bp-note-body .toastui-editor-contents :is(h1, h2, h3, h4, h5, h6) {
+    break-after: avoid-page;
+  }
+
+  .bp-plain:has(> .bp-plain-title) {
+    break-inside: auto;
+  }
+
+  .bp-plain > .bp-plain-title + * {
+    break-before: avoid-page;
+  }
+}
+
+
+/* ------------------------------------------------------------ subsidy (user, 2026-11-16) */
+
+/* "(Net Payable)" under the amount the customer pays, bold, on its own line (client's table). */
+.bp-doc .bp-net-payable {
+  display: block;
+  margin-top: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* The subsidy line and the Net Effective Price after the grand total, as large as it. */
+.bp-totals-table .bp-totals :is(.bp-subsidy-row, .bp-effective-row) > * {
+  padding-block: 6px;
+  font-size: calc(var(--bp-font-size-grand) * var(--bp-text-scale, 1));
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------ the fixed last two pages */
+
+/*
+ * Premium Services and Terms & Conditions as the client's pages (user, 2026-11-16): the title as
+ * the template's other section titles (the notes' "List of components"), the points in the
+ * template's text size, indented under it, each marked with the client's arrowhead (➢: an
+ * outlined arrowhead, its lower half filled), each service's name bold on its own line, the
+ * text justified with open line spacing.
+ */
+.bp-fixed {
+  gap: 12px;
+}
+
+.bp-fixed-title {
+  color: var(--bp-ink);
+  font-family: var(--bp-label-font);
+  font-size: calc(var(--bp-font-size-section) * var(--bp-text-scale, 1));
+  font-weight: 700;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bp-fixed .bp-fixed-list {
+  gap: 2px;
+  padding-inline-start: 28px;
+  font-size: calc(var(--bp-font-size-base) * var(--bp-text-scale, 1));
+}
+
+.bp-fixed .bp-fixed-list > li {
+  padding-inline-start: 26px;
+  line-height: 1.8;
+}
+
+/* ➢, drawn: an arrowhead outlined in ink, its lower half filled (the client's Word bullet). Two
+   vector shapes (clip-path), the ink arrowhead and its white upper inside over it: a background
+   image was snapped to whole pixels box by box, so the arrows came out in different sizes (user,
+   17 Nov). */
+.bp-fixed .bp-fixed-list > li::before,
+.bp-fixed .bp-fixed-list > li::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  content: "";
+  pointer-events: none;
+
+  /* A whole-pixel box scaled to 0.84em (the list's text is 14px × the text scale) and moved to
+     the first line's middle: a transform is never snapped, so every arrow is the same size. */
+  transform: translateY(calc(0.9em - 0.42em)) scale(calc(0.588 * var(--bp-text-scale, 1)));
+  transform-origin: 0 0;
+}
+
+.bp-fixed .bp-fixed-list > li::before {
+  background: var(--bp-ink);
+  clip-path: polygon(0 0, 100% 50%, 0 100%, 30% 50%);
+}
+
+.bp-fixed .bp-fixed-list > li::after {
+  background: var(--bp-paper);
+  clip-path: polygon(23.6% 21.9%, 79.9% 50%, 40.5% 50%);
+}
+
+.bp-doc[dir="rtl"] .bp-fixed .bp-fixed-list > li::before,
+.bp-doc[dir="rtl"] .bp-fixed .bp-fixed-list > li::after {
+  right: 0;
+  left: auto;
+  transform: translateY(calc(0.9em - 0.42em))
+    scale(calc(-0.588 * var(--bp-text-scale, 1)), calc(0.588 * var(--bp-text-scale, 1)));
+  transform-origin: 100% 0;
+}
+
+.bp-fixed-lead {
+  display: block;
+  font-weight: 700;
+}
+
+.bp-fixed-text {
+  display: block;
+}
+
+.bp-fixed-text > strong {
+  font-weight: 700;
+}
+
+/* The page's own logo, tagline and document QR are left out (user, 2026-11-16): the business's
+   letterhead carries the logo and tagline. */
+.bp-head-side,
+.bp-head .bp-logo,
+.bp-head .bp-tagline,
+.bp-head .bp-doc-qr {
+  display: none;
+}
+
+.bp-head {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
+.bp-head-main {
+  grid-column: 1;
+}
+
+.bp-head-qrs {
+  grid-column: 1;
+  justify-self: end;
+}
+
+/* Tables in the notes share their width equally between columns (user, 2026-11-16). */
+.bp-doc .bp-note-body .toastui-editor-contents table {
+  table-layout: fixed;
+}
+
+.bp-doc .bp-note-body .toastui-editor-contents :is(th, td) {
+  width: auto;
+  overflow-wrap: break-word;
+}
+
+/* The figure column lined up with the item table's last column (helpers.ts alignTotalsColumn):
+   its width a share of the frame, no floor of its own. */
+.bp-totals-table.is-aligned .bp-totals .ceres-subtotal-value {
+  width: var(--bp-value-share);
+  min-width: 0;
+}
+
+/* While measured: each figure cell at its content's width. */
+.bp-totals-table.is-measuring .bp-totals .ceres-subtotal-value {
+  width: 1%;
+  min-width: 0;
+}
+
+/*
+ * No page-top rule in this template (user, 2026-11-16: "ye line unnecessarily aa rahi hai", in
+ * the PDF too): its pages start with the unboxed header, the item table (always a new page) or
+ * the fixed pages, so the engine's rule only drew a stray line over the title. The item table's
+ * heading draws its own top rule on the pages it repeats on.
+ */
+@media print {
+  .bp-page-frame > * > tr.bp-page-rule {
+    display: none;
+  }
+
+}
+
+
+/* The item table's heading keeps its top rule in print, so a page it continues on opens closed
+   (the engine's page-top rule is off); on page 1 it lies on the box above's bottom rule. */
+@media print {
+  .bp-doc .bp-page-body > .bp-items-section .bp-items > thead > tr:first-child > th {
+    border-top-width: 1px;
+  }
+
+  .bp-doc .bp-page-body > :is(.bp-box, .bp-totals-table, .bp-bottom) + .bp-items-section {
+    margin-top: -1px;
+  }
+}
+
+/*
+ * Pageless PDF (one page as tall as the content; user, 2026-11-16): no page breaks and no extra
+ * space. The fixed pages follow the content after an ordinary section gap instead of starting a
+ * page of their own.
+ */
+.bp-doc.is-pageless .bp-page-body > .bp-page-start.bp-page-start {
+  margin-top: 24px;
+  break-before: auto;
+}
+
+@media print {
+  .bp-doc.is-pageless .bp-page-body > .bp-page-start.bp-page-start {
+    margin-top: 24px;
+    break-before: auto;
+  }
+}
+
+/*
+ * Page breaks between the parts, each closed (user, 2026-11-16: "page break ke baad closing cap"):
+ * the frame stays one ruled box, no gaps. In print every part keeps its own top rule and sits one
+ * pixel up on the part above, so on one page the two rules are one line; where a page breaks
+ * between them, the browser drops that margin and the part opens the new page with its own top
+ * rule, while the part above closes its page with its bottom rule. A part split across pages
+ * (the item table, the terms | signature table) closes at each page foot with its repeating
+ * footer row and reopens with its repeating heading.
+ */
+@media print {
+  .bp-doc .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) {
+    margin-top: -1px;
+  }
+
+  .bp-doc .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-box {
+    border-top-width: 1px;
+  }
+
+  .bp-doc .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-totals-table .bp-totals > tr:first-child > *,
+  .bp-doc .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-bottom .bp-lines-head td,
+  .bp-doc .bp-page-body > :is(.bp-box, .bp-items-section, .bp-totals-table, .bp-bottom) + .bp-widget-table .ceres-table > thead > tr:first-child > th {
+    border-top-width: 1px;
+  }
+
+  /* The totals print whole (a short part); a break falls before or after them. */
+  .bp-totals-table {
+    break-inside: avoid;
+  }
+}
+
+/* Under a notes label, a table starts as far below as under the notes' own title (user,
+   2026-11-16: "gap should be same as below the list of component text"): 20 px. */
+.bp-doc .bp-note-body .toastui-editor-contents > :is(h1, h2, h3, h4, h5, h6) + table {
+  margin-top: 20px;
+}
+
+/* The UPI QR and its caption sit at the bank box's foot, the caption on the last bank row's
+   line (user, 2026-11-16, as the client's "SCAN & PAY"). Stacked under 600 px it stays centred. */
+.bp-bank > .bp-upi {
+  align-self: flex-end;
+}
+
+@container bp-doc (width < 600px) {
+  .bp-bank > .bp-upi {
+    align-self: center;
+  }
+}
+
+/* The summary tables at the end, after the notes and attachments (user, 2026-11-16): a section
+   gap above them and between them; nothing when none shows. */
+
+/* A space between the tables, each its own box (user, 2026-11-16). */
+.bp-summaries {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.bp-summaries:not(:has(> .bp-widget-table:not([style*="none"]) .ceres-table)) {
+  display: none;
+}
+
+/* The terms | signature part's top rule is its heading row (template.hbs bp-lines-head), which
+   print repeats at the top of each page it continues on; its first row draws none. */
+.bp-lines > .bp-lines-head td {
+  height: 0;
+  padding: 0;
+  border-top: var(--bp-rule);
+}
+
+.bp-doc .bp-lines .bp-line-start > td {
+  border-top-width: 0;
+}
+
+@media print {
+  .bp-lines > .bp-lines-head {
+    display: table-header-group;
+  }
+}
+
+/*
+ * The terms | signature part's empty spacer row (bp-line-end) could go over to the next page by
+ * itself, leaving a stray rule at that page's top (user, 2026-11-17). In print it is dropped and
+ * the last terms line carries its space, so the part always ends on a line with text.
+ */
+@media print {
+  .bp-lines .bp-line-end {
+    display: none;
+  }
+
+  .bp-lines .bp-line:has(+ .bp-line-end) > .bp-line-cell {
+    padding-bottom: calc(3px + 12px);
+  }
+}

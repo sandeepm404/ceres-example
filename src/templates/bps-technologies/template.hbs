@@ -1,0 +1,622 @@
+{{!--
+  BPS Technologies (Figma Document-Templates, node 1801:8109 "BPS Technologies").
+
+  Root is normalizeInvoiceTemplateState's output. Every block reads the view model built once
+  by `bpView` (helpers.ts): labels, visibility and table columns all come from the payload.
+  The design has no fixed assets: the logo, the QR codes and the signature are the document's.
+
+  Order: header (title + status | document details, business logo + document QR), Billed By |
+  Billed To, Shipped From | Shipped To, Transport Details | E-Invoice / E-Way Bill (with the
+  e-invoice QR), items (with the column-sum row), then two columns: Bank and UPI, Terms, Notes,
+  Additional Info, Attachments on the left; totals, amount in words and signature on the
+  right. Summaries (HSN, tax, batch, payments) and the enquiry line close the document.
+  data-testid / data-section / data-col are test hooks; data-ceres-* are the host's live
+  update targets.
+--}}
+{{#with (bpView @root) as |view|}}
+<div class="bp-doc{{#if view.print.stretchTable}} is-stretch{{/if}}{{#if view.pageless}} is-pageless{{/if}}" data-bp-currency="{{@root.invoice.currency}}" data-testid="invoice-root" data-bp-side-margin="{{view.print.sideMargin}}" data-bp-paper-width="{{view.print.paperWidth}}" dir="{{view.script.dir}}"{{#if view.script.lang}} lang="{{view.script.lang}}"{{/if}}{{#if view.script.script}} data-ceres-script="{{view.script.script}}"{{/if}} style="--bp-text-scale: {{view.print.textScale}}; --bp-print-scale: {{view.print.printScale}}; --bp-print-width: {{view.print.printWidth}}px; --bp-browser-print-width: {{view.print.browserPrintWidth}}px; --bp-print-base: {{view.print.printBase}}px; --bp-browser-print-height: {{view.print.browserPrintHeight}}px; --bp-browser-print-base: {{view.print.browserPrintBase}}px;{{#if view.theme}} --bp-theme: {{view.theme.accent}}; --bp-on-accent: {{view.theme.onAccent}};{{#if view.theme.accentText}} --bp-accent-text: {{view.theme.accentText}};{{/if}}{{/if}}{{#if view.script.font}} --bp-script-font: {{{view.script.font}}};{{/if}}">
+  {{!-- Text Scale Smaller (0.8, also unset): Refrens' renderer leaves the page unzoomed then, so the template zooms it (helpers.ts mapPrint ownPrintZoom); :where() lets the renderer's own rule win once Lydia sets another size live. --}}
+  {{#if view.print.ownPrintZoom}}<style id="bp-own-zoom">@media print { :where(html) { zoom: {{view.print.ownPrintZoom}}; } }</style>{{/if}}
+  {{!-- The Language/Script setting's font, for the glyphs Inter lacks. --}}
+  {{#if view.script.fontUrl}}<link rel="stylesheet" href="{{view.script.fontUrl}}" />{{/if}}
+  {{#unless view.letterheadEveryPage}}
+    {{!-- Letterhead on the first page only (pdfOptions.letterHeadOnFirstPage): in the flow. --}}
+    <div class="{{#if view.serviceLetterhead}}no-dibella {{/if}}invoice-letterhead bp-letterhead{{#unless @root.invoice.letterHead}} is-empty{{/unless}}" data-ceres-page-header data-ceres-page-policy="first">
+      {{#if @root.invoice.letterHead}}
+        <img src="{{@root.invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+      {{else}}
+        <img alt="Letterhead" data-ceres-height="letterhead" />
+      {{/if}}
+    </div>
+  {{/unless}}
+
+  {{!--
+    Print frame: transparent on screen (display: contents). In print, the letterhead repeats
+    at the top of every page in the <thead> unless it is for the first page only; when the
+    footer repeats on every page (pdfOptions.footerOnLastPage off), the real footer is fixed
+    to the foot of each page and the repeating <tfoot> holds an invisible copy of it, so
+    content never runs under it.
+  --}}
+  <table class="bp-page-frame" role="presentation">
+    {{!-- The page's top margin in a browser's own print, whose page margins are 0 there so Chrome
+          prints no date / title / URL / page-number stamps (helpers.ts applyBrowserPrintPage);
+          hidden otherwise, and under an every-page letterhead, which sits on the page's edge. --}}
+    <thead class="bp-page-frame-header">
+      <tr class="bp-page-margin" aria-hidden="true"><td></td></tr>
+      {{#if view.letterheadEveryPage}}
+        {{!-- What the PDF service's stamped letterhead takes past its margin (helpers.ts placeStampRoom). --}}
+        <tr class="bp-stamp-room is-top" aria-hidden="true"><td></td></tr>
+        <tr>
+          <td>
+            <div class="no-dibella invoice-letterhead bp-letterhead{{#unless @root.invoice.letterHead}} is-empty{{/unless}}" data-ceres-page-header data-ceres-page-policy="all">
+              {{#if @root.invoice.letterHead}}
+                <img src="{{@root.invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
+              {{else}}
+                <img alt="Letterhead" data-ceres-height="letterhead" />
+              {{/if}}
+            </div>
+          </td>
+        </tr>
+      {{/if}}
+      {{!-- Print: a rule at the top of every page's content (styles.css bp-page-rule). --}}
+      <tr class="bp-page-rule is-top" aria-hidden="true"><td></td></tr>
+    </thead>
+    <tfoot class="bp-page-frame-footer">
+      {{#if view.footerEveryPage}}
+        <tr>
+          <td>
+            <div class="{{#if view.serviceFooter}}no-dibella {{/if}}invoice-letterhead-footer bp-letterhead-footer bp-footer-spacer{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" aria-hidden="true">
+              {{#if @root.invoice.letterHeadFooter}}<img src="{{@root.invoice.letterHeadFooter}}" alt="" />{{else}}<img alt="" />{{/if}}
+            </div>
+          </td>
+        </tr>
+        <tr class="bp-stamp-room is-bottom" aria-hidden="true"><td></td></tr>
+      {{/if}}
+      {{#if view.ownSignatureNote}}
+        <tr class="bp-signature-note"><td><p>This is an electronically generated document, no signature is required.</p></td></tr>
+      {{/if}}
+      <tr class="bp-page-margin" aria-hidden="true"><td></td></tr>
+    </tfoot>
+    <tbody>
+      <tr>
+        <td class="bp-page-frame-cell">
+          <div class="bp-page-body">
+          {{!--
+            BPS design (the client's quotation, 2026-11-16): the logo centred, the subtitle (the
+            client's tagline) under it and the title in the theme colour, bold; the QR at the
+            header's end. Then one ruled box: the seller on the left; the document details and
+            the customer on the right, every line "Label: value" in bold.
+          --}}
+          <header class="bp-head" data-testid="section" data-section="header">
+            <div class="bp-head-side" aria-hidden="true"></div>
+            <div class="bp-head-main">
+              {{#if view.brand.logo}}
+                <div class="bp-logo">
+                  {{> CeresImage src=view.brand.logo alt=view.brand.name class="bp-logo-image"}}
+                </div>
+              {{/if}}
+              {{!-- The business's tagline, fixed (client brief, 2026-11-16). --}}
+              <p class="bp-tagline">Telangana’s Most Trusted Solar Installer</p>
+              {{#if view.title}}
+                <div class="bp-title-row">
+                  <h1 class="bp-title" data-role="title">{{view.title}}</h1>
+                  {{#if view.status}}
+                    <span class="bp-status{{#unless view.status.inPrint}} no-print{{/unless}}"><span class="invoice-tag {{view.status.color}}">{{view.status.text}}</span></span>
+                  {{/if}}
+                </div>
+              {{/if}}
+              {{#if view.subtitle}}<p class="bp-subtitle">{{view.subtitle}}</p>{{/if}}
+              {{#if view.copy}}<p class="bp-copy" data-role="tag">{{view.copy}}</p>{{/if}}
+            </div>
+            {{!-- One QR: the e-invoice QR while the IRN is active, else the document QR; ZATCA /
+                  LHDN beside it. --}}
+            <div class="bp-qr-list bp-head-qrs">
+              <div class="bp-qr bp-doc-qr{{#unless view.documentQr}} is-empty{{/unless}}" data-ceres-field-container="documentQr"><img data-ceres-field="documentQr"{{#if view.documentQr}} src="{{view.documentQr}}"{{/if}} alt="Document QR Code" /></div>
+              {{#unless view.compliance.isBelowItems}}
+                <div class="bp-qr{{#unless view.compliance.qr.irn}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img data-ceres-field="qrCode"{{#if view.compliance.qr.irn}} src="{{view.compliance.qr.irn}}"{{/if}} alt="E-Invoice QR Code" /></div>
+                <div class="bp-qr{{#unless view.compliance.qr.zatca}} is-empty{{/unless}}" data-ceres-field-container="zatcaQrCode"><img data-ceres-field="zatcaQrCode"{{#if view.compliance.qr.zatca}} src="{{view.compliance.qr.zatca}}"{{/if}} alt="ZATCA QR Code" /></div>
+                <div class="bp-qr{{#unless view.compliance.qr.lhdn}} is-empty{{/unless}}" data-ceres-field-container="lhdnQrCode"><img data-ceres-field="lhdnQrCode"{{#if view.compliance.qr.lhdn}} src="{{view.compliance.qr.lhdn}}"{{/if}} alt="LHDN QR Code" /></div>
+              {{/unless}}
+            </div>
+          </header>
+
+          <div class="bp-box bp-row bp-row-parties" data-testid="section" data-section="parties">
+            {{#with view.seller as |party|}}
+              <div class="bp-cell bp-party bp-seller" data-role="billed-by">
+                <p class="bp-party-name bp-seller-name" dir="auto">{{party.name}}</p>
+                {{#if party.address}}<p class="bp-party-address" data-role="address">{{party.address}}</p>{{/if}}
+                {{#if party.fields.length}}
+                  <div class="bp-fields">
+                    {{#each party.fields}}
+                      <p class="bp-field"><span class="bp-field-label">{{label}}</span><span class="bp-field-value{{#if noWrap}} bp-num{{else if isEmail}} bp-email{{/if}}{{#if isToken}} bp-break{{/if}}">{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</span></p>
+                    {{/each}}
+                  </div>
+                {{/if}}
+              </div>
+            {{/with}}
+            {{!-- The document details, then the customer (Billed To): one list, bold. --}}
+            <div class="bp-cell bp-meta" data-testid="section" data-section="details">
+              <div class="bp-fields">
+                {{#each view.details}}
+                  <p class="bp-field bp-meta-{{key}}"{{#if attr}} {{attr}}{{/if}}{{#if isHidden}} style="display:none"{{/if}}><span class="bp-field-label">{{label}}</span><span class="bp-field-value{{#if isNum}} bp-num{{/if}}"{{#if isNum}} data-testid="num"{{/if}}>{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{bpDate value 0}}{{else}}{{value}}{{/if}}</span></p>
+                {{/each}}
+                {{#unless view.compliance.isBelowItems}}
+                  <span class="bp-compliance bp-meta-compliance" data-testid="section" data-section="compliance">
+                    {{#if view.compliance.showIrn}}
+                      <p class="bp-field bp-irn-row"{{#unless view.compliance.irn}} style="display:none"{{/unless}}><span class="bp-field-label">{{view.compliance.irnLabel}}</span><span class="bp-field-value bp-irn-value" data-ceres-field="irn">{{view.compliance.irn}}</span></p>
+                    {{/if}}
+                    {{#each view.compliance.rows}}
+                      <p class="bp-field bp-compliance-{{key}}"><span class="bp-field-label">{{label}}</span><span class="bp-field-value bp-num" data-testid="num">{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{bpDate value 0}}{{else}}{{value}}{{/if}}</span></p>
+                    {{/each}}
+                  </span>
+                {{/unless}}
+                {{#if view.supply}}{{#unless view.supplyInShipping}}
+                  <span class="bp-supply" data-testid="section" data-section="supply" data-ceres-country-of-supply{{#if view.supply.hidden}} style="display:none"{{/if}}>
+                    {{#each view.supply.rows}}
+                      <p class="bp-field bp-supply-cell"{{#if attr}} {{attr}}{{/if}}{{#if isHidden}} style="display:none"{{/if}}><span class="bp-field-label">{{label}}</span><span class="bp-field-value">{{value}}</span></p>
+                    {{/each}}
+                  </span>
+                {{/unless}}{{/if}}
+                {{#with view.buyer as |party|}}
+                  <span class="bp-buyer" data-role="billed-to">
+                    <p class="bp-field bp-buyer-name"><span class="bp-field-label">{{view.customerLabel}}</span><span class="bp-field-value bp-party-name" dir="auto">{{party.name}}</span></p>
+                    {{#if party.address}}<p class="bp-field bp-buyer-address"><span class="bp-field-label">{{view.addressLabel}}</span><span class="bp-field-value bp-party-address" data-role="address">{{party.address}}</span></p>{{/if}}
+                    {{#each party.fields}}
+                      <p class="bp-field"><span class="bp-field-label">{{label}}</span><span class="bp-field-value{{#if noWrap}} bp-num{{else if isEmail}} bp-email{{/if}}{{#if isToken}} bp-break{{/if}}">{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</span></p>
+                    {{/each}}
+                  </span>
+                {{/with}}
+              </div>
+            </div>
+          </div>
+
+          {{!-- Page 1's project details: the document's custom fields (Project Type, system
+                capacity, inverter, panels …), two pairs a row (client brief, 2026-11-16). --}}
+          {{#if view.additional}}
+            <section class="bp-box bp-project" data-testid="section" data-section="additional">
+              {{#if view.additional.title}}<h2 class="bp-card-title" data-role="title">{{view.additional.title}}</h2>{{/if}}
+              <div class="bp-project-grid">
+                {{#each view.additional.rows}}
+                  <p class="bp-project-field"><span class="bp-kv-label" data-role="ai-label">{{label}}</span><span class="bp-kv-value{{#if isDate}} bp-num{{/if}}" data-role="ai-value">{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</span></p>
+                {{/each}}
+              </div>
+            </section>
+          {{/if}}
+
+          {{#if view.hasLogistics}}
+          <div class="bp-box bp-row bp-row-logistics" data-testid="section" data-section="logistics">
+            {{#each view.dispatchParties}}
+              <div class="bp-cell bp-party bp-ship" data-role="{{role}}">
+                {{#if title}}<h2 class="bp-caption">{{title}}</h2>{{/if}}
+                <p class="bp-party-name" dir="auto">{{name}}</p>
+                {{#if address}}<p class="bp-party-address" data-role="address">{{address}}</p>{{/if}}
+                {{!-- The party's fields, then Country / Place of Supply under Shipped To (fixed
+                      decision, all templates), in one grid so the values line up. --}}
+                <div class="bp-fields">
+                  {{#each fields}}
+                    <p class="bp-field"><span class="bp-field-label">{{label}}</span><span class="bp-field-value{{#if noWrap}} bp-num{{else if isEmail}} bp-email{{/if}}{{#if isToken}} bp-break{{/if}}">{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else if isPhone}}{{formatPhoneNumber value}}{{else}}{{value}}{{/if}}</span></p>
+                  {{/each}}
+                  {{#if isShippedTo}}{{#if view.supply}}
+                    <span class="bp-supply" data-testid="section" data-section="supply" data-ceres-country-of-supply{{#if view.supply.hidden}} style="display:none"{{/if}}>
+                      {{#each view.supply.rows}}
+                        <p class="bp-field bp-supply-cell"{{#if attr}} {{attr}}{{/if}}{{#if isHidden}} style="display:none"{{/if}}><span class="bp-field-label">{{label}}</span><span class="bp-field-value">{{value}}</span></p>
+                      {{/each}}
+                    </span>
+                  {{/if}}{{/if}}
+                </div>
+              </div>
+            {{/each}}
+            {{#if view.transport}}
+              <div class="bp-cell bp-party bp-transport" data-role="transport">
+                {{#if view.transport.title}}<h2 class="bp-caption">{{view.transport.title}}</h2>{{/if}}
+                <div class="bp-fields">
+                  {{#each view.transport.rows}}
+                    <p class="bp-field"><span class="bp-field-label bp-transport-{{key}}">{{label}}</span><span class="bp-field-value{{#if isNum}} bp-num{{/if}}"{{#if isNum}} data-testid="num"{{/if}}>{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{bpDate value 0}}{{else}}{{value}}{{/if}}</span></p>
+                  {{/each}}
+                </div>
+              </div>
+            {{/if}}
+          </div>
+          {{/if}}
+
+          {{!-- The items join the box above them, on page 1 (user, 2026-11-16, as the client's PDF). --}}
+          <section class="bp-items-section" data-testid="section" data-section="items">
+            <div class="bp-items-scroll" data-testid="items-scroll">
+              <table class="bp-items{{#if view.printTight}} is-print-tight{{/if}}{{#if view.table.showThumbnail}} has-thumbnails{{/if}}{{#if view.table.smallNumbers}} has-small-numbers{{/if}}{{#if view.table.manyFigures}} has-many-figures{{/if}}" data-testid="items-table" style="--bp-figures: {{view.table.figureCount}}; --bp-serial-width: {{view.table.serialWidth}}px;">
+                <thead>
+                  <tr data-testid="items-header">
+                    {{!-- "#" over the serial numbers, as the Simple design heads them. --}}
+                    <th class="bp-col-serial" data-col="sr" style="width: {{view.table.serialShare}}%">{{view.table.serialLabel}}</th>
+                    {{#each view.table.header}}
+                      <th class="{{className}}" data-col="{{col}}"{{#if share}} style="width: {{share}}%"{{/if}}>
+                        {{#each labelParts}}{{this}}{{#unless @last}}<wbr />{{/unless}}{{/each}}
+                      </th>
+                    {{/each}}
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each view.table.rows}}
+                    {{#if isGroupHeader}}
+                      <tr class="bp-group-row{{#if isStripe}} is-stripe{{/if}}" data-testid="group-row">
+                        <td colspan="{{colspan}}">
+                          <span class="bp-group-name">{{name}}</span>
+                          {{#if images.length}}{{> CeresImageGallery (prepareImageGallery images variant="thumbnail" alt=name) }}{{/if}}
+                        </td>
+                      </tr>
+                      {{#if originalImages.length}}
+                        <tr class="bp-image-row bp-group-image-row{{#if isStripe}} is-stripe{{/if}}" data-testid="group-image-row">
+                          <td colspan="{{colspan}}">
+                            {{#each originalImages}}<img class="bp-large-image" data-testid="large-image" src="{{this}}" alt="{{../name}}" referrerpolicy="no-referrer" />{{/each}}
+                          </td>
+                        </tr>
+                      {{/if}}
+                    {{else}}
+                      {{#if nameRow}}
+                        <tr class="bp-name-row{{#if isStripe}} is-stripe{{/if}}" data-testid="item-name-row" data-item-index="{{itemIndex}}">
+                          <td class="bp-col-serial" data-col="sr" rowspan="2">{{#if serial}}<span class="bp-num" data-testid="num">{{serial}}</span>{{/if}}</td>
+                          <td colspan="{{detailColspan}}">
+                            <span class="bp-item-name">{{name}}</span>
+                            {{#if inlineCodes.length}}<span class="bp-item-codes">{{#each inlineCodes}}<span class="bp-item-code">{{this}}</span>{{/each}}</span>{{/if}}
+                          </td>
+                        </tr>
+                      {{/if}}
+                      <tr class="bp-item-row{{#if isStripe}} is-stripe{{/if}}{{#if isRich}} is-rich{{/if}}{{#if isGroupTotal}} bp-group-total-row{{/if}}{{#if nameRow}} has-name-row{{/if}}" data-testid="item-row" data-item-index="{{itemIndex}}">
+                        {{#unless nameRow}}<td class="bp-col-serial" data-col="sr">{{#if serial}}<span class="bp-num" data-testid="num">{{serial}}</span>{{/if}}</td>{{/unless}}
+                        {{#each cells}}
+                          {{#if isName}}
+                            <td class="{{className}}" data-col="{{col}}">
+                              {{#if ../thumbnail}}
+                                <div class="bp-item-thumbnail">{{> CeresImage src=../thumbnail alt=../name class="bp-thumbnail" href=../thumbnail}}</div>
+                              {{/if}}
+                              {{#unless ../nameRow}}
+                                <span class="bp-item-name">{{../name}}</span>
+                                {{#if ../inlineCodes.length}}<span class="bp-item-codes">{{#each ../inlineCodes}}<span class="bp-item-code">{{this}}</span>{{/each}}</span>{{/if}}
+                              {{/unless}}
+                              {{#if ../hasDetail}}
+                                <div class="bp-item-detail" data-ceres-description-inline{{#if ../detailRow}} style="display: none;"{{/if}}>
+                                  {{#unless ../detailRow}}
+                                    <div data-ceres-description-content>
+                                      {{#if ../description}}<div class="bp-item-desc">{{> MarkdownViewer (prepareMarkdownViewerData ../description) }}</div>{{/if}}
+                                      {{#if ../images.length}}{{> CeresImageGallery (prepareImageGallery ../images variant="thumbnail" alt=../name) }}{{/if}}
+                                    </div>
+                                  {{/unless}}
+                                </div>
+                              {{/if}}
+                            </td>
+                          {{else}}
+                            <td class="{{className}}" data-col="{{col}}" data-label="{{label}}">{{#if isNum}}<span class="bp-num" data-testid="num">{{value}}</span>{{else}}{{value}}{{/if}}{{#if @last}}{{#if ../netPayable}}<span class="bp-net-payable">(Net Payable)</span>{{/if}}{{/if}}</td>
+                          {{/if}}
+                        {{/each}}
+                      </tr>
+                      {{#if hasDetail}}
+                        {{!-- Full-width description row (isDescriptionFullWidth), kept for the live toggle. --}}
+                        <tr class="bp-detail-row{{#if isStripe}} is-stripe{{/if}}" data-testid="item-detail-row" data-item-index="{{itemIndex}}" data-ceres-description-row{{#unless detailRow}} style="display: none;"{{/unless}}>
+                          {{#unless detailSpansAll}}<td class="bp-col-serial"></td>{{/unless}}
+                          <td colspan="{{#if detailSpansAll}}{{colspan}}{{else}}{{detailColspan}}{{/if}}">
+                            <div class="bp-item-detail" data-ceres-description-full-width>
+                              {{#if detailRow}}
+                                <div data-ceres-description-content>
+                                  {{#if description}}<div class="bp-item-desc">{{> MarkdownViewer (prepareMarkdownViewerData description) }}</div>{{/if}}
+                                  {{#if images.length}}{{> CeresImageGallery (prepareImageGallery images variant="thumbnail" alt=name) }}{{/if}}
+                                </div>
+                              {{/if}}
+                            </div>
+                          </td>
+                        </tr>
+                      {{/if}}
+                      {{#if imageRow}}
+                        {{!-- Original images: their own row under the item, across the whole table. --}}
+                        <tr class="bp-image-row{{#if isStripe}} is-stripe{{/if}}" data-testid="item-detail-row" data-item-index="{{itemIndex}}">
+                          <td colspan="{{colspan}}">
+                            {{#each originalImages}}<img class="bp-large-image" data-testid="large-image" src="{{this}}" alt="{{../name}}" referrerpolicy="no-referrer" />{{/each}}
+                          </td>
+                        </tr>
+                      {{/if}}
+                    {{/if}}
+                  {{/each}}
+                  {{!-- Stretch row: takes the spare height of a one-page printout, or of the preview's A4 sheet. --}}
+                  <tr class="bp-filler" aria-hidden="true"><td class="bp-col-serial"></td>{{#each view.table.header}}<td class="{{className}}"></td>{{/each}}</tr>
+                </tbody>
+                {{#if view.table.footer.show}}
+                  <tbody class="bp-items-total">
+                    <tr class="bp-total-row" data-testid="items-total">
+                      <td class="bp-col-serial" data-col="sr">{{#if view.table.footer.labelInSerial}}{{view.table.footer.label}}{{/if}}</td>
+                      {{#each view.table.footer.cells}}
+                        <td class="{{className}}" data-col="{{col}}"{{#unless isName}} data-label="{{label}}"{{/unless}}>{{#if isName}}{{view.table.footer.label}}{{else if isNum}}<span class="bp-num" data-testid="num">{{value}}</span>{{/if}}{{#if @last}}{{#if view.table.footer.netPayable}}<span class="bp-net-payable">(Net Payable)</span>{{/if}}{{/if}}</td>
+                      {{/each}}
+                    </tr>
+                  </tbody>
+                {{/if}}
+                {{!-- Print only: repeated at the foot of each page the table spans, it rounds the
+                      corners of the page's last row (styles.css, "corners at a page break"). --}}
+                <tfoot class="bp-items-corners" aria-hidden="true">
+                  <tr><td class="bp-col-serial"></td>{{#each view.table.header}}<td class="{{className}}"></td>{{/each}}</tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+
+          {{#if view.compliance.isBelowItems}}
+            <section class="bp-box bp-cards bp-logistics" data-testid="section" data-section="logistics-below">
+              <div class="bp-card bp-compliance bp-col-2{{#unless view.hasCompliance}} is-empty{{/unless}}" data-testid="section" data-section="compliance">
+                <div class="bp-compliance-text">
+                  {{#if view.compliance.title}}<h2 class="bp-card-title">{{view.compliance.title}}</h2>{{/if}}
+                  <div class="bp-kv">
+                    {{#if view.compliance.showIrn}}
+                      <span class="bp-kv-label bp-irn-row"{{#unless view.compliance.irn}} style="display:none"{{/unless}}>{{view.compliance.irnLabel}}</span>
+                      <span class="bp-kv-value bp-irn-value"{{#unless view.compliance.irn}} style="display:none"{{/unless}} data-ceres-field="irn">{{view.compliance.irn}}</span>
+                    {{/if}}
+                    {{#each view.compliance.rows}}
+                      <span class="bp-kv-label">{{label}}</span>
+                      <span class="bp-kv-value bp-num" data-testid="num">{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else if isUtcDate}}{{bpDate value 0}}{{else}}{{value}}{{/if}}</span>
+                    {{/each}}
+                  </div>
+                </div>
+                <div class="bp-qr-list">
+                  <div class="bp-qr{{#unless view.compliance.qr.irn}} is-empty{{/unless}}" data-ceres-field-container="qrCode"><img data-ceres-field="qrCode"{{#if view.compliance.qr.irn}} src="{{view.compliance.qr.irn}}"{{/if}} alt="E-Invoice QR Code" /></div>
+                  <div class="bp-qr{{#unless view.compliance.qr.zatca}} is-empty{{/unless}}" data-ceres-field-container="zatcaQrCode"><img data-ceres-field="zatcaQrCode"{{#if view.compliance.qr.zatca}} src="{{view.compliance.qr.zatca}}"{{/if}} alt="ZATCA QR Code" /></div>
+                  <div class="bp-qr{{#unless view.compliance.qr.lhdn}} is-empty{{/unless}}" data-ceres-field-container="lhdnQrCode"><img data-ceres-field="lhdnQrCode"{{#if view.compliance.qr.lhdn}} src="{{view.compliance.qr.lhdn}}"{{/if}} alt="LHDN QR Code" /></div>
+                </div>
+              </div>
+            </section>
+          {{/if}}
+
+          {{!--
+            The totals under the items, across the frame (Simple design): each row its label on the
+            right, its figure in a ruled cell at the end; the grand total larger. The shared
+            Subtotal widget's rows (computeSubtotalRows), its classes and data-ceres-* hooks, so the
+            live hideTotals / hideTaxes toggles and the widget's visibility CSS still apply.
+          --}}
+          <table class="bp-totals-table" data-testid="totals-table">
+            <tbody class="bp-totals ceres-subtotal" data-ceres-subtotal data-testid="section" data-section="totals">
+              {{#each view.totals.rows}}
+                <tr
+                  class="ceres-subtotal-row ceres-subtotal-row-{{emphasis}}{{#if isGrand}} bp-grand-row{{/if}}{{#if isExtra}} bp-extra-row{{/if}}{{#if isBpSubsidy}} bp-subsidy-row{{/if}}{{#if isBpEffective}} bp-effective-row{{/if}}{{#if view.totals.hidden}}{{#unless survivesHideTotals}} is-hidden-by-totals{{/unless}}{{/if}}{{#if isTaxRow}}{{#if view.totals.hideTaxes}} is-hidden-by-taxes{{/if}}{{/if}}"
+                  data-ceres-subtotal-row="{{key}}"
+                  {{#if isTaxRow}}data-ceres-subtotal-taxes{{/if}}
+                  {{#if survivesHideTotals}}data-ceres-subtotal-keep{{/if}}
+                >
+                  <th class="ceres-subtotal-label" scope="row">
+                    {{label}}
+                    {{#if note}}<div class="ceres-subtotal-note">{{note}}</div>{{/if}}
+                  </th>
+                  <td class="ceres-subtotal-value">
+                    <span class="bp-num"{{#if isNum}} data-testid="num"{{/if}}{{#if isGrand}} data-role="grand-total-row"{{/if}}>{{value}}</span>
+                    {{#if netPayable}}<span class="bp-net-payable">(Net Payable)</span>{{/if}}
+                    {{#if converted}}<div class="ceres-subtotal-converted">{{converted}}</div>{{/if}}
+                    {{#if extra}}
+                      <div class="ceres-subtotal-extra">
+                        {{extra.value}}
+                        {{#if extra.converted}}<div class="ceres-subtotal-converted">{{extra.converted}}</div>{{/if}}
+                      </div>
+                    {{/if}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+
+          {{!-- The amount in words on a ruled line of its own: "<label>: <words>". --}}
+          {{#if view.words}}
+            <div class="bp-box bp-words ceres-subtotal-words{{#if view.totals.hidden}} is-hidden-by-totals{{/if}}{{#if view.words.hiddenBySetting}} is-hidden-by-words-setting{{/if}}" data-ceres-total-in-words>
+              <p><span class="bp-words-label">{{view.words.label}}:</span> <span class="bp-words-value">{{view.words.value}}</span></p>
+            </div>
+          {{/if}}
+
+          {{!-- Bank details on the left, the UPI QR with "SCAN & PAY" under it on the right. --}}
+          {{#if view.bank.show}}
+            <section class="bp-box bp-card bp-bank" data-testid="section" data-section="bank">
+              <div class="bp-bank-main">
+                {{#if view.bank.title}}<h2 class="bp-card-title" data-role="title">{{view.bank.title}}</h2>{{/if}}
+                {{#if view.bank.rows.length}}
+                  <div class="bp-kv bp-bank-rows">
+                    {{#each view.bank.rows}}
+                      <span class="bp-kv-label bp-bank-{{key}}">{{label}}</span>
+                      <span class="bp-kv-value{{#if isNum}} bp-num{{/if}}"{{#if isNum}} data-testid="num"{{/if}}>{{value}}</span>
+                    {{/each}}
+                    {{#if view.bank.upi}}
+                      <span class="bp-kv-label bp-upi-label">{{view.bank.upi.label}}</span>
+                      <span class="bp-kv-value bp-upi-id bp-num" data-testid="num">{{view.bank.upi.id}}</span>
+                    {{/if}}
+                  </div>
+                {{else if view.bank.upi}}
+                  <div class="bp-kv bp-bank-rows">
+                    <span class="bp-kv-label bp-upi-label">{{view.bank.upi.label}}</span>
+                    <span class="bp-kv-value bp-upi-id bp-num" data-testid="num">{{view.bank.upi.id}}</span>
+                  </div>
+                {{/if}}
+              </div>
+              {{#if view.bank.upi.qr}}
+                <figure class="bp-upi">
+                  <img class="bp-upi-qr" data-testid="upi-qr" src="{{view.bank.upi.qr}}" alt="{{view.bank.upi.label}} {{view.bank.upi.id}}" />
+                  <figcaption class="bp-upi-caption">{{view.bank.upi.scanLabel}}</figcaption>
+                  {{!-- No UPI limit note under the QR (user, 2026-11-16). --}}
+                </figure>
+              {{/if}}
+            </section>
+          {{/if}}
+
+          {{!--
+            Payment terms | Authorized Signatory: one table. Each terms line is a row whose cell
+            draws the part's left edge, the rule between the halves and (::after) the right edge;
+            the signature sits in a cell spanning every row; the footer row draws the bottom rule,
+            repeated at each page's foot in print, so every page's piece closes (Chrome 122 copies
+            no border onto a box broken across pages). Terms are numbered by the stylesheet.
+          --}}
+          <div class="bp-bottom" data-testid="section" data-section="bottom">
+            <table class="bp-lines" role="presentation">
+              <colgroup><col class="bp-lines-main" /><col class="bp-lines-side" /></colgroup>
+              {{!-- The top rule as a heading row: repeated at the top of every page the part
+                    continues on, so each page's piece opens closed (user, 2026-11-16). --}}
+              <thead class="bp-lines-head" aria-hidden="true"><tr><td colspan="2"></td></tr></thead>
+              <tfoot class="bp-lines-foot" aria-hidden="true"><tr><td colspan="2"></td></tr></tfoot>
+              <tbody>
+                <tr class="bp-line bp-line-start"><td class="bp-line-cell"></td><td class="bp-bottom-side" rowspan="1000">
+              {{!-- Only for a signature the document has (an image or a digital request). --}}
+              {{#if view.signature.show}}
+                <section class="bp-signature" data-testid="signature">
+                  {{#if view.signature.label}}<p class="bp-signature-label">{{view.signature.label}}</p>{{/if}}
+                  <div class="bp-signature-mark">
+                    {{#if view.signature.image}}
+                      {{> CeresImage src=view.signature.image alt=view.signature.label class="bp-signature-image"}}
+                    {{else if view.signature.awaitingDigital}}
+                      <p class="bp-signature-banner">Awaiting Digital Signature</p>
+                    {{else if view.signature.signedDigital}}
+                      <p class="bp-signature-banner">
+                        Digitally signed{{#if view.signature.signerName}} by {{view.signature.signerName}}{{/if}}
+                        {{#if view.signature.verifyUrl}}<a href="{{view.signature.verifyUrl}}" target="_blank" rel="noopener noreferrer">Verify</a>{{/if}}
+                      </p>
+                    {{/if}}
+                  </div>
+                </section>
+              {{/if}}
+                </td></tr>
+                {{!-- Every terms group sits beside the signature, one after another (user,
+                      2026-11-16: "T&C groups yahi pe aana chahiye"). --}}
+                {{#each view.terms}}
+                  <tr class="bp-line bp-line-title bp-terms" data-testid="section" data-section="terms"><td class="bp-line-cell"><h2 class="bp-card-title" data-role="title">{{title}}</h2></td></tr>
+                  {{#each items}}<tr class="bp-line bp-term"><td class="bp-line-cell"><div class="bp-term-row"><span class="bp-term-no" aria-hidden="true"></span><span class="bp-term-text">{{this}}</span></div></td></tr>{{/each}}
+                {{/each}}
+                <tr class="bp-line bp-line-end"><td class="bp-line-cell"></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          {{!-- Notes, Additional Information and Attachments after the box, unboxed, each under an
+                underlined heading (the client's component list, warranty, services and terms
+                pages). They run on line by line across page breaks. In print the notes start
+                a new page (user, 17 Nov); pageless runs on after a section gap. --}}
+          {{#if view.notes}}
+            <section class="bp-plain bp-notes bp-page-start" data-testid="section" data-section="notes">
+              {{#if view.notes.title}}<h2 class="bp-plain-title" data-role="title">{{view.notes.title}}</h2>{{/if}}
+              <div class="bp-note-body">{{> MarkdownViewer (prepareMarkdownViewerData view.notes.body) }}</div>
+            </section>
+          {{/if}}
+          {{#if view.attachments}}
+            <section class="bp-plain bp-attachments-section" data-testid="section" data-section="attachments">
+              {{#if view.attachments.title}}<h2 class="bp-plain-title" data-role="title">{{view.attachments.title}}</h2>{{/if}}
+              <ul class="bp-attachments">
+                {{#each view.attachments.files}}<li><a href="{{url}}" target="_blank" rel="noopener noreferrer" title="{{name}}">{{name}}</a></li>{{/each}}
+              </ul>
+            </section>
+          {{/if}}
+
+          <div class="bp-summaries">
+          {{!-- The summaries last, after the notes and attachments, before the fixed pages (user,
+                2026-11-16); rendered with their data, hidden while switched off (live toggles). --}}
+          <section class="bp-box bp-card bp-widget-table" data-testid="section" data-section="hsn" data-ceres-hsn-summary{{#if view.hsn.hidden}} style="display: none;"{{/if}}>
+            {{> HsnSummaryTable (computeHsnSummary @root.invoice.items isIgst=(showIgst @root.invoice) isUtgst=(showUtgst @root.invoice)) }}
+          </section>
+
+          <section class="bp-box bp-card bp-widget-table" data-testid="section" data-section="tax-summary" data-ceres-tax-summary{{#if view.taxSummary.hidden}} style="display: none;"{{/if}}>
+            {{> TaxSummaryTable (computeTaxSummary @root.invoice.items isIgst=(showIgst @root.invoice) isUtgst=(showUtgst @root.invoice)) }}
+          </section>
+
+          {{#if view.stock}}
+            <section class="bp-box bp-card bp-widget-table" data-testid="section" data-section="stock-summary" data-ceres-batch-summary{{#if view.stock.hidden}} style="display: none;"{{/if}}>
+              <div class="ceres-table-section">
+                <table class="ceres-table bp-stock-table">
+                  <thead><tr>{{#each view.stock.columns}}<th>{{label}}</th>{{/each}}</tr></thead>
+                  <tbody>
+                    {{#each view.stock.rows}}
+                      <tr>{{#each this}}<td{{#if isNum}} class="bp-num" data-testid="num"{{/if}}>{{value}}</td>{{/each}}</tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          {{/if}}
+
+          {{#if view.payments.show}}
+            <section class="bp-box bp-card bp-widget-table" data-testid="section" data-section="payments" data-ceres-payment-table{{#if view.payments.hidden}} style="display: none;"{{/if}}>
+              <div class="ceres-table-section">
+                <table class="ceres-table bp-payments-table">
+                  <thead><tr>{{#each view.payments.columns}}<th>{{this}}</th>{{/each}}</tr></thead>
+                  <tbody>
+                    {{#each view.payments.rows}}
+                      <tr data-testid="payment">
+                        {{#each this}}
+                          <td{{#unless isText}} class="bp-num"{{/unless}}>{{#if isDate}}{{bpDate value @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}{{#if converted}}<span class="bp-payment-converted">{{converted}}</span>{{/if}}</td>
+                        {{/each}}
+                      </tr>
+                    {{/each}}
+                  </tbody>
+                  {{#if view.payments.total}}
+                    <tfoot><tr data-testid="payments-total">{{#each view.payments.total}}<td class="bp-num">{{value}}</td>{{/each}}</tr></tfoot>
+                  {{/if}}
+                </table>
+              </div>
+            </section>
+          {{/if}}
+
+          </div>
+
+          {{!--
+            The last two pages: the client's fixed text, copied as written (user, 2026-11-16: "ye
+            content last ke do pages pe fix rahega"). Each starts a new page. Quotations only.
+          --}}
+          {{#if view.fixedPages}}
+            <section class="bp-plain bp-fixed bp-page-start" data-testid="section" data-section="fixed-services">
+              <h2 class="bp-fixed-title">BPS Energy Premium Services:</h2>
+              <ul class="bp-fixed-list">
+                <li><strong class="bp-fixed-lead">Comprehensive Maintenance Package</strong><span class="bp-fixed-text"><strong>5 years preventive and corrective maintenance,</strong> at no extra cost—to keep your solar system performing at its best all year round.</span></li>
+                <li><strong class="bp-fixed-lead">Complete Civil Work &amp; Chemical Anchoring</strong><span class="bp-fixed-text">We manage all necessary civil work and use chemical anchoring techniques to ensure a strong, secure, and long-lasting foundation.</span></li>
+                <li><strong class="bp-fixed-lead">Expert Installation Services</strong><span class="bp-fixed-text">Our experienced team delivers precise, high-quality installations that meet the highest industry standards.</span></li>
+                <li><strong class="bp-fixed-lead">Prompt Service Support</strong><span class="bp-fixed-text">We provide quick, responsive service, addressing your concerns on priority to ensure uninterrupted performance.</span></li>
+                <li><strong class="bp-fixed-lead">Timely Project Completion</strong><span class="bp-fixed-text">From initiation to handover, we commit to completing your project within 45 days, ensuring timely and efficient delivery.</span></li>
+                <li><strong class="bp-fixed-lead">Flexible Financing Options</strong><span class="bp-fixed-text">Benefit from EMI options via PSU banks at attractive interest rates, making solar adoption more affordable and accessible. T&amp;C apply</span></li>
+                <li><strong class="bp-fixed-lead">Enhanced Safety Measures</strong><span class="bp-fixed-text">Safety comes first—our systems include three-point earthing and lightning protection, ensuring total peace of mind.</span></li>
+              </ul>
+            </section>
+
+            <section class="bp-plain bp-fixed bp-page-start" data-testid="section" data-section="fixed-terms">
+              <h2 class="bp-fixed-title">Terms &amp; Conditions</h2>
+              <ul class="bp-fixed-list">
+                <li>Please note that additional charges may apply for any changes related to your electricity bill, such as load enhancement, name correction, or phase conversion.</li>
+                <li>To initiate your application, you must provide all required documents, including a PAN card, Aadhaar card, and a recent electricity bill.</li>
+                <li>Customers opting for financing may be required to submit additional documentation as per lender requirements.</li>
+                <li>Prices quoted are valid until the proposal’s expiry date.</li>
+                <li>The offer price is subject to revision following a detailed site survey or any change in site conditions.</li>
+                <li>The customer must provide access to electricity and water supply during installation and commissioning.</li>
+                <li>A safe and secure storage space must be made available for materials during the installation period.</li>
+                <li>The customer shall arrange necessary tools and equipment such as ladders, stools, or high stools wherever required.</li>
+                <li>A working internet connection (Wi-Fi or LAN) and auxiliary power supply must be available for the data logger.</li>
+                <li>The customer must ensure unrestricted access for service personnel to the rooftop, meter board, or any other relevant areas for maintenance and support.</li>
+              </ul>
+            </section>
+          {{/if}}
+
+          {{#if view.enquiry}}
+            <p class="bp-enquiry" data-testid="enquiry" data-section="enquiry">{{view.enquiry.lead}}{{#if view.enquiry.email}} {{view.enquiry.emailLabel}} <strong class="bp-email">{{view.enquiry.email}}</strong>{{/if}}{{#if view.enquiry.phone}}{{#if view.enquiry.email}},{{/if}} {{view.enquiry.phoneLabel}} <strong class="bp-num">{{formatPhoneNumber view.enquiry.phone}}</strong>{{/if}}</p>
+          {{/if}}
+
+          {{> RefrensBranding @root.invoice}}
+          {{!-- On the last page only: the content's last block, so in print the content before it
+                goes over to a new page with it rather than leave it alone there. --}}
+          {{#unless view.footerEveryPage}}
+        <div class="{{#if view.serviceFooter}}no-dibella {{/if}}invoice-letterhead-footer bp-letterhead-footer{{#if view.footerEveryPage}} bp-footer-fixed{{/if}}{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" data-ceres-page-footer data-ceres-page-policy="{{#if view.footerEveryPage}}all{{else}}last{{/if}}">
+          {{#if @root.invoice.letterHeadFooter}}
+            <img src="{{@root.invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+          {{else}}
+            <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+          {{/if}}
+        </div>
+          {{/unless}}
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  {{!-- On every page: fixed to each printed page's foot (print rules), outside the frame. --}}
+  {{#if view.footerEveryPage}}
+  <div class="{{#if view.serviceFooter}}no-dibella {{/if}}invoice-letterhead-footer bp-letterhead-footer{{#if view.footerEveryPage}} bp-footer-fixed{{/if}}{{#unless @root.invoice.letterHeadFooter}} is-empty{{/unless}}" data-ceres-page-footer data-ceres-page-policy="{{#if view.footerEveryPage}}all{{else}}last{{/if}}">
+    {{#if @root.invoice.letterHeadFooter}}
+      <img src="{{@root.invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{else}}
+      <img alt="Letterhead footer" data-ceres-height="letterhead-footer" />
+    {{/if}}
+  </div>
+  {{/if}}
+</div>
+{{/with}}
