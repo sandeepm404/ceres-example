@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - compiled via handlebars-loader
 import template from "./template.hbs";
 import { normalizeInvoiceTemplateState } from "../../main/invoiceTemplateNormalization";
@@ -7,6 +8,8 @@ import "./styles.css";
 import "../../widgets/date-time";
 import "../../widgets/markdown-viewer";
 import "../../widgets/qr-code";
+import "../../widgets/image";
+import "../../widgets/line-items";
 import "../../widgets/subtotal";
 
 import { registerFitkingTemplateHelpers } from "./helpers";
