@@ -5603,7 +5603,7 @@ export const withPrintRules = <T>(width: number, measure: () => T): T => {
       if (sheet.media?.mediaText) flip(sheet.media);
       visit(sheet.cssRules);
     } catch {
-      // Another origin's stylesheet (a font): it holds no print rules of ours.
+      // A stylesheet from another origin: its rules cannot be read, so it is left as it is.
     }
   });
   try {
@@ -5639,74 +5639,6 @@ export const withPrintMedia = <T>(measure: () => T): T => {
     return measure();
   } finally {
     window.matchMedia = original;
-  }
-};
-
-/*
- * The template's stylesheet comes from another origin than the renderer (GitHub Pages under
- * lstatic.refrens.com), so its rules cannot be read and withPrintRules switched none of them:
- * a browser's own print counted its pages from the screen layout. The bundle carries the same
- * CSS as text (index.ts): put in the page as a <style> right after the stylesheet once the
- * document is drawn, switched off, and for a measurement switched on in the stylesheet's
- * place (the sheet's own disabled flag, which requests nothing; toggling the link's attribute
- * reloads it, and a fetched copy made Refrens' PDF service answer with an error page, as the
- * Viraj template found, 2026-10-26). The copy keeps the font import: the stylesheet switched
- * off takes its imported Inter with it, and a measurement in the fallback font came out 80 px
- * short, so a stretched table ran onto a blank second page. Not in the PDF service
- * (body.isDibella), which prints in print media and needs no measurement.
- */
-const TEMPLATE_STYLESHEET = /\/bps-technologies\/[^/]+\/bundle\.css(?:[?#]|$)/;
-
-let stylesheetText = "";
-let measureStyle: HTMLStyleElement | null = null;
-
-export const setBpsStylesheetText = (css: string): void => {
-  stylesheetText = css;
-};
-
-const readable = (sheet: CSSStyleSheet | null): boolean => {
-  try {
-    return Boolean(sheet && sheet.cssRules);
-  } catch {
-    return false;
-  }
-};
-
-const unreadableStylesheet = (): HTMLLinkElement | undefined =>
-  Array.from(
-    document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')
-  ).find(
-    (candidate) =>
-      TEMPLATE_STYLESHEET.test(candidate.href) && !readable(candidate.sheet)
-  );
-
-/* The switched-off copy, put in once the document is drawn (registerBpsWords). */
-export const prepareReadableStylesheet = (): void => {
-  if (measureStyle?.isConnected || !stylesheetText) return;
-  if (document.body?.classList.contains("isDibella")) return;
-  const link = unreadableStylesheet();
-  if (!link) return;
-  measureStyle = document.createElement("style");
-  measureStyle.setAttribute("data-bp-measure", "");
-  measureStyle.textContent = stylesheetText;
-  link.after(measureStyle);
-  if (measureStyle.sheet) measureStyle.sheet.disabled = true;
-};
-
-export const withReadableStylesheet = <T>(measure: () => T): T => {
-  const link = unreadableStylesheet();
-  const original = link?.sheet;
-  if (!link || !original || !stylesheetText) return measure();
-  prepareReadableStylesheet();
-  const sheet = measureStyle?.sheet;
-  if (!sheet) return measure();
-  sheet.disabled = false;
-  original.disabled = true;
-  try {
-    return measure();
-  } finally {
-    original.disabled = false;
-    sheet.disabled = true;
   }
 };
 
@@ -5754,23 +5686,21 @@ export const prepareBrowserPrint = (
   const pageHeight = parseFloat(
     style.getPropertyValue("--bp-browser-print-height")
   );
-  withReadableStylesheet(() =>
-    withPrintRules(width, () => {
-      // Laid out wider by the 75 % print base, so it still fills the page (styles.css).
-      doc.style.width = `calc(${width}px / var(--bp-print-scale, 1))`;
-      if (pageHeight > 0)
-        doc.style.setProperty("--bp-vh", `${pageHeight / 100}px`);
-      withPrintMedia(() => {
-        preparingBrowserPrint = true;
-        try {
-          layout?.();
-        } finally {
-          preparingBrowserPrint = false;
-        }
-        doc.dataset.bpPreparedWidth = String(doc.getBoundingClientRect().width);
-      });
-    })
-  );
+  withPrintRules(width, () => {
+    // Laid out wider by the 75 % print base, so it still fills the page (styles.css).
+    doc.style.width = `calc(${width}px / var(--bp-print-scale, 1))`;
+    if (pageHeight > 0)
+      doc.style.setProperty("--bp-vh", `${pageHeight / 100}px`);
+    withPrintMedia(() => {
+      preparingBrowserPrint = true;
+      try {
+        layout?.();
+      } finally {
+        preparingBrowserPrint = false;
+      }
+      doc.dataset.bpPreparedWidth = String(doc.getBoundingClientRect().width);
+    });
+  });
   doc.style.width = docWidth;
   doc.style.removeProperty("--bp-vh");
   fitted.forEach(([table, className]) => {
@@ -7247,7 +7177,6 @@ export const registerBpsWords = (): void => {
     window.clearTimeout(timer);
     timer = window.setTimeout(() => {
       removeHiddenSymbol();
-      prepareReadableStylesheet();
       applyBrowserPrintPage();
       loadScriptFonts();
       syncPrintWidths();
