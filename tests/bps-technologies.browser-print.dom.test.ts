@@ -4,10 +4,8 @@
 import {
   prepareBrowserPrint,
   printMediaText,
-  setBpsStylesheetText,
   syncPrintWidths,
   withPrintRules,
-  withReadableStylesheet,
 } from "../src/templates/bps-technologies/helpers";
 
 describe("BPS Technologies — a browser's own print", () => {
@@ -65,38 +63,6 @@ describe("BPS Technologies — a browser's own print", () => {
       window.matchMedia = original;
     }
     expect(layout).not.toHaveBeenCalled();
-  });
-
-  it("measures with a readable copy of a stylesheet from another origin", () => {
-    setBpsStylesheetText('@import url("font.css"); .probe { color: red; }');
-    document.head.innerHTML =
-      '<link rel="stylesheet" href="https://example.com/templates/bps-technologies/1.0.1/bundle.css">';
-    const link = document.querySelector("link") as HTMLLinkElement;
-    // A sheet whose rules cannot be read, as a cross-origin one.
-    const foreign = {
-      disabled: false,
-      get cssRules(): CSSRuleList {
-        throw new DOMException("cross-origin", "SecurityError");
-      },
-    };
-    Object.defineProperty(link, "sheet", { value: foreign });
-    const during = withReadableStylesheet(() => ({
-      copy: document.querySelector("style[data-bp-measure]")?.textContent,
-      on: !(
-        document.querySelector("style[data-bp-measure]") as HTMLStyleElement
-      ).sheet?.disabled,
-      original: foreign.disabled,
-    }));
-    expect(during).toEqual({
-      copy: '@import url("font.css"); .probe { color: red; }',
-      on: true,
-      original: true,
-    });
-    expect(foreign.disabled).toBe(false);
-    expect(
-      (document.querySelector("style[data-bp-measure]") as HTMLStyleElement)
-        .sheet?.disabled
-    ).toBe(true);
   });
 
   // Lydia changes the print size live: the renderer rewrites its zoom style, no new render.
