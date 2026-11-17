@@ -12,11 +12,7 @@ import {
   withRefrensDefaults,
   withTemplateSettings,
 } from "./helpers";
-// eslint-disable-next-line import/no-duplicates
 import "./styles.css";
-// The same CSS as text, for print measurements (helpers withReadableStylesheet).
-// eslint-disable-next-line import/no-duplicates
-import bpsCss from "./styles.css?raw";
 // Register only the widgets template.hbs uses.
 import "../../widgets/date-time";
 import "../../widgets/markdown-viewer";
@@ -30,6 +26,11 @@ import "../../widgets/invoice-status";
 import "../../widgets/phone-number";
 import "../../widgets/refrens-branding";
 import "../../widgets/watermark";
+
+// The same CSS as text, for print measurements (helpers withReadableStylesheet): css-loader
+// inline, as a plain string, imports and urls left as written (no build config needed).
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires, import/no-webpack-loader-syntax, import/no-unresolved
+const bpsCss: string = require('!!css-loader?{"exportType":"string","import":false,"url":false}!./styles.css');
 
 setBpsStylesheetText(bpsCss);
 registerBpsHelpers(window.Handlebars);

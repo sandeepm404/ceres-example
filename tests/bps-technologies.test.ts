@@ -1,3 +1,10 @@
+/**
+ * @jest-environment jsdom
+ */
+/*
+ * BPS Technologies: every test of the template in one file (one describe per area).
+ */
+import { TextDecoder, TextEncoder } from "util";
 import fs from "fs";
 import path from "path";
 import HandlebarsRuntime from "handlebars/runtime";
@@ -5,27 +12,45 @@ import fixture from "./fixtures/bps-technologies.json";
 import { normalizeInvoiceTemplateState } from "../src/main/invoiceTemplateNormalization";
 import template from "../src/templates/bps-technologies/template.hbs";
 import {
+  applyBrowserPrintPage,
   buildBpsView,
+  cutCards,
+  drawnRect,
+  evenSummaryColumns,
+  fitItemsToScreen,
+  flowFiller,
+  foreignAmountInWords,
   formatContext,
   formatDocumentDate,
   formatFigure,
-  foreignAmountInWords,
-  withRefrensDefaults,
-  mapCompliance,
-  mapParty,
-  mapItemTable,
-  mapScript,
-  mapPrint,
-  printScaleFor,
-  withTemplateSettings,
-  mapStockSummary,
-  onThemeColor,
-  registerBpsHelpers,
-  resolveSettings,
-  notesLabels,
-  minusSubsidy,
   isInvisibleSymbol,
+  joinTotals,
+  mapCompliance,
+  mapItemTable,
+  mapParty,
+  mapPrint,
+  mapScript,
+  mapStockSummary,
+  minusSubsidy,
+  notesLabels,
+  onThemeColor,
+  prepareBrowserPrint,
+  printMediaText,
+  printScaleFor,
+  registerBpsHelpers,
+  removeHiddenSymbol,
+  resolveSettings,
+  setBpsStylesheetText,
+  splitTotals,
+  stretchItemTable,
+  stretchPrintRules,
+  syncPrintWidths,
+  type FlowUnit,
   withMoneyDefaults,
+  withPrintRules,
+  withReadableStylesheet,
+  withRefrensDefaults,
+  withTemplateSettings,
 } from "../src/templates/bps-technologies/helpers";
 import taxSummaryPartial from "../src/widgets/tax-summary/TaxSummaryTable.hbs";
 import hsnSummaryPartial from "../src/widgets/hsn-summary/HsnSummaryTable.hbs";
@@ -40,6 +65,9 @@ import { computePaymentColumns } from "../src/widgets/payment-table/utils";
 import { prepareImageGallery } from "../src/widgets/image/utils";
 import registerFormatCurrencyHelper from "../src/widgets/shared/registerFormatCurrencyHelper";
 import registerTaxFlagHelpers from "../src/widgets/shared/registerTaxFlagHelpers";
+
+// jsdom (the DOM sections below) has no TextEncoder; Node's is the same API.
+Object.assign(globalThis, { TextDecoder, TextEncoder });
 
 type Json = Record<string, any>;
 
@@ -2858,5 +2886,766 @@ describe("BPS Technologies — space between summary tables (user, 2026-11-16)",
     expect(css).toMatch(
       /\.bp-summaries \{\s*display: flex;\s*flex-direction: column;\s*gap: 16px;/
     );
+  });
+});
+
+// ---- browser-page (was tests/bps-technologies.browser-page.dom.test.ts)
+describe("browser-page", () => {
+  const page = () => document.getElementById("bp-browser-page")?.textContent;
+
+  describe("BPS Technologies — a browser's print takes the side margins", () => {
+    beforeEach(() => {
+      document.head.innerHTML = "";
+      document.body.className = "";
+    });
+
+    it("writes an @page margin from the document's setting", () => {
+      document.body.innerHTML = `<div class="bp-doc" data-bp-side-margin="60"></div>`;
+      applyBrowserPrintPage();
+      // Wide (2): two 30 px steps of the paper, as Refrens' PDF service.
+      expect(page()).toBe("@page { margin: 0 60px; }");
+    });
+
+    it("divides the margins by the print size zoom, which scales them", () => {
+      document.body.innerHTML = `<div class="bp-doc" data-bp-side-margin="30"></div>`;
+      const zoom = document.createElement("style");
+      zoom.id = "ceres-template-zoom";
+      zoom.textContent = "@media print { html { zoom: 1.25; } }";
+      document.head.append(zoom);
+      applyBrowserPrintPage();
+      expect(page()).toBe("@page { margin: 0 24px; }");
+    });
+
+    it("leaves the PDF service's own margins alone", () => {
+      document.body.className = "isDibella";
+      document.body.innerHTML = `<div class="bp-doc" data-bp-side-margin="2"></div>`;
+      applyBrowserPrintPage();
+      expect(page()).toBeUndefined();
+    });
+  });
+});
+
+// ---- browser-print (was tests/bps-technologies.browser-print.dom.test.ts)
+describe("browser-print", () => {
+  describe("BPS Technologies — a browser's own print", () => {
+    it("reads each media query as print would on the page", () => {
+      expect(printMediaText("print", 718)).toBe("all");
+      expect(printMediaText("screen", 718)).toBe("not all");
+      expect(printMediaText("screen and (width <= 720px)", 718)).toBe(
+        "not all"
+      );
+      expect(printMediaText("(width <= 640px)", 718)).toBe("not all");
+      expect(printMediaText("(width <= 640px)", 479)).toBe("all");
+      expect(
+        printMediaText("(prefers-color-scheme: dark)", 718)
+      ).toBeUndefined();
+    });
+
+    it("switches the print rules on for one measurement and back", () => {
+      document.head.innerHTML =
+        "<style>@media print { .probe { color: red; } } @media screen { .probe { color: blue; } }</style>";
+      const sheet = document.styleSheets[0];
+      const media = () =>
+        Array.from(sheet.cssRules).map(
+          (rule) => (rule as CSSMediaRule).media.mediaText
+        );
+      expect(withPrintRules(718, media)).toEqual(["all", "not all"]);
+      expect(media()).toEqual(["print", "screen"]);
+      expect(() =>
+        withPrintRules(718, () => {
+          throw new Error("measure failed");
+        })
+      ).toThrow("measure failed");
+      expect(media()).toEqual(["print", "screen"]);
+    });
+
+    it("prepares before printing, leaving the screen layout as it was", () => {
+      document.head.innerHTML = "";
+      document.body.innerHTML = `<div class="bp-doc" style="--bp-print-width: 714px;"><div class="bp-items-scroll"><table class="bp-items is-cards"></table></div></div>`;
+      prepareBrowserPrint();
+      expect(document.querySelector<HTMLElement>(".bp-doc")?.style.width).toBe(
+        ""
+      );
+      expect(document.querySelector(".bp-items")?.className).toBe(
+        "bp-items is-cards"
+      );
+    });
+
+    // Refrens' PDF service makes its PDF in print media, and making it fires beforeprint.
+    it("prepares nothing when print media is on already (the PDF service)", () => {
+      document.body.innerHTML = `<div class="bp-doc" style="--bp-print-width: 714px;"></div>`;
+      const original = window.matchMedia;
+      window.matchMedia = ((query: string) => ({
+        matches: /print/.test(query),
+        media: query,
+      })) as unknown as typeof window.matchMedia;
+      const layout = jest.fn();
+      try {
+        prepareBrowserPrint(layout);
+      } finally {
+        window.matchMedia = original;
+      }
+      expect(layout).not.toHaveBeenCalled();
+    });
+
+    it("measures with a readable copy of a stylesheet from another origin", () => {
+      // The sections above share this page: start from a browser's page, not the PDF service's.
+      document.body.className = "";
+      setBpsStylesheetText('@import url("font.css"); .probe { color: red; }');
+      document.head.innerHTML =
+        '<link rel="stylesheet" href="https://example.com/templates/bps-technologies/1.0.1/bundle.css">';
+      const link = document.querySelector("link") as HTMLLinkElement;
+      // A sheet whose rules cannot be read, as a cross-origin one.
+      const foreign = {
+        disabled: false,
+        get cssRules(): CSSRuleList {
+          throw new DOMException("cross-origin", "SecurityError");
+        },
+      };
+      Object.defineProperty(link, "sheet", { value: foreign });
+      const during = withReadableStylesheet(() => ({
+        copy: document.querySelector("style[data-bp-measure]")?.textContent,
+        on: !(
+          document.querySelector("style[data-bp-measure]") as HTMLStyleElement
+        ).sheet?.disabled,
+        original: foreign.disabled,
+      }));
+      expect(during).toEqual({
+        copy: '@import url("font.css"); .probe { color: red; }',
+        on: true,
+        original: true,
+      });
+      expect(foreign.disabled).toBe(false);
+      expect(
+        (document.querySelector("style[data-bp-measure]") as HTMLStyleElement)
+          .sheet?.disabled
+      ).toBe(true);
+    });
+
+    // Lydia changes the print size live: the renderer rewrites its zoom style, no new render.
+    it("follows a print zoom changed live", () => {
+      document.head.innerHTML = "";
+      document.body.innerHTML = `<div class="bp-doc" style="--bp-print-width: 714px; --bp-browser-print-width: 714px; --bp-print-base: 718.1102px; --bp-browser-print-base: 718.1102px;"></div>`;
+      const doc = document.querySelector<HTMLElement>(".bp-doc") as HTMLElement;
+      syncPrintWidths();
+      expect(doc.style.getPropertyValue("--bp-print-width")).toBe("714px");
+      const zoom = document.createElement("style");
+      zoom.id = "ceres-template-zoom";
+      zoom.textContent = "@media print { html { zoom: 1.2; } }";
+      document.head.append(zoom);
+      syncPrintWidths();
+      expect(doc.style.getPropertyValue("--bp-print-width")).toBe("594px");
+      expect(doc.style.getPropertyValue("--bp-browser-print-width")).toBe(
+        "594px"
+      );
+      // Back to 0.8, which the renderer draws by removing its style: zoom 1 widths.
+      zoom.remove();
+      syncPrintWidths();
+      expect(doc.style.getPropertyValue("--bp-print-width")).toBe("714px");
+    });
+
+    // Nothing shrinks to fit the paper (user, 2026-11-01): the browser's print lays the page out
+    // at its width (over the 75 % print base) and the table keeps the print size.
+    it("never scales the document or the table for a browser's print", () => {
+      document.body.innerHTML = `<div class="bp-doc" style="--bp-print-width: 714px;"><div class="bp-items-scroll"><table class="bp-items"></table></div></div>`;
+      const doc = document.querySelector(".bp-doc") as HTMLElement;
+      let widthWhilePreparing = "";
+      prepareBrowserPrint(() => {
+        widthWhilePreparing = doc.style.width;
+      });
+      // jsdom drops a calc() with a variable; Chrome lays the page out at 714 px / the 75 % base.
+      expect(["", "calc(714px / var(--bp-print-scale, 1))"]).toContain(
+        widthWhilePreparing
+      );
+      expect(doc.getAttribute("style")).not.toMatch(/zoom|fit/);
+      expect(doc.dataset.bpPreparedZoom).toBeUndefined();
+    });
+
+    // The item photos' print cap is a share of the page's height: measured in the window's.
+    it("measures with the page's vh and leaves none behind", () => {
+      document.head.innerHTML = "";
+      document.body.innerHTML = `<div class="bp-doc" style="--bp-print-width: 736px; --bp-browser-print-height: 1268px;"></div>`;
+      const doc = document.querySelector<HTMLElement>(".bp-doc") as HTMLElement;
+      let during = "";
+      prepareBrowserPrint(() => {
+        during = doc.style.getPropertyValue("--bp-vh");
+      });
+      expect(during).toBe("12.68px");
+      expect(doc.style.getPropertyValue("--bp-vh")).toBe("");
+    });
+  });
+});
+
+// ---- screen-fit (was tests/bps-technologies.screen-fit.dom.test.ts)
+describe("screen-fit", () => {
+  const media = (print: boolean) => {
+    window.matchMedia = ((query: string) => ({
+      matches: print && query === "print",
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+  };
+
+  const mount = (extra = "") => {
+    document.body.innerHTML = `<div class="bp-doc"><div class="bp-items-scroll"><table class="bp-items${extra}"><tbody><tr><td>1</td></tr></tbody></table></div></div>`;
+    return document.querySelector<HTMLElement>(".bp-items") as HTMLElement;
+  };
+
+  // jsdom lays nothing out: the screen reads 0 px wide, a phone.
+  describe("BPS Technologies — item table on a phone or tablet screen", () => {
+    it("shows the items as cards on a phone", () => {
+      media(false);
+      const table = mount();
+      fitItemsToScreen();
+      expect(table.classList.contains("is-cards")).toBe(true);
+    });
+
+    // refrens.com's own invoice pages: cards under 576 px, then the headings in a row with each
+    // name across the table (user request, 2026-10-24); from the A4 width the paper table.
+    it.each([
+      [575, "is-cards"],
+      [576, "is-grid"],
+      [793, "is-grid"],
+      [794, ""],
+    ])("at %i px the table reads as '%s'", (width, layout) => {
+      media(false);
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: width,
+      });
+      const table = mount(" is-cards");
+      fitItemsToScreen();
+      expect(table.classList.contains("is-cards")).toBe(layout === "is-cards");
+      expect(table.classList.contains("is-grid")).toBe(layout === "is-grid");
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: 0,
+      });
+    });
+
+    it("keeps the table as it is in print", () => {
+      media(true);
+      const table = mount(" is-cards");
+      fitItemsToScreen();
+      expect(table.classList.contains("is-cards")).toBe(false);
+      expect(table.classList.contains("is-grid")).toBe(false);
+    });
+  });
+
+  // The summaries on a phone (user request, 2026-10-24): each row as heading | figure pairs.
+  describe("BPS Technologies — summary tables on a phone screen", () => {
+    const mountSummary = () => {
+      document.body.innerHTML = `<div class="bp-doc"><section class="bp-card bp-widget-table" data-section="hsn"><div class="ceres-table-section"><table class="ceres-table">
+        <thead><tr><th>HSN</th><th>Taxable Value</th><th colspan="2">IGST</th><th>Total</th></tr><tr><th></th><th></th><th>Rate</th><th>Amount</th><th></th></tr></thead>
+        <tbody><tr><td>9018</td><td>175000</td><td>5%</td><td>8750</td><td>8750</td></tr></tbody>
+        <tfoot><tr><td><strong>Total</strong></td><td>175000</td><td></td><td>8750</td><td>8750</td></tr><tr><td colspan="99" class="ceres-table-words">Words</td></tr></tfoot>
+      </table></div></section></div>`;
+      return document.querySelector<HTMLElement>(
+        ".bp-widget-table"
+      ) as HTMLElement;
+    };
+
+    it("labels each cell with its column's headings, both rows joined", () => {
+      media(false);
+      const section = mountSummary();
+      fitItemsToScreen();
+      expect(section.classList.contains("is-stacked")).toBe(true);
+      const labels = Array.from(section.querySelectorAll("td")).map(
+        (cell) => cell.dataset.label ?? ""
+      );
+      expect(labels).toEqual([
+        "HSN",
+        "Taxable Value",
+        "IGST Rate",
+        "IGST Amount",
+        "Total",
+        "",
+        "Taxable Value",
+        "IGST Rate",
+        "IGST Amount",
+        "Total",
+        "",
+      ]);
+    });
+
+    it("keeps the tables as they are on a wider screen and in print", () => {
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: 576,
+      });
+      media(false);
+      const section = mountSummary();
+      fitItemsToScreen();
+      expect(section.classList.contains("is-stacked")).toBe(false);
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: 0,
+      });
+      media(true);
+      fitItemsToScreen();
+      expect(section.classList.contains("is-stacked")).toBe(false);
+    });
+  });
+
+  describe("BPS Technologies — invisible currency symbol on the page (user, 2026-11-16)", () => {
+    it("takes the hidden mark and its space out of every figure", () => {
+      document.body.innerHTML = `<div class="bp-doc"><span>\u2060 3,12,213.00</span><span>-\u2060 78,000.00</span></div>`;
+      removeHiddenSymbol();
+      expect(document.body.textContent).toBe("3,12,213.00-78,000.00");
+    });
+  });
+});
+
+// ---- stretch (was tests/bps-technologies.stretch.dom.test.ts)
+describe("stretch", () => {
+  const media = (print: boolean) => {
+    window.matchMedia = ((query: string) => ({
+      matches: print && query === "print",
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+  };
+
+  const rect = (top: number, bottom: number, width = 1000) =>
+    ({
+      top,
+      bottom,
+      left: 0,
+      right: width,
+      width,
+      height: bottom - top,
+      x: 0,
+      y: top,
+    } as DOMRect);
+
+  /*
+   * jsdom lays nothing out: the document's boxes are given here. One item row ending at
+   * `itemEnd`, the totals after it ending at `end` (the body's foot), 1000 px wide.
+   */
+  const mount = (classes = "", itemEnd = 500, end = 600) => {
+    document.body.innerHTML = `<div class="bp-doc${classes}"><table class="bp-page-frame"><tbody><tr><td class="bp-page-frame-cell"><div class="bp-page-body"><div class="bp-items-scroll"><table class="bp-items"><tbody><tr class="bp-item-row"><td>1</td></tr><tr class="bp-filler"><td></td></tr></tbody></table></div><section class="bp-totals-row">Totals</section></div></td></tr></tbody></table></div>`;
+    const doc = document.querySelector<HTMLElement>(".bp-doc") as HTMLElement;
+    Object.defineProperty(doc, "offsetWidth", {
+      configurable: true,
+      value: 1000,
+    });
+    const set = (selector: string, box: DOMRect) => {
+      const el = document.querySelector(selector) as HTMLElement;
+      el.getBoundingClientRect = () => box;
+    };
+    set(".bp-doc", rect(0, end));
+    set(".bp-page-body", rect(0, end));
+    set(".bp-items-scroll", rect(0, itemEnd));
+    set(".bp-items", rect(0, itemEnd));
+    set(".bp-item-row", rect(0, itemEnd));
+    set(".bp-totals-row", rect(itemEnd, end));
+    const filler = doc.querySelector<HTMLElement>(".bp-filler") as HTMLElement;
+    return { doc, filler };
+  };
+
+  const fillerHeight = (filler: HTMLElement) =>
+    filler.style.getPropertyValue("--bp-filler-height");
+
+  const LAYOUT = { head: 0, foot: 0, start: 0 };
+  const room = (units: FlowUnit[], anchor: number, page: number) => {
+    const length = flowFiller(units, anchor, { ...LAYOUT, page });
+    return length ? length.c + length.k * page : undefined;
+  };
+
+  // The pages, simulated (user, 2026-11-01: the table runs to the foot of the page it ends on,
+  // one page or more).
+  describe("BPS Technologies — the stretch's pages", () => {
+    it("fills what the table and the totals after it leave of a one-page document", () => {
+      const units = [
+        { top: 0, bottom: 400 },
+        { top: 400, bottom: 600 },
+      ];
+      expect(room(units, 0, 1000)).toBe(400);
+    });
+
+    it("fills the page the table ends on when the document runs longer", () => {
+      // Twelve 100 px items: the eleventh moves to page 2; the totals follow on page 2.
+      const items = Array.from({ length: 12 }, (_, i) => ({
+        top: i * 100,
+        bottom: (i + 1) * 100,
+      }));
+      const units = [...items, { top: 1200, bottom: 1300 }];
+      // Page 2 holds items 11 and 12 (200 px) and the totals (100 px): 700 px left.
+      expect(room(units, 11, 1000)).toBe(700);
+    });
+
+    it("runs the table down its page, short of the foot, when the totals move to the next page", () => {
+      const units = [
+        { top: 0, bottom: 900 },
+        { top: 900, bottom: 1150 },
+      ];
+      // The totals go to page 2: 100 px left under the table, 24 kept back from the page's
+      // foot (an empty table never moves to a page of its own).
+      expect(room(units, 0, 1000)).toBe(76);
+    });
+
+    // The party, shipping and transport cards break between their lines in print.
+    it("places a row of cards cut between its lines", () => {
+      const card = (bottom: number) => ({
+        top: 0,
+        bottom,
+        head: 50,
+        close: 17,
+        breaks: [
+          { fit: 200, resume: 204 },
+          { fit: 400, resume: 404 },
+          { fit: 600, resume: 604 },
+        ],
+      });
+      // Page end 500: each card breaks after its line ending at 400; the taller card's rest
+      // (from 604 to 820, its title and top edge again) sets the row's height on page 2.
+      expect(cutCards([card(700), card(820)], 500)).toEqual({
+        rest: 50 + 820 - 404,
+      });
+      // No line fits above the bottom edge: the row moves on whole.
+      expect(cutCards([card(700)], 150)).toBeUndefined();
+    });
+
+    it("does not stretch where a page break cuts a row before the table ends", () => {
+      const units: FlowUnit[] = [
+        { top: 0, bottom: 1500, fluid: true, line: 20 },
+        { top: 1500, bottom: 1600 },
+      ];
+      expect(flowFiller(units, 0, { ...LAYOUT, page: 1000 })).toBeUndefined();
+    });
+
+    it("writes one print rule per range of page heights, in 100vh", () => {
+      const css = stretchPrintRules(
+        [
+          { top: 0, bottom: 400 },
+          { top: 400, bottom: 600 },
+        ],
+        0,
+        LAYOUT,
+        1,
+        16
+      );
+      expect(css).toMatch(
+        /@media print and \(min-height: \d+px\) and \(max-height: [\d.]+px\) \{ \.bp-doc\.is-stretch \.bp-items \.bp-filler \{ --bp-filler-height: max\(0px, calc\(1 \* 100vh \/ 1 - 616px\)\); \} \}/
+      );
+    });
+  });
+
+  // The preview always stretches, whatever the toggles (user, 2026-10-31; 2026-11-01: on the
+  // sheet the table ends on, one sheet or more).
+  describe("BPS Technologies — the preview's A4 sheet", () => {
+    afterEach(() => {
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: 0,
+      });
+    });
+
+    it("gives a short document's spare height to the filler, toggles off", () => {
+      media(false);
+      const { doc, filler } = mount();
+      stretchItemTable();
+      // 1000 px wide: an A4 sheet is 1414 px tall; the document is 600.
+      expect(fillerHeight(filler)).toBe("814px");
+      expect(doc.classList.contains("is-filled")).toBe(true);
+    });
+
+    it("measures the same again with the filler in place (no loop)", () => {
+      media(false);
+      const { filler } = mount(" is-stretch");
+      stretchItemTable();
+      stretchItemTable();
+      expect(fillerHeight(filler)).toBe("814px");
+    });
+
+    it("adds no space when the totals move to the next sheet, as in print", () => {
+      media(false);
+      // The item ends at 1300 px on sheet 1 (1414 px tall); the totals (400 px) move to sheet 2.
+      const { doc, filler } = mount("", 1300, 1700);
+      stretchItemTable();
+      expect(fillerHeight(filler)).toBe("0px");
+      expect(doc.classList.contains("is-filled")).toBe(false);
+    });
+
+    // User (2026-11-02): the summary rows never stretch; the space goes under the last item.
+    it("puts the space above a closing Sub total row", () => {
+      media(false);
+      mount();
+      const filler = document.querySelector(".bp-filler") as HTMLElement;
+      filler.insertAdjacentHTML(
+        "beforebegin",
+        '<tr class="bp-item-row bp-group-total-row"><td>Sub total</td></tr>'
+      );
+      stretchItemTable();
+      const rows = Array.from(document.querySelectorAll(".bp-items tr"));
+      expect(rows.map((row) => row.className)).toEqual([
+        "bp-item-row",
+        "bp-filler",
+        "bp-item-row bp-group-total-row",
+      ]);
+    });
+
+    it("leaves a Pageless document as it is", () => {
+      media(false);
+      const { doc, filler } = mount(" is-pageless");
+      stretchItemTable();
+      expect(fillerHeight(filler)).toBe("");
+      expect(doc.classList.contains("is-filled")).toBe(false);
+    });
+
+    it("leaves the cards and grid layouts as they are", () => {
+      media(false);
+      Object.defineProperty(document.documentElement, "clientWidth", {
+        configurable: true,
+        value: 700,
+      });
+      const { doc, filler } = mount();
+      fitItemsToScreen();
+      expect(document.querySelector(".bp-items.is-grid")).not.toBeNull();
+      expect(fillerHeight(filler)).toBe("");
+      expect(doc.classList.contains("is-filled")).toBe(false);
+    });
+
+    // In print the business's toggle decides; the preview's filler goes.
+    it("drops the preview's filler in print without the business toggle", () => {
+      media(false);
+      const { doc, filler } = mount();
+      stretchItemTable();
+      media(true);
+      stretchItemTable();
+      expect(fillerHeight(filler)).toBe("");
+      expect(doc.classList.contains("is-filled")).toBe(false);
+      // Print ends: the preview fills its sheet again.
+      media(false);
+      stretchItemTable();
+      expect(fillerHeight(filler)).toBe("814px");
+    });
+
+    it("stretches in print with the business toggle, by page-height rules", () => {
+      media(true);
+      const { doc, filler } = mount(" is-stretch");
+      stretchItemTable();
+      expect(doc.classList.contains("is-filled")).toBe(true);
+      expect(fillerHeight(filler)).toBe("");
+      expect(document.getElementById("bp-stretch-pages")?.textContent).toMatch(
+        /--bp-filler-height: max\(0px, calc\(1 \* 100vh/
+      );
+    });
+  });
+});
+
+// ---- summary-even (was tests/bps-technologies.summary-even.dom.test.ts)
+describe("summary-even", () => {
+  describe("BPS Technologies — HSN / Tax Summary even columns", () => {
+    it("sets the words row's colspan to the real column count and marks the table even", () => {
+      document.body.innerHTML = `
+        <section class="bp-widget-table" data-section="hsn"><table class="ceres-table">
+          <thead><tr><th>HSN</th><th>Taxable</th><th colspan="2">IGST</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+            <tr><td class="ceres-table-words" colspan="99">words</td></tr>
+          </tbody>
+        </table></section>
+        <section class="bp-widget-table" data-section="payments"><table class="ceres-table">
+          <tbody><tr><td colspan="99">untouched</td></tr></tbody>
+        </table></section>`;
+      evenSummaryColumns();
+      const [hsn, payments] = Array.from(document.querySelectorAll("table"));
+      expect(hsn.classList.contains("is-even")).toBe(true);
+      expect(
+        (hsn.querySelector(".ceres-table-words") as HTMLTableCellElement)
+          .colSpan
+      ).toBe(5);
+      expect(payments.classList.contains("is-even")).toBe(false);
+      expect(
+        (payments.querySelector("td") as HTMLTableCellElement).colSpan
+      ).toBe(99);
+    });
+  });
+});
+
+// ---- totals-joint (was tests/bps-technologies.totals-joint.dom.test.ts)
+describe("totals-joint", () => {
+  const printing = () => {
+    window.matchMedia = ((query: string) => ({
+      matches: /print/.test(query),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+  };
+
+  const rect = (left: number, right: number, top = 0, bottom = 20) =>
+    ({
+      left,
+      right,
+      top,
+      bottom,
+      width: right - left,
+      height: bottom - top,
+      x: left,
+      y: top,
+    } as DOMRect);
+
+  // The item table's last row, its cells at these left/right edges, in a box 0–714 px wide.
+  const mount = (edges: Array<[number, number]>) => {
+    const cells = edges.map(() => "<td>x</td>").join("");
+    document.body.innerHTML = `<div class="bp-items-scroll"><table class="bp-items"><tbody><tr>${cells}</tr></tbody><tbody class="bp-items-total"><tr>${cells}</tr></tbody></table></div>`;
+    const box = document.querySelector(".bp-items-scroll") as HTMLElement;
+    box.getBoundingClientRect = () => rect(0, 714);
+    const row = document.querySelector(
+      ".bp-items tbody tr"
+    ) as HTMLTableRowElement;
+    Array.from(row.cells).forEach((cell, i) => {
+      const [left, right] = edges[i];
+      // eslint-disable-next-line no-param-reassign
+      cell.getBoundingClientRect = () => rect(left, right);
+      // eslint-disable-next-line no-param-reassign
+      cell.getClientRects = () => [rect(left, right)] as unknown as DOMRectList;
+    });
+    return row;
+  };
+
+  describe("BPS Technologies — the totals' joint on a cut-off table", () => {
+    it("marks both square corners when the table fits its box", () => {
+      printing();
+      mount([
+        [0, 300],
+        [300, 714],
+      ]);
+      const table = document.querySelector(".bp-items") as HTMLElement;
+      table.getBoundingClientRect = () => rect(0, 714);
+      splitTotals();
+      const split = document.querySelector(
+        "table[data-bp-totals-split]"
+      ) as HTMLElement;
+      expect(split.classList.contains("is-joint-left")).toBe(true);
+      expect(split.classList.contains("is-joint-right")).toBe(true);
+    });
+
+    // User (2026-11-01): a wide table is cut off at the page edge, never shrunk. Chrome 122 let
+    // the corner mark past that edge escape the cut and shrank the whole PDF page to show it.
+    it("leaves out the corner that falls past the page edge", () => {
+      printing();
+      mount([
+        [0, 500],
+        [500, 954],
+      ]);
+      const table = document.querySelector(".bp-items") as HTMLElement;
+      table.getBoundingClientRect = () => rect(0, 954);
+      splitTotals();
+      const split = document.querySelector(
+        "table[data-bp-totals-split]"
+      ) as HTMLElement;
+      expect(split.classList.contains("is-joint-left")).toBe(true);
+      expect(split.classList.contains("is-joint-right")).toBe(false);
+    });
+  });
+});
+
+// ---- totals-split (was tests/bps-technologies.totals-split.dom.test.ts)
+describe("totals-split", () => {
+  const printing = (matches: boolean) => {
+    window.matchMedia = ((query: string) => ({
+      matches,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia;
+  };
+
+  const mount = () => {
+    document.body.innerHTML = `<div class="bp-items-scroll"><table class="bp-items"><thead><tr><th>Sr.</th><th>Item</th></tr></thead><tbody><tr><td>1</td><td>A</td></tr></tbody><tbody class="bp-items-total"><tr><td>T</td><td>1</td></tr></tbody></table></div>`;
+    return document.querySelector<HTMLTableElement>(
+      ".bp-items"
+    ) as HTMLTableElement;
+  };
+
+  describe("BPS Technologies — totals in print", () => {
+    it("moves the totals into a table of their own, without the item headings", () => {
+      printing(true);
+      const table = mount();
+      splitTotals();
+      const split = table.nextElementSibling as HTMLTableElement;
+      expect(split.hasAttribute("data-bp-totals-split")).toBe(true);
+      expect(split.querySelector("thead")).toBeNull();
+      expect(split.querySelectorAll(".bp-items-total")).toHaveLength(1);
+      expect(table.querySelectorAll(".bp-items-total")).toHaveLength(0);
+      expect(split.querySelectorAll("col")).toHaveLength(2);
+    });
+
+    it("leaves the table whole outside print, and joins it back in order", () => {
+      printing(false);
+      const table = mount();
+      const before = table.innerHTML;
+      splitTotals();
+      expect(table.nextElementSibling).toBeNull();
+      printing(true);
+      splitTotals();
+      joinTotals();
+      expect(table.nextElementSibling).toBeNull();
+      expect(table.innerHTML).toBe(before);
+    });
+  });
+});
+
+// ---- zoom-measure (was tests/bps-technologies.zoom-measure.dom.test.ts)
+describe("zoom-measure", () => {
+  /*
+   * Refrens' PDF service runs Chrome 122, which reports anything inside a CSS-zoomed element
+   * divided by that zoom; Chrome 128+ reports what is drawn (Element.currentCSSZoom exists there).
+   */
+  describe("BPS Technologies — measuring inside the zoomed print table", () => {
+    const mount = () => {
+      document.body.innerHTML = `<table class="bp-items" style="zoom: 0.5"><tbody><tr><td id="cell">1</td></tr></tbody></table>`;
+      const cell = document.getElementById("cell") as HTMLElement;
+      cell.getBoundingClientRect = () =>
+        ({
+          x: 400,
+          y: 100,
+          width: 200,
+          height: 40,
+          left: 400,
+          right: 600,
+          top: 100,
+          bottom: 140,
+        } as DOMRect);
+      const real = window.getComputedStyle;
+      jest
+        .spyOn(window, "getComputedStyle")
+        .mockImplementation((element: Element) => {
+          const style = real(element);
+          // jsdom drops the zoom property; it is read from the style attribute.
+          const zoom =
+            /zoom:\s*([\d.]+)/.exec(element.getAttribute("style") || "")?.[1] ||
+            "1";
+          return { ...style, zoom } as CSSStyleDeclaration;
+        });
+      return cell;
+    };
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+      delete (Element.prototype as unknown as Record<string, unknown>)
+        .currentCSSZoom;
+    });
+
+    it("scales Chrome 122's figures by the zoom, to what is drawn", () => {
+      const rect = drawnRect(mount());
+      expect([rect.x, rect.y, rect.width, rect.height]).toEqual([
+        200, 50, 100, 20,
+      ]);
+    });
+
+    it("leaves a Chrome 128+ rect as it is", () => {
+      Object.defineProperty(Element.prototype, "currentCSSZoom", {
+        configurable: true,
+        get: () => 1,
+      });
+      const rect = drawnRect(mount());
+      expect([rect.x, rect.width]).toEqual([400, 200]);
+    });
   });
 });
