@@ -680,6 +680,16 @@
       </div>
       {{/if}}
 
+      {{!-- ═══ Contact Details (invoice.contact) — "For any enquiry, reach out via email at …, call on …" ═══ --}}
+      {{#if mapped.visibility.contactStrip}}
+      <div class="fk-contact-section" data-testid="contact">
+        <p class="fk-contact-line">{{docLabel "contact" "For any enquiry, reach out via"}}{{#if invoice.contact.email}}
+          {{docLabel "contactEmail" "email at"}} <strong>{{invoice.contact.email}}</strong>{{/if}}{{#if
+          invoice.contact.phone}}{{#if invoice.contact.email}},{{/if}} {{docLabel "contactPhone" "call on"}}
+          <strong>{{formatPhone invoice.contact.phone}}</strong>{{/if}}</p>
+      </div>
+      {{/if}}
+
     </div>{{!-- .fk-main-box --}}
 
   </div>{{!-- .fk-page --}}
