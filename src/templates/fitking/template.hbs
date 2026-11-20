@@ -203,8 +203,8 @@
           </table>
           {{#with (qrSrc mapped.qr.top) as |docQrSrc|}}
           <div class="fk-details-qr">
-            <p class="fk-doc-qr-label">{{docLabel "documentQr" "Document QR"}}</p>
-            <img src="{{docQrSrc}}" alt="Document QR" class="fk-qr-img" />
+            <p class="fk-doc-qr-label">{{topQrLabel}}</p>
+            <img src="{{docQrSrc}}" alt="{{topQrLabel}}" class="fk-qr-img" />
           </div>
           {{/with}}
         </div>

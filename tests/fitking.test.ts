@@ -1031,7 +1031,7 @@ describe("QR rendering", () => {
       });
 
       expect(srcOf(html, "fk-qr-img")).toMatch(/^data:image\/gif;base64,/);
-      expect(html).toContain("Document QR");
+      expect(html).toContain("e-Invoice QR");
     });
 
     it("passes a hosted QR image through untouched", () => {
@@ -1053,6 +1053,47 @@ describe("QR rendering", () => {
       const html = render(basePayload());
 
       expect(html).not.toContain("Document QR");
+    });
+
+    describe("label names the code that printed", () => {
+      const qrLabel = (payload: Record<string, unknown>) =>
+        render({ ...basePayload(), ...payload }).match(
+          /<p class="fk-doc-qr-label">([^<]*)<\/p>/
+        )?.[1];
+      const irnQr = "https://cdn.example.com/irn.png";
+
+      it("e-invoice QR while the IRN is active", () => {
+        expect(qrLabel({ irn: { qrCode: irnQr }, documentQr: "doc" })).toBe(
+          "e-Invoice QR"
+        );
+      });
+
+      it("document QR once the IRN is cancelled", () => {
+        expect(
+          qrLabel({
+            irn: { qrCode: irnQr, CancelDate: "2025-08-01" },
+            documentQr: "https://cdn.example.com/doc.png",
+          })
+        ).toBe("Document QR");
+      });
+
+      it("ZATCA and LHDN QRs by name", () => {
+        expect(qrLabel({ zatcaQrCode: "https://cdn.example.com/z.png" })).toBe(
+          "ZATCA QR"
+        );
+        expect(qrLabel({ lhdnQrCode: "https://cdn.example.com/l.png" })).toBe(
+          "LHDN QR"
+        );
+      });
+
+      it("the business's own label", () => {
+        expect(
+          qrLabel({
+            irn: { qrCode: irnQr },
+            customLabels: { einvoiceQr: "IRN QR Code" },
+          })
+        ).toBe("IRN QR Code");
+      });
     });
   });
 });

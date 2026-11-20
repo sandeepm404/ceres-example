@@ -1408,6 +1408,30 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     };
   };
 
+  // What the details column's QR is, for its label. `mapped.qr.top` is the
+  // first of these the document carries (shared normalizer): the e-invoice QR
+  // while the IRN is active, then the ZATCA and LHDN QRs, then the document's
+  // own QR. The same order and the same "is it there" test are used here, so
+  // the label always names the code that printed.
+  HB.registerHelper("topQrLabel", function (options: any) {
+    const invoice = asRecord(rootOf(options).invoice);
+    const irn = asRecord(invoice.irn);
+    const present = (val: any) => {
+      const text = stringifyFieldValue(val);
+      return Boolean(text) && text !== "null" && text !== "undefined";
+    };
+    const label = (...args: string[]) => documentLabel(...args, options);
+    if (
+      (present(invoice.qrCode) || present(irn.qrCode)) &&
+      !present(irn.CancelDate)
+    ) {
+      return label("einvoiceQr", "irnQr", "e-Invoice QR");
+    }
+    if (present(invoice.zatcaQrCode)) return label("zatcaQr", "ZATCA QR");
+    if (present(invoice.lhdnQrCode)) return label("lhdnQr", "LHDN QR");
+    return label("documentQr", "Document QR");
+  });
+
   // The IRN itself, unless the business's e-invoice settings hide it.
   HB.registerHelper("irnNumber", function (options: any) {
     const invoice = asRecord(rootOf(options).invoice);
