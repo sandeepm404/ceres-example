@@ -1370,3 +1370,61 @@ describe("summary visibility", () => {
     });
   });
 });
+
+describe("contact details", () => {
+  const base = {
+    invoiceTitle: "Invoice",
+    invoiceNumber: "0023",
+    items: [{ _id: "1", name: "Chair", quantity: 1, rate: 10, amount: 10 }],
+  };
+  const contactLine = (payload: Record<string, unknown>) => {
+    const html = render({ ...base, ...payload });
+    const match = html.match(/<p class="fk-contact-line">([\s\S]*?)<\/p>/);
+    return match
+      ? match[1]
+          .replace(/<[^>]+>/g, "")
+          .replace(/[\u2066-\u2069]/g, "")
+          .replace(/\s+/g, " ")
+          .trim()
+      : null;
+  };
+
+  it("prints the email and phone from invoice.contact", () => {
+    expect(
+      contactLine({
+        contact: { email: "hi@fitking.in", phone: "+919999988888" },
+      })
+    ).toBe(
+      "For any enquiry, reach out via email at hi@fitking.in, call on +91 99999 88888"
+    );
+  });
+
+  it("prints only the email when there is no phone", () => {
+    expect(contactLine({ contact: { email: "hi@fitking.in" } })).toBe(
+      "For any enquiry, reach out via email at hi@fitking.in"
+    );
+  });
+
+  it("prints only the phone when there is no email", () => {
+    expect(contactLine({ contact: { phone: "+919999988888" } })).toBe(
+      "For any enquiry, reach out via call on +91 99999 88888"
+    );
+  });
+
+  it("uses the business's own labels", () => {
+    expect(
+      contactLine({
+        contact: { email: "hi@fitking.in" },
+        customLabels: {
+          contact: "Questions? Reach us by",
+          contactEmail: "mail at",
+        },
+      })
+    ).toBe("Questions? Reach us by mail at hi@fitking.in");
+  });
+
+  it("is absent without an email or phone", () => {
+    expect(contactLine({})).toBeNull();
+    expect(contactLine({ contact: { email: "", phone: "" } })).toBeNull();
+  });
+});

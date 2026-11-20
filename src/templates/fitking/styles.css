@@ -238,7 +238,7 @@
 
 .fk-info-kv-custom .fk-kv-val {
   flex: 1 1 auto;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* Details Column — var(--fk-font-size-base) */
@@ -515,7 +515,7 @@
 .fk-custom-cell {
   font-size: var(--fk-font-size-base);
   color: #333;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* Numeric values: breaking "20,13,20,21,562" across two lines reads as two
@@ -659,6 +659,26 @@
   font-size: var(--fk-font-size-sm);
   color: #777;
   opacity: 1;
+}
+
+/* ===== CONTACT DETAILS ===== */
+.fk-contact-section {
+  padding: 4px var(--fk-font-size-lg);
+  border-top: 1px solid var(--fk-border);
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
+  text-align: center;
+}
+
+.fk-contact-line {
+  font-size: var(--fk-font-size-base);
+  line-height: 1.5;
+  color: var(--fk-text-muted);
+}
+
+.fk-contact-line strong {
+  font-weight: 600;
+  color: var(--fk-text);
 }
 
 /* ===== TAX, HSN & PAYMENTS SUMMARIES ===== */
