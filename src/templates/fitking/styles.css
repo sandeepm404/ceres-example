@@ -258,8 +258,10 @@
 /* Tax numbers: GSTIN and PAN fit the 60px key column; "VAT Number" or a
    renamed label grows it rather than wrapping. */
 .fk-info-kv-tax .fk-kv-key {
+  box-sizing: border-box;
   width: auto;
   min-width: 60px;
+  padding-right: 4px;
   flex: 0 0 auto;
 }
 
@@ -284,12 +286,13 @@
   font-size: var(--fk-font-size-base);
 }
 
+/* Values wrap at spaces; only a single unbroken token (an IRN, an email)
+   splits mid-way. */
 .fk-details-table td {
   border-top: 1px solid var(--fk-border-light);
   border-right: 1px solid var(--fk-border-light);
   padding: 4px 8px;
-  overflow-wrap: break-word;
-  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 
 .fk-details-table td:last-child {

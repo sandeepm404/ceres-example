@@ -1433,7 +1433,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   });
 
   // The IRN itself, unless the business's e-invoice settings hide it.
-  HB.registerHelper("irnNumber", function (options: any) {
+  HB.registerHelper("irnNumber", function (_invoice: any, options: any) {
     const invoice = asRecord(rootOf(options).invoice);
     const { einvoice } = complianceSettings(invoice);
     if (isOffFlag(einvoice.irnNumber)) return "";
@@ -1443,7 +1443,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   // The e-invoice acknowledgement, IRN cancellation and e-way bill rows for the
   // details table. Each row prints only with a value and unless the business's
   // settings hide it; a cancelled IRN drops its acknowledgement.
-  HB.registerHelper("complianceRows", function (options: any) {
+  HB.registerHelper("complianceRows", function (_invoice: any, options: any) {
     const root = rootOf(options);
     const invoice = asRecord(root.invoice);
     const irn = asRecord(invoice.irn);
@@ -1630,7 +1630,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     );
   };
 
-  HB.registerHelper("batchSummary", function (options: any) {
+  HB.registerHelper("batchSummary", function (_invoice: any, options: any) {
     const root = rootOf(options);
     const invoice = asRecord(root.invoice);
     const explicit = [
