@@ -3,7 +3,7 @@
   invoice.textScale}}style="zoom: {{invoice.textScale}};" {{/if}}{{/if}}{{/if}}>
 
   {{!-- Letterhead --}}
-  <div class="no-dibella invoice-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
+  <div class="{{#unless mapped.visibility.letterHeadOnFirstPage}}no-dibella {{/unless}}invoice-letterhead{{#unless (assetUrl invoice.letterHead)}} is-empty{{/unless}}">
     {{#if (assetUrl invoice.letterHead)}}
     <img src="{{assetUrl invoice.letterHead}}" alt="Letterhead" data-ceres-height="letterhead" />
     {{else}}
@@ -33,7 +33,10 @@
 
       {{!-- ═══ Title Bar ═══ --}}
       <div class="fk-title-bar">
-        <h1 class="fk-title">{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}Quotation{{/if}}</h1>
+        <div class="fk-title-group">
+          <h1 class="fk-title">{{#if invoice.invoiceTitle}}{{invoice.invoiceTitle}}{{else}}Quotation{{/if}}</h1>
+          {{#if invoice.invoiceSubTitle}}<p class="fk-subtitle" data-testid="subtitle">{{invoice.invoiceSubTitle}}</p>{{/if}}
+        </div>
         {{#if mapped.visibility.showStatusTagInPrint}}
         <span class="fk-paid-stamp">{{docLabel "paidStatus" "Paid"}}</span>
         {{/if}}
@@ -55,29 +58,23 @@
             {{invoice.billedBy.country}}{{/if}}
           </p>
           {{/if}}
-          {{#if invoice.billedBy.phone}}
+          {{#if invoice.billedBy.phone}}{{#unless (isOff invoice.billedBy.phoneShowInInvoice)}}
           <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "phone" "Phone"}}</span><span
               class="fk-kv-val">{{formatPhone invoice.billedBy.phone}}</span></div>
-          {{/if}}
-          {{#if invoice.billedBy.email}}
+          {{/unless}}{{/if}}
+          {{#if invoice.billedBy.email}}{{#unless (isOff invoice.billedBy.emailShowInInvoice)}}
           <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "email" "Email"}}</span><span
               class="fk-kv-val">{{invoice.billedBy.email}}</span></div>
-          {{/if}}
-          {{#if invoice.billedBy.gstin}}
-          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "gstin" "gstNumber" "GSTIN"}}:</span><span
-              class="fk-kv-val">{{invoice.billedBy.gstin}}</span></div>
-          {{/if}}
-          {{#if invoice.billedBy.panNumber}}
-          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "pan" "panNumber" "PAN"}}:</span><span
-              class="fk-kv-val">{{invoice.billedBy.panNumber}}</span></div>
-          {{else}}{{#if invoice.billedBy.pan}}
-          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "pan" "panNumber" "PAN"}}:</span><span
-              class="fk-kv-val">{{invoice.billedBy.pan}}</span></div>
-          {{/if}}{{/if}}
-          {{#if invoice.billedBy.trnNumber}}
-          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "trn" "trnNumber" "TRN"}}:</span><span
-              class="fk-kv-val">{{invoice.billedBy.trnNumber}}</span></div>
-          {{/if}}
+          {{/unless}}{{/if}}
+          {{!-- GSTIN, PAN, VAT, TRN, TIN, SST, Tax ID — see `partyTaxIds` for which print. --}}
+          {{#each (partyTaxIds invoice.billedBy)}}
+          <div class="fk-info-kv fk-info-kv-tax" data-testid="tax-id"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{value}}</span></div>
+          {{/each}}
+          {{#each (contactPersonFields invoice.billedBy)}}
+          <div class="fk-info-kv fk-info-kv-custom" data-testid="contact-person"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{#if isPhone}}{{formatPhone value}}{{else}}{{value}}{{/if}}</span></div>
+          {{/each}}
           {{#each (partyFields invoice.billedBy)}}
           <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span
               class="fk-kv-val">{{value}}</span></div>
@@ -98,22 +95,23 @@
             {{invoice.billedTo.country}}{{/if}}
           </p>
           {{/if}}
-          {{#if invoice.billedTo.phone}}
+          {{#if invoice.billedTo.phone}}{{#unless (isOff invoice.billedTo.phoneShowInInvoice)}}
           <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "phone" "Phone"}}</span><span
               class="fk-kv-val">{{formatPhone invoice.billedTo.phone}}</span></div>
-          {{/if}}
-          {{#if invoice.billedTo.email}}
+          {{/unless}}{{/if}}
+          {{#if invoice.billedTo.email}}{{#unless (isOff invoice.billedTo.emailShowInInvoice)}}
           <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "email" "Email"}}</span><span
               class="fk-kv-val">{{invoice.billedTo.email}}</span></div>
-          {{/if}}
-          {{#if invoice.billedTo.gstin}}
-          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "gstin" "gstNumber" "GSTIN"}}:</span><span
-              class="fk-kv-val">{{invoice.billedTo.gstin}}</span></div>
-          {{/if}}
-          {{#if invoice.billedTo.trnNumber}}
-          <div class="fk-info-kv"><span class="fk-kv-key">{{docLabel "trn" "trnNumber" "TRN"}}:</span><span
-              class="fk-kv-val">{{invoice.billedTo.trnNumber}}</span></div>
-          {{/if}}
+          {{/unless}}{{/if}}
+          {{!-- GSTIN, PAN, VAT, TRN, TIN, SST, Tax ID — see `partyTaxIds` for which print. --}}
+          {{#each (partyTaxIds invoice.billedTo)}}
+          <div class="fk-info-kv fk-info-kv-tax" data-testid="tax-id"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{value}}</span></div>
+          {{/each}}
+          {{#each (contactPersonFields invoice.billedTo)}}
+          <div class="fk-info-kv fk-info-kv-custom" data-testid="contact-person"><span class="fk-kv-key">{{label}}:</span><span
+              class="fk-kv-val">{{#if isPhone}}{{formatPhone value}}{{else}}{{value}}{{/if}}</span></div>
+          {{/each}}
           {{#each (partyFields invoice.billedTo)}}
           <div class="fk-info-kv fk-info-kv-custom"><span class="fk-kv-key">{{label}}:</span><span
               class="fk-kv-val">{{value}}</span></div>
@@ -152,18 +150,39 @@
             </tr>
             {{/if}}
             {{/unless}}
-            {{#if invoice.irn.AckDt}}
-            <tr>
-              <td class="fk-dt-label">{{docLabel "irnAckDate" "ackDate" "IRN Ack Date"}}</td>
-              <td class="fk-dt-value">{{formatDateInTimeZone invoice.irn.AckDt "UTC" "SECONDARY_SHORT_DATE_FORMAT"}}
-              </td>
+            {{!-- A credit / debit note's linked invoice and reason. --}}
+            {{#with (linkedDocumentNumbers invoice) as |linkedNumbers|}}
+            <tr data-testid="linked-document">
+              <td class="fk-dt-label">{{docLabel "linkedDocument" "linkedInvoice" "Linked Document"}}</td>
+              <td class="fk-dt-value">{{linkedNumbers}}</td>
+            </tr>
+            {{/with}}
+            {{#if invoice.documentReason}}
+            <tr data-testid="document-reason">
+              <td class="fk-dt-label">{{docLabel "documentReason" "reason" "Reason"}}</td>
+              <td class="fk-dt-value">{{invoice.documentReason}}</td>
             </tr>
             {{/if}}
-            {{#if invoice.irn.CancelDate}}
-            <tr>
-              <td class="fk-dt-label">{{docLabel "irnCancelled" "cancelDate" "IRN Cancelled"}}</td>
-              <td class="fk-dt-value">{{formateShortDateWithOffset invoice.irn.CancelDate invoice.ownerOffset}}</td>
+
+            {{!-- E-invoice acknowledgement, IRN cancellation and e-way bill — see `complianceRows`. --}}
+            {{#each (complianceRows)}}
+            <tr data-testid="compliance-row">
+              <td class="fk-dt-label">{{label}}</td>
+              <td class="fk-dt-value">{{#if isUtcDate}}{{formatDateInTimeZone value "UTC"
+                "SECONDARY_SHORT_DATE_FORMAT"}}{{else if isDate}}{{formateShortDateWithOffset value
+                @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}</td>
             </tr>
+            {{/each}}
+
+            {{!-- "Created By", when the document's Show in Invoice toggle beside its creator is on. --}}
+            {{#if (or (eq advanceOptions.showCreatorInInvoice true) (eq invoice.advanceOptions.showCreatorInInvoice
+            true))}}
+            {{#if invoice.creator.name}}
+            <tr data-testid="created-by">
+              <td class="fk-dt-label">{{docLabel "createdBy" "Created By"}}</td>
+              <td class="fk-dt-value">{{invoice.creator.name}}</td>
+            </tr>
+            {{/if}}
             {{/if}}
 
             {{#each invoice.customFields}}
@@ -190,6 +209,14 @@
           {{/with}}
         </div>
       </div>
+
+      {{!-- ═══ E-invoice IRN — a 64-character hash, so it gets the full width ═══ --}}
+      {{#with (irnNumber) as |irn|}}
+      <div class="fk-irn-strip" data-testid="irn">
+        <span class="fk-kv-key">{{docLabel "irn" "irnNumber" "IRN"}}:</span>
+        <span class="fk-irn-value">{{irn}}</span>
+      </div>
+      {{/with}}
 
       {{!-- ═══ Shipping & Logistics (Conditionally shown) ═══ --}}
       {{#if (or mapped.visibility.shippedTo mapped.visibility.shippedFrom mapped.visibility.showLogistics)}}
@@ -413,6 +440,19 @@
             </div>
           </div>
           {{/if}}
+
+          {{#with (attachmentFiles invoice) as |files|}}
+          {{#if files.length}}
+          <div class="fk-attachments-section" data-testid="attachments">
+            <p class="fk-section-title">{{docLabel "attachment" "attachments" "Attachments"}}</p>
+            <ul class="fk-attachments-list">
+              {{#each files}}
+              <li><a href="{{url}}" target="_blank" rel="noopener noreferrer">{{name}}</a></li>
+              {{/each}}
+            </ul>
+          </div>
+          {{/if}}
+          {{/with}}
 
           {{!-- Bank & UPI Details --}}
           {{#if mapped.visibility.showBankUpiSection}}
@@ -680,6 +720,32 @@
       </div>
       {{/if}}
 
+      {{!-- ═══ Batch Summary — see `batchSummary` for when it prints and its columns ═══ --}}
+      {{#with (batchSummary) as |batch|}}
+      <div class="fk-summary-section" data-testid="batch-summary">
+        <p class="fk-summary-heading">{{docLabel "batchSummary" "Batch Summary"}}</p>
+        <table class="fk-summary-table">
+          <thead>
+            <tr>
+              {{#each batch.columns}}
+              <th{{#if isNum}} class="text-right"{{/if}}>{{label}}</th>
+              {{/each}}
+            </tr>
+          </thead>
+          <tbody>
+            {{#each batch.rows}}
+            <tr>
+              {{#each this}}
+              <td{{#if isNum}} class="text-right"{{/if}}>{{#if value}}{{#if isDate}}{{formateShortDateWithOffset value
+                @root.invoice.ownerOffset}}{{else}}{{value}}{{/if}}{{/if}}</td>
+              {{/each}}
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{/with}}
+
       {{!-- ═══ Contact Details (invoice.contact) — "For any enquiry, reach out via email at …, call on …" ═══ --}}
       {{#if mapped.visibility.contactStrip}}
       <div class="fk-contact-section" data-testid="contact">
@@ -695,7 +761,7 @@
   </div>{{!-- .fk-page --}}
 
   {{!-- Letterhead Footer --}}
-  <div class="no-dibella invoice-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
+  <div class="{{#unless mapped.visibility.footerOnLastPage}}no-dibella {{/unless}}invoice-letterhead-footer{{#unless (assetUrl invoice.letterHeadFooter)}} is-empty{{/unless}}">
     {{#if (assetUrl invoice.letterHeadFooter)}}
     <img src="{{assetUrl invoice.letterHeadFooter}}" alt="Letterhead footer" data-ceres-height="letterhead-footer" />
     {{else}}

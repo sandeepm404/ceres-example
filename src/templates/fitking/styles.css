@@ -144,6 +144,20 @@
   position: relative;
 }
 
+.fk-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.fk-subtitle {
+  margin: 0;
+  font-size: var(--fk-font-size-base);
+  line-height: 1.5;
+  color: #fff;
+}
+
 /* ===== PAID STAMP =====
    Only rendered when mapped.visibility.showStatusTagInPrint is true
    (billType === "INVOICE" && status === "PAID"). Positioned relative to
@@ -238,6 +252,18 @@
 
 .fk-info-kv-custom .fk-kv-val {
   flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+
+/* Tax numbers: GSTIN and PAN fit the 60px key column; "VAT Number" or a
+   renamed label grows it rather than wrapping. */
+.fk-info-kv-tax .fk-kv-key {
+  width: auto;
+  min-width: 60px;
+  flex: 0 0 auto;
+}
+
+.fk-info-kv-tax .fk-kv-val {
   overflow-wrap: anywhere;
 }
 
@@ -659,6 +685,48 @@
   font-size: var(--fk-font-size-sm);
   color: #777;
   opacity: 1;
+}
+
+/* ===== E-INVOICE IRN ===== */
+.fk-irn-strip {
+  display: flex;
+  gap: 4px;
+  padding: 4px var(--fk-font-size-lg);
+  border-left: 1px solid var(--fk-border);
+  border-right: 1px solid var(--fk-border);
+  border-bottom: 1px solid var(--fk-border);
+  font-size: var(--fk-font-size-base);
+  line-height: 1.5;
+}
+
+.fk-irn-strip .fk-kv-key {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.fk-irn-value {
+  color: var(--fk-text);
+  overflow-wrap: anywhere;
+}
+
+/* ===== ATTACHMENTS ===== */
+.fk-attachments-section {
+  margin-top: 20px;
+}
+
+.fk-attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: var(--fk-font-size-lg);
+  font-size: var(--fk-font-size-base);
+  line-height: 1.5;
+}
+
+.fk-attachments-list a {
+  color: var(--fk-text);
+  overflow-wrap: anywhere;
 }
 
 /* ===== CONTACT DETAILS ===== */

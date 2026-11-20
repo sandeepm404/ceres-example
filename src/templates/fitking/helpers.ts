@@ -114,11 +114,11 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
   function extractNumericValue(val: any): number | null {
     if (val === undefined || val === null || val === "") return null;
-    if (typeof val === "number") return isNaN(val) ? null : val;
+    if (typeof val === "number") return Number.isNaN(val) ? null : val;
     if (typeof val === "string") {
       const cleaned = val.replace(/,/g, "").trim();
       const parsed = parseFloat(cleaned);
-      return isNaN(parsed) ? null : parsed;
+      return Number.isNaN(parsed) ? null : parsed;
     }
     if (typeof val === "object" && val !== null) {
       const candidateKeys = [
@@ -131,12 +131,12 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         "price",
         "rate",
       ];
-      for (const k of candidateKeys) {
-        if (val[k] !== undefined && val[k] !== null) {
-          const res = extractNumericValue(val[k]);
-          if (res !== null) return res;
-        }
-      }
+      // The first candidate key that holds a number wins.
+      const found = candidateKeys
+        .filter((k) => val[k] !== undefined && val[k] !== null)
+        .map((k) => extractNumericValue(val[k]))
+        .find((res) => res !== null);
+      return found ?? null;
     }
     return null;
   }
@@ -153,7 +153,7 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   function stringifyFieldValue(val: any): string {
     if (val === undefined || val === null) return "";
     if (typeof val === "string") return val.trim();
-    if (typeof val === "number") return isNaN(val) ? "" : String(val);
+    if (typeof val === "number") return Number.isNaN(val) ? "" : String(val);
     if (typeof val === "boolean") return val ? "Yes" : "No";
     if (Array.isArray(val)) {
       return val.map(stringifyFieldValue).filter(Boolean).join(", ");
@@ -190,19 +190,19 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     // `showInInvoice` is opt-out: it is frequently absent on records that are
     // meant to print, so only an explicit false hides the row.
-    for (const field of asArray(party.customFields)) {
+    asArray(party.customFields).forEach((field) =>
       add(
         field?.label ?? field?.name,
         field?.value,
         field?.params?.showInInvoice === false
-      );
-    }
-    for (const id of asArray(party.additionalIds)) {
-      add(id?.label, id?.value, id?.showInInvoice === false);
-    }
-    for (const header of asArray(party.customHeaders)) {
-      add(header?.label, header?.value, header?.showInInvoice === false);
-    }
+      )
+    );
+    asArray(party.additionalIds).forEach((id) =>
+      add(id?.label, id?.value, id?.showInInvoice === false)
+    );
+    asArray(party.customHeaders).forEach((header) =>
+      add(header?.label, header?.value, header?.showInInvoice === false)
+    );
 
     return fields;
   });
@@ -217,10 +217,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   function resolveAssetUrl(val: any): string {
     if (typeof val === "string") return val.trim();
     if (val && typeof val === "object") {
-      for (const key of ["url", "src", "link", "href"]) {
-        const nested = (val as any)[key];
-        if (typeof nested === "string" && nested.trim()) return nested.trim();
-      }
+      const nested = ["url", "src", "link", "href"]
+        .map((key) => (val as any)[key])
+        .find((value) => typeof value === "string" && value.trim());
+      if (nested) return nested.trim();
     }
     return "";
   }
@@ -243,6 +243,13 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   HB.registerHelper("itemImages", function (item: any) {
     return resolveItemImages(item);
   });
+
+  // Keys are compared with punctuation and case stripped, so `accountNo`,
+  // `account_no` and `Account No` are the same key.
+  const normalizeColumnKey = (key: any) =>
+    String(key || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
 
   // The bank block, built from the payload rather than written out row by row.
   // Two things make hardcoding it wrong: BankDetails carries its own
@@ -299,50 +306,48 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     // The account's own labels win over the document's, which win over ours.
     const labelSources = [account.customLabels, invoice?.customLabels];
     const labelFor = (labelKeys: string[], fallback: string) => {
-      for (const source of labelSources) {
-        if (!source || typeof source !== "object") continue;
-        const available = new Map<string, string>();
-        for (const [key, val] of Object.entries(source)) {
-          if (typeof val === "string" && val.trim()) {
-            available.set(normalizeColumnKey(key), val.trim());
-          }
-        }
-        for (const key of labelKeys) {
-          const match = available.get(normalizeColumnKey(key));
-          if (match) return match;
-        }
-      }
-      return fallback;
+      const match = labelSources
+        .filter((source) => source && typeof source === "object")
+        .map((source) => {
+          const available = new Map<string, string>();
+          Object.entries(source).forEach(([key, val]) => {
+            if (typeof val === "string" && val.trim()) {
+              available.set(normalizeColumnKey(key), val.trim());
+            }
+          });
+          return labelKeys
+            .map((key) => available.get(normalizeColumnKey(key)))
+            .find(Boolean);
+        })
+        .find(Boolean);
+      return match || fallback;
     };
 
     const rows: Array<{ label: string; value: string }> = [];
-    for (const row of BANK_ROWS) {
-      let value = "";
-      for (const key of row.valueKeys) {
-        const text = stringifyFieldValue(account[key]);
-        if (text) {
-          value = text;
-          break;
-        }
-      }
+    BANK_ROWS.forEach((row) => {
+      let value =
+        row.valueKeys
+          .map((key) => stringifyFieldValue(account[key]))
+          .find(Boolean) || "";
       // The holder name is the one row that prints regardless: an account with
       // no name on it belongs to the business issuing the document.
       if (!value && row.label === "Account Name") {
         value = stringifyFieldValue(invoice?.billedBy?.name);
       }
-      if (!value) continue;
-      rows.push({ label: labelFor(row.labelKeys, row.label), value });
-    }
+      if (value) {
+        rows.push({ label: labelFor(row.labelKeys, row.label), value });
+      }
+    });
 
     // Whatever else the account has been configured to carry.
-    for (const field of Array.isArray(account.customFields)
-      ? account.customFields
-      : []) {
-      if (field?.params?.showInInvoice === false) continue;
-      const label = typeof field?.label === "string" ? field.label.trim() : "";
-      const value = stringifyFieldValue(field?.value);
-      if (label && value) rows.push({ label, value });
-    }
+    (Array.isArray(account.customFields) ? account.customFields : [])
+      .filter((field: any) => field?.params?.showInInvoice !== false)
+      .forEach((field: any) => {
+        const label =
+          typeof field?.label === "string" ? field.label.trim() : "";
+        const value = stringifyFieldValue(field?.value);
+        if (label && value) rows.push({ label, value });
+      });
 
     return rows;
   });
@@ -395,19 +400,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   }
 
   HB.registerHelper("formatItemDiscount", itemDiscountText);
-
-  // The item's tax-inclusive total for the declared `total` column — see
-  // `lineItemTax` below for how the tax figure is derived.
-  HB.registerHelper(
-    "formatLineTotal",
-    function (item: any, invoice: any, visibility: any) {
-      const amount = extractNumericValue(item?.amount) ?? 0;
-      return formatCurrencyValue(
-        amount + lineItemTax(item, visibility),
-        invoice
-      );
-    }
-  );
 
   HB.registerHelper("formatPhone", function (phone: any) {
     if (typeof phone !== "string" && typeof phone !== "number") return "";
@@ -522,151 +514,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     custom: { colClass: "fk-col-custom", label: "" },
   };
 
-  const normalizeColumnKey = (key: any) =>
-    String(key || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "");
-
-  // Tax, discount and HSN columns stay subject to the document's visibility
-  // flags: a declared column set lists every column the account has configured,
-  // including ones that do not apply to this document (an intra-state invoice
-  // still declares IGST), and rendering those would print a column of zeros.
-  function isKindVisible(kind: string, root: any): boolean {
-    const visibility = root?.mapped?.visibility || {};
-    if (kind === "hsn") return Boolean(root?.derived?.showHsnColumn);
-    if (kind === "discount")
-      return Boolean(root?.invoice?.finalTotal?.discount);
-    if (kind === "igst") return Boolean(visibility.showIgst);
-    if (kind === "cgst" || kind === "sgst")
-      return Boolean(visibility.showCgstSgst);
-    if (kind === "photo") {
-      const items = Array.isArray(root?.invoice?.items)
-        ? root.invoice.items
-        : [];
-      return items.some((item: any) => resolveItemImages(item).length > 0);
-    }
-    return true;
-  }
-
-  function getItemColumns(root: any): Array<Record<string, any>> {
-    const rawColumns = root?.columns || root?.invoice?.columns;
-    const customLabels = root?.invoice?.customLabels || {};
-
-    // The declared set, minus the entries that never print, resolved to kinds.
-    const declared: Array<Record<string, any>> = [];
-    for (const col of Array.isArray(rawColumns) ? rawColumns : []) {
-      if (!col || typeof col !== "object") continue;
-      if (col.isHidden === true || col.private === true) continue;
-
-      const key = String(col.key || col.id || col.name || "").trim();
-      if (!key) continue;
-      const label = typeof col.label === "string" ? col.label.trim() : "";
-      // A business's own custom column (e.g. one it named "Model No.") has a
-      // random generated key, so it never matches by key. Falling back to the
-      // label catches that case and routes it through the "model" kind, which
-      // always renders the item's SKU rather than that column's stored value.
-      const kind =
-        COLUMN_KEY_KINDS[normalizeColumnKey(key)] ||
-        (COLUMN_KEY_KINDS[normalizeColumnKey(label)] === "model" ? "model" : undefined);
-
-      // An unrecognised key is a user-defined column, rendered from item data.
-      if (!kind && !label) continue;
-      declared.push({
-        kind: kind || "custom",
-        label,
-        key,
-        dataType: String(col.dataType || "").toLowerCase(),
-        fxReturnType: String(col.fxReturnType || "").toLowerCase(),
-      });
-    }
-
-    const columns: Array<Record<string, any>> = [];
-    const usedKinds = new Set<string>();
-    const declares = (kind: string) =>
-      declared.some((col) => col.kind === kind);
-
-    const add = (kind: string, extra: Record<string, any> = {}) => {
-      // Every kind but `custom` is a single column; payloads legitimately
-      // declare both `amount` and `total`, which are the same column here.
-      if (kind !== "custom" && usedKinds.has(kind)) return;
-      if (!isKindVisible(kind, root)) return;
-      usedKinds.add(kind);
-
-      const meta = COLUMN_KIND_META[kind] || COLUMN_KIND_META.custom;
-      const label =
-        extra.label ||
-        (meta.labelKey && customLabels[meta.labelKey]) ||
-        meta.label;
-      columns.push({
-        ...extra,
-        kind,
-        colClass: extra.colClass || meta.colClass,
-        label,
-      });
-    };
-
-    // The item name and its photo are one visual unit, so the photo is pinned
-    // beside the name rather than taking a slot from the declared order. It is
-    // the only column this template adds that the document does not declare —
-    // anything else invented here shows up as a duplicate of a declared column.
-    const addItemColumns = (label?: string) => {
-      if (usedKinds.has("name")) return;
-      add("name", label ? { label } : {});
-      add("photo");
-    };
-
-    add("sno");
-    if (!declares("name")) addItemColumns();
-
-    for (const col of declared) {
-      if (col.kind === "name") {
-        addItemColumns(col.label);
-      } else if (col.kind === "custom") {
-        add("custom", {
-          label: col.label,
-          key: col.key,
-          dataType: col.dataType,
-          fxReturnType: col.fxReturnType,
-        });
-      } else {
-        add(col.kind, col.label ? { label: col.label } : {});
-      }
-    }
-
-    // No column config at all: fall back to this template's own order so those
-    // documents keep rendering exactly as they did.
-    if (!declared.length) {
-      add("model");
-      add("hsn");
-      add("rate");
-      add("qty");
-      add("discount");
-      add("igst");
-      add("cgst");
-      add("sgst");
-      add("amount");
-    }
-
-    // A user-defined column the account configured but never actually filled
-    // in — no item on this document carries a value for its key under any of
-    // the three buckets `customColumnValue` checks — renders as a header over
-    // an empty strip. Built-in kinds are left alone: those are core invoice
-    // fields (rate, qty, tax…) where an all-zero column is still meaningful,
-    // just a `custom` column with nothing in it is dead weight.
-    const items = Array.isArray(root?.invoice?.items) ? root.invoice.items : [];
-    const visibleColumns = columns.filter(
-      (column) =>
-        column.kind !== "custom" ||
-        items.some(
-          (item: any) =>
-            customColumnValue(item, column, root?.invoice).text !== ""
-        )
-    );
-
-    assignColumnWidths(visibleColumns, root);
-    return visibleColumns;
-  }
-
   // ── Column widths ────────────────────────────────────────────────────────
   //
   // Widths are measured from the values this document actually prints, not
@@ -732,9 +579,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       .split(/\s+/)
       .reduce((longest, word) => Math.max(longest, word.length), 0);
 
-  // The text a given column prints for a given item, mirroring the row markup.
-  // Anything this returns short renders clipped, so it has to stay in step with
-  // the cells in template.hbs.
   // The line's tax-inclusive total: `amount` (already net of the line
   // discount) plus whatever tax the item carries. `taxAmount` wins when the
   // backend has already summed it. Otherwise only ONE regime applies per
@@ -777,129 +621,18 @@ export function registerFitkingTemplateHelpers(HB: any): void {
     );
   }
 
-  function columnCellText(
-    kind: string,
-    column: any,
-    item: any,
-    invoice: any,
-    visibility?: any
-  ): string {
-    switch (kind) {
-      case "model":
-        return String(item?.sku || "");
-      case "hsn":
-        return String(item?.hsn || "");
-      case "rate":
-        return formatCurrencyValue(item?.rate, invoice);
-      case "qty": {
-        const qty =
-          item?.quantity !== undefined && item?.quantity !== null
-            ? item.quantity
-            : item?.qty;
-        if (qty === undefined || qty === null) return "";
-        // The unit prints on its own line under the figure, so the column only
-        // has to fit whichever of the two is wider.
-        const unit = resolveUnit(item?.unit, item, invoice);
-        return String(qty).length >= String(unit || "").length
-          ? String(qty)
-          : String(unit);
-      }
-      case "discount":
-        return itemDiscountText(item, invoice);
-      case "igst":
-        return formatCurrencyValue(item?.igst, invoice);
-      case "cgst":
-        return formatCurrencyValue(item?.cgst, invoice);
-      case "sgst":
-        return formatCurrencyValue(item?.sgst, invoice);
-      case "amount":
-        return formatCurrencyValue(item?.amount, invoice);
-      case "total": {
-        const amount = extractNumericValue(item?.amount) ?? 0;
-        return formatCurrencyValue(
-          amount + lineItemTax(item, visibility),
-          invoice
-        );
-      }
-      case "custom":
-        return customColumnValue(item, column, invoice).text;
-      default:
-        return "";
-    }
-  }
-
-  function assignColumnWidths(
-    columns: Array<Record<string, any>>,
-    root: any
-  ): void {
-    const invoice = root?.invoice;
-    const items = Array.isArray(invoice?.items) ? invoice.items : [];
-    const visibility = root?.mapped?.visibility;
-
-    // Measured px per column, name excluded: it takes whatever is left.
-    let measuredTotal = 0;
-    for (const column of columns) {
-      if (column.kind === "name") continue;
-
-      const rule =
-        column.kind === "custom" && isNumericColumnType(column)
-          ? COLUMN_WIDTH_RULES.customNumeric
-          : COLUMN_WIDTH_RULES[column.kind] || COLUMN_WIDTH_RULES.custom;
-      let widest = rule.wraps
-        ? longestWordLength(column.label)
-        : String(column.label || "").length;
-
-      if (column.kind === "sno") {
-        widest = Math.max(widest, String(items.length).length);
-      } else if (column.kind !== "photo") {
-        for (const item of items) {
-          const text = columnCellText(
-            column.kind,
-            column,
-            item,
-            invoice,
-            visibility
-          );
-          widest = Math.max(
-            widest,
-            rule.wraps ? longestWordLength(text) : text.length
-          );
-        }
-      }
-
-      const px = Math.min(
-        rule.max,
-        Math.max(rule.min, widest * CHAR_PX + CELL_CHROME_PX)
-      );
-      column.widthPx = px;
-      measuredTotal += px;
-    }
-
-    let measuredPct = (measuredTotal / TABLE_PX) * 100;
-    // Too many columns to fit alongside a readable description: give them their
-    // share of what is left over instead of their measured width.
-    const scale =
-      measuredPct > 100 - MIN_NAME_PCT ? (100 - MIN_NAME_PCT) / measuredPct : 1;
-    measuredPct *= scale;
-
-    for (const column of columns) {
-      if (column.kind === "name") continue;
-      column.widthPct = Number(
-        ((column.widthPx / TABLE_PX) * 100 * scale).toFixed(3)
+  // The item's tax-inclusive total for the declared `total` column — see
+  // `lineItemTax` below for how the tax figure is derived.
+  HB.registerHelper(
+    "formatLineTotal",
+    function (item: any, invoice: any, visibility: any) {
+      const amount = extractNumericValue(item?.amount) ?? 0;
+      return formatCurrencyValue(
+        amount + lineItemTax(item, visibility),
+        invoice
       );
     }
-
-    const nameColumn = columns.find((column) => column.kind === "name");
-    if (nameColumn) {
-      nameColumn.widthPct = Number(
-        Math.max(MIN_NAME_PCT, 100 - measuredPct).toFixed(3)
-      );
-    }
-  }
-
-  HB.registerHelper("itemColumns", function (options: any) {
-    return getItemColumns(options?.data?.root);
-  });
+  );
 
   // The rendered cell for a user-defined column: the text plus whether it came
   // out numeric, which the markup uses to stop long figures wrapping mid-number.
@@ -953,104 +686,6 @@ export function registerFitkingTemplateHelpers(HB: any): void {
   }
 
   HB.registerHelper("customColumnCell", customColumnValue);
-
-  // Column count of the line-item table. The full-width description row spans
-  // the whole table, and a colspan larger than the real column count makes the
-  // browser invent the missing columns — they eat the width the auto-sized Item
-  // column should get and leave a dead strip at the right edge.
-  HB.registerHelper("itemColspan", function (options: any) {
-    return getItemColumns(options?.data?.root).length;
-  });
-
-  // The name header spans into the photo column via colspan, since photo
-  // never gets a <th> of its own — but isKindVisible drops photo entirely
-  // when no item has an image, so the colspan has to shrink to match or the
-  // header claims a column the body no longer has.
-  HB.registerHelper("hasPhotoColumn", function (options: any) {
-    return getItemColumns(options?.data?.root).some(
-      (col) => col.kind === "photo"
-    );
-  });
-
-  // Every heading the document names for itself. The account configures these
-  // in `invoice.customLabels` — a quotation's "Quotation From", a renamed
-  // "Remarks", a translated "Total" — so the string in the markup is only what
-  // prints when the payload carries no label for that key. Deciding wording
-  // from the document's own data instead (matching `invoiceTitle` against
-  // "Quotation", say) reads a field the user is free to type anything into, and
-  // silently falls back the moment they do.
-  //
-  // Named `docLabel`, not `label`: line items, terms and custom fields all
-  // carry their own `label` property, and a helper of that name would shadow
-  // every one of them.
-  // Takes one or more candidate keys followed by the fallback:
-  // `{{docLabel "notes" "Remarks"}}`, or where accounts are known to name the
-  // same section differently, `{{docLabel "additionalInfo" "footer" "…"}}` —
-  // the first key the payload carries wins. Keys are matched with punctuation
-  // and case stripped, so `additionalInfo`, `additional_info` and
-  // `Additional Info` are all the same key.
-  function documentLabel(...args: any[]) {
-    const options = args[args.length - 1];
-    const positional = args
-      .slice(0, -1)
-      .filter((arg) => typeof arg === "string");
-    const fallback =
-      positional.length > 1 ? positional[positional.length - 1] : "";
-    const keys = positional.length > 1 ? positional.slice(0, -1) : positional;
-
-    const customLabels = options?.data?.root?.invoice?.customLabels;
-    if (customLabels) {
-      const available = new Map<string, string>();
-      for (const [ckey, cval] of Object.entries(customLabels)) {
-        if (typeof cval === "string" && cval.trim()) {
-          available.set(normalizeColumnKey(ckey), cval.trim());
-        }
-      }
-      for (const key of keys) {
-        const match = available.get(normalizeColumnKey(key));
-        if (match) return match;
-      }
-    }
-
-    return fallback;
-  }
-
-  HB.registerHelper("docLabel", documentLabel);
-
-  // The signature image the document actually carries, or "" when it carries
-  // none — the signature box is gated on this, never on
-  // `customLabels.signature`, which ships as the default "Authorised
-  // Signatory" even on documents with no signature.
-  //
-  // `signature` is the contract's own field; the `billedBy`/`signatureImage`
-  // spellings are kept from the original chain as engine-specific fallbacks
-  // the platform reference does not document.
-  // Fitking prints the rate beside every tax row ("CGST (9%)", "IGST (18%)").
-  // The shared Subtotal widget only does that under the per-rate tax view, so
-  // hand it a copy of the invoice with that view forced on. The copy feeds the
-  // totals block alone; the document itself is untouched.
-  HB.registerHelper("withTaxRates", function (invoice: any) {
-    if (!invoice || typeof invoice !== "object") return invoice;
-    const advanceOptions = invoice.advanceOptions || {};
-    const view = advanceOptions.taxSummaryView;
-    if (view === "BOTH" || view === "INVOICE_SUMMARY") return invoice;
-
-    return {
-      ...invoice,
-      advanceOptions: { ...advanceOptions, taxSummaryView: "INVOICE_SUMMARY" },
-    };
-  });
-
-  HB.registerHelper("signatureImage", function (invoice: any) {
-    const candidate = [
-      invoice?.signature,
-      invoice?.billedBy?.signature,
-      invoice?.signatureImage,
-      invoice?.billedBy?.signatureImage,
-    ].find((src: any) => typeof src === "string" && src.trim());
-
-    return candidate ? String(candidate).trim() : "";
-  });
 
   function isDatabaseId(str: string): boolean {
     if (!str) return false;
@@ -1120,11 +755,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       item?.custom?.unit,
     ];
 
-    for (const cand of candidates) {
-      if (cand && typeof cand === "string" && !isDatabaseId(cand)) {
-        return cand.trim();
-      }
-    }
+    const named = candidates.find(
+      (cand) => cand && typeof cand === "string" && !isDatabaseId(cand)
+    );
+    if (named) return named.trim();
 
     let rawStr = "";
     if (typeof unitRaw === "string") {
@@ -1158,10 +792,10 @@ export function registerFitkingTemplateHelpers(HB: any): void {
         invoice.advanceOptions?.units,
       ];
 
-      for (const src of sources) {
-        const found = lookupUnitInObjectOrArray(unitIdToLookup, src);
-        if (found) return found;
-      }
+      const found = sources
+        .map((src) => lookupUnitInObjectOrArray(unitIdToLookup, src))
+        .find(Boolean);
+      if (found) return found;
     }
 
     if (isDatabaseId(unitIdToLookup)) {
@@ -1170,6 +804,373 @@ export function registerFitkingTemplateHelpers(HB: any): void {
 
     return rawStr;
   }
+
+  // The text a given column prints for a given item, mirroring the row markup.
+  // Anything this returns short renders clipped, so it has to stay in step with
+  // the cells in template.hbs.
+  function columnCellText(
+    kind: string,
+    column: any,
+    item: any,
+    invoice: any,
+    visibility?: any
+  ): string {
+    switch (kind) {
+      case "model":
+        return String(item?.sku || "");
+      case "hsn":
+        return String(item?.hsn || "");
+      case "rate":
+        return formatCurrencyValue(item?.rate, invoice);
+      case "qty": {
+        const qty =
+          item?.quantity !== undefined && item?.quantity !== null
+            ? item.quantity
+            : item?.qty;
+        if (qty === undefined || qty === null) return "";
+        // The unit prints on its own line under the figure, so the column only
+        // has to fit whichever of the two is wider.
+        const unit = resolveUnit(item?.unit, item, invoice);
+        return String(qty).length >= String(unit || "").length
+          ? String(qty)
+          : String(unit);
+      }
+      case "discount":
+        return itemDiscountText(item, invoice);
+      case "igst":
+        return formatCurrencyValue(item?.igst, invoice);
+      case "cgst":
+        return formatCurrencyValue(item?.cgst, invoice);
+      case "sgst":
+        return formatCurrencyValue(item?.sgst, invoice);
+      case "amount":
+        return formatCurrencyValue(item?.amount, invoice);
+      case "total": {
+        const amount = extractNumericValue(item?.amount) ?? 0;
+        return formatCurrencyValue(
+          amount + lineItemTax(item, visibility),
+          invoice
+        );
+      }
+      case "custom":
+        return customColumnValue(item, column, invoice).text;
+      default:
+        return "";
+    }
+  }
+
+  function assignColumnWidths(
+    columns: Array<Record<string, any>>,
+    root: any
+  ): void {
+    const invoice = root?.invoice;
+    const items = Array.isArray(invoice?.items) ? invoice.items : [];
+    const visibility = root?.mapped?.visibility;
+
+    // Measured px per column, name excluded: it takes whatever is left.
+    let measuredTotal = 0;
+    const measured = columns.filter((column) => column.kind !== "name");
+    measured.forEach((column) => {
+      const rule =
+        column.kind === "custom" && isNumericColumnType(column)
+          ? COLUMN_WIDTH_RULES.customNumeric
+          : COLUMN_WIDTH_RULES[column.kind] || COLUMN_WIDTH_RULES.custom;
+      let widest = rule.wraps
+        ? longestWordLength(column.label)
+        : String(column.label || "").length;
+
+      if (column.kind === "sno") {
+        widest = Math.max(widest, String(items.length).length);
+      } else if (column.kind !== "photo") {
+        widest = items.reduce((max: number, item: any) => {
+          const text = columnCellText(
+            column.kind,
+            column,
+            item,
+            invoice,
+            visibility
+          );
+          return Math.max(
+            max,
+            rule.wraps ? longestWordLength(text) : text.length
+          );
+        }, widest);
+      }
+
+      const px = Math.min(
+        rule.max,
+        Math.max(rule.min, widest * CHAR_PX + CELL_CHROME_PX)
+      );
+      Object.assign(column, { widthPx: px });
+      measuredTotal += px;
+    });
+
+    let measuredPct = (measuredTotal / TABLE_PX) * 100;
+    // Too many columns to fit alongside a readable description: give them their
+    // share of what is left over instead of their measured width.
+    const scale =
+      measuredPct > 100 - MIN_NAME_PCT ? (100 - MIN_NAME_PCT) / measuredPct : 1;
+    measuredPct *= scale;
+
+    measured.forEach((column) => {
+      Object.assign(column, {
+        widthPct: Number(
+          ((column.widthPx / TABLE_PX) * 100 * scale).toFixed(3)
+        ),
+      });
+    });
+
+    const nameColumn = columns.find((column) => column.kind === "name");
+    if (nameColumn) {
+      nameColumn.widthPct = Number(
+        Math.max(MIN_NAME_PCT, 100 - measuredPct).toFixed(3)
+      );
+    }
+  }
+
+  // Tax, discount and HSN columns stay subject to the document's visibility
+  // flags: a declared column set lists every column the account has configured,
+  // including ones that do not apply to this document (an intra-state invoice
+  // still declares IGST), and rendering those would print a column of zeros.
+  function isKindVisible(kind: string, root: any): boolean {
+    const visibility = root?.mapped?.visibility || {};
+    if (kind === "hsn") return Boolean(root?.derived?.showHsnColumn);
+    if (kind === "discount")
+      return Boolean(root?.invoice?.finalTotal?.discount);
+    if (kind === "igst") return Boolean(visibility.showIgst);
+    if (kind === "cgst" || kind === "sgst")
+      return Boolean(visibility.showCgstSgst);
+    if (kind === "photo") {
+      const items = Array.isArray(root?.invoice?.items)
+        ? root.invoice.items
+        : [];
+      return items.some((item: any) => resolveItemImages(item).length > 0);
+    }
+    return true;
+  }
+
+  function getItemColumns(root: any): Array<Record<string, any>> {
+    const rawColumns = root?.columns || root?.invoice?.columns;
+    const customLabels = root?.invoice?.customLabels || {};
+
+    // The declared set, minus the entries that never print, resolved to kinds.
+    const declared: Array<Record<string, any>> = [];
+    (Array.isArray(rawColumns) ? rawColumns : []).forEach((col: any) => {
+      if (!col || typeof col !== "object") return;
+      if (col.isHidden === true || col.private === true) return;
+
+      const key = String(col.key || col.id || col.name || "").trim();
+      if (!key) return;
+      const label = typeof col.label === "string" ? col.label.trim() : "";
+      // A business's own custom column (e.g. one it named "Model No.") has a
+      // random generated key, so it never matches by key. Falling back to the
+      // label catches that case and routes it through the "model" kind, which
+      // always renders the item's SKU rather than that column's stored value.
+      const kind =
+        COLUMN_KEY_KINDS[normalizeColumnKey(key)] ||
+        (COLUMN_KEY_KINDS[normalizeColumnKey(label)] === "model"
+          ? "model"
+          : undefined);
+
+      // An unrecognised key is a user-defined column, rendered from item data.
+      if (!kind && !label) return;
+      declared.push({
+        kind: kind || "custom",
+        label,
+        key,
+        dataType: String(col.dataType || "").toLowerCase(),
+        fxReturnType: String(col.fxReturnType || "").toLowerCase(),
+      });
+    });
+
+    const columns: Array<Record<string, any>> = [];
+    const usedKinds = new Set<string>();
+    const declares = (kind: string) =>
+      declared.some((col) => col.kind === kind);
+
+    const add = (kind: string, extra: Record<string, any> = {}) => {
+      // Every kind but `custom` is a single column; payloads legitimately
+      // declare both `amount` and `total`, which are the same column here.
+      if (kind !== "custom" && usedKinds.has(kind)) return;
+      if (!isKindVisible(kind, root)) return;
+      usedKinds.add(kind);
+
+      const meta = COLUMN_KIND_META[kind] || COLUMN_KIND_META.custom;
+      const label =
+        extra.label ||
+        (meta.labelKey && customLabels[meta.labelKey]) ||
+        meta.label;
+      columns.push({
+        ...extra,
+        kind,
+        colClass: extra.colClass || meta.colClass,
+        label,
+      });
+    };
+
+    // The item name and its photo are one visual unit, so the photo is pinned
+    // beside the name rather than taking a slot from the declared order. It is
+    // the only column this template adds that the document does not declare —
+    // anything else invented here shows up as a duplicate of a declared column.
+    const addItemColumns = (label?: string) => {
+      if (usedKinds.has("name")) return;
+      add("name", label ? { label } : {});
+      add("photo");
+    };
+
+    add("sno");
+    if (!declares("name")) addItemColumns();
+
+    declared.forEach((col) => {
+      if (col.kind === "name") {
+        addItemColumns(col.label);
+      } else if (col.kind === "custom") {
+        add("custom", {
+          label: col.label,
+          key: col.key,
+          dataType: col.dataType,
+          fxReturnType: col.fxReturnType,
+        });
+      } else {
+        add(col.kind, col.label ? { label: col.label } : {});
+      }
+    });
+
+    // No column config at all: fall back to this template's own order so those
+    // documents keep rendering exactly as they did.
+    if (!declared.length) {
+      add("model");
+      add("hsn");
+      add("rate");
+      add("qty");
+      add("discount");
+      add("igst");
+      add("cgst");
+      add("sgst");
+      add("amount");
+    }
+
+    // A user-defined column the account configured but never actually filled
+    // in — no item on this document carries a value for its key under any of
+    // the three buckets `customColumnValue` checks — renders as a header over
+    // an empty strip. Built-in kinds are left alone: those are core invoice
+    // fields (rate, qty, tax…) where an all-zero column is still meaningful,
+    // just a `custom` column with nothing in it is dead weight.
+    const items = Array.isArray(root?.invoice?.items) ? root.invoice.items : [];
+    const visibleColumns = columns.filter(
+      (column) =>
+        column.kind !== "custom" ||
+        items.some(
+          (item: any) =>
+            customColumnValue(item, column, root?.invoice).text !== ""
+        )
+    );
+
+    assignColumnWidths(visibleColumns, root);
+    return visibleColumns;
+  }
+
+  HB.registerHelper("itemColumns", function (options: any) {
+    return getItemColumns(options?.data?.root);
+  });
+
+  // Column count of the line-item table. The full-width description row spans
+  // the whole table, and a colspan larger than the real column count makes the
+  // browser invent the missing columns — they eat the width the auto-sized Item
+  // column should get and leave a dead strip at the right edge.
+  HB.registerHelper("itemColspan", function (options: any) {
+    return getItemColumns(options?.data?.root).length;
+  });
+
+  // The name header spans into the photo column via colspan, since photo
+  // never gets a <th> of its own — but isKindVisible drops photo entirely
+  // when no item has an image, so the colspan has to shrink to match or the
+  // header claims a column the body no longer has.
+  HB.registerHelper("hasPhotoColumn", function (options: any) {
+    return getItemColumns(options?.data?.root).some(
+      (col) => col.kind === "photo"
+    );
+  });
+
+  // Every heading the document names for itself. The account configures these
+  // in `invoice.customLabels` — a quotation's "Quotation From", a renamed
+  // "Remarks", a translated "Total" — so the string in the markup is only what
+  // prints when the payload carries no label for that key. Deciding wording
+  // from the document's own data instead (matching `invoiceTitle` against
+  // "Quotation", say) reads a field the user is free to type anything into, and
+  // silently falls back the moment they do.
+  //
+  // Named `docLabel`, not `label`: line items, terms and custom fields all
+  // carry their own `label` property, and a helper of that name would shadow
+  // every one of them.
+  // Takes one or more candidate keys followed by the fallback:
+  // `{{docLabel "notes" "Remarks"}}`, or where accounts are known to name the
+  // same section differently, `{{docLabel "additionalInfo" "footer" "…"}}` —
+  // the first key the payload carries wins. Keys are matched with punctuation
+  // and case stripped, so `additionalInfo`, `additional_info` and
+  // `Additional Info` are all the same key.
+  function documentLabel(...args: any[]) {
+    const options = args[args.length - 1];
+    const positional = args
+      .slice(0, -1)
+      .filter((arg) => typeof arg === "string");
+    const fallback =
+      positional.length > 1 ? positional[positional.length - 1] : "";
+    const keys = positional.length > 1 ? positional.slice(0, -1) : positional;
+
+    const customLabels = options?.data?.root?.invoice?.customLabels;
+    if (customLabels) {
+      const available = new Map<string, string>();
+      Object.entries(customLabels).forEach(([ckey, cval]) => {
+        if (typeof cval === "string" && cval.trim()) {
+          available.set(normalizeColumnKey(ckey), cval.trim());
+        }
+      });
+      const match = keys
+        .map((key) => available.get(normalizeColumnKey(key)))
+        .find(Boolean);
+      if (match) return match;
+    }
+
+    return fallback;
+  }
+
+  HB.registerHelper("docLabel", documentLabel);
+
+  // The signature image the document actually carries, or "" when it carries
+  // none — the signature box is gated on this, never on
+  // `customLabels.signature`, which ships as the default "Authorised
+  // Signatory" even on documents with no signature.
+  //
+  // `signature` is the contract's own field; the `billedBy`/`signatureImage`
+  // spellings are kept from the original chain as engine-specific fallbacks
+  // the platform reference does not document.
+  // Fitking prints the rate beside every tax row ("CGST (9%)", "IGST (18%)").
+  // The shared Subtotal widget only does that under the per-rate tax view, so
+  // hand it a copy of the invoice with that view forced on. The copy feeds the
+  // totals block alone; the document itself is untouched.
+  HB.registerHelper("withTaxRates", function (invoice: any) {
+    if (!invoice || typeof invoice !== "object") return invoice;
+    const advanceOptions = invoice.advanceOptions || {};
+    const view = advanceOptions.taxSummaryView;
+    if (view === "BOTH" || view === "INVOICE_SUMMARY") return invoice;
+
+    return {
+      ...invoice,
+      advanceOptions: { ...advanceOptions, taxSummaryView: "INVOICE_SUMMARY" },
+    };
+  });
+
+  HB.registerHelper("signatureImage", function (invoice: any) {
+    const candidate = [
+      invoice?.signature,
+      invoice?.billedBy?.signature,
+      invoice?.signatureImage,
+      invoice?.billedBy?.signatureImage,
+    ].find((src: any) => typeof src === "string" && src.trim());
+
+    return candidate ? String(candidate).trim() : "";
+  });
 
   HB.registerHelper(
     "formatQtyCell",
@@ -1202,4 +1203,481 @@ export function registerFitkingTemplateHelpers(HB: any): void {
       return String(qty);
     }
   );
+
+  /* ── Payload switches and compliance blocks ─────────────────────────────── */
+
+  const asRecord = (val: any): Record<string, any> =>
+    val && typeof val === "object" && !Array.isArray(val) ? val : {};
+  const asList = (val: any): any[] => (Array.isArray(val) ? val : []);
+
+  // Opt-out switches: only an explicit false (or "false") hides.
+  const isOffFlag = (val: any): boolean =>
+    val === false ||
+    (typeof val === "string" && val.trim().toLowerCase() === "false");
+
+  // A tri-state switch: true / false when the payload says so, else undefined.
+  const optionalFlag = (val: any): boolean | undefined => {
+    if (typeof val === "boolean") return val;
+    const raw = stringifyFieldValue(val).toLowerCase();
+    if (["true", "1", "yes", "on"].includes(raw)) return true;
+    if (["false", "0", "no", "off"].includes(raw)) return false;
+    return undefined;
+  };
+
+  const rootOf = (options: any) => options?.data?.root ?? {};
+  const ownerConfiguration = (invoice: any) =>
+    asRecord(asRecord(asRecord(invoice).owner).configuration);
+  const businessFieldVisibility = (invoice: any) =>
+    asRecord(
+      asRecord(ownerConfiguration(invoice).experimental).fieldVisibility
+    );
+
+  // `{{#unless (isOff invoice.billedTo.phoneShowInInvoice)}}`
+  HB.registerHelper("isOff", (val: any) => isOffFlag(val));
+
+  const isIndianParty = (party: any) =>
+    ["IN", "INDIA"].includes(
+      stringifyFieldValue(asRecord(party).country).toUpperCase()
+    );
+
+  // GSTIN / PAN hide when the business (owner.configuration.experimental
+  // .fieldVisibility.<key>.showInDocument) or the party's own map turns them off.
+  const fieldShown = (invoice: any, party: any, key: string) =>
+    !isOffFlag(
+      asRecord(businessFieldVisibility(invoice)[key]).showInDocument
+    ) && !isOffFlag(asRecord(party.fieldVisibility)[key]);
+
+  // VAT / TRN / TIN / SST / Tax ID print only where the document carries them:
+  // any switch that hides one (`<key>ShowInInvoice`, `show<Key>`, `hide<Key>`,
+  // the party's or the business's fieldVisibility) hides it; an explicit "on"
+  // shows it; otherwise it shows unless this is an Indian GST document, whose
+  // form has GSTIN and PAN only.
+  const taxIdShown = (invoice: any, party: any, aliases: string[]) => {
+    const names = aliases.map((alias) => alias.toLowerCase());
+    const fromMap = (map: Record<string, any>) =>
+      Object.keys(map)
+        .filter((key) => names.includes(key.toLowerCase()))
+        .map((key) => {
+          const value = map[key];
+          const record = asRecord(value);
+          return [
+            value,
+            record.showInDocument,
+            record.showInInvoice,
+            record.visible,
+          ]
+            .map(optionalFlag)
+            .find((flag) => flag !== undefined);
+        });
+    const capital = (alias: string) =>
+      alias.charAt(0).toUpperCase() + alias.slice(1);
+    const switches = [
+      ...aliases.flatMap((alias) =>
+        [
+          party[`${alias}ShowInInvoice`],
+          party[`show${capital(alias)}InInvoice`],
+          party[`show${capital(alias)}`],
+        ].map(optionalFlag)
+      ),
+      ...fromMap(asRecord(party.fieldVisibility)),
+      ...fromMap(businessFieldVisibility(invoice)),
+    ].filter((flag): flag is boolean => flag !== undefined);
+    const hidden = aliases.some(
+      (alias) => optionalFlag(party[`hide${capital(alias)}`]) === true
+    );
+    if (hidden || switches.includes(false)) return false;
+    if (switches.includes(true)) return true;
+    return (
+      stringifyFieldValue(invoice.taxType).toUpperCase() !== "INDIA" ||
+      !isIndianParty(party)
+    );
+  };
+
+  // A party's tax numbers, in the order refrens.com prints them. GSTIN and PAN
+  // are Indian numbers, so a party abroad prints neither; the other
+  // geographies' numbers never print for a party in India.
+  HB.registerHelper("partyTaxIds", function (party: any, options: any) {
+    const p = asRecord(party);
+    const invoice = asRecord(rootOf(options).invoice);
+    const label = (...args: string[]) => documentLabel(...args, options);
+    const rows: Array<{ label: string; value: string }> = [];
+    const add = (labelText: string, value: any) => {
+      const text = stringifyFieldValue(value);
+      if (text) rows.push({ label: labelText, value: text });
+    };
+
+    const domestic = isIndianParty(p) || !stringifyFieldValue(p.country);
+    if (domestic && fieldShown(invoice, p, "gst")) {
+      add(label("gstin", "gstNumber", "GSTIN"), p.gstin);
+    }
+    if (domestic && fieldShown(invoice, p, "pan")) {
+      add(
+        label("pan", "panNumber", "PAN"),
+        stringifyFieldValue(p.panNumber) || p.pan
+      );
+    }
+    if (!isIndianParty(p)) {
+      const vatFallback = stringifyFieldValue(p.vatLabel) || "VAT Number";
+      [
+        {
+          key: "vatNumber",
+          aliases: ["vat", "vatNumber"],
+          text: label("vat", "vatNumber", vatFallback),
+        },
+        {
+          key: "trnNumber",
+          aliases: ["trn", "trnNumber"],
+          text: label("trn", "trnNumber", "TRN"),
+        },
+        {
+          key: "tinNumber",
+          aliases: ["tin", "tinNumber"],
+          text: label("tin", "tinNumber", "TIN"),
+        },
+        {
+          key: "sstNumber",
+          aliases: ["sst", "sstNumber"],
+          text: label("sst", "sstNumber", "SST"),
+        },
+        {
+          key: "taxId",
+          aliases: ["taxId"],
+          text: label("taxId", "Tax ID"),
+        },
+      ].forEach(({ key, aliases, text }) => {
+        if (stringifyFieldValue(p[key]) && taxIdShown(invoice, p, aliases)) {
+          add(text, p[key]);
+        }
+      });
+    }
+    return rows;
+  });
+
+  // The client's contact person: the name, plus their email and phone when the
+  // contact asks for them (contactPerson.displayFields). The name is skipped
+  // when one of the party's own fields already carries it.
+  HB.registerHelper("contactPersonFields", function (party: any, options: any) {
+    const p = asRecord(party);
+    const person = asRecord(p.contactPerson);
+    const label = (...args: string[]) => documentLabel(...args, options);
+    const name = stringifyFieldValue(person.name);
+    const shows = (field: string) =>
+      asList(person.displayFields).map(stringifyFieldValue).includes(field);
+    const ownValues = [
+      ...asList(p.customFields),
+      ...asList(p.additionalIds),
+      ...asList(p.customHeaders),
+    ].map((field) => stringifyFieldValue(asRecord(field).value).toLowerCase());
+
+    const rows: Array<{ label: string; value: string; isPhone?: boolean }> = [];
+    if (name && !ownValues.includes(name.toLowerCase())) {
+      rows.push({
+        label: label("contactPerson", "responsiblePerson", "Contact Person"),
+        value: name,
+      });
+    }
+    if (shows("email") && stringifyFieldValue(person.email)) {
+      rows.push({
+        label: label("contactPersonEmail", "Contact Email"),
+        value: stringifyFieldValue(person.email),
+      });
+    }
+    if (shows("phone") && stringifyFieldValue(person.phone)) {
+      rows.push({
+        label: label("contactPersonPhone", "Contact Phone"),
+        value: stringifyFieldValue(person.phone),
+        isPhone: true,
+      });
+    }
+    return rows;
+  });
+
+  // The business's e-invoice / e-way bill settings, the document's own
+  // (einvoiceConfig / ewayConfig) over the account's.
+  const complianceSettings = (invoice: any) => {
+    const configuration = ownerConfiguration(invoice);
+    return {
+      einvoice: {
+        ...asRecord(configuration.einvoice),
+        ...asRecord(invoice.einvoiceConfig),
+      },
+      eway: {
+        ...asRecord(configuration.eway),
+        ...asRecord(invoice.ewayConfig),
+      },
+    };
+  };
+
+  // The IRN itself, unless the business's e-invoice settings hide it.
+  HB.registerHelper("irnNumber", function (options: any) {
+    const invoice = asRecord(rootOf(options).invoice);
+    const { einvoice } = complianceSettings(invoice);
+    if (isOffFlag(einvoice.irnNumber)) return "";
+    return stringifyFieldValue(asRecord(invoice.irn).Irn);
+  });
+
+  // The e-invoice acknowledgement, IRN cancellation and e-way bill rows for the
+  // details table. Each row prints only with a value and unless the business's
+  // settings hide it; a cancelled IRN drops its acknowledgement.
+  HB.registerHelper("complianceRows", function (options: any) {
+    const root = rootOf(options);
+    const invoice = asRecord(root.invoice);
+    const irn = asRecord(invoice.irn);
+    const { einvoice, eway } = complianceSettings(invoice);
+    const isCancelled =
+      asRecord(asRecord(root.mapped).irn).isCancelled === true;
+    const label = (...args: string[]) => documentLabel(...args, options);
+    const rows = [
+      {
+        label: label("irnAcknowledgementNumber", "ackNo", "Ack No"),
+        value:
+          isOffFlag(einvoice.irnAcknowledgementNumber) || isCancelled
+            ? ""
+            : stringifyFieldValue(irn.AckNo),
+      },
+      {
+        label: label(
+          "irnAckDate",
+          "irnAcknowledgementDate",
+          "ackDate",
+          "IRN Ack Date"
+        ),
+        value:
+          isOffFlag(einvoice.irnAcknowledgementDate) || isCancelled
+            ? ""
+            : stringifyFieldValue(irn.AckDt),
+        isUtcDate: true,
+      },
+      {
+        label: label(
+          "irnCancelled",
+          "irnCancelledDate",
+          "cancelDate",
+          "IRN Cancelled"
+        ),
+        value: isOffFlag(einvoice.irnCancelledDate)
+          ? ""
+          : stringifyFieldValue(irn.CancelDate),
+        isDate: true,
+      },
+      {
+        label: label("ewayBillNumber", "Eway Bill"),
+        value: isOffFlag(eway.billNumber) ? "" : stringifyFieldValue(irn.EwbNo),
+      },
+      {
+        label: label("ewayBillDate", "E-Way Bill Date"),
+        value: isOffFlag(eway.billDate) ? "" : stringifyFieldValue(irn.EwbDt),
+        isUtcDate: true,
+      },
+      {
+        label: label("validTillDate", "ewayValidTill", "Valid Till"),
+        value: isOffFlag(eway.billValidTillDate)
+          ? ""
+          : stringifyFieldValue(irn.EwbValidTill),
+        isUtcDate: true,
+      },
+    ];
+    return rows.filter((row) => row.value);
+  });
+
+  // A credit / debit note's linked invoices, by number. A bare id prints nothing.
+  HB.registerHelper("linkedDocumentNumbers", function (invoice: any) {
+    const inv = asRecord(invoice);
+    return [...asList(inv.linkedInvoices), ...asList(inv.linkedDocuments)]
+      .map((linked) => stringifyFieldValue(asRecord(linked).invoiceNumber))
+      .filter(Boolean)
+      .join(", ");
+  });
+
+  // The document's attachments as { url, name }; a file's name is the last
+  // segment of its URL, without the query string.
+  HB.registerHelper("attachmentFiles", function (invoice: any) {
+    return asList(asRecord(invoice).attachments)
+      .map((entry) => {
+        const record = asRecord(entry);
+        return stringifyFieldValue(
+          typeof entry === "string" ? entry : record.url || record.link
+        );
+      })
+      .filter(Boolean)
+      .map((url) => {
+        const path = url.split(/[?#]/)[0];
+        let name = path.substring(path.lastIndexOf("/") + 1);
+        try {
+          name = decodeURIComponent(name);
+        } catch {
+          /* keep it encoded */
+        }
+        return { url, name: name || url };
+      });
+  });
+
+  // Batch Summary — Refrens' "Show Batch Summary in Invoice"
+  // (advanceOptions.showStockSummary). Rows are the document's own
+  // batchSummary (sent only when the setting is on), else, when the setting is
+  // explicitly on, the items' batches. An explicit off hides it. Columns follow
+  // the business's batch summary config (order, labels, hidden ones left out);
+  // without one, the standard set less any column no row fills.
+  const BATCH_COLUMNS = [
+    {
+      key: "itemName",
+      label: "Item Name",
+      showSku: true,
+      showBatchCode: false,
+    },
+    {
+      key: "batchName",
+      label: "Batch Name",
+      showSku: false,
+      showBatchCode: true,
+    },
+    { key: "quantity", label: "Qty", showSku: false, showBatchCode: false },
+    {
+      key: "warehouse",
+      label: "Warehouse",
+      showSku: false,
+      showBatchCode: false,
+    },
+    {
+      key: "manufacturerName",
+      label: "Mfg Name",
+      showSku: false,
+      showBatchCode: false,
+    },
+    {
+      key: "manufacturingDate",
+      label: "Mfg Date",
+      showSku: false,
+      showBatchCode: false,
+    },
+    {
+      key: "expiryDate",
+      label: "Expiry Date",
+      showSku: false,
+      showBatchCode: false,
+    },
+  ];
+
+  const pickFirstText = (...values: any[]) =>
+    values.map(stringifyFieldValue).find(Boolean) || "";
+
+  const withCode = (name: string, code: string, show: boolean) => {
+    const extra = show ? code : "";
+    if (name && extra) return `${name} (${extra})`;
+    return name || extra;
+  };
+
+  const batchValue = (
+    entry: Record<string, any>,
+    column: (typeof BATCH_COLUMNS)[number]
+  ): string => {
+    const batch = asRecord(entry.batch);
+    if (column.key === "itemName") {
+      return withCode(
+        pickFirstText(entry.itemName),
+        pickFirstText(entry.sku, batch.sku),
+        column.showSku
+      );
+    }
+    if (column.key === "batchName") {
+      return withCode(
+        pickFirstText(
+          entry.batchName,
+          batch.batchName,
+          batch.name,
+          typeof entry.batch === "string" ? entry.batch : ""
+        ),
+        pickFirstText(entry.batchCode, batch.batchCode),
+        column.showBatchCode
+      );
+    }
+    if (column.key === "warehouse") {
+      return pickFirstText(
+        entry.warehouseName,
+        batch.warehouseName,
+        typeof entry.warehouse === "object" ? "" : entry.warehouse
+      );
+    }
+    return pickFirstText(
+      entry[column.key],
+      batch[column.key],
+      asRecord(entry.custom)[column.key],
+      asRecord(batch.custom)[column.key]
+    );
+  };
+
+  HB.registerHelper("batchSummary", function (options: any) {
+    const root = rootOf(options);
+    const invoice = asRecord(root.invoice);
+    const explicit = [
+      asRecord(root.advanceOptions).showStockSummary,
+      asRecord(invoice.advanceOptions).showStockSummary,
+      invoice.showStockSummary,
+    ]
+      .map(optionalFlag)
+      .find((flag) => flag !== undefined);
+    if (explicit === false) return null;
+
+    let entries = asList(invoice.batchSummary).map(asRecord);
+    if (!entries.length && explicit === true) {
+      entries = asList(invoice.items)
+        .map(asRecord)
+        .flatMap((item) =>
+          asList(item.batchSummary)
+            .map(asRecord)
+            .map((batch) => ({
+              ...batch,
+              itemName: pickFirstText(batch.itemName, item.name),
+              sku: pickFirstText(batch.sku, item.sku),
+            }))
+        );
+    }
+    if (!entries.length) return null;
+
+    const configured = asList(
+      asList(asRecord(invoice.stockSummaryConfig).batchSummaryColumns).length
+        ? asRecord(invoice.stockSummaryConfig).batchSummaryColumns
+        : invoice.defaultBatchColumns
+    )
+      .map(asRecord)
+      .filter((column) => column.isHidden !== true)
+      .map((column) => ({
+        key: pickFirstText(column.key, column.name),
+        label: pickFirstText(column.label, column.name, column.key),
+        showSku: column.showSku === true,
+        showBatchCode: column.showBatchCode === true,
+      }))
+      .filter((column) => column.key && column.label);
+    const source = configured.length ? configured : BATCH_COLUMNS;
+
+    const isDateKey = (key: string) => /date$/i.test(key);
+    const isQtyKey = (key: string) => /^(?:quantity|qty)$/i.test(key);
+    const cells = entries.map((entry) =>
+      source.map((column) => ({
+        value: batchValue(entry, column),
+        isDate: isDateKey(column.key),
+        isNum: isQtyKey(column.key),
+      }))
+    );
+    // The business's own columns all print, filled or not (as Refrens does).
+    const kept = source
+      .map((column, index) => ({ ...column, index }))
+      .filter(
+        (column) =>
+          configured.length || cells.some((row) => row[column.index].value)
+      );
+    if (!kept.length) return null;
+
+    return {
+      columns: kept.map((column) => ({
+        label: column.label,
+        isNum: isQtyKey(column.key),
+      })),
+      rows: cells.map((row) => kept.map((column) => row[column.index])),
+    };
+  });
 }
+
+export default registerFitkingTemplateHelpers;
+
+/* eslint-enable @typescript-eslint/no-explicit-any */
