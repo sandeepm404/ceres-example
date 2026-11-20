@@ -1031,7 +1031,7 @@ describe("QR rendering", () => {
       });
 
       expect(srcOf(html, "fk-qr-img")).toMatch(/^data:image\/gif;base64,/);
-      expect(html).toContain("Document QR");
+      expect(html).toContain("e-Invoice QR");
     });
 
     it("passes a hosted QR image through untouched", () => {
@@ -1053,6 +1053,47 @@ describe("QR rendering", () => {
       const html = render(basePayload());
 
       expect(html).not.toContain("Document QR");
+    });
+
+    describe("label names the code that printed", () => {
+      const qrLabel = (payload: Record<string, unknown>) =>
+        render({ ...basePayload(), ...payload }).match(
+          /<p class="fk-doc-qr-label">([^<]*)<\/p>/
+        )?.[1];
+      const irnQr = "https://cdn.example.com/irn.png";
+
+      it("e-invoice QR while the IRN is active", () => {
+        expect(qrLabel({ irn: { qrCode: irnQr }, documentQr: "doc" })).toBe(
+          "e-Invoice QR"
+        );
+      });
+
+      it("document QR once the IRN is cancelled", () => {
+        expect(
+          qrLabel({
+            irn: { qrCode: irnQr, CancelDate: "2025-08-01" },
+            documentQr: "https://cdn.example.com/doc.png",
+          })
+        ).toBe("Document QR");
+      });
+
+      it("ZATCA and LHDN QRs by name", () => {
+        expect(qrLabel({ zatcaQrCode: "https://cdn.example.com/z.png" })).toBe(
+          "ZATCA QR"
+        );
+        expect(qrLabel({ lhdnQrCode: "https://cdn.example.com/l.png" })).toBe(
+          "LHDN QR"
+        );
+      });
+
+      it("the business's own label", () => {
+        expect(
+          qrLabel({
+            irn: { qrCode: irnQr },
+            customLabels: { einvoiceQr: "IRN QR Code" },
+          })
+        ).toBe("IRN QR Code");
+      });
     });
   });
 });
@@ -1426,5 +1467,393 @@ describe("contact details", () => {
   it("is absent without an email or phone", () => {
     expect(contactLine({})).toBeNull();
     expect(contactLine({ contact: { email: "", phone: "" } })).toBeNull();
+  });
+});
+
+describe("missing blocks and ignored switches", () => {
+  const base = {
+    invoiceTitle: "Invoice",
+    invoiceNumber: "0023",
+    items: [{ _id: "1", name: "Chair", quantity: 1, rate: 10, amount: 10 }],
+  };
+  const html = (payload: Record<string, unknown>) =>
+    render({ ...base, ...payload });
+  const textOf = (markup: string) =>
+    markup
+      .replace(/<[^>]+>/g, " ")
+      .replace(/[⁦-⁩]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  const rowsOf = (markup: string, testId: string) =>
+    [
+      ...markup.matchAll(
+        new RegExp(
+          `data-testid="${testId}"[^>]*>([\\s\\S]*?)</(?:div|tr)>`,
+          "g"
+        )
+      ),
+    ].map((match) => textOf(match[1]));
+
+  describe("letterhead and footer", () => {
+    const letterheadClass = (markup: string, slot: string) =>
+      markup.match(new RegExp(`class="([^"]*)invoice-${slot}[" ]`))?.[1] ?? "";
+
+    it("leave both to the PDF service by default", () => {
+      const markup = html({});
+      expect(letterheadClass(markup, "letterhead")).toContain("no-dibella");
+      expect(letterheadClass(markup, "letterhead-footer")).toContain(
+        "no-dibella"
+      );
+    });
+
+    it("print them in the page when shown only on the first / last page", () => {
+      const markup = html({
+        pdfOptions: { letterHeadOnFirstPage: true, footerOnLastPage: true },
+      });
+      expect(letterheadClass(markup, "letterhead")).not.toContain("no-dibella");
+      expect(letterheadClass(markup, "letterhead-footer")).not.toContain(
+        "no-dibella"
+      );
+    });
+  });
+
+  describe("party phone and email", () => {
+    const party = { name: "Acme", phone: "+919999988888", email: "a@acme.in" };
+
+    it("print by default", () => {
+      const text = textOf(html({ billedTo: party }));
+      expect(text).toContain("a@acme.in");
+      expect(text).toContain("+91 99999 88888");
+    });
+
+    it("hide when switched off for the document", () => {
+      const text = textOf(
+        html({
+          billedTo: {
+            ...party,
+            phoneShowInInvoice: false,
+            emailShowInInvoice: "false",
+          },
+        })
+      );
+      expect(text).not.toContain("a@acme.in");
+      expect(text).not.toContain("+91 99999 88888");
+    });
+  });
+
+  describe("party tax numbers", () => {
+    it("print PAN for Billed To too", () => {
+      expect(
+        rowsOf(
+          html({
+            billedTo: { name: "Acme", country: "IN", panNumber: "AAAPA1234A" },
+          }),
+          "tax-id"
+        )
+      ).toEqual(["PAN: AAAPA1234A"]);
+    });
+
+    it("hide GSTIN and PAN when the business switches them off", () => {
+      const rows = rowsOf(
+        html({
+          owner: {
+            configuration: {
+              experimental: {
+                fieldVisibility: { gst: { showInDocument: false } },
+              },
+            },
+          },
+          billedBy: {
+            name: "Us",
+            gstin: "29AAAAA0000A1Z5",
+            panNumber: "AAAAA0000A",
+          },
+        }),
+        "tax-id"
+      );
+      expect(rows).toEqual(["PAN: AAAAA0000A"]);
+    });
+
+    it("print a foreign party's VAT, TIN, SST and Tax ID, not its GSTIN", () => {
+      const rows = rowsOf(
+        html({
+          billedTo: {
+            name: "Gulf Co",
+            country: "AE",
+            gstin: "29AAAAA0000A1Z5",
+            vatNumber: "100200300400500",
+            trnNumber: "TRN-1",
+            tinNumber: "TIN-1",
+            sstNumber: "SST-1",
+            taxId: "TX-1",
+          },
+        }),
+        "tax-id"
+      );
+      expect(rows).toEqual([
+        "VAT Number: 100200300400500",
+        "TRN: TRN-1",
+        "TIN: TIN-1",
+        "SST: SST-1",
+        "Tax ID: TX-1",
+      ]);
+    });
+
+    it("never print VAT or TRN for a party in India", () => {
+      expect(
+        rowsOf(
+          html({
+            billedTo: {
+              name: "Acme",
+              country: "IN",
+              trnNumber: "TRN-1",
+              vatNumber: "V1",
+            },
+          }),
+          "tax-id"
+        )
+      ).toEqual([]);
+    });
+
+    it("hide a foreign tax number its switch turns off", () => {
+      expect(
+        rowsOf(
+          html({
+            billedTo: {
+              name: "Gulf Co",
+              country: "AE",
+              vatNumber: "V1",
+              vatShowInInvoice: false,
+            },
+          }),
+          "tax-id"
+        )
+      ).toEqual([]);
+    });
+
+    it("use the business's own label", () => {
+      expect(
+        rowsOf(
+          html({
+            customLabels: { vat: "VAT Reg. No." },
+            billedTo: { name: "Gulf Co", country: "AE", vatNumber: "V1" },
+          }),
+          "tax-id"
+        )
+      ).toEqual(["VAT Reg. No.: V1"]);
+    });
+  });
+
+  describe("contact person", () => {
+    it("prints the name, and the email and phone the contact asks for", () => {
+      const rows = rowsOf(
+        html({
+          billedTo: {
+            name: "Acme",
+            contactPerson: {
+              name: "Ravi Kumar",
+              email: "ravi@acme.in",
+              phone: "+919876543210",
+              displayFields: ["name", "email", "phone"],
+            },
+          },
+        }),
+        "contact-person"
+      );
+      expect(rows).toEqual([
+        "Contact Person: Ravi Kumar",
+        "Contact Email: ravi@acme.in",
+        "Contact Phone: +91 98765 43210",
+      ]);
+    });
+
+    it("prints only the name when no other fields are asked for", () => {
+      expect(
+        rowsOf(
+          html({
+            billedTo: {
+              name: "Acme",
+              contactPerson: { name: "Ravi Kumar", email: "ravi@acme.in" },
+            },
+          }),
+          "contact-person"
+        )
+      ).toEqual(["Contact Person: Ravi Kumar"]);
+    });
+
+    it("skips the name when a party field already carries it", () => {
+      expect(
+        rowsOf(
+          html({
+            billedTo: {
+              name: "Acme",
+              contactPerson: { name: "Ravi Kumar" },
+              customFields: [{ label: "Attn", value: "Ravi Kumar" }],
+            },
+          }),
+          "contact-person"
+        )
+      ).toEqual([]);
+    });
+  });
+
+  describe("e-invoice and e-way bill", () => {
+    const irn = {
+      Irn: "a".repeat(64),
+      AckNo: "112510123456789",
+      AckDt: "2025-07-30 12:34:00",
+      EwbNo: "331009876543",
+      EwbDt: "2025-07-30 13:00:00",
+      EwbValidTill: "2025-07-31 23:59:00",
+    };
+
+    it("prints the IRN, acknowledgement and e-way bill", () => {
+      const markup = html({ irn });
+      expect(rowsOf(markup, "irn")).toEqual([`IRN: ${irn.Irn}`]);
+      expect(rowsOf(markup, "compliance-row")).toEqual([
+        "Ack No 112510123456789",
+        "IRN Ack Date 2025-07-30 12:34:00",
+        "Eway Bill 331009876543",
+        "E-Way Bill Date 2025-07-30 13:00:00",
+        "Valid Till 2025-07-31 23:59:00",
+      ]);
+    });
+
+    it("drops the acknowledgement once the IRN is cancelled", () => {
+      expect(
+        rowsOf(
+          html({ irn: { ...irn, CancelDate: "2025-08-01" } }),
+          "compliance-row"
+        )
+      ).toEqual([
+        "IRN Cancelled 2025-08-01",
+        "Eway Bill 331009876543",
+        "E-Way Bill Date 2025-07-30 13:00:00",
+        "Valid Till 2025-07-31 23:59:00",
+      ]);
+    });
+
+    it("hides what the business's e-invoice and e-way settings turn off", () => {
+      const markup = html({
+        irn,
+        owner: { configuration: { einvoice: { irnNumber: false } } },
+        ewayConfig: { billDate: false, billValidTillDate: false },
+      });
+      expect(rowsOf(markup, "irn")).toEqual([]);
+      expect(rowsOf(markup, "compliance-row")).toEqual([
+        "Ack No 112510123456789",
+        "IRN Ack Date 2025-07-30 12:34:00",
+        "Eway Bill 331009876543",
+      ]);
+    });
+  });
+
+  describe("details rows", () => {
+    it("print a note's linked invoice and reason", () => {
+      const markup = html({
+        linkedInvoices: [{ _id: "x", invoiceNumber: "INV-7" }, { _id: "y" }],
+        documentReason: "Product Return",
+      });
+      expect(rowsOf(markup, "linked-document")).toEqual([
+        "Linked Document INV-7",
+      ]);
+      expect(rowsOf(markup, "document-reason")).toEqual([
+        "Reason Product Return",
+      ]);
+    });
+
+    it("print the creator only when the document asks for it", () => {
+      const creator = { name: "Sandeep" };
+      expect(rowsOf(html({ creator }), "created-by")).toEqual([]);
+      expect(
+        rowsOf(
+          html({ creator, advanceOptions: { showCreatorInInvoice: true } }),
+          "created-by"
+        )
+      ).toEqual(["Created By Sandeep"]);
+    });
+  });
+
+  it("prints the document subtitle", () => {
+    expect(html({})).not.toContain('data-testid="subtitle"');
+    expect(html({ invoiceSubTitle: "Original for Recipient" })).toContain(
+      '<p class="fk-subtitle" data-testid="subtitle">Original for Recipient</p>'
+    );
+  });
+
+  it("lists the attachments by file name", () => {
+    const markup = html({
+      attachments: [
+        "https://cdn.example.com/files/Spec%20Sheet.pdf?token=abc",
+        { url: "https://cdn.example.com/files/drawing.png" },
+      ],
+    });
+    expect(rowsOf(markup, "attachments")).toEqual([
+      "Attachments Spec Sheet.pdf drawing.png",
+    ]);
+  });
+
+  describe("batch summary", () => {
+    const batchSummary = [
+      {
+        itemName: "Chair",
+        batchName: "B-01",
+        quantity: 4,
+        warehouseName: "Main",
+        expiryDate: "2027-01-01",
+      },
+    ];
+    const table = (markup: string) => rowsOf(markup, "batch-summary");
+
+    it("prints the document's batches, leaving out empty columns", () => {
+      const markup = html({ batchSummary });
+      expect(textOf(markup)).toContain(
+        "Batch Summary Item Name Batch Name Qty Warehouse Expiry Date Chair B-01 4 Main 2027-01-01"
+      );
+    });
+
+    it("hides when the setting is explicitly off", () => {
+      expect(
+        table(
+          html({ batchSummary, advanceOptions: { showStockSummary: false } })
+        )
+      ).toEqual([]);
+      expect(
+        textOf(
+          html({ batchSummary, advanceOptions: { showStockSummary: false } })
+        )
+      ).not.toContain("Batch Summary");
+    });
+
+    it("falls back to the items' batches only when explicitly on", () => {
+      const items = [
+        {
+          _id: "1",
+          name: "Chair",
+          quantity: 1,
+          rate: 10,
+          amount: 10,
+          batchSummary: [{ batchName: "B-09", quantity: 1 }],
+        },
+      ];
+      expect(textOf(html({ items }))).not.toContain("Batch Summary");
+      expect(
+        textOf(html({ items, advanceOptions: { showStockSummary: true } }))
+      ).toContain("Batch Summary Item Name Batch Name Qty Chair B-09 1");
+    });
+
+    it("follows the business's batch columns", () => {
+      const markup = html({
+        batchSummary,
+        stockSummaryConfig: {
+          batchSummaryColumns: [
+            { key: "batchName", label: "Lot" },
+            { key: "quantity", label: "Units" },
+            { key: "warehouse", label: "Store", isHidden: true },
+          ],
+        },
+      });
+      expect(textOf(markup)).toContain("Batch Summary Lot Units B-01 4");
+    });
   });
 });
