@@ -792,6 +792,12 @@
   color: #333;
 }
 
+/* Batch Summary: tighter rows than the tax and payment tables. */
+.fk-batch-table th,
+.fk-batch-table td {
+  padding: 4px 8px;
+}
+
 .fk-summary-total-row td {
   font-weight: 600;
   color: #000;
